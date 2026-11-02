@@ -30,6 +30,7 @@
       if (role === 'SUPER_ADMIN') return superAdmin(p);
       if (role === 'MEDIA_OFFICER') return mediaOfficer(p);
       if (role === 'REFEREE') return referee(p);
+      if (role === 'DEVELOPER') return developer(p);
       if (role === 'CLUB_ADMIN') { box().innerHTML = '<h2 class="rt">Club squad</h2><p class="muted">Squad entry for clubs will be added next.</p>'; return; }
       box().innerHTML = '';
     });
@@ -231,6 +232,32 @@
     }).then(function (r) {
       if (r.error) { msg(r.error.message); return; }
       msg(status === 'PUBLISHED' ? 'Published.' : 'Returned to the Media Officer.'); loadReview();
+    });
+  }
+
+  // ---------- TECHNICAL DIRECTOR: assign roles ----------
+  var ROLE_OPTIONS = [['VIEWER','Viewer'],['PLAYER','Player'],['CLUB_ADMIN','Club Manager'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['FINANCE_OFFICER','Finance Officer'],['STAFF','Staff (read-only)'],['SUPER_ADMIN','Super Admin']];
+  function developer(p) {
+    box().innerHTML = '<h2 class="rt">Assign roles</h2><p class="muted">Choose a role, give a reason, then apply. Every change is logged.</p><div id="roleList" class="muted">Loading accounts…</div><div class="status" id="roleMsg"></div>';
+    db.from('user_profiles').select('id, full_name, email, system_role, status').order('email').limit(300).then(function (r) {
+      var rows = (r.data || []).filter(function (u) { return String(u.system_role).toUpperCase() !== 'DEVELOPER'; });
+      $('roleList').innerHTML = rows.length ? rows.map(function (u) {
+        var opts = ROLE_OPTIONS.map(function (o) { return '<option value="' + o[0] + '"' + (String(u.system_role).toUpperCase() === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('');
+        return '<div class="post"><strong>' + esc(u.full_name || u.email) + '</strong><div class="muted">' + esc(u.email) + ' · ' + esc(u.status) + '</div>' +
+          '<select data-role-for="' + esc(u.id) + '">' + opts + '</select>' +
+          '<div class="btns"><button class="small" data-apply="' + esc(u.id) + '">Apply role</button></div></div>';
+      }).join('') : 'No accounts yet.';
+      document.querySelectorAll('[data-apply]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var id = b.dataset.apply, role = document.querySelector('[data-role-for="' + id + '"]').value;
+          var reason = prompt('Reason for this role change (at least 5 characters, kept in the log):');
+          if (reason == null) return;
+          if (reason.trim().length < 5) { msg('Give a reason of at least 5 characters.'); return; }
+          db.rpc('set_user_role', { p_user: id, p_role: role, p_reason: reason.trim() }).then(function (res) {
+            msg(res.error ? res.error.message : 'Role saved and logged.'); developer(p);
+          });
+        });
+      });
     });
   }
 
