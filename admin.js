@@ -29,6 +29,7 @@
       var role = String(p.system_role).toUpperCase();
       if (role === 'SUPER_ADMIN') return superAdmin(p);
       if (role === 'MEDIA_OFFICER') return mediaOfficer(p);
+      if (role === 'REFEREE') return referee(p);
       if (role === 'CLUB_ADMIN') { box().innerHTML = '<h2 class="rt">Club squad</h2><p class="muted">Squad entry for clubs will be added next.</p>'; return; }
       box().innerHTML = '';
     });
@@ -55,6 +56,11 @@
         input('lvMinute', 'Minute', 'number', 'min="0" max="130"') +
         '<div class="btns"><button class="primary" id="lvAdd">Record event</button></div>' +
       '</div>' +
+      '<h2 class="rt">Assign a referee</h2>' +
+      '<label for="asMatch">Match</label><select id="asMatch"><option value="">Loading…</option></select>' +
+      '<label for="asRef">Referee</label><select id="asRef"><option value="">Loading referees…</option></select>' +
+      '<div class="btns"><button class="primary" id="asSave">Assign</button></div>' +
+      '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
@@ -81,6 +87,50 @@
 
     loadReview();
     wireLive();
+    loadAssignOptions();
+    loadPendingResults();
+    $('asSave').addEventListener('click', function () {
+      var m = $('asMatch').value, r = $('asRef').value;
+      if (!m || !r) { msg('Choose a match and a referee.'); return; }
+      db.auth.getUser().then(function (u) {
+        return db.from('match_referee_assignments').insert([{ match_id: Number(m), referee_user_id: r, assigned_by: u.data.user.id, official_role: 'MAIN', assignment_status: 'ACTIVE' }]);
+      }).then(function (res) { msg(res.error ? res.error.message : 'Referee assigned.'); });
+    });
+  }
+
+  function loadAssignOptions() {
+    db.from('matches').select('id, home_team, away_team, match_date').order('match_date', { ascending: false }).limit(60).then(function (r) {
+      $('asMatch').innerHTML = '<option value="">Choose a match…</option>' + (r.data || []).map(function (m) {
+        return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + '</option>'; }).join('');
+    });
+    db.from('user_profiles').select('id, full_name, email').eq('system_role', 'REFEREE').then(function (r) {
+      $('asRef').innerHTML = '<option value="">Choose a referee…</option>' + (r.data || []).map(function (u) {
+        return '<option value="' + esc(u.id) + '">' + esc(u.full_name || u.email) + '</option>'; }).join('') || '<option value="">No referees yet</option>';
+    });
+  }
+
+  function loadPendingResults() {
+    db.from('match_results').select('id, home_team, away_team, home_goals, away_goals, recorded_by').eq('status', 'PENDING').order('id', { ascending: true })
+      .then(function (r) {
+        var rows = r.data || [];
+        $('pendingResults').innerHTML = rows.length ? rows.map(function (x) {
+          return '<div class="post"><strong>' + esc(x.home_team) + ' ' + x.home_goals + ' – ' + x.away_goals + ' ' + esc(x.away_team) + '</strong>' +
+            '<div class="btns"><button class="primary" data-approve="' + x.id + '">Approve</button><button class="secondary" data-reject="' + x.id + '">Reject</button></div></div>';
+        }).join('') : 'No final scores waiting.';
+        document.querySelectorAll('[data-approve]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            db.rpc('approve_match_result', { p_result_id: Number(b.dataset.approve) }).then(function (res) {
+              msg(res.error ? res.error.message : 'Approved. The table is updated.'); loadPendingResults(); loadMatchesForResult(); });
+          });
+        });
+        document.querySelectorAll('[data-reject]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            if (!confirm('Reject this score? The referee will need to send it again.')) return;
+            db.from('match_results').delete().eq('id', Number(b.dataset.reject)).then(function (res) {
+              msg(res.error ? res.error.message : 'Rejected.'); loadPendingResults(); });
+          });
+        });
+      });
   }
 
   // Live match: start, record events, end (end saves the score to the table)
@@ -181,6 +231,85 @@
     }).then(function (r) {
       if (r.error) { msg(r.error.message); return; }
       msg(status === 'PUBLISHED' ? 'Published.' : 'Returned to the Media Officer.'); loadReview();
+    });
+  }
+
+  // ---------- REFEREE ----------
+  var refEvents = [];
+  function referee(p) {
+    box().innerHTML =
+      '<h2 class="rt">My matches</h2>' +
+      '<label for="rfMatch">Match</label><select id="rfMatch"><option value="">Loading your matches…</option></select>' +
+      '<div class="scores"><span id="rfScore" class="score-big">0 – 0</span></div>' +
+      '<div class="btns"><button class="secondary" id="rfStart">Start match</button><button class="primary" id="rfEnd">End and submit score</button></div>' +
+      '<div id="rfPanel" class="hidden">' +
+        '<label for="rfTeam">Team</label><select id="rfTeam"></select>' +
+        input('rfPlayer', 'Player') + input('rfAssist', 'Assist (optional)') + input('rfOff', 'Player off (substitutions only)') +
+        '<label for="rfType">Event</label><select id="rfType"><option value="goal">Goal</option><option value="yellow_card">Yellow card</option><option value="red_card">Red card</option><option value="substitution">Substitution</option></select>' +
+        input('rfMinute', 'Minute', 'number', 'min="0" max="130"') +
+        '<div class="btns"><button class="primary" id="rfAdd">Record event</button></div>' +
+      '</div>' +
+      '<div class="status" id="roleMsg"></div>';
+
+    db.auth.getUser().then(function (u) {
+      return db.from('match_referee_assignments').select('match_id').eq('referee_user_id', u.data.user.id).eq('assignment_status', 'ACTIVE').eq('official_role', 'MAIN');
+    }).then(function (a) {
+      var ids = (a.data || []).map(function (x) { return x.match_id; });
+      if (!ids.length) { $('rfMatch').innerHTML = '<option value="">No matches assigned to you yet</option>'; return; }
+      return db.from('matches').select('id, home_team, away_team, match_status, match_date').in('id', ids).order('match_date', { ascending: true })
+        .then(function (r) {
+          $('rfMatch').innerHTML = '<option value="">Choose a match…</option>' + (r.data || []).map(function (m) {
+            return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + (m.match_status === 'LIVE' ? ' · LIVE' : '') + '</option>'; }).join('');
+        });
+    });
+
+    $('rfMatch').addEventListener('change', function () { loadRefMatch(this.value); });
+    $('rfStart').addEventListener('click', function () {
+      var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
+      db.from('matches').update({ match_status: 'LIVE' }).eq('id', id).then(function (r) {
+        msg(r.error ? r.error.message : 'Match is live.'); loadRefMatch(id); });
+    });
+    $('rfEnd').addEventListener('click', function () {
+      var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
+      db.from('matches').select('id, home_team, away_team').eq('id', id).maybeSingle().then(function (r) {
+        var m = r.data; var hg = goalsFor(m.home_team), ag = goalsFor(m.away_team);
+        if (!confirm('Submit ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + ' for the Super Admin to approve?')) return;
+        return db.auth.getUser().then(function (u) {
+          return db.from('match_results').insert([{ match_id: String(id), home_team: m.home_team, away_team: m.away_team, home_goals: hg, away_goals: ag, status: 'PENDING', recorded_by: u.data.user.id }]);
+        }).then(function (res) {
+          if (res.error) { msg(res.error.message); return; }
+          return db.from('matches').update({ match_status: 'FINISHED' }).eq('id', id).then(function () {
+            msg('Score submitted for approval.'); loadRefMatch(id); });
+        });
+      });
+    });
+    $('rfAdd').addEventListener('click', function () {
+      var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
+      var type = $('rfType').value, player = $('rfPlayer').value.trim(), minute = parseInt($('rfMinute').value, 10);
+      if (!player || isNaN(minute)) { msg('Enter the player and the minute.'); return; }
+      if (type === 'substitution' && !$('rfOff').value.trim()) { msg('Enter the player coming off.'); return; }
+      db.auth.getUser().then(function (u) {
+        return db.from('match_events').insert([{ match_id: String(id), event_type: type, team_name: $('rfTeam').value, player_name: player,
+          assist_player_name: $('rfAssist').value.trim() || null, player_off_name: $('rfOff').value.trim() || null, minute: minute,
+          recorded_by: u.data.user.id, recorded_at: new Date().toISOString(), published_at: new Date().toISOString() }]);
+      }).then(function (res) {
+        if (res.error) { msg(res.error.message); return; }
+        msg('Recorded.'); ['rfPlayer','rfAssist','rfOff','rfMinute'].forEach(function (x) { $(x).value = ''; });
+        loadRefMatch(id);
+      });
+    });
+  }
+  function goalsFor(team) { return refEvents.filter(function (e) { return e.event_type === 'goal' && e.team_name === team; }).length; }
+  function loadRefMatch(id) {
+    if (!id) { $('rfPanel').classList.add('hidden'); return; }
+    db.from('matches').select('id, home_team, away_team, match_status').eq('id', id).maybeSingle().then(function (r) {
+      var m = r.data; if (!m) return;
+      $('rfTeam').innerHTML = '<option>' + esc(m.home_team) + '</option><option>' + esc(m.away_team) + '</option>';
+      $('rfPanel').classList.toggle('hidden', m.match_status !== 'LIVE');
+      db.from('match_events').select('event_type, team_name, minute').eq('match_id', String(id)).then(function (e) {
+        refEvents = e.data || [];
+        $('rfScore').textContent = goalsFor(m.home_team) + ' – ' + goalsFor(m.away_team);
+      });
     });
   }
 
