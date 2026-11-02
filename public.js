@@ -127,7 +127,7 @@
   // News and media (published only)
   function loadNews() {
     db.from('media_posts').select('id, category, title, body, image_url, video_url, published_at, status')
-      .eq('status', 'published').order('published_at', { ascending: false }).limit(20)
+      .eq('status', 'PUBLISHED').order('published_at', { ascending: false }).limit(20)
       .then(function (res) {
         if (res.error || !(res.data || []).length) { $('newsList').innerHTML = empty('No news yet.'); return; }
         $('newsList').innerHTML = res.data.map(function (p) {

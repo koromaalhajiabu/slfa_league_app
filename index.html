@@ -88,6 +88,13 @@ button.danger { border-color:var(--danger); color:var(--danger); }
 .ev .min { width:34px; color:var(--muted); font-variant-numeric:tabular-nums; }
 .ev .etxt { flex:1; }
 .ev .etxt small { display:block; color:var(--muted); font-size:12px; }
+.rt { margin:18px 0 8px; font-size:15px; color:var(--accent); }
+.scores { display:flex; align-items:center; gap:8px; }
+.scores input { text-align:center; }
+textarea { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(128,128,128,.4); background:var(--bg); color:var(--ink); font-size:16px; font-family:inherit; }
+select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(128,128,128,.4); background:var(--bg); color:var(--ink); font-size:16px; }
+.post { padding:12px 0; border-bottom:1px solid rgba(128,128,128,.2); }
+.post p { margin:6px 0; font-size:14px; }
 </style>
 </head>
 <body>
@@ -184,6 +191,7 @@ button.danger { border-color:var(--danger); color:var(--danger); }
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="public.js"></script>
+<script src="admin.js"></script>
 <script>
 (function () {
   var cfg = window.SLFA_CONFIG;
