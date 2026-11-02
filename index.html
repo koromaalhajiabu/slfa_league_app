@@ -40,6 +40,7 @@ button.danger { border-color:var(--danger); color:var(--danger); }
 .hero { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; padding:18px 0 8px; }
 .kicker { margin:0; color:var(--muted); font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
 .title { margin:4px 0 0; font-size:28px; font-weight:700; letter-spacing:.01em; }
+.hero-actions { display:flex; gap:8px; }
 .share-app { border:1px solid var(--accent); background:transparent; color:var(--accent); border-radius:999px; padding:8px 14px; font-size:13px; cursor:pointer; }
 .tabs { display:flex; gap:6px; overflow-x:auto; padding:6px 0 4px; scrollbar-width:none; }
 .tabs::-webkit-scrollbar { display:none; }
@@ -102,7 +103,8 @@ button.danger { border-color:var(--danger); color:var(--danger); }
         <p class="kicker">Sierra Leone Football Association</p>
         <h2 class="title">League Centre</h2>
       </div>
-      <button class="share-app" id="shareApp">Share</button>
+      <div class="hero-actions"><button class="share-app" id="alertBtn">Get alerts</button><button class="share-app" id="shareApp">Share</button></div>
+      <div class="status" id="alertStatus"></div>
     </div>
     <nav class="tabs" role="tablist" aria-label="League sections">
       <button role="tab" data-tab="matches" aria-selected="true">Matches</button>

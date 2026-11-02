@@ -59,14 +59,14 @@
     box.hidden = false;
     if (box.dataset.loaded) return;
     box.textContent = 'Loading…';
-    db.from('match_events').select('event_type, team_name, player_name, player_off_name, assist_player_name, minute, published_at')
-      .eq('match_id', String(card.dataset.match)).not('published_at', 'is', null)
+    db.from('match_events').select('event_type, team_name, player_name, player_off_name, assist_player_name, minute')
+      .eq('match_id', String(card.dataset.match))
       .order('minute', { ascending: true })
       .then(function (res) {
         box.dataset.loaded = '1';
         if (res.error) { box.textContent = 'Details are not available right now.'; return; }
-        var ev = (res.data || []).filter(function (e) { return e.published_at; });
-        box.innerHTML = ev.length ? ev.map(eventLine).join('') : '<p class="muted">No match events published yet.</p>';
+        var ev = res.data || [];
+        box.innerHTML = ev.length ? ev.map(eventLine).join('') : '<p class="muted">No match events yet.</p>';
       });
   }
   var ICON = { goal:'⚽', yellow_card:'🟨', red_card:'🟥', substitution:'🔁' };
@@ -155,6 +155,40 @@
     else if (navigator.clipboard) { navigator.clipboard.writeText(text + ' ' + location.href); alert('Link copied.'); }
   }
   $('shareApp').addEventListener('click', function () { shareText('Follow the league on the SLFA League app'); });
+
+  // ALERTS: anyone can subscribe on their phone or computer
+  function urlBase64ToUint8Array(b64) {
+    var pad = '='.repeat((4 - b64.length % 4) % 4);
+    var raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, function (c) { return c.charCodeAt(0); });
+  }
+  function setAlertStatus(msg) { var el = $('alertStatus'); if (el) el.textContent = msg; }
+  var alertBtn = $('alertBtn');
+  if (alertBtn) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      alertBtn.disabled = true;
+      setAlertStatus('Alerts are not supported on this browser. On iPhone, add the app to your Home Screen first.');
+    }
+    alertBtn.addEventListener('click', function () {
+      setAlertStatus('Turning on alerts…');
+      Notification.requestPermission().then(function (perm) {
+        if (perm !== 'granted') { setAlertStatus('Alerts are off. You can allow them in your browser settings.'); return; }
+        return navigator.serviceWorker.register('sw.js').then(function (reg) {
+          return navigator.serviceWorker.ready.then(function () {
+            return reg.pushManager.getSubscription().then(function (sub) {
+              return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(cfg.vapidPublicKey) });
+            });
+          });
+        }).then(function (sub) {
+          var j = sub.toJSON();
+          return db.from('push_subscriptions').insert([{ user_id: null, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth }]).then(function (res) {
+            if (res.error && res.error.code !== '23505') throw res.error;
+            setAlertStatus('Alerts are on for this device.');
+          });
+        }).catch(function () { setAlertStatus('Could not turn on alerts. Please try again.'); });
+      });
+    });
+  }
 
   loadMatches(); loadTable(); loadTeams(); loadPlayers(); loadNews();
 })();
