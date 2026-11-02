@@ -2,8 +2,8 @@
 // 1. Keeps the app shell available offline (pages, scripts, styles, images).
 // 2. Shows league alerts sent as push messages.
 // League data always comes from the network, so scores and news are never stale.
-const CACHE = 'slfa-app-v3';
-const SHELL = ['./', './index.html', './config.js', './public.js', './admin.js', './manifest.json',
+const CACHE = 'slfa-app-v4';
+const SHELL = ['./', './index.html', './config.js', './public.js', './admin.js', './debug-panel.js', './manifest.json',
   './icon-192.png', './icon-512.png', './slfa-logo.png'];
 
 self.addEventListener('install', function (e) {
