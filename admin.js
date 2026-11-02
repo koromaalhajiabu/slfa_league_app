@@ -242,6 +242,7 @@
       '<label for="rfMatch">Match</label><select id="rfMatch"><option value="">Loading your matches…</option></select>' +
       '<div class="scores"><span id="rfScore" class="score-big">0 – 0</span></div>' +
       '<div class="btns"><button class="secondary" id="rfStart">Start match</button><button class="primary" id="rfEnd">End and submit score</button></div>' +
+      '<h2 class="rt">Events so far</h2><div id="rfEvents" class="muted">No events yet.</div>' +
       '<div id="rfPanel" class="hidden">' +
         '<label for="rfTeam">Team</label><select id="rfTeam"></select>' +
         input('rfPlayer', 'Player') + input('rfAssist', 'Assist (optional)') + input('rfOff', 'Player off (substitutions only)') +
@@ -306,9 +307,24 @@
       var m = r.data; if (!m) return;
       $('rfTeam').innerHTML = '<option>' + esc(m.home_team) + '</option><option>' + esc(m.away_team) + '</option>';
       $('rfPanel').classList.toggle('hidden', m.match_status !== 'LIVE');
-      db.from('match_events').select('event_type, team_name, minute').eq('match_id', String(id)).then(function (e) {
+      db.from('match_events').select('id, event_type, team_name, player_name, player_off_name, minute').eq('match_id', String(id)).order('minute', { ascending: true }).then(function (e) {
         refEvents = e.data || [];
         $('rfScore').textContent = goalsFor(m.home_team) + ' – ' + goalsFor(m.away_team);
+        $('rfEvents').innerHTML = refEvents.length ? refEvents.map(function (ev) {
+          var label = ev.event_type === 'substitution' ? ev.player_name + ' on, ' + (ev.player_off_name || '') + ' off' : ev.player_name;
+          return '<div class="ev"><span class="min">' + esc(ev.minute) + "'</span><span class=\"etxt\">" + esc(String(ev.event_type).replace('_',' ')) + ': ' + esc(label) +
+            '<small>' + esc(ev.team_name || '') + '</small></span><button class="small danger" data-rev="' + ev.id + '">Reverse</button></div>';
+        }).join('') : 'No events yet.';
+        document.querySelectorAll('[data-rev]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var reason = prompt('Why is this being reversed? For example: goal disallowed for offside. Kept in the log.');
+            if (reason == null) return;
+            if (reason.trim().length < 5) { msg('Give a reason of at least 5 characters.'); return; }
+            db.rpc('reverse_match_event', { p_event_id: Number(b.dataset.rev), p_reason: reason.trim() }).then(function (res) {
+              msg(res.error ? res.error.message : 'Reversed and logged. The score is updated.'); loadRefMatch(id);
+            });
+          });
+        });
       });
     });
   }
@@ -321,7 +337,7 @@
       input('npTitle', 'Title') +
       '<label for="npBody">Story</label><textarea id="npBody" rows="5"></textarea>' +
       input('npImage', 'Photo link (optional)', 'url') + input('npVideo', 'Video link (optional)', 'url') +
-      '<div class="btns"><button class="secondary" id="npDraft">Save draft</button><button class="primary" id="npSubmit">Submit for approval</button></div>' +
+      '<div class="btns"><button class="secondary" id="npDraft">Save draft</button><button class="secondary" id="npSubmit">Submit for approval</button><button class="primary" id="npPublish">Publish now</button></div>' +
       '<h2 class="rt">My posts</h2><div id="myPosts" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
@@ -332,16 +348,19 @@
         return db.from('media_posts').insert([{
           category: $('npCat').value, title: t, body: $('npBody').value.trim(),
           image_url: $('npImage').value.trim() || null, video_url: $('npVideo').value.trim() || null,
-          status: status, created_by: u.data.user.id, created_by_name: p.full_name || p.email, submitted_at: status === 'SUBMITTED' ? new Date().toISOString() : null
+          status: status, created_by: u.data.user.id, created_by_name: p.full_name || p.email,
+          submitted_at: status === 'SUBMITTED' ? new Date().toISOString() : null,
+          published_at: status === 'PUBLISHED' ? new Date().toISOString() : null
         }]);
       }).then(function (r) {
         if (r.error) { msg(r.error.message); return; }
-        msg(status === 'SUBMITTED' ? 'Sent to the Super Admin for approval.' : 'Draft saved.');
+        msg(status === 'SUBMITTED' ? 'Sent to the Super Admin for approval.' : status === 'PUBLISHED' ? 'Published.' : 'Draft saved.');
         $('npTitle').value = ''; $('npBody').value = ''; $('npImage').value = ''; $('npVideo').value = ''; loadMine();
       });
     }
     $('npDraft').addEventListener('click', function () { save('DRAFT'); });
     $('npSubmit').addEventListener('click', function () { save('SUBMITTED'); });
+    $('npPublish').addEventListener('click', function () { save('PUBLISHED'); });
     loadMine();
   }
   function loadMine() {
@@ -350,14 +369,20 @@
     }).then(function (r) {
       var rows = r.data || [];
       $('myPosts').innerHTML = rows.length ? rows.map(function (x) {
-        var canSubmit = x.status === 'DRAFT' || x.status === 'RETURNED';
+        var open = x.status !== 'PUBLISHED';
         return '<div class="post"><strong>' + esc(x.title) + '</strong><div class="muted">' + esc(x.category) + ' · ' + esc(x.status) + '</div>' +
-          (canSubmit ? '<div class="btns"><button class="small" data-sub="' + esc(x.id) + '">Submit for approval</button></div>' : '') + '</div>';
+          (open ? '<div class="btns"><button class="small" data-sub="' + esc(x.id) + '">Submit for approval</button><button class="small" data-pub="' + esc(x.id) + '">Publish now</button></div>' : '') + '</div>';
       }).join('') : 'No posts yet.';
       document.querySelectorAll('[data-sub]').forEach(function (b) {
         b.addEventListener('click', function () {
           db.from('media_posts').update({ status: 'SUBMITTED', submitted_at: new Date().toISOString() }).eq('id', b.dataset.sub)
             .then(function (res) { msg(res.error ? res.error.message : 'Sent for approval.'); loadMine(); });
+        });
+      });
+      document.querySelectorAll('[data-pub]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          db.from('media_posts').update({ status: 'PUBLISHED', published_at: new Date().toISOString() }).eq('id', b.dataset.pub)
+            .then(function (res) { msg(res.error ? res.error.message : 'Published.'); loadMine(); });
         });
       });
     });
