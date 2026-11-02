@@ -238,15 +238,56 @@
   // ---------- TECHNICAL DIRECTOR: assign roles ----------
   var ROLE_OPTIONS = [['VIEWER','Viewer'],['PLAYER','Player'],['CLUB_ADMIN','Club Manager'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['FINANCE_OFFICER','Finance Officer'],['STAFF','Staff (read-only)'],['SUPER_ADMIN','Super Admin']];
   function developer(p) {
-    box().innerHTML = '<h2 class="rt">Assign roles</h2><p class="muted">Choose a role, give a reason, then apply. Every change is logged.</p><div id="roleList" class="muted">Loading accounts…</div><div class="status" id="roleMsg"></div>';
+    box().innerHTML =
+      '<h2 class="rt">League status</h2><div id="leagueState" class="muted">Checking…</div>' +
+      '<div class="btns"><button class="secondary" id="pauseBtn">Freeze league</button><button class="primary" id="resumeBtn">Resume league</button></div>' +
+      '<h2 class="rt">Accounts</h2><p class="muted">Assign roles, suspend or restore. Each change needs a reason and is logged.</p>' +
+      '<div id="roleList" class="muted">Loading accounts…</div>' +
+      '<h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div>' +
+      '<div class="status" id="roleMsg"></div>';
+
+    loadLeagueState(); loadAccountsDev(p); loadRoleLog();
+
+    $('pauseBtn').addEventListener('click', function () { setPause(true); });
+    $('resumeBtn').addEventListener('click', function () { setPause(false); });
+  }
+
+  function loadLeagueState() {
+    db.from('system_pause').select('paused, reason, changed_at').eq('id', 1).maybeSingle().then(function (r) {
+      var st = r.data || { paused: false };
+      $('leagueState').innerHTML = st.paused
+        ? '<strong style="color:#ff8a80">Frozen.</strong> The league is paused. Results and fixtures cannot change.' + (st.reason ? '<br><small>Reason: ' + esc(st.reason) + '</small>' : '')
+        : '<strong style="color:#7ee6a0">Live.</strong> The league is running normally.';
+    });
+  }
+  function setPause(pause) {
+    var reason = prompt(pause ? 'Reason for freezing the league (at least 5 characters, kept in the log):' : 'Reason for resuming the league (at least 5 characters, kept in the log):');
+    if (reason == null) return;
+    if (reason.trim().length < 5) { msg('Give a reason of at least 5 characters.'); return; }
+    db.rpc('set_system_pause', { p_paused: pause, p_reason: reason.trim() }).then(function (res) {
+      msg(res.error ? res.error.message : (pause ? 'League frozen and logged.' : 'League resumed and logged.'));
+      loadLeagueState(); loadRoleLog();
+    });
+  }
+
+  function loadAccountsDev(p) {
     db.from('user_profiles').select('id, full_name, email, system_role, status').order('email').limit(300).then(function (r) {
-      var rows = (r.data || []).filter(function (u) { return String(u.system_role).toUpperCase() !== 'DEVELOPER'; });
+      var rows = r.data || [];
       $('roleList').innerHTML = rows.length ? rows.map(function (u) {
+        var isMe = u.id === p.id;
+        var isDev = String(u.system_role).toUpperCase() === 'DEVELOPER';
+        var active = String(u.status).toLowerCase() === 'active';
         var opts = ROLE_OPTIONS.map(function (o) { return '<option value="' + o[0] + '"' + (String(u.system_role).toUpperCase() === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('');
-        return '<div class="post"><strong>' + esc(u.full_name || u.email) + '</strong><div class="muted">' + esc(u.email) + ' · ' + esc(u.status) + '</div>' +
-          '<select data-role-for="' + esc(u.id) + '">' + opts + '</select>' +
-          '<div class="btns"><button class="small" data-apply="' + esc(u.id) + '">Apply role</button></div></div>';
+        return '<div class="post"><strong>' + esc(u.full_name || u.email) + (isMe ? ' <span class="muted">(you)</span>' : '') + '</strong>' +
+          '<div class="muted">' + esc(u.email) + ' · ' + esc(u.status) + '</div>' +
+          (isDev ? '<div class="muted">Technical Director</div>' :
+            '<select data-role-for="' + esc(u.id) + '">' + opts + '</select>' +
+            '<div class="btns"><button class="small" data-apply="' + esc(u.id) + '">Apply role</button>' +
+            (isMe ? '' : '<button class="small ' + (active ? 'danger' : '') + '" data-status="' + esc(u.id) + '" data-next="' + (active ? 'Suspended' : 'Active') + '">' + (active ? 'Suspend' : 'Restore') + '</button>') +
+            '</div>') +
+          '</div>';
       }).join('') : 'No accounts yet.';
+
       document.querySelectorAll('[data-apply]').forEach(function (b) {
         b.addEventListener('click', function () {
           var id = b.dataset.apply, role = document.querySelector('[data-role-for="' + id + '"]').value;
@@ -254,10 +295,31 @@
           if (reason == null) return;
           if (reason.trim().length < 5) { msg('Give a reason of at least 5 characters.'); return; }
           db.rpc('set_user_role', { p_user: id, p_role: role, p_reason: reason.trim() }).then(function (res) {
-            msg(res.error ? res.error.message : 'Role saved and logged.'); developer(p);
+            msg(res.error ? res.error.message : 'Role saved and logged.'); loadAccountsDev(p); loadRoleLog();
           });
         });
       });
+      document.querySelectorAll('[data-status]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var next = b.dataset.next;
+          var reason = prompt(next === 'Suspended' ? 'Reason for suspending (at least 5 characters, kept in the log):' : 'Reason for restoring (at least 5 characters, kept in the log):');
+          if (reason == null) return;
+          if (reason.trim().length < 5) { msg('Give a reason of at least 5 characters.'); return; }
+          db.rpc('set_account_status', { p_user: b.dataset.status, p_status: next, p_reason: reason.trim() }).then(function (res) {
+            msg(res.error ? res.error.message : (next === 'Suspended' ? 'Account suspended and logged.' : 'Account restored and logged.'));
+            loadAccountsDev(p);
+          });
+        });
+      });
+    });
+  }
+
+  function loadRoleLog() {
+    db.from('role_change_log').select('user_email, previous_role, new_role, reason, changed_at').order('changed_at', { ascending: false }).limit(10).then(function (r) {
+      var rows = r.data || [];
+      $('roleLog').innerHTML = rows.length ? rows.map(function (x) {
+        return '<div class="ev"><span class="etxt">' + esc(x.user_email) + ': ' + esc(x.previous_role || '—') + ' → ' + esc(x.new_role) + '<small>' + esc(x.reason) + '</small></span></div>';
+      }).join('') : 'No role changes yet.';
     });
   }
 
