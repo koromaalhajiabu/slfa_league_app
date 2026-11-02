@@ -3,7 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b1f14">
+<meta name="theme-color" content="#0a4a8a">
+<meta name="application-name" content="SLFA League">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SLFA League">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>SLFA League</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,6 +52,9 @@ button.small { padding:6px 11px; border-radius:8px; border:1px solid var(--line)
 button.danger { border-color:var(--danger); color:var(--danger); }
 .status { font-size:12px; color:var(--muted); margin-top:10px; min-height:16px; }
 .hidden { display:none !important; }
+.install-wrap { position:relative; }
+.install-btn { border:0; border-radius:999px; padding:8px 14px; background:linear-gradient(135deg,#1eb53a,#0072c6); color:#fff; font-size:12px; font-weight:500; letter-spacing:.04em; cursor:pointer; box-shadow:0 8px 20px -10px rgba(0,114,198,.8); }
+.install-hint { position:absolute; right:0; top:calc(100% + 8px); width:min(280px, 80vw); padding:12px 14px; border-radius:14px; background:rgba(7,27,48,.96); border:1px solid rgba(30,181,58,.35); font-size:12.5px; line-height:1.5; color:#e8f0f8; z-index:40; }
 /* Public viewer */
 .public { margin-bottom:16px; }
 .hero { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; padding:22px 0 10px; }
@@ -238,6 +248,10 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
 
     </div>
   </details>
+  <div class="install-wrap">
+    <button class="install-btn" id="installBtn" hidden>Install app</button>
+    <div class="install-hint" id="iosHint" hidden>To install on iPhone: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.</div>
+  </div>
 </header>
 <main>
   <!-- PUBLIC VIEWER: the main screen everyone sees -->
@@ -290,6 +304,26 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
+<script>
+// Install: Android and desktop get a button; iPhone gets a short instruction.
+(function () {
+  var deferred = null;
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (standalone) return;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault(); deferred = e; document.getElementById('installBtn').hidden = false;
+  });
+  document.getElementById('installBtn').addEventListener('click', function () {
+    if (!deferred) return;
+    deferred.prompt();
+    deferred.userChoice.then(function () { deferred = null; this.hidden = true; }.bind(this));
+  });
+  window.addEventListener('appinstalled', function () { document.getElementById('installBtn').hidden = true; });
+  if (isIOS) document.getElementById('iosHint').hidden = false;
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+})();
+</script>
 <script src="public.js"></script>
 <script src="admin.js"></script>
 <script>
