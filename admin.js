@@ -417,4 +417,19 @@
 
   db.auth.onAuthStateChange(function () { setTimeout(render, 0); });
   render();
+
+  // LIVE ADMIN: lists update when a result, news post, event or assignment changes
+  var adminTimer = null;
+  function refreshAdmin() {
+    if ($('pendingResults')) loadPendingResults();
+    if ($('reviewList')) loadReview();
+    if ($('myPosts')) loadMine();
+    if ($('rfMatch') && $('rfMatch').value) loadRefMatch($('rfMatch').value);
+    if ($('lvMatch') && $('lvMatch').value) loadLiveMatch($('lvMatch').value);
+  }
+  db.channel('admin-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'match_results' }, function () { clearTimeout(adminTimer); adminTimer = setTimeout(refreshAdmin, 400); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'media_posts' }, function () { clearTimeout(adminTimer); adminTimer = setTimeout(refreshAdmin, 400); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'match_events' }, function () { clearTimeout(adminTimer); adminTimer = setTimeout(refreshAdmin, 400); })
+    .subscribe();
 })();

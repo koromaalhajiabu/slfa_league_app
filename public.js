@@ -190,5 +190,6 @@
     });
   }
 
-  loadMatches(); loadLive(); loadTable(); loadTeams(); loadPlayers(); loadNews();
+  refreshAll();
+  subscribeLive();
 })();
