@@ -32,6 +32,8 @@ button.primary { flex:1; padding:12px; border:0; border-radius:10px; background:
 button.secondary { flex:1; padding:12px; border-radius:10px; border:1px solid var(--accent); background:transparent; color:var(--ink); font-size:15px; font-weight:600; cursor:pointer; }
 button.small { padding:7px 12px; border-radius:8px; border:1px solid var(--accent); background:transparent; color:var(--ink); cursor:pointer; font-size:13px; }
 button.danger { border-color:var(--danger); color:var(--danger); }
+.admin-bar { display:flex; align-items:center; gap:10px; justify-content:flex-end; padding:12px 16px 0; max-width:720px; margin:0 auto; }
+.admin-bar select { width:auto; padding:8px 12px; }
 .status { font-size:13px; color:var(--muted); margin-top:10px; min-height:18px; }
 .hidden { display:none !important; }
 </style>
@@ -105,23 +107,22 @@ button.danger { border-color:var(--danger); color:var(--danger); }
   var db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
     auth: { persistSession: true, autoRefreshToken: true }
   });
-
+  var profile = null;
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
   function fmtDate(d) { try { return new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return d; } }
 
-  // PUBLIC: fixtures and results only
+  // PUBLIC: fixtures and results
+  function matchRow(m) {
+    var score = m.home_score == null ? esc(fmtDate(m.match_date)) : esc(m.home_score) + ' – ' + esc(m.away_score);
+    return '<div class="row"><span>' + esc(m.home_team) + ' v ' + esc(m.away_team) + '</span><span>' + score + '</span></div>';
+  }
   function loadPublic() {
     db.from('matches').select('id, match_date, venue, match_status, home_team, away_team, home_score, away_score')
       .order('match_date', { ascending: true }).limit(50)
       .then(function (res) {
-        if (res.error) {
-          $('fixtures').textContent = 'Could not load fixtures.';
-          $('results').textContent = '';
-          $('connStatus').textContent = 'Not connected to the league database.';
-          return;
-        }
+        if (res.error) { $('fixtures').textContent = 'Could not load fixtures.'; $('results').textContent = ''; $('connStatus').textContent = 'Not connected to the league database.'; return; }
         var rows = res.data || [];
         var up = rows.filter(function (m) { return m.home_score == null; });
         var done = rows.filter(function (m) { return m.home_score != null; }).reverse();
@@ -130,94 +131,93 @@ button.danger { border-color:var(--danger); color:var(--danger); }
         $('connStatus').textContent = 'Connected to the league database.';
       });
   }
-  function matchRow(m) {
-    var score = m.home_score == null ? esc(fmtDate(m.match_date)) : esc(m.home_score) + ' – ' + esc(m.away_score);
-    return '<div class="row"><span>' + esc(m.home_team) + ' v ' + esc(m.away_team) + '</span><span>' + score + '</span></div>';
-  }
 
-  // ADMINISTRATION: sign in, create account, sign out
-  $('showCreateBtn').addEventListener('click', function () {
-    $('createBox').classList.toggle('hidden');
-    $('authStatus').textContent = '';
-  });
+  // ADMINISTRATION dropdown
+  function showAdmin(view) {
+    var open = view === 'signin' || view === 'create';
+    $('adminPanel').hidden = !open;
+    $('signinForm').hidden = view !== 'signin' || !!profile;
+    $('createForm').hidden = view !== 'create' || !!profile;
+    if (profile) { $('signinForm').hidden = true; $('createForm').hidden = true; }
+    $('adminStatus').textContent = '';
+  }
+  $('adminMenu').addEventListener('change', function () { showAdmin(this.value); });
 
   $('signinBtn').addEventListener('click', function () {
-    $('authStatus').textContent = 'Signing in…';
+    $('adminStatus').textContent = 'Signing in…';
     db.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value })
       .then(function (res) {
-        if (res.error) { $('authStatus').textContent = 'Sign-in failed. Check your email and password.'; return; }
-        $('password').value = '';
-        return showAdmin();
+        if (res.error) { $('adminStatus').textContent = 'Sign-in failed. Check your email and password.'; return; }
+        return refreshRole();
       });
   });
 
   $('createBtn').addEventListener('click', function () {
-    var email = $('email').value.trim();
-    var password = $('password').value;
-    if (!email || password.length < 8) { $('authStatus').textContent = 'Enter an email and a password of at least 8 characters above.'; return; }
-    $('authStatus').textContent = 'Creating account…';
-    db.auth.signUp({ email: email, password: password, options: { data: { full_name: $('fullName').value.trim() } } })
+    var pw = $('newPassword').value;
+    if (pw.length < 10) { $('adminStatus').textContent = 'Use a password of at least 10 characters.'; return; }
+    $('adminStatus').textContent = 'Creating account…';
+    db.auth.signUp({ email: $('newEmail').value.trim(), password: pw, options: { data: { full_name: $('newName').value.trim() } } })
       .then(function (res) {
-        if (res.error) { $('authStatus').textContent = res.error.message; return; }
-        $('authStatus').textContent = 'Account created. Check your email to confirm it, then sign in.';
-        $('password').value = '';
+        if (res.error) { $('adminStatus').textContent = res.error.message; return; }
+        $('adminStatus').textContent = 'Account created. Check your email to confirm it, then sign in.';
+        $('newPassword').value = '';
       });
   });
 
   $('signoutBtn').addEventListener('click', function () {
-    db.auth.signOut().then(showSignedOut);
+    db.auth.signOut().then(function () { profile = null; $('adminMenu').value = ''; showAdmin(''); render(); });
   });
 
-  function showSignedOut() {
-    $('signedOut').classList.remove('hidden');
-    $('signedIn').classList.add('hidden');
-    $('createBox').classList.add('hidden');
-    $('authStatus').textContent = '';
-  }
-
-  function showAdmin() {
+  function refreshRole() {
     return db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) return showSignedOut();
+      if (!u.data || !u.data.user) { profile = null; return render(); }
       return db.from('user_profiles').select('system_role, status, full_name, email').eq('id', u.data.user.id).maybeSingle()
         .then(function (res) {
-          var p = res.data;
-          if (!p || String(p.status).toLowerCase() !== 'active') {
-            $('authStatus').textContent = 'This account is not active. Ask the Technical Director to check it.';
-            return db.auth.signOut().then(showSignedOut);
+          profile = res.data || null;
+          if (profile && String(profile.status).toLowerCase() !== 'active') {
+            $('adminStatus').textContent = 'This account is not active. Ask the Technical Director to check it.';
+            profile = null;
+            return db.auth.signOut().then(render);
           }
-          $('signedOut').classList.add('hidden');
-          $('signedIn').classList.remove('hidden');
-          $('whoName').textContent = p.full_name || p.email;
-          $('whoRole').textContent = String(p.system_role).replace(/_/g, ' ');
-          var isDev = String(p.system_role).toUpperCase() === 'DEVELOPER';
-          $('developerTools').classList.toggle('hidden', !isDev);
-          if (isDev) loadAccounts();
+          $('adminMenu').value = profile ? 'signin' : $('adminMenu').value;
+          render();
         });
     });
   }
 
-  // TECHNICAL DIRECTOR: suspend or restore accounts, with a logged reason
+  function render() {
+    if (!profile) {
+      $('signedInBox').hidden = true; $('devBox').hidden = true;
+      if ($('adminMenu').value === 'signin' || $('adminMenu').value === 'create') showAdmin($('adminMenu').value);
+      return;
+    }
+    $('signinForm').hidden = true; $('createForm').hidden = true;
+    $('adminPanel').hidden = false;
+    $('signedInBox').hidden = false;
+    $('adminInfo').textContent = (profile.full_name || profile.email) + ' · ' + String(profile.system_role).replace('_', ' ');
+    var isDev = String(profile.system_role).toUpperCase() === 'DEVELOPER';
+    $('devBox').hidden = !isDev;
+    if (isDev) loadAccounts();
+  }
+
+  // DEVELOPER: accounts, suspend or restore with a logged reason
   function loadAccounts() {
     db.from('user_profiles').select('id, full_name, email, system_role, status').order('email')
       .then(function (res) {
         if (res.error) { $('accounts').textContent = 'Could not load accounts.'; return; }
         $('accounts').innerHTML = (res.data || []).map(function (u) {
-          var isDev = String(u.system_role).toUpperCase() === 'DEVELOPER';
           var active = String(u.status).toLowerCase() === 'active';
-          var action = isDev ? '' :
-            '<button class="small ' + (active ? 'danger' : '') + '" data-id="' + esc(u.id) + '" data-next="' + (active ? 'Suspended' : 'Active') + '">' + (active ? 'Suspend' : 'Restore') + '</button>';
-          return '<div class="row"><span>' + esc(u.full_name || u.email) + '<br><small>' + esc(String(u.system_role).replace(/_/g, ' ')) + ' · ' + esc(u.status) + '</small></span><span>' + action + '</span></div>';
+          var isDevRole = String(u.system_role).toUpperCase() === 'DEVELOPER';
+          return '<div class="row"><span>' + esc(u.full_name || u.email) + '<br><small>' + esc(String(u.system_role).replace('_',' ')) + ' · ' + esc(u.status) + '</small></span>' +
+            (isDevRole ? '<span></span>' : '<button class="small ' + (active ? 'danger' : '') + '" data-id="' + esc(u.id) + '" data-next="' + (active ? 'Suspended' : 'Active') + '">' + (active ? 'Suspend' : 'Restore') + '</button>') + '</div>';
         }).join('') || 'No accounts.';
         document.querySelectorAll('#accounts [data-id]').forEach(function (b) {
           b.addEventListener('click', function () { changeStatus(b.dataset.id, b.dataset.next); });
         });
       });
   }
-
   function changeStatus(id, next) {
-    var reason = prompt(next === 'Suspended'
-      ? 'Reason for suspending (at least 5 characters, kept in the log):'
-      : 'Reason for restoring (at least 5 characters, kept in the log):');
+    var reason = prompt(next === 'Suspended' ? 'Reason for suspending (at least 5 characters, kept in the log):' : 'Reason for restoring (at least 5 characters, kept in the log):');
     if (reason == null) return;
     if (reason.trim().length < 5) { $('devStatus').textContent = 'Give a reason of at least 5 characters.'; return; }
     $('devStatus').textContent = 'Saving…';
@@ -227,11 +227,9 @@ button.danger { border-color:var(--danger); color:var(--danger); }
     });
   }
 
-  db.auth.onAuthStateChange(function (event) {
-    if (event === 'SIGNED_OUT') showSignedOut();
-  });
+  db.auth.onAuthStateChange(function () { refreshRole(); });
   loadPublic();
-  showAdmin();
+  refreshRole();
 })();
 </script>
 </body>
