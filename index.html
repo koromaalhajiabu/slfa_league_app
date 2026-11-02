@@ -109,7 +109,7 @@ button.danger { border-color:var(--danger); color:var(--danger); }
 
   // PUBLIC: fixtures and results (only what the public may see)
   function loadPublic() {
-    db.from('matches').select('id, match_date, status, home_team, away_team, home_score, away_score')
+    db.from('matches').select('id, match_date, venue, match_status, home_team, away_team, home_score, away_score')
       .order('match_date', { ascending: true }).limit(50)
       .then(function (res) {
         if (res.error) { $('fixtures').textContent = 'Could not load fixtures.'; $('results').textContent = ''; $('connStatus').textContent = 'Not connected to the league database.'; return; }
