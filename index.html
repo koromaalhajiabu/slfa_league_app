@@ -10,25 +10,30 @@
 @media (prefers-color-scheme: light) { :root { --bg:#f4f7f5; --card:#ffffff; --ink:#0b1f14; --muted:#4b6b58; --accent:#9a7b12; --danger:#b3261e; } }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; min-height:100vh; }
-header { padding:22px 16px 6px; border-bottom:2px solid var(--accent); }
+header { padding:22px 16px 14px; border-bottom:2px solid var(--accent); }
 header h1 { margin:0; font-size:22px; letter-spacing:.03em; }
-header p { margin:4px 0 10px; color:var(--muted); font-size:13px; }
-nav { display:flex; gap:8px; padding:10px 16px; overflow-x:auto; position:sticky; top:0; background:var(--bg); z-index:2; }
-nav button { flex:0 0 auto; border:1px solid var(--accent); background:transparent; color:var(--ink); padding:9px 16px; border-radius:999px; font-size:14px; cursor:pointer; }
-nav button[aria-selected="true"] { background:var(--accent); color:#0b1f14; font-weight:600; }
-main { padding:6px 16px 48px; max-width:720px; margin:0 auto; }
-.panel[hidden] { display:none; }
+header p { margin:4px 0 0; color:var(--muted); font-size:13px; }
+main { padding:8px 16px 48px; max-width:720px; margin:0 auto; }
 .card { background:var(--card); border-radius:14px; padding:16px; margin:12px 0; box-shadow:0 1px 3px rgba(0,0,0,.08); }
 .card h2 { margin:0 0 8px; font-size:16px; color:var(--accent); }
 .muted { color:var(--muted); font-size:14px; }
 .row { display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid rgba(128,128,128,.2); font-size:15px; }
 .row:last-child { border-bottom:0; }
+details.admin { margin:16px 0; background:var(--card); border-radius:14px; border:1px solid var(--accent); }
+details.admin > summary { list-style:none; cursor:pointer; padding:14px 16px; font-weight:600; color:var(--accent); display:flex; justify-content:space-between; align-items:center; }
+details.admin > summary::-webkit-details-marker { display:none; }
+details.admin > summary::after { content:"▾"; }
+details.admin[open] > summary::after { content:"▴"; }
+.admin-body { padding:0 16px 16px; }
 label { display:block; margin:10px 0 4px; font-size:14px; color:var(--muted); }
-input, select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(128,128,128,.4); background:var(--bg); color:var(--ink); font-size:16px; }
-button.primary { margin-top:14px; width:100%; padding:12px; border:0; border-radius:10px; background:var(--accent); color:#0b1f14; font-size:16px; font-weight:600; cursor:pointer; }
+input { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgba(128,128,128,.4); background:var(--bg); color:var(--ink); font-size:16px; }
+.btns { display:flex; gap:8px; margin-top:14px; }
+button.primary { flex:1; padding:12px; border:0; border-radius:10px; background:var(--accent); color:#0b1f14; font-size:15px; font-weight:600; cursor:pointer; }
+button.secondary { flex:1; padding:12px; border-radius:10px; border:1px solid var(--accent); background:transparent; color:var(--ink); font-size:15px; font-weight:600; cursor:pointer; }
 button.small { padding:7px 12px; border-radius:8px; border:1px solid var(--accent); background:transparent; color:var(--ink); cursor:pointer; font-size:13px; }
 button.danger { border-color:var(--danger); color:var(--danger); }
-.status { font-size:13px; color:var(--muted); margin-top:8px; min-height:18px; }
+.status { font-size:13px; color:var(--muted); margin-top:10px; min-height:18px; }
+.hidden { display:none !important; }
 </style>
 </head>
 <body>
@@ -36,14 +41,9 @@ button.danger { border-color:var(--danger); color:var(--danger); }
   <h1>SLFA League</h1>
   <p>Sierra Leone Football Association</p>
 </header>
-<nav role="tablist" aria-label="Sections">
-  <button role="tab" aria-selected="true" data-panel="public">Public</button>
-  <button role="tab" aria-selected="false" data-panel="admin">League admin</button>
-  <button role="tab" aria-selected="false" data-panel="developer" hidden>Developer</button>
-</nav>
 <main>
-  <!-- PUBLIC: default panel -->
-  <section id="public" class="panel" role="tabpanel">
+  <!-- PUBLIC VIEWER: the main screen everyone sees -->
+  <section id="public" aria-label="League information">
     <div class="card">
       <h2>Upcoming fixtures</h2>
       <div id="fixtures" class="muted">Loading fixtures…</div>
@@ -55,33 +55,46 @@ button.danger { border-color:var(--danger); color:var(--danger); }
     <div class="status" id="connStatus"></div>
   </section>
 
-  <!-- LEAGUE ADMIN -->
-  <section id="admin" class="panel" role="tabpanel" hidden>
-    <div class="card" id="signinCard">
-      <h2>League administrator sign-in</h2>
-      <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="username">
-      <label for="password">Password</label>
-      <input id="password" type="password" autocomplete="current-password">
-      <button class="primary" id="signinBtn">Sign in</button>
-      <div class="status" id="signinStatus"></div>
-    </div>
-    <div class="card" id="adminCard" hidden>
-      <h2>Signed in</h2>
-      <div id="adminInfo" class="muted"></div>
-      <p class="muted">Data entry for fixtures, results and squads will be added here.</p>
-      <button class="small" id="signoutBtn">Sign out</button>
-    </div>
-  </section>
+  <!-- ONE administration dropdown: sign in, create account, and the admin tools after sign-in -->
+  <details class="admin" id="adminDropdown">
+    <summary>Administration</summary>
+    <div class="admin-body">
 
-  <!-- DEVELOPER -->
-  <section id="developer" class="panel" role="tabpanel" hidden>
-    <div class="card">
-      <h2>Accounts</h2>
-      <div id="accounts" class="muted">Sign in as the Technical Director to see accounts.</div>
-      <div class="status" id="devStatus"></div>
+      <div id="signedOut">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="username">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password">
+        <div class="btns">
+          <button class="primary" id="signinBtn">Sign in</button>
+          <button class="secondary" id="showCreateBtn">Create account</button>
+        </div>
+        <div id="createBox" class="hidden">
+          <label for="fullName">Full name</label>
+          <input id="fullName" type="text" autocomplete="name">
+          <div class="btns">
+            <button class="primary" id="createBtn">Create my account</button>
+          </div>
+          <p class="muted">A new account can view the league. A Technical Director must assign your role before you can make changes.</p>
+        </div>
+        <div class="status" id="authStatus"></div>
+      </div>
+
+      <div id="signedIn" class="hidden">
+        <div class="row"><span id="whoName"></span><span class="muted" id="whoRole"></span></div>
+        <div id="adminTools" class="muted" style="margin-top:12px">Data entry for fixtures, results and squads will be added here.</div>
+
+        <div id="developerTools" class="hidden" style="margin-top:16px">
+          <h2 style="font-size:16px;color:var(--accent);margin:0 0 6px">Accounts</h2>
+          <div id="accounts" class="muted">Loading accounts…</div>
+          <div class="status" id="devStatus"></div>
+        </div>
+
+        <div class="btns"><button class="secondary" id="signoutBtn">Sign out</button></div>
+      </div>
+
     </div>
-  </section>
+  </details>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -92,27 +105,23 @@ button.danger { border-color:var(--danger); color:var(--danger); }
   var db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
     auth: { persistSession: true, autoRefreshToken: true }
   });
-  var profile = null;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+  function fmtDate(d) { try { return new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return d; } }
 
-  // Tabs
-  document.querySelectorAll('nav [data-panel]').forEach(function (btn) {
-    btn.addEventListener('click', function () { showPanel(btn.dataset.panel); });
-  });
-  function showPanel(name) {
-    document.querySelectorAll('nav [data-panel]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.panel === name)); });
-    document.querySelectorAll('.panel').forEach(function (p) { p.hidden = p.id !== name; });
-  }
-
-  // PUBLIC: fixtures and results (only what the public may see)
+  // PUBLIC: fixtures and results only
   function loadPublic() {
     db.from('matches').select('id, match_date, venue, match_status, home_team, away_team, home_score, away_score')
       .order('match_date', { ascending: true }).limit(50)
       .then(function (res) {
-        if (res.error) { $('fixtures').textContent = 'Could not load fixtures.'; $('results').textContent = ''; $('connStatus').textContent = 'Not connected to the league database.'; return; }
+        if (res.error) {
+          $('fixtures').textContent = 'Could not load fixtures.';
+          $('results').textContent = '';
+          $('connStatus').textContent = 'Not connected to the league database.';
+          return;
+        }
         var rows = res.data || [];
         var up = rows.filter(function (m) { return m.home_score == null; });
         var done = rows.filter(function (m) { return m.home_score != null; }).reverse();
@@ -125,68 +134,90 @@ button.danger { border-color:var(--danger); color:var(--danger); }
     var score = m.home_score == null ? esc(fmtDate(m.match_date)) : esc(m.home_score) + ' – ' + esc(m.away_score);
     return '<div class="row"><span>' + esc(m.home_team) + ' v ' + esc(m.away_team) + '</span><span>' + score + '</span></div>';
   }
-  function fmtDate(d) { try { return new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return d; } }
 
-  // ADMIN: sign-in and role check
+  // ADMINISTRATION: sign in, create account, sign out
+  $('showCreateBtn').addEventListener('click', function () {
+    $('createBox').classList.toggle('hidden');
+    $('authStatus').textContent = '';
+  });
+
   $('signinBtn').addEventListener('click', function () {
-    $('signinStatus').textContent = 'Signing in…';
+    $('authStatus').textContent = 'Signing in…';
     db.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value })
       .then(function (res) {
-        if (res.error) { $('signinStatus').textContent = 'Sign-in failed. Check your email and password.'; return; }
-        return refreshRole();
+        if (res.error) { $('authStatus').textContent = 'Sign-in failed. Check your email and password.'; return; }
+        $('password').value = '';
+        return showAdmin();
       });
   });
-  $('signoutBtn').addEventListener('click', function () {
-    db.auth.signOut().then(function () { profile = null; refreshRole(); });
+
+  $('createBtn').addEventListener('click', function () {
+    var email = $('email').value.trim();
+    var password = $('password').value;
+    if (!email || password.length < 8) { $('authStatus').textContent = 'Enter an email and a password of at least 8 characters above.'; return; }
+    $('authStatus').textContent = 'Creating account…';
+    db.auth.signUp({ email: email, password: password, options: { data: { full_name: $('fullName').value.trim() } } })
+      .then(function (res) {
+        if (res.error) { $('authStatus').textContent = res.error.message; return; }
+        $('authStatus').textContent = 'Account created. Check your email to confirm it, then sign in.';
+        $('password').value = '';
+      });
   });
 
-  function refreshRole() {
+  $('signoutBtn').addEventListener('click', function () {
+    db.auth.signOut().then(showSignedOut);
+  });
+
+  function showSignedOut() {
+    $('signedOut').classList.remove('hidden');
+    $('signedIn').classList.add('hidden');
+    $('createBox').classList.add('hidden');
+    $('authStatus').textContent = '';
+  }
+
+  function showAdmin() {
     return db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) { profile = null; return showSignedOut(); }
+      if (!u.data || !u.data.user) return showSignedOut();
       return db.from('user_profiles').select('system_role, status, full_name, email').eq('id', u.data.user.id).maybeSingle()
         .then(function (res) {
-          profile = res.data || null;
-          if (!profile || String(profile.status).toLowerCase() !== 'active') {
-            $('signinStatus').textContent = 'This account is not active. Ask the Technical Director to check it.';
+          var p = res.data;
+          if (!p || String(p.status).toLowerCase() !== 'active') {
+            $('authStatus').textContent = 'This account is not active. Ask the Technical Director to check it.';
             return db.auth.signOut().then(showSignedOut);
           }
-          showSignedIn();
+          $('signedOut').classList.add('hidden');
+          $('signedIn').classList.remove('hidden');
+          $('whoName').textContent = p.full_name || p.email;
+          $('whoRole').textContent = String(p.system_role).replace(/_/g, ' ');
+          var isDev = String(p.system_role).toUpperCase() === 'DEVELOPER';
+          $('developerTools').classList.toggle('hidden', !isDev);
+          if (isDev) loadAccounts();
         });
     });
   }
-  function showSignedOut() {
-    $('signinCard').hidden = false; $('adminCard').hidden = true;
-    $('password').value = ''; $('signinStatus').textContent = '';
-    $('developer') && ($('developer').hidden = true);
-    document.querySelector('nav [data-panel="developer"]').hidden = true;
-  }
-  function showSignedIn() {
-    $('signinCard').hidden = true; $('adminCard').hidden = false;
-    $('adminInfo').textContent = (profile.full_name || profile.email) + ' · ' + String(profile.system_role).replace('_', ' ');
-    var isDev = String(profile.system_role).toUpperCase() === 'DEVELOPER';
-    document.querySelector('nav [data-panel="developer"]').hidden = !isDev;
-    if (isDev) loadAccounts();
-  }
 
-  // DEVELOPER: list accounts, suspend or restore with a logged reason
+  // TECHNICAL DIRECTOR: suspend or restore accounts, with a logged reason
   function loadAccounts() {
     db.from('user_profiles').select('id, full_name, email, system_role, status').order('email')
       .then(function (res) {
         if (res.error) { $('accounts').textContent = 'Could not load accounts.'; return; }
         $('accounts').innerHTML = (res.data || []).map(function (u) {
+          var isDev = String(u.system_role).toUpperCase() === 'DEVELOPER';
           var active = String(u.status).toLowerCase() === 'active';
-          var next = active ? 'Suspended' : 'Active';
-          return '<div class="row"><span>' + esc(u.full_name || u.email) + '<br><small>' + esc(String(u.system_role).replace('_',' ')) + ' · ' + esc(u.status) + '</small></span>' +
-            (String(u.system_role).toUpperCase() === 'DEVELOPER' ? '<span></span>' :
-            '<button class="small ' + (active ? 'danger' : '') + '" data-id="' + esc(u.id) + '" data-next="' + next + '">' + (active ? 'Suspend' : 'Restore') + '</button>') + '</div>';
+          var action = isDev ? '' :
+            '<button class="small ' + (active ? 'danger' : '') + '" data-id="' + esc(u.id) + '" data-next="' + (active ? 'Suspended' : 'Active') + '">' + (active ? 'Suspend' : 'Restore') + '</button>';
+          return '<div class="row"><span>' + esc(u.full_name || u.email) + '<br><small>' + esc(String(u.system_role).replace(/_/g, ' ')) + ' · ' + esc(u.status) + '</small></span><span>' + action + '</span></div>';
         }).join('') || 'No accounts.';
         document.querySelectorAll('#accounts [data-id]').forEach(function (b) {
           b.addEventListener('click', function () { changeStatus(b.dataset.id, b.dataset.next); });
         });
       });
   }
+
   function changeStatus(id, next) {
-    var reason = prompt((next === 'Suspended' ? 'Reason for suspending (at least 5 characters, kept in the log):' : 'Reason for restoring (at least 5 characters, kept in the log):'));
+    var reason = prompt(next === 'Suspended'
+      ? 'Reason for suspending (at least 5 characters, kept in the log):'
+      : 'Reason for restoring (at least 5 characters, kept in the log):');
     if (reason == null) return;
     if (reason.trim().length < 5) { $('devStatus').textContent = 'Give a reason of at least 5 characters.'; return; }
     $('devStatus').textContent = 'Saving…';
@@ -196,9 +227,11 @@ button.danger { border-color:var(--danger); color:var(--danger); }
     });
   }
 
-  db.auth.onAuthStateChange(function () { refreshRole(); });
+  db.auth.onAuthStateChange(function (event) {
+    if (event === 'SIGNED_OUT') showSignedOut();
+  });
   loadPublic();
-  refreshRole();
+  showAdmin();
 })();
 </script>
 </body>
