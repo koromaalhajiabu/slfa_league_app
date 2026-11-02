@@ -34,15 +34,49 @@
         $('matchList').innerHTML =
           '<h3 class="sub">Upcoming</h3>' + (up.length ? up.map(matchCard).join('') : empty('No upcoming matches yet.')) +
           '<h3 class="sub">Results</h3>' + (done.length ? done.map(matchCard).join('') : empty('No results yet.'));
+        wireMatchDetails();
       });
   }
   function matchCard(m) {
     var score = m.home_score == null ? '<span class="vs">v</span>' : '<span class="score">' + esc(m.home_score) + ' – ' + esc(m.away_score) + '</span>';
     var motm = m.motm_name ? '<div class="meta">Man of the Match: ' + esc(m.motm_name) + (m.motm_jersey_number ? ' (#' + esc(m.motm_jersey_number) + ')' : '') + '</div>' : '';
-    return '<article class="match">' +
+    return '<article class="match" data-match="' + esc(m.id) + '" tabindex="0">' +
       '<div class="meta">' + esc(fmt(m.match_date)) + (m.venue ? ' · ' + esc(m.venue) : '') + '</div>' +
       '<div class="teams"><span>' + esc(m.home_team) + '</span>' + score + '<span>' + esc(m.away_team) + '</span></div>' +
-      motm + '</article>';
+      motm + '<div class="detail" hidden></div></article>';
+  }
+
+  // Match details: goals, cards and substitutions, published events only
+  function wireMatchDetails() {
+    document.querySelectorAll('.match[data-match]').forEach(function (card) {
+      card.addEventListener('click', function () { toggleDetail(card); });
+      card.addEventListener('keydown', function (e) { if (e.key === 'Enter') toggleDetail(card); });
+    });
+  }
+  function toggleDetail(card) {
+    var box = card.querySelector('.detail');
+    if (!box.hidden) { box.hidden = true; return; }
+    box.hidden = false;
+    if (box.dataset.loaded) return;
+    box.textContent = 'Loading…';
+    db.from('match_events').select('event_type, team_name, player_name, player_off_name, assist_player_name, minute, published_at')
+      .eq('match_id', String(card.dataset.match)).not('published_at', 'is', null)
+      .order('minute', { ascending: true })
+      .then(function (res) {
+        box.dataset.loaded = '1';
+        if (res.error) { box.textContent = 'Details are not available right now.'; return; }
+        var ev = (res.data || []).filter(function (e) { return e.published_at; });
+        box.innerHTML = ev.length ? ev.map(eventLine).join('') : '<p class="muted">No match events published yet.</p>';
+      });
+  }
+  var ICON = { goal:'⚽', yellow_card:'🟨', red_card:'🟥', substitution:'🔁' };
+  function eventLine(e) {
+    var t = String(e.event_type || '').toLowerCase();
+    var who = e.player_name || '';
+    var text = t === 'substitution' ? (who + ' on, ' + (e.player_off_name || '') + ' off')
+      : t === 'goal' ? (who + (e.assist_player_name ? ' (assist ' + e.assist_player_name + ')' : ''))
+      : who;
+    return '<div class="ev"><span class="min">' + esc(e.minute) + "'</span><span class=\"ico\">" + (ICON[t] || '•') + '</span><span class="etxt">' + esc(text) + '<small>' + esc(e.team_name || '') + '</small></span></div>';
   }
 
   // League table
