@@ -190,5 +190,5 @@
     });
   }
 
-  loadMatches(); loadTable(); loadTeams(); loadPlayers(); loadNews();
+  loadMatches(); loadLive(); loadTable(); loadTeams(); loadPlayers(); loadNews();
 })();

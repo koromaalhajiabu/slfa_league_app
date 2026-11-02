@@ -45,6 +45,16 @@
       '<label for="resMatch">Match</label><select id="resMatch"><option value="">Loading matches…</option></select>' +
       '<div class="scores"><input id="resHome" type="number" min="0" placeholder="Home"><span>–</span><input id="resAway" type="number" min="0" placeholder="Away"></div>' +
       '<div class="btns"><button class="primary" id="resSave">Record result</button></div>' +
+      '<h2 class="rt">Live match</h2>' +
+      '<label for="lvMatch">Match</label><select id="lvMatch"><option value="">Loading matches…</option></select>' +
+      '<div class="btns"><button class="secondary" id="lvStart">Start match</button><button class="primary" id="lvEnd">End match</button></div>' +
+      '<div id="lvPanel" class="hidden">' +
+        '<label for="lvTeam">Team</label><select id="lvTeam"></select>' +
+        input('lvPlayer', 'Player') + input('lvAssist', 'Assist (optional)') + input('lvOff', 'Player off (substitutions only)') +
+        '<label for="lvType">Event</label><select id="lvType"><option value="goal">Goal</option><option value="yellow_card">Yellow card</option><option value="red_card">Red card</option><option value="substitution">Substitution</option></select>' +
+        input('lvMinute', 'Minute', 'number', 'min="0" max="130"') +
+        '<div class="btns"><button class="primary" id="lvAdd">Record event</button></div>' +
+      '</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
@@ -70,6 +80,73 @@
     });
 
     loadReview();
+    wireLive();
+  }
+
+  // Live match: start, record events, end (end saves the score to the table)
+  var liveMatch = null;
+  function wireLive() {
+    loadLiveOptions();
+    $('lvMatch').addEventListener('change', function () { liveMatch = null; loadLiveMatch(this.value); });
+    $('lvStart').addEventListener('click', function () {
+      var id = $('lvMatch').value; if (!id) { msg('Choose a match.'); return; }
+      db.from('matches').update({ match_status: 'LIVE' }).eq('id', id).then(function (r) {
+        msg(r.error ? r.error.message : 'Match is live.'); loadLiveMatch(id); loadLiveOptions();
+      });
+    });
+    $('lvEnd').addEventListener('click', function () {
+      var id = $('lvMatch').value; if (!id || !liveMatch) { msg('Choose a live match first.'); return; }
+      var hg = goalsFor(liveMatch.home_team), ag = goalsFor(liveMatch.away_team);
+      if (!confirm('End the match at ' + liveMatch.home_team + ' ' + hg + ' – ' + ag + ' ' + liveMatch.away_team + '? This saves the result to the table.')) return;
+      db.rpc('record_match_result', { p_match_id: Number(id), p_home: hg, p_away: ag }).then(function (r) {
+        if (r.error) { msg(r.error.message); return; }
+        return db.from('matches').update({ match_status: 'FINISHED' }).eq('id', id).then(function () {
+          msg('Match finished and the table updated.'); liveMatch = null; loadLiveOptions(); loadLiveMatch('');
+        });
+      });
+    });
+    $('lvAdd').addEventListener('click', function () {
+      if (!liveMatch) { msg('Choose a live match.'); return; }
+      var type = $('lvType').value, player = $('lvPlayer').value.trim(), minute = parseInt($('lvMinute').value, 10);
+      if (!player || isNaN(minute)) { msg('Enter the player and the minute.'); return; }
+      if (type === 'substitution' && !$('lvOff').value.trim()) { msg('Enter the player coming off.'); return; }
+      db.auth.getUser().then(function (u) {
+        return db.from('match_events').insert([{
+          match_id: String($('lvMatch').value), event_type: type, team_name: $('lvTeam').value, player_name: player,
+          assist_player_name: $('lvAssist').value.trim() || null, player_off_name: $('lvOff').value.trim() || null,
+          minute: minute, recorded_by: u.data.user.id, recorded_at: new Date().toISOString(), published_at: new Date().toISOString()
+        }]);
+      }).then(function (r) {
+        if (r.error) { msg(r.error.message); return; }
+        msg('Recorded.'); ['lvPlayer','lvAssist','lvOff','lvMinute'].forEach(function (x) { $(x).value = ''; });
+        loadLiveMatch($('lvMatch').value);
+      });
+    });
+  }
+  var liveEvents = [];
+  function goalsFor(team) { return liveEvents.filter(function (e) { return e.event_type === 'goal' && e.team_name === team; }).length; }
+  function loadLiveOptions() {
+    db.from('matches').select('id, home_team, away_team, match_status, match_date').order('match_date', { ascending: false }).limit(60)
+      .then(function (r) {
+        var rows = r.data || [];
+        var cur = $('lvMatch').value;
+        $('lvMatch').innerHTML = '<option value="">Choose a match…</option>' + rows.map(function (m) {
+          var tag = m.match_status === 'LIVE' ? ' · LIVE' : '';
+          return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + tag + '</option>';
+        }).join('');
+        if (cur) $('lvMatch').value = cur;
+      });
+  }
+  function loadLiveMatch(id) {
+    if (!id) { $('lvPanel').classList.add('hidden'); return; }
+    db.from('matches').select('id, home_team, away_team, match_status').eq('id', id).maybeSingle().then(function (r) {
+      liveMatch = r.data;
+      if (!liveMatch) return;
+      $('lvTeam').innerHTML = '<option>' + esc(liveMatch.home_team) + '</option><option>' + esc(liveMatch.away_team) + '</option>';
+      $('lvPanel').classList.toggle('hidden', liveMatch.match_status !== 'LIVE');
+      db.from('match_events').select('event_type, team_name, player_name, minute').eq('match_id', String(id)).order('minute', { ascending: true })
+        .then(function (e) { liveEvents = e.data || []; });
+    });
   }
 
   function loadMatchesForResult() {

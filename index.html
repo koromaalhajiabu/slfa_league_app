@@ -80,6 +80,9 @@ button.danger { border-color:var(--danger); color:var(--danger); }
 .news a { color:var(--accent); font-size:14px; }
 .share { margin-top:6px; border:1px solid var(--accent); background:transparent; color:var(--accent); border-radius:999px; padding:6px 12px; font-size:12px; cursor:pointer; }
 .empty { margin:8px 0; }
+.dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#e0474c; margin-right:6px; animation:pulse 1.4s infinite; }
+@keyframes pulse { 50% { opacity:.3; } }
+.match.live { border:1px solid var(--accent); border-radius:14px; padding:12px; margin-bottom:10px; }
 .match { cursor:pointer; }
 .detail { margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--bg); }
 .detail[hidden] { display:none; }
@@ -114,12 +117,15 @@ select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid rgb
       <div class="status" id="alertStatus"></div>
     </div>
     <nav class="tabs" role="tablist" aria-label="League sections">
+      <button role="tab" data-tab="live" aria-selected="false">Live</button>
       <button role="tab" data-tab="matches" aria-selected="true">Matches</button>
       <button role="tab" data-tab="table" aria-selected="false">Table</button>
       <button role="tab" data-tab="teams" aria-selected="false">Teams</button>
       <button role="tab" data-tab="players" aria-selected="false">Players</button>
       <button role="tab" data-tab="news" aria-selected="false">News</button>
     </nav>
+
+    <div data-view="live" class="view card" id="liveList" hidden></div>
 
     <div data-view="matches" class="view card" id="matchList">Loading matches…</div>
 
