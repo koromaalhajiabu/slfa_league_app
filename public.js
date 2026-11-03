@@ -252,7 +252,8 @@
       db.from('club_announcements').select('title, body, created_at').eq('club_id', id).order('created_at', { ascending: false }).limit(10),
       db.from('club_squad').select('id, player_name, position, photo_url, jersey_number').eq('club_id', id).order('jersey_number', { ascending: true, nullsFirst: false }).order('player_name'),
       db.from('suspensions').select('player_id, matches_total, matches_served').eq('status', 'ACTIVE'),
-      db.from('disciplinary_actions').select('player_id, action_type, amount, currency, reason, decided_at').eq('published', true).order('decided_at', { ascending: false }).limit(200)
+      db.from('disciplinary_actions').select('player_id, action_type, amount, currency, reason, decided_at').eq('published', true).order('decided_at', { ascending: false }).limit(200),
+      db.from('motm_awards').select('player_id, awards').limit(500)
     ]).then(function (all) {
       var profile = all[0].data || {};
       var facts = [profile.stadium ? 'Ground: ' + profile.stadium : '', profile.city || '', profile.founded_year ? 'Founded ' + profile.founded_year : ''].filter(Boolean);
@@ -270,11 +271,13 @@
       rows.forEach(function (x) { squadIds[x.id] = true; nameById[x.id] = x.player_name; });
       (all[3].data || []).forEach(function (s) { if (squadIds[s.player_id] && s.matches_served < s.matches_total) susp[s.player_id] = s.matches_total - s.matches_served; });
       var records = all[4].error ? [] : (all[4].data || []).filter(function (x) { return squadIds[x.player_id]; });
+      var motmBy = {};
+      if (!all[5].error) (all[5].data || []).forEach(function (a) { if (squadIds[a.player_id]) motmBy[a.player_id] = a.awards; });
       html += '<h4 class="league-name">Squad</h4>';
       if (all[2].error) { html += empty('The squad is not available right now.'); }
       else {
         html += rows.length ? rows.map(function (x) {
-          return '<div class="row">' + badge(x.photo_url, x.player_name) + '<span class="pname">' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + '<small>' + esc(POS[x.position] || x.position) + (susp[x.id] ? ' · Suspended, ' + susp[x.id] + ' match' + (susp[x.id] === 1 ? '' : 'es') + ' left' : '') + '</small></span></div>';
+          return '<div class="row">' + badge(x.photo_url, x.player_name) + '<span class="pname">' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + '<small>' + esc(POS[x.position] || x.position) + (susp[x.id] ? ' · Suspended, ' + susp[x.id] + ' match' + (susp[x.id] === 1 ? '' : 'es') + ' left' : '') + (motmBy[x.id] ? ' · Man of the Match ×' + motmBy[x.id] : '') + '</small></span></div>';
         }).join('') : empty('No approved players for this season yet.');
       }
       if (records.length) {
@@ -308,6 +311,10 @@
     db.from('clean_sheets').select('goalkeeper, club, clean_sheets, photo_url').order('clean_sheets', { ascending: false }).limit(10)
       .then(function (res) {
         $('cleanSheets').innerHTML = list(inLeague(res.data).map(function (r) { return { name: r.goalkeeper, club: r.club, photo_url: r.photo_url, sheets: r.clean_sheets }; }), 'clean sheets', 'sheets');
+      });
+    db.from('motm_awards').select('player, club, awards, photo_url').order('awards', { ascending: false }).limit(10)
+      .then(function (res) {
+        $('motm').innerHTML = list(inLeague(res.data).map(function (r) { return { name: r.player, club: r.club, photo_url: r.photo_url, awards: r.awards }; }), 'Man of the Match awards', 'awards');
       });
   }
 
@@ -469,11 +476,11 @@
     });
   }
   function shareText(text) {
-    var data = { title: 'SLFA League', text: text, url: location.href };
+    var data = { title: 'The SLFA League App', text: text, url: location.href };
     if (navigator.share) { navigator.share(data).catch(function () {}); }
     else if (navigator.clipboard) { navigator.clipboard.writeText(text + ' ' + location.href); alert('Link copied.'); }
   }
-  $('shareApp').addEventListener('click', function () { shareText('Follow the league on the SLFA League app'); });
+  $('shareApp').addEventListener('click', function () { shareText('Follow the league on The SLFA League App'); });
 
   // ALERTS: anyone can subscribe on their phone or computer
   function urlBase64ToUint8Array(b64) {

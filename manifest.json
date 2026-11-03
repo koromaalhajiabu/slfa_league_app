@@ -1,6 +1,6 @@
 {
-  "name": "SLFA League",
-  "short_name": "SLFA League",
+  "name": "The SLFA League App",
+  "short_name": "SLFA League App",
   "description": "Fixtures, live scores, standings, teams, players and news from the Sierra Leone Football Association.",
   "start_url": "./index.html",
   "scope": "./",

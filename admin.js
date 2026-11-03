@@ -912,6 +912,8 @@
       '<div class="scores"><span id="rfScore" class="score-big">0 – 0</span></div>' +
       '<div class="btns"><button class="secondary" id="rfStart">Start match</button><button class="primary" id="rfEnd">End and save final score</button></div>' +
       '<h2 class="rt">Events so far</h2><div id="rfEvents" class="muted">No events yet.</div>' +
+      '<h2 class="rt">Man of the Match</h2><label for="rfMotm">Player</label><select id="rfMotm"><option value="">Choose a match first…</option></select>' +
+      '<div class="btns"><button class="secondary" id="rfMotmSave">Save Man of the Match</button></div>' +
       '<div id="touchPad"></div>' +
       '<div id="rfPanel" class="hidden">' +
         '<div class="btns"><button class="secondary" id="rfHalf">Half time</button><button class="secondary" id="rfSecond">Second half</button></div>' +
@@ -954,6 +956,7 @@
       });
     });
     wireMatchTime('rf', 'rfMatch');
+    $('rfMotmSave').addEventListener('click', saveMotm);
     $('rfAdd').addEventListener('click', function () {
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
       var type = $('rfType').value, player = $('rfPlayer').value.trim(), minute = parseInt($('rfMinute').value, 10);
@@ -971,6 +974,34 @@
     });
   }
   function setMatch(id, fields) { return db.from('matches').update(fields).eq('id', id); }
+  // Man of the Match: approved players of both clubs in the match, grouped by club
+  function loadMotm(m) {
+    var sel = $('rfMotm'); if (!sel) return;
+    db.from('league_clubs').select('id, club_name').in('club_name', [m.home_team, m.away_team]).then(function (c) {
+      var clubs = c.data || [];
+      if (!clubs.length) { sel.innerHTML = '<option value="">No club found for this match</option>'; return; }
+      var names = {}; clubs.forEach(function (k) { names[k.id] = k.club_name; });
+      return db.from('club_squad').select('id, player_name, jersey_number, club_id').in('club_id', clubs.map(function (k) { return k.id; }))
+        .eq('registration_status', 'Approved').order('player_name').then(function (s) {
+          var rows = s.data || [];
+          var groups = [m.home_team, m.away_team].map(function (team) {
+            var opts = rows.filter(function (r) { return names[r.club_id] === team; }).map(function (r) {
+              return '<option value="' + esc(r.id) + '"' + (String(r.id) === String(m.motm_player_id) ? ' selected' : '') + '>' +
+                (r.jersey_number ? '#' + esc(r.jersey_number) + ' ' : '') + esc(r.player_name) + '</option>';
+            }).join('');
+            return opts ? '<optgroup label="' + esc(team) + '">' + opts + '</optgroup>' : '';
+          }).join('');
+          sel.innerHTML = '<option value="">No Man of the Match</option>' + (groups || '<option value="">No approved players yet</option>');
+        });
+    });
+  }
+  function saveMotm() {
+    var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
+    var v = $('rfMotm').value;
+    db.rpc('set_match_motm', { p_match_id: Number(id), p_player_id: v ? Number(v) : null }).then(function (res) {
+      msg(res.error ? res.error.message : (v ? 'Man of the Match saved.' : 'Man of the Match cleared.'));
+    });
+  }
   // Half time, second half and the current minute, for the Super Admin or the referee
   function wireMatchTime(prefix, matchSel) {
     $(prefix + 'Half').addEventListener('click', function () { var id = $(matchSel).value; if (!id) return; setMatch(id, { match_status: 'HT', match_minute: 45 }).then(function (r) { msg(r.error ? r.error.message : 'Half time.'); }); });
@@ -985,8 +1016,9 @@
   function goalsFor(team) { return refEvents.filter(function (e) { return e.event_type === 'GOAL' && e.team_name === team; }).length; }
   function loadRefMatch(id) {
     if (!id) { $('rfPanel').classList.add('hidden'); return; }
-    db.from('matches').select('id, home_team, away_team, match_status').eq('id', id).maybeSingle().then(function (r) {
+    db.from('matches').select('id, home_team, away_team, match_status, motm_player_id').eq('id', id).maybeSingle().then(function (r) {
       var m = r.data; if (!m) return;
+      loadMotm(m);
       $('rfTeam').innerHTML = '<option>' + esc(m.home_team) + '</option><option>' + esc(m.away_team) + '</option>';
       $('rfPanel').classList.toggle('hidden', m.match_status !== 'LIVE' && m.match_status !== 'HT');
       db.from('match_events').select('id, event_type, team_name, player_name, player_off_name, minute').eq('match_id', String(id)).order('minute', { ascending: true }).then(function (e) {

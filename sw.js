@@ -2,10 +2,10 @@
 // 1. Keeps the app shell available offline (pages, scripts, styles, images).
 // 2. Shows league alerts sent as push messages.
 // League data always comes from the network, so scores and news are never stale.
-const CACHE = 'slfa-app-v29';
+const CACHE = 'slfa-app-v33';
 // Saved copies of public league data, so fans can still read the last information when offline
 const DATA_CACHE = CACHE + '-data';
-const PUBLIC_TABLES = ['matches', 'league_standings', 'league_clubs', 'club_squad', 'media_posts', 'leagues', 'match_events', 'match_lineups', 'club_announcements', 'top_scorers', 'top_assists', 'clean_sheets', 'polls', 'poll_options'];
+const PUBLIC_TABLES = ['matches', 'league_standings', 'league_clubs', 'club_squad', 'media_posts', 'leagues', 'match_events', 'match_lineups', 'club_announcements', 'top_scorers', 'top_assists', 'clean_sheets', 'motm_awards', 'polls', 'poll_options'];
 const SHELL = ['./', './index.html', './config.js', './public.js', './admin.js', './portal.js', './sw-update.js', './styles.css', './developer.html', './super-admin.html', './referee.html', './media.html', './disciplinary.html', './club.html', './manifest.json',
   './icon-192.png', './icon-512.png', './slfa-logo.png'];
 
@@ -52,8 +52,8 @@ self.addEventListener('fetch', function (e) {
 
 self.addEventListener('push', function (event) {
   var data = {};
-  try { data = event.data ? event.data.json() : {}; } catch (e) { data = { title: 'SLFA League', body: event.data ? event.data.text() : '' }; }
-  event.waitUntil(self.registration.showNotification(data.title || 'SLFA League', {
+  try { data = event.data ? event.data.json() : {}; } catch (e) { data = { title: 'The SLFA League App', body: event.data ? event.data.text() : '' }; }
+  event.waitUntil(self.registration.showNotification(data.title || 'The SLFA League App', {
     body: data.body || '', icon: 'icon-192.png', badge: 'icon-192.png', data: { url: data.url || './' }
   }));
 });
