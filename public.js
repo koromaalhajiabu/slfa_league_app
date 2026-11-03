@@ -469,11 +469,11 @@
     });
   }
   function shareText(text) {
-    var data = { title: 'SLFA League', text: text, url: location.href };
+    var data = { title: 'The SLFA League App', text: text, url: location.href };
     if (navigator.share) { navigator.share(data).catch(function () {}); }
     else if (navigator.clipboard) { navigator.clipboard.writeText(text + ' ' + location.href); alert('Link copied.'); }
   }
-  $('shareApp').addEventListener('click', function () { shareText('Follow the league on the SLFA League app'); });
+  $('shareApp').addEventListener('click', function () { shareText('Follow the league on The SLFA League App'); });
 
   // ALERTS: anyone can subscribe on their phone or computer
   function urlBase64ToUint8Array(b64) {
