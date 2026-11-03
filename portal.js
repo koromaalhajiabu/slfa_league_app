@@ -5,7 +5,7 @@
     auth: { persistSession: true, autoRefreshToken: true }
   });
   window.slfaDb = db;
-  var PAGES = { DEVELOPER: 'developer.html', SUPER_ADMIN: 'super-admin.html', REFEREE: 'referee.html', MEDIA_OFFICER: 'media.html', CLUB_ADMIN: 'club.html' };
+  var PAGES = { DEVELOPER: 'developer.html', SUPER_ADMIN: 'super-admin.html', REFEREE: 'referee.html', MEDIA_OFFICER: 'media.html', DISCIPLINARY_OFFICER: 'disciplinary.html', CLUB_ADMIN: 'club.html' };
   var portal = document.body.dataset.portal;
 
   function $(id) { return document.getElementById(id); }

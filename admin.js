@@ -32,6 +32,7 @@
     var role = String(p.system_role).toUpperCase();
     if (role === 'SUPER_ADMIN') return superAdmin(p);
     if (role === 'MEDIA_OFFICER') return mediaOfficer(p);
+    if (role === 'DISCIPLINARY_OFFICER') return disciplinary(p);
     if (role === 'REFEREE') return referee(p);
     if (role === 'DEVELOPER') return developer(p);
     if (role === 'CLUB_ADMIN') return clubManager(p);
@@ -68,7 +69,7 @@
         input('lvMin', 'Current minute', 'number', 'min="0" max="130"') + '<div class="btns"><button class="secondary" id="lvMinSave">Update minute</button></div>' +
         '<label for="lvTeam">Team</label><select id="lvTeam"></select>' +
         input('lvPlayer', 'Player') + input('lvAssist', 'Assist (optional)') + input('lvOff', 'Player off (substitutions only)') +
-        '<label for="lvType">Event</label><select id="lvType"><option value="goal">Goal</option><option value="yellow_card">Yellow card</option><option value="red_card">Red card</option><option value="substitution">Substitution</option></select>' +
+        '<label for="lvType">Event</label><select id="lvType"><option value="GOAL">Goal</option><option value="YELLOW_CARD">Yellow card</option><option value="RED_CARD">Red card</option><option value="SUB">Substitution</option></select>' +
         input('lvMinute', 'Minute', 'number', 'min="0" max="130"') +
         '<div class="btns"><button class="primary" id="lvAdd">Record event</button></div>' +
       '</div>' +
@@ -193,7 +194,7 @@
       if (!liveMatch) { msg('Choose a live match.'); return; }
       var type = $('lvType').value, player = $('lvPlayer').value.trim(), minute = parseInt($('lvMinute').value, 10);
       if (!player || isNaN(minute)) { msg('Enter the player and the minute.'); return; }
-      if (type === 'substitution' && !$('lvOff').value.trim()) { msg('Enter the player coming off.'); return; }
+      if (type === 'SUB' && !$('lvOff').value.trim()) { msg('Enter the player coming off.'); return; }
       db.auth.getUser().then(function (u) {
         return db.from('match_events').insert([{
           match_id: String($('lvMatch').value), event_type: type, team_name: $('lvTeam').value, player_name: player,
@@ -208,7 +209,7 @@
     });
   }
   var liveEvents = [];
-  function goalsFor(team) { return liveEvents.filter(function (e) { return e.event_type === 'goal' && e.team_name === team; }).length; }
+  function goalsFor(team) { return liveEvents.filter(function (e) { return e.event_type === 'GOAL' && e.team_name === team; }).length; }
   function loadLiveOptions() {
     db.from('matches').select('id, home_team, away_team, match_status, match_date').order('match_date', { ascending: false }).limit(60)
       .then(function (r) {
@@ -432,13 +433,17 @@
     Promise.all([
       db.from('club_squad').select('id, player_name, position, jersey_number').eq('club_id', myClub.id).eq('season_id', currentSeason.id)
         .eq('registration_status', 'Approved').eq('status', 'Active').order('jersey_number', { ascending: true, nullsFirst: false }).order('player_name'),
-      db.from('match_lineups').select('player_id, is_starter').eq('match_id', id).eq('club_id', myClub.id)
+      db.from('match_lineups').select('player_id, is_starter').eq('match_id', id).eq('club_id', myClub.id),
+      db.from('suspensions').select('player_id, matches_total, matches_served').eq('status', 'ACTIVE')
     ]).then(function (all) {
       var players = all[0].data || [];
+      var suspended = {};
+      (all[2].data || []).forEach(function (s) { if (s.matches_served < s.matches_total) suspended[s.player_id] = true; });
       var existing = {};
       (all[1].data || []).forEach(function (l) { existing[l.player_id] = l.is_starter ? 'XI' : 'BENCH'; });
       var closes = chosen ? '<p class="muted">Lineup closes ' + esc(lineupCloses(chosen)) + ' (20 minutes before kick-off).</p>' : '';
       $('luPlayers').innerHTML = players.length ? closes + '<p class="muted">Pick up to 11 for the Starting XI and up to 23 in total. Players left blank are not in the matchday squad.</p>' + players.map(function (x) {
+        if (suspended[x.id]) { return '<div class="row"><span>' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + ' <strong class="muted">Suspended</strong></span></div>'; }
         var v = existing[x.id] || '';
         return '<div class="row"><span>' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + ' <span class="muted">' + esc(x.position) + '</span></span>' +
           '<select data-lu="' + esc(x.id) + '"><option value="">Not in squad</option><option value="XI"' + (v === 'XI' ? ' selected' : '') + '>Starting XI</option><option value="BENCH"' + (v === 'BENCH' ? ' selected' : '') + '>Bench</option></select></div>';
@@ -626,7 +631,7 @@
 
   // ---------- TECHNICAL DIRECTOR: assign roles ----------
   var clubsCache = [];
-  var ROLE_OPTIONS = [['CLUB_ADMIN','Club Manager'],['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],['MEDIA_OFFICER','Media Officer'],['SUPER_ADMIN','Super Admin']];
+  var ROLE_OPTIONS = [['CLUB_ADMIN','Club Manager'],['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer'],['SUPER_ADMIN','Super Admin']];
   var devUser = null;
   function developer(p) {
     devUser = p;
@@ -786,7 +791,7 @@
   // ---------- MATCH-DAY TOUCH SCREEN (referee) ----------
   // Big buttons: event, then team, then player (and a second player for a substitution). One tap records the event.
   var tp = { id: null, match: null, events: [], players: [], step: 'type', type: null, team: null, on: null, minute: 0, lastId: null };
-  var TP_LABEL = { goal: 'Goal', yellow_card: 'Yellow card', red_card: 'Red card', substitution: 'Substitution' };
+  var TP_LABEL = { GOAL: 'Goal', YELLOW_CARD: 'Yellow card', RED_CARD: 'Red card', SUB: 'Substitution' };
   function initTouchPad() {
     $('touchPad').addEventListener('click', tpClick);
     $('rfMatch').addEventListener('change', function () { tpLoad(this.value); });
@@ -810,7 +815,7 @@
       tpRender();
     });
   }
-  function tpScore(team) { return tp.events.filter(function (e) { return e.event_type === 'goal' && e.team_name === team; }).length; }
+  function tpScore(team) { return tp.events.filter(function (e) { return e.event_type === 'GOAL' && e.team_name === team; }).length; }
   function tpRoster(team) { return tp.players.filter(function (x) { return x.team === team; }); }
   function tpRender(note) {
     var m = tp.match, box = $('touchPad');
@@ -825,16 +830,16 @@
       box.innerHTML = h; return;
     }
     if (tp.step === 'type') {
-      h += '<button class="tp-btn tp-goal" data-tp="type" data-v="goal">GOAL</button>' +
-           '<button class="tp-btn tp-yellow" data-tp="type" data-v="yellow_card">YELLOW CARD</button>' +
-           '<button class="tp-btn tp-red" data-tp="type" data-v="red_card">RED CARD</button>' +
-           '<button class="tp-btn tp-sub" data-tp="type" data-v="substitution">SUBSTITUTION</button>';
+      h += '<button class="tp-btn tp-goal" data-tp="type" data-v="GOAL">GOAL</button>' +
+           '<button class="tp-btn tp-yellow" data-tp="type" data-v="YELLOW_CARD">YELLOW CARD</button>' +
+           '<button class="tp-btn tp-red" data-tp="type" data-v="RED_CARD">RED CARD</button>' +
+           '<button class="tp-btn tp-sub" data-tp="type" data-v="SUB">SUBSTITUTION</button>';
     } else if (tp.step === 'team') {
       h += '<p class="tp-note">' + esc(TP_LABEL[tp.type]) + ': which team?</p>' +
            '<button class="tp-btn tp-team" data-tp="team" data-v="' + esc(m.home_team) + '">' + esc(m.home_team) + '</button>' +
            '<button class="tp-btn tp-team" data-tp="team" data-v="' + esc(m.away_team) + '">' + esc(m.away_team) + '</button>';
     } else {
-      var label = tp.type === 'substitution' ? (tp.step === 'on' ? 'Player coming ON' : 'Player going OFF') : 'Player';
+      var label = tp.type === 'SUB' ? (tp.step === 'on' ? 'Player coming ON' : 'Player going OFF') : 'Player';
       h += '<p class="tp-note">' + esc(label) + ' · ' + esc(tp.team) + '</p>';
       var roster = tpRoster(tp.team).filter(function (x) { return x.name !== tp.on; });
       h += roster.length ? roster.map(function (x) {
@@ -860,7 +865,7 @@
       if (!name) { msg('Type the player name.'); return; }
       if (tp.step === 'on') {
         tp.on = name;
-        if (tp.type === 'substitution') { tp.step = 'off'; tpRender(); return; }
+        if (tp.type === 'SUB') { tp.step = 'off'; tpRender(); return; }
         tpRecord(name, null); return;
       }
       if (tp.step === 'off') { tpRecord(tp.on, name); return; }
@@ -913,7 +918,7 @@
         input('rfMin', 'Current minute', 'number', 'min="0" max="130"') + '<div class="btns"><button class="secondary" id="rfMinSave">Update minute</button></div>' +
         '<label for="rfTeam">Team</label><select id="rfTeam"></select>' +
         input('rfPlayer', 'Player') + input('rfAssist', 'Assist (optional)') + input('rfOff', 'Player off (substitutions only)') +
-        '<label for="rfType">Event</label><select id="rfType"><option value="goal">Goal</option><option value="yellow_card">Yellow card</option><option value="red_card">Red card</option><option value="substitution">Substitution</option></select>' +
+        '<label for="rfType">Event</label><select id="rfType"><option value="GOAL">Goal</option><option value="YELLOW_CARD">Yellow card</option><option value="RED_CARD">Red card</option><option value="SUB">Substitution</option></select>' +
         input('rfMinute', 'Minute', 'number', 'min="0" max="130"') +
         '<div class="btns"><button class="primary" id="rfAdd">Record event</button></div>' +
       '</div>' +
@@ -953,7 +958,7 @@
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
       var type = $('rfType').value, player = $('rfPlayer').value.trim(), minute = parseInt($('rfMinute').value, 10);
       if (!player || isNaN(minute)) { msg('Enter the player and the minute.'); return; }
-      if (type === 'substitution' && !$('rfOff').value.trim()) { msg('Enter the player coming off.'); return; }
+      if (type === 'SUB' && !$('rfOff').value.trim()) { msg('Enter the player coming off.'); return; }
       db.auth.getUser().then(function (u) {
         return db.from('match_events').insert([{ match_id: String(id), event_type: type, team_name: $('rfTeam').value, player_name: player,
           assist_player_name: $('rfAssist').value.trim() || null, player_off_name: $('rfOff').value.trim() || null, minute: minute,
@@ -977,7 +982,7 @@
       setMatch(id, { match_minute: n }).then(function (r) { msg(r.error ? r.error.message : 'Minute updated.'); });
     });
   }
-  function goalsFor(team) { return refEvents.filter(function (e) { return e.event_type === 'goal' && e.team_name === team; }).length; }
+  function goalsFor(team) { return refEvents.filter(function (e) { return e.event_type === 'GOAL' && e.team_name === team; }).length; }
   function loadRefMatch(id) {
     if (!id) { $('rfPanel').classList.add('hidden'); return; }
     db.from('matches').select('id, home_team, away_team, match_status').eq('id', id).maybeSingle().then(function (r) {
@@ -988,7 +993,7 @@
         refEvents = e.data || [];
         $('rfScore').textContent = goalsFor(m.home_team) + ' – ' + goalsFor(m.away_team);
         $('rfEvents').innerHTML = refEvents.length ? refEvents.map(function (ev) {
-          var label = ev.event_type === 'substitution' ? ev.player_name + ' on, ' + (ev.player_off_name || '') + ' off' : ev.player_name;
+          var label = ev.event_type === 'SUB' ? ev.player_name + ' on, ' + (ev.player_off_name || '') + ' off' : ev.player_name;
           return '<div class="ev"><span class="min">' + esc(ev.minute) + "'</span><span class=\"etxt\">" + esc(String(ev.event_type).replace('_',' ')) + ': ' + esc(label) +
             '<small>' + esc(ev.team_name || '') + '</small></span><button class="small danger" data-rev="' + ev.id + '">Reverse</button></div>';
         }).join('') : 'No events yet.';
@@ -1004,6 +1009,112 @@
         });
       });
     });
+  }
+
+  // ---------- DISCIPLINARY OFFICER ----------
+  var REASON = { YELLOW_ACCUMULATION: 'Yellow card accumulation', RED_CARD: 'Straight red card', OFFICIAL_RULING: 'Official ruling' };
+  var ACTION = { FINE: 'Fine', PROTEST: 'Protest', BAN: 'Match ban', RULING: 'Official ruling', NOTE: 'Note' };
+  function disciplinary(p) {
+    box().innerHTML =
+      '<h2 class="rt">Suspensions</h2><div id="suspList" class="muted">Loading…</div>' +
+      '<h2 class="rt">Record a decision</h2>' +
+      '<label for="dsPlayer">Player</label><select id="dsPlayer"><option value="">Loading players…</option></select>' +
+      '<label for="dsType">Decision</label><select id="dsType"><option value="NOTE">Note</option><option value="PROTEST">Protest</option><option value="RULING">Official ruling</option><option value="FINE">Fine</option><option value="BAN">Match ban</option></select>' +
+      input('dsAmount', 'Fine amount (fines only)', 'number', 'min="0" step="0.01"') +
+      input('dsMatches', 'Number of matches (bans only)', 'number', 'min="1" max="10"') +
+      '<label for="dsMatch">Related match (optional)</label><select id="dsMatch"><option value="">None</option></select>' +
+      '<label for="dsReason">Reason and ruling</label><textarea id="dsReason" rows="3"></textarea>' +
+      '<label><input id="dsPublish" type="checkbox" checked> Show on the public player profile</label>' +
+      '<div class="btns"><button class="primary" id="dsSave">Record decision</button></div>' +
+      '<h2 class="rt">Rules</h2>' +
+      input('ruYellow', 'Yellow cards that trigger a ban', 'number', 'min="1" max="20"') +
+      input('ruYellowBan', 'Matches banned for that accumulation', 'number', 'min="0" max="10"') +
+      input('ruRedBan', 'Matches banned for a straight red card', 'number', 'min="0" max="10"') +
+      '<div class="btns"><button class="secondary" id="ruSave">Save rules</button></div>' +
+      '<h2 class="rt">Recent decisions</h2><div id="actionList" class="muted">Loading…</div>' +
+      '<div class="status" id="roleMsg"></div>';
+    loadRules(); loadSuspensions(); loadDecisionPlayers(); loadDecisionMatches(); loadActions();
+    $('dsSave').addEventListener('click', saveDecision);
+    $('ruSave').addEventListener('click', saveRules);
+  }
+  function loadRules() {
+    db.from('disciplinary_rules').select('yellow_threshold, yellow_ban, red_ban').eq('id', 1).maybeSingle().then(function (r) {
+      var d = r.data || { yellow_threshold: 3, yellow_ban: 1, red_ban: 1 };
+      $('ruYellow').value = d.yellow_threshold; $('ruYellowBan').value = d.yellow_ban; $('ruRedBan').value = d.red_ban;
+    });
+  }
+  function saveRules() {
+    var y = Number($('ruYellow').value), yb = Number($('ruYellowBan').value), rb = Number($('ruRedBan').value);
+    if (!(y >= 1 && y <= 20) || !(yb >= 0 && yb <= 10) || !(rb >= 0 && rb <= 10)) { msg('Check the rules: yellow cards 1 to 20, bans 0 to 10 matches.'); return; }
+    db.from('disciplinary_rules').update({ yellow_threshold: y, yellow_ban: yb, red_ban: rb }).eq('id', 1).then(function (r) {
+      msg(r.error ? r.error.message : 'Rules saved. They apply to cards given from now on.');
+    });
+  }
+  function loadSuspensions() {
+    db.from('suspensions').select('id, reason, matches_total, matches_served, club_squad(player_name, league_clubs(club_name))')
+      .eq('status', 'ACTIVE').order('created_at', { ascending: false }).then(function (r) {
+        var rows = r.data || [];
+        $('suspList').innerHTML = rows.length ? rows.map(function (x) {
+          var pl = x.club_squad || {}, club = pl.league_clubs ? pl.league_clubs.club_name : '';
+          var left = x.matches_total - x.matches_served;
+          return '<div class="post"><strong>' + esc(pl.player_name || 'Player') + '</strong> <span class="muted">' + esc(club) + '</span>' +
+            '<div class="muted">' + esc(REASON[x.reason] || x.reason) + ' · ' + left + ' match' + (left === 1 ? '' : 'es') + ' left (' + x.matches_served + ' of ' + x.matches_total + ' served)</div>' +
+            '<div class="btns"><button class="small" data-overturn="' + esc(x.id) + '">Overturn</button></div></div>';
+        }).join('') : 'No active suspensions.';
+        document.querySelectorAll('[data-overturn]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var reason = prompt('Why is this suspension being overturned? (at least 5 characters)');
+            if (reason == null) return;
+            db.rpc('overturn_suspension', { p_id: Number(b.dataset.overturn), p_reason: reason.trim() }).then(function (res) {
+              msg(res.error ? res.error.message : 'Suspension overturned and logged.'); loadSuspensions(); loadActions();
+            });
+          });
+        });
+      });
+  }
+  function loadDecisionPlayers() {
+    db.from('club_squad').select('id, player_name, league_clubs(club_name)').eq('registration_status', 'Approved').eq('status', 'Active').order('player_name').limit(500)
+      .then(function (r) {
+        $('dsPlayer').innerHTML = '<option value="">Choose a player…</option>' + (r.data || []).map(function (x) {
+          return '<option value="' + esc(x.id) + '">' + esc(x.player_name) + ' · ' + esc(x.league_clubs ? x.league_clubs.club_name : '') + '</option>';
+        }).join('');
+      });
+  }
+  function loadDecisionMatches() {
+    db.from('matches').select('id, home_team, away_team, match_date').order('match_date', { ascending: false }).limit(40).then(function (r) {
+      $('dsMatch').innerHTML = '<option value="">None</option>' + (r.data || []).map(function (m) {
+        return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + ' · ' + esc(new Date(m.match_date).toLocaleDateString()) + '</option>';
+      }).join('');
+    });
+  }
+  function saveDecision() {
+    var player = $('dsPlayer').value, type = $('dsType').value, reason = $('dsReason').value.trim();
+    if (!player) { msg('Choose the player.'); return; }
+    if (reason.length < 5) { msg('Give a reason of at least 5 characters.'); return; }
+    db.rpc('disciplinary_decide', {
+      p_player_id: Number(player), p_action: type,
+      p_amount: $('dsAmount').value ? Number($('dsAmount').value) : null,
+      p_reason: reason,
+      p_matches: $('dsMatches').value ? parseInt($('dsMatches').value, 10) : null,
+      p_match_id: $('dsMatch').value ? Number($('dsMatch').value) : null,
+      p_publish: $('dsPublish').checked
+    }).then(function (r) {
+      if (r.error) { msg(r.error.message); return; }
+      msg('Decision recorded.' + (type === 'BAN' ? ' The ban is now in the suspension list.' : ''));
+      $('dsReason').value = ''; $('dsAmount').value = ''; $('dsMatches').value = '';
+      loadSuspensions(); loadActions();
+    });
+  }
+  function loadActions() {
+    db.from('disciplinary_actions').select('id, action_type, amount, currency, reason, published, decided_at, club_squad(player_name)')
+      .order('decided_at', { ascending: false }).limit(30).then(function (r) {
+        var rows = r.data || [];
+        $('actionList').innerHTML = rows.length ? rows.map(function (x) {
+          return '<div class="post"><strong>' + esc(ACTION[x.action_type] || x.action_type) + '</strong> · ' + esc(x.club_squad ? x.club_squad.player_name : 'Player') +
+            (x.amount ? ' · ' + esc(x.currency) + ' ' + esc(x.amount) : '') + (x.published ? '' : ' <span class="muted">(not shown publicly)</span>') +
+            '<div class="muted">' + esc(new Date(x.decided_at).toLocaleString()) + '</div><p>' + esc(x.reason) + '</p></div>';
+        }).join('') : 'No decisions yet.';
+      });
   }
 
   // ---------- MEDIA OFFICER ----------
