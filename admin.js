@@ -37,6 +37,7 @@
   function superAdmin(p) {
     box().innerHTML =
       '<h2 class="rt">Add a fixture</h2>' +
+      '<label for="fxLeague">League</label><select id="fxLeague"><option value="">Loading leagues…</option></select>' +
       input('fxHome', 'Home team') + input('fxAway', 'Away team') +
       input('fxDate', 'Date and time', 'datetime-local') + input('fxVenue', 'Venue') +
       '<div class="btns"><button class="primary" id="fxSave">Add fixture</button></div>' +
@@ -74,8 +75,9 @@
     $('fxSave').addEventListener('click', function () {
       var h = $('fxHome').value.trim(), a = $('fxAway').value.trim(), d = $('fxDate').value, v = $('fxVenue').value.trim();
       if (!h || !a || !d) { msg('Enter both teams and the date.'); return; }
+      if (!$('fxLeague').value) { msg('Choose the league.'); return; }
       db.from('seasons').select('id').order('id', { ascending: false }).limit(1).maybeSingle().then(function (s) {
-        return db.from('matches').insert([{ home_team: h, away_team: a, match_date: new Date(d).toISOString(), venue: v || null, season_id: s.data ? s.data.id : null, home_score: null, away_score: null, match_status: 'SCHEDULED' }]);
+        return db.from('matches').insert([{ home_team: h, away_team: a, match_date: new Date(d).toISOString(), venue: v || null, season_id: s.data ? s.data.id : null, league_id: Number($('fxLeague').value), home_score: null, away_score: null, match_status: 'SCHEDULED' }]);
       }).then(function (r) {
         if (r.error) { msg(r.error.message); return; }
         msg('Fixture added.'); $('fxHome').value = ''; $('fxAway').value = ''; $('fxVenue').value = ''; loadMatchesForResult();
@@ -94,6 +96,7 @@
       });
     });
 
+    loadLeagueOptions();
     loadReview();
     loadSquadReview();
     loadTransferReview();
@@ -234,6 +237,12 @@
       $('msMatch').innerHTML = '<option value="">Choose a match…</option>' + (r.data || []).map(function (m) {
         return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + ' · ' + esc(m.match_status) + '</option>';
       }).join('');
+    });
+  }
+  function loadLeagueOptions() {
+    db.from('leagues').select('id, name').eq('is_active', true).order('sort_order').then(function (r) {
+      $('fxLeague').innerHTML = '<option value="">Choose the league…</option>' + (r.data || []).map(function (l) {
+        return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>'; }).join('');
     });
   }
   function loadReview() {
