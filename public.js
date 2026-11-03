@@ -25,6 +25,8 @@
   // Matches
   // Upcoming and results are loaded separately, so the newest results are never cut off
   var resultsTeam = '', leaguesCache = [], dateSel = '', clubLogos = {};
+  // Favourite clubs for the signed-in fan (empty when signed out)
+  var myFavIds = {}, myFavNames = {}, myFavList = [];
   // The league chosen in the switcher above the tabs, remembered on this device
   var currentLeague = '', leagueList = [], clubLeague = {};
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch (e) {}
@@ -80,7 +82,7 @@
       var done = all[2].data || [];
       var teams = {};
       up.concat(done).forEach(function (m) { teams[m.home_team] = true; teams[m.away_team] = true; });
-      var teamOpts = Object.keys(teams).sort().map(function (t) {
+      var teamOpts = (myFavList.length ? '<option value="__fav__"' + (resultsTeam === '__fav__' ? ' selected' : '') + '>My clubs</option>' : '') + Object.keys(teams).sort().map(function (t) {
         return '<option value="' + esc(t) + '"' + (t === resultsTeam ? ' selected' : '') + '>' + esc(t) + '</option>';
       }).join('');
       clubLogos = {};
@@ -126,8 +128,9 @@
     $('upcomingList').innerHTML = byLeague(list) || empty(dateSel ? 'No upcoming matches on this date.' : currentLeague ? 'No upcoming matches in this league.' : 'No upcoming matches yet.');
   }
   function renderResults(rows) {
-    var list = onDate(resultsTeam ? rows.filter(function (m) { return m.home_team === resultsTeam || m.away_team === resultsTeam; }) : rows);
-    $('resultsList').innerHTML = byLeague(list) || empty(dateSel ? 'No results on this date.' : resultsTeam ? 'No results for ' + esc(resultsTeam) + ' yet.' : 'No results yet.');
+    var mine = function (m) { return resultsTeam === '__fav__' ? !!(myFavNames[m.home_team] || myFavNames[m.away_team]) : (m.home_team === resultsTeam || m.away_team === resultsTeam); };
+    var list = onDate(resultsTeam ? rows.filter(mine) : rows);
+    $('resultsList').innerHTML = byLeague(list) || empty(dateSel ? 'No results on this date.' : resultsTeam === '__fav__' ? 'No results for your clubs yet.' : resultsTeam ? 'No results for ' + esc(resultsTeam) + ' yet.' : 'No results yet.');
   }
   function matchCard(m) {
     var st = m.match_status;
@@ -228,16 +231,60 @@
       .then(function (res) {
         if (res.error || !(res.data || []).length) { $('teamGrid').innerHTML = empty('Teams will appear here once they are added.'); return; }
         var clubs = (res.data || []).filter(function (c) { return !currentLeague || clubLeague[c.club_name] === currentLeague; });
-        $('teamGrid').innerHTML = clubs.map(function (c) {
-          return '<div class="team" role="button" tabindex="0" data-club="' + esc(c.id) + '" data-name="' + esc(c.club_name) + '">' + badge(c.logo_url, c.club_name) + '<span>' + esc(c.club_name) + '</span></div>';
-        }).join('') + '<div id="squadPanel"></div>';
+        var mine = clubs.filter(function (c) { return myFavIds[c.id]; });
+        var others = clubs.filter(function (c) { return !myFavIds[c.id]; });
+        function card(c) {
+          var on = !!myFavIds[c.id];
+          return '<div class="team" role="button" tabindex="0" data-club="' + esc(c.id) + '" data-name="' + esc(c.club_name) + '">' + badge(c.logo_url, c.club_name) +
+            '<span>' + esc(c.club_name) + '</span>' +
+            '<button class="fav' + (on ? ' on' : '') + '" data-fav="' + esc(c.id) + '" aria-pressed="' + (on ? 'true' : 'false') + '" aria-label="' +
+            (on ? 'Remove ' : 'Save ') + esc(c.club_name) + ' as a favourite">' + (on ? '★' : '☆') + '</button></div>';
+        }
+        var head = '<div class="favNote" style="grid-column:1/-1"><span id="favStatus" class="muted"></span></div>';
+        var yours = mine.length ? '<h3 class="sub" style="grid-column:1/-1">Your clubs</h3>' + mine.map(card).join('') + '<h3 class="sub" style="grid-column:1/-1">All clubs</h3>' : '';
+        $('teamGrid').innerHTML = head + yours + others.map(card).join('');
         document.querySelectorAll('[data-club]').forEach(function (el) {
           el.addEventListener('click', function () { loadSquadPublic(el.dataset.club, el.dataset.name); });
           el.addEventListener('keydown', function (e) { if (e.key === 'Enter') loadSquadPublic(el.dataset.club, el.dataset.name); });
         });
+        document.querySelectorAll('[data-fav]').forEach(function (b) {
+          b.addEventListener('click', function (e) { e.stopPropagation(); toggleFav(b.dataset.fav, clubs); });
+        });
         if (selectedClub) loadSquadPublic(selectedClub.id, selectedClub.name);
       });
   }
+
+  // Favourite clubs: saved to the fan's account; signed-out fans are asked to sign in
+  function loadFavs() {
+    return db.auth.getUser().then(function (u) {
+      if (!u.data || !u.data.user) { myFavIds = {}; myFavNames = {}; myFavList = []; return; }
+      return db.from('user_favorite_clubs').select('club_id, league_clubs(club_name)').eq('user_id', u.data.user.id).then(function (r) {
+        myFavIds = {}; myFavNames = {}; myFavList = [];
+        (r.data || []).forEach(function (f) {
+          var name = f.league_clubs && f.league_clubs.club_name;
+          if (!name) return;
+          myFavIds[f.club_id] = true; myFavNames[name] = true; myFavList.push({ id: f.club_id, name: name });
+        });
+      });
+    }).then(function () { loadTeams(); });
+  }
+  function refreshFavs() { loadFavs().then(function () { loadMatches(); }); }
+  function toggleFav(clubId, clubs) {
+    var status = function (t) { var el = document.getElementById('favStatus'); if (el) el.textContent = t; };
+    db.auth.getUser().then(function (u) {
+      if (!u.data || !u.data.user) { status('Sign in under Admin (top right) to save favourite clubs.'); return; }
+      var on = !!myFavIds[clubId];
+      var q = on
+        ? db.from('user_favorite_clubs').delete().eq('user_id', u.data.user.id).eq('club_id', clubId)
+        : db.from('user_favorite_clubs').insert({ user_id: u.data.user.id, club_id: clubId });
+      return q.then(function (r) {
+        if (r.error) { status(r.error.message); return; }
+        status(on ? 'Removed from your clubs.' : 'Saved to your clubs.');
+        refreshFavs();
+      });
+    });
+  }
+  db.auth.onAuthStateChange(function () { refreshFavs(); });
 
   // Squad for one club: approved, active players for the current season
   var selectedClub = null;
@@ -581,6 +628,56 @@
     setInterval(refreshAll, 120000);
   }
 
+  // Premium interaction: pull to refresh, light tactile feedback, and goal and card alerts for favourite clubs
+  var buzz = function (pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {} };
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('button, .match[data-match], .team[data-club]')) buzz(8);
+  });
+
+  var pull = document.createElement('div');
+  pull.className = 'pullHint'; pull.setAttribute('aria-live', 'polite');
+  document.body.appendChild(pull);
+  var pullY = null;
+  function hidePull() { pull.classList.remove('show'); pull.style.transform = ''; }
+  document.addEventListener('touchstart', function (e) {
+    pullY = window.scrollY <= 0 && !document.querySelector('dialog[open]') ? e.touches[0].clientY : null;
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (pullY == null) return;
+    var dy = e.touches[0].clientY - pullY;
+    if (dy <= 0) { hidePull(); return; }
+    pull.classList.add('show');
+    pull.style.transform = 'translateY(' + Math.min(dy * 0.5, 56) + 'px)';
+    pull.textContent = dy > 70 ? 'Release to refresh' : 'Pull to refresh';
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (pullY == null) return;
+    var dy = e.changedTouches[0].clientY - pullY;
+    pullY = null;
+    if (dy > 70) { pull.textContent = 'Refreshing…'; pull.style.transform = 'translateY(40px)'; buzz(12); refreshAll(); setTimeout(hidePull, 900); }
+    else hidePull();
+  });
+
+  var toastEl = document.createElement('div');
+  toastEl.className = 'toast'; toastEl.setAttribute('role', 'status');
+  document.body.appendChild(toastEl);
+  var toastTimer = null;
+  function toast(text) {
+    toastEl.textContent = text; toastEl.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 4500);
+  }
+  var ALERT_EVENTS = { GOAL: 'Goal', YELLOW_CARD: 'Yellow card', RED_CARD: 'Red card' };
+  function favAlert(e) {
+    var label = ALERT_EVENTS[String(e.event_type).toUpperCase()];
+    if (!label || !myFavNames[e.team_name]) return;
+    buzz(e.event_type === 'GOAL' ? [60, 40, 60] : 40);
+    toast(label + ' for ' + e.team_name + (e.player_name ? ': ' + e.player_name : '') + (e.minute != null ? ' (' + e.minute + "')" : ''));
+  }
+  db.channel('favourite-alerts')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'match_events' }, function (p) { if (p && p.new) favAlert(p.new); })
+    .subscribe();
+
   refreshAll();
   subscribeLive();
+  loadFavs();
 })();
