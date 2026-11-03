@@ -628,6 +628,55 @@
     setInterval(refreshAll, 120000);
   }
 
+  // Premium interaction: pull to refresh, light tactile feedback, and goal and card alerts for favourite clubs
+  var buzz = function (pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {} };
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('button, .match[data-match], .team[data-club]')) buzz(8);
+  });
+
+  var pull = document.createElement('div');
+  pull.className = 'pullHint'; pull.setAttribute('aria-live', 'polite');
+  document.body.appendChild(pull);
+  var pullY = null;
+  function hidePull() { pull.classList.remove('show'); pull.style.transform = ''; }
+  document.addEventListener('touchstart', function (e) {
+    pullY = window.scrollY <= 0 && !document.querySelector('dialog[open]') ? e.touches[0].clientY : null;
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (pullY == null) return;
+    var dy = e.touches[0].clientY - pullY;
+    if (dy <= 0) { hidePull(); return; }
+    pull.classList.add('show');
+    pull.style.transform = 'translateY(' + Math.min(dy * 0.5, 56) + 'px)';
+    pull.textContent = dy > 70 ? 'Release to refresh' : 'Pull to refresh';
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (pullY == null) return;
+    var dy = e.changedTouches[0].clientY - pullY;
+    pullY = null;
+    if (dy > 70) { pull.textContent = 'Refreshing…'; pull.style.transform = 'translateY(40px)'; buzz(12); refreshAll(); setTimeout(hidePull, 900); }
+    else hidePull();
+  });
+
+  var toastEl = document.createElement('div');
+  toastEl.className = 'toast'; toastEl.setAttribute('role', 'status');
+  document.body.appendChild(toastEl);
+  var toastTimer = null;
+  function toast(text) {
+    toastEl.textContent = text; toastEl.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 4500);
+  }
+  var ALERT_EVENTS = { GOAL: 'Goal', YELLOW_CARD: 'Yellow card', RED_CARD: 'Red card' };
+  function favAlert(e) {
+    var label = ALERT_EVENTS[String(e.event_type).toUpperCase()];
+    if (!label || !myFavNames[e.team_name]) return;
+    buzz(e.event_type === 'GOAL' ? [60, 40, 60] : 40);
+    toast(label + ' for ' + e.team_name + (e.player_name ? ': ' + e.player_name : '') + (e.minute != null ? ' (' + e.minute + "')" : ''));
+  }
+  db.channel('favourite-alerts')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'match_events' }, function (p) { if (p && p.new) favAlert(p.new); })
+    .subscribe();
+
   refreshAll();
   subscribeLive();
   loadFavs();
