@@ -40,6 +40,12 @@
   // ---------- SUPER ADMIN ----------
   function superAdmin(p) {
     box().innerHTML =
+      '<h2 class="rt">Clubs</h2>' +
+      '<label for="clName">Club name</label><input id="clName" type="text">' +
+      '<label for="clLeague">League</label><select id="clLeague"><option value="">Loading leagues…</option></select>' +
+      input('clLogo', 'Logo link (optional)', 'url') +
+      '<div class="btns"><button class="primary" id="clAdd">Add club</button></div>' +
+      '<div id="clubAdminList" class="muted">Loading clubs…</div>' +
       '<h2 class="rt">Add a fixture</h2>' +
       '<label for="fxLeague">League</label><select id="fxLeague"><option value="">Loading leagues…</option></select>' +
       input('fxHome', 'Home team') + input('fxAway', 'Away team') +
@@ -101,6 +107,7 @@
     });
 
     loadLeagueOptions();
+    wireClubs();
     loadReview();
     loadSquadReview();
     loadTransferReview();
@@ -247,6 +254,45 @@
     db.from('leagues').select('id, name').eq('is_active', true).order('sort_order').then(function (r) {
       $('fxLeague').innerHTML = '<option value="">Choose the league…</option>' + (r.data || []).map(function (l) {
         return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>'; }).join('');
+    });
+  }
+  function wireClubs() {
+    db.from('leagues').select('id, name').eq('is_active', true).order('sort_order').then(function (r) {
+      $('clLeague').innerHTML = '<option value="">Choose the league…</option>' + (r.data || []).map(function (l) {
+        return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>'; }).join('');
+    });
+    $('clAdd').addEventListener('click', function () {
+      var name = $('clName').value.trim(), lg = $('clLeague').value;
+      if (!name) { msg('Enter the club name.'); return; }
+      if (!lg) { msg('Choose the league for this club.'); return; }
+      db.from('league_clubs').insert({ club_name: name, league_id: Number(lg), logo_url: $('clLogo').value.trim() || null, is_active: true }).then(function (r) {
+        if (r.error) { msg(r.error.message); return; }
+        msg('Club added.'); $('clName').value = ''; $('clLogo').value = ''; loadClubAdmin();
+      });
+    });
+    loadClubAdmin();
+  }
+  function loadClubAdmin() {
+    Promise.all([
+      db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
+      db.from('league_clubs').select('id, club_name, league_id, is_active').order('club_name')
+    ]).then(function (all) {
+      var leagues = all[0].data || [], clubs = all[1].data || [];
+      function opts(sel) {
+        return '<option value="">No league</option>' + leagues.map(function (l) {
+          return '<option value="' + esc(l.id) + '"' + (String(l.id) === String(sel) ? ' selected' : '') + '>' + esc(l.name) + '</option>'; }).join('');
+      }
+      $('clubAdminList').innerHTML = clubs.length ? clubs.map(function (c) {
+        return '<div class="post"><strong>' + esc(c.club_name) + '</strong>' + (c.is_active ? '' : ' <span class="muted">(inactive)</span>') +
+          '<label>League</label><select data-club-league="' + esc(c.id) + '">' + opts(c.league_id) + '</select></div>';
+      }).join('') : 'No clubs yet.';
+      document.querySelectorAll('[data-club-league]').forEach(function (s) {
+        s.addEventListener('change', function () {
+          db.from('league_clubs').update({ league_id: s.value ? Number(s.value) : null }).eq('id', s.dataset.clubLeague).then(function (res) {
+            msg(res.error ? res.error.message : 'League updated.');
+          });
+        });
+      });
     });
   }
   function loadReview() {
@@ -966,6 +1012,7 @@
       '<h2 class="rt">New news post</h2>' +
       '<label for="npCat">Category</label><select id="npCat"><option value="NEWS">News</option><option value="PRESS_RELEASE">Press release</option><option value="MATCH_REPORT">Match report</option><option value="ANNOUNCEMENT">Announcement</option></select>' +
       '<label for="npMatch">Match (for match reports, optional)</label><select id="npMatch"><option value="">Not linked to a match</option></select>' +
+      '<label for="npLeague">League (leave as All leagues for general news)</label><select id="npLeague"><option value="">All leagues (general)</option></select>' +
       input('npTitle', 'Title') +
       '<label for="npBody">Story</label><textarea id="npBody" rows="5"></textarea>' +
       input('npImage', 'Photo link (optional)', 'url') + input('npVideo', 'Video link (optional)', 'url') +
@@ -983,6 +1030,7 @@
       db.auth.getUser().then(function (u) {
         return db.from('media_posts').insert([{
           category: $('npCat').value, title: t, body: $('npBody').value.trim(), match_id: $('npMatch').value || null,
+          league_id: $('npLeague').value ? Number($('npLeague').value) : null,
           image_url: $('npImage').value.trim() || null, video_url: $('npVideo').value.trim() || null,
           status: status, created_by: u.data.user.id, created_by_name: p.full_name || p.email,
           submitted_at: status === 'SUBMITTED' ? new Date().toISOString() : null,
@@ -991,7 +1039,7 @@
       }).then(function (r) {
         if (r.error) { msg(r.error.message); return; }
         msg(status === 'SUBMITTED' ? 'Sent to the Super Admin for approval.' : status === 'PUBLISHED' ? 'Published.' : 'Draft saved.');
-        $('npTitle').value = ''; $('npBody').value = ''; $('npImage').value = ''; $('npVideo').value = ''; $('npMatch').value = ''; loadMine();
+        $('npTitle').value = ''; $('npBody').value = ''; $('npImage').value = ''; $('npVideo').value = ''; $('npMatch').value = ''; $('npLeague').value = ''; loadMine();
       });
     }
     $('npDraft').addEventListener('click', function () { save('DRAFT'); });
@@ -1009,6 +1057,10 @@
       }).join('');
     });
     $('pqSave').addEventListener('click', savePoll);
+    db.from('leagues').select('id, name').eq('is_active', true).order('sort_order').then(function (r) {
+      $('npLeague').innerHTML = '<option value="">All leagues (general)</option>' + (r.data || []).map(function (l) {
+        return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>'; }).join('');
+    });
     loadMine();
     loadPolls();
   }
