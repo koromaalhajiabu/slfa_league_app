@@ -3,7 +3,7 @@
 // New versions are downloaded in the background.
 // Supabase league data stays network-first with offline fallback.
 
-const CACHE = 'slfa-app-v36';
+const CACHE = 'slfa-app-v37';
 const DATA_CACHE = CACHE + '-data';
 
 const PUBLIC_TABLES = [
@@ -161,47 +161,33 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // Only cache files belonging to this app.
+  // Only handle files belonging to this app. Always ask the network for
+  // the newest shell first; use the saved copy only when the device is offline.
   if (url.origin !== self.location.origin) return;
 
-  // Start downloading the newest version in the background.
-  var updatePromise = fetch(request)
-    .then(function (response) {
-      if (response.ok) {
-        var copy = response.clone();
-
-        return caches.open(CACHE)
-          .then(function (cache) {
-            return cache.put(request, copy);
-          })
-          .then(function () {
-            return response;
-          });
-      }
-
-      return response;
-    });
-
-  event.waitUntil(updatePromise.catch(function () {}));
-
-  // Return the saved copy immediately when available.
   event.respondWith(
-    caches.match(request)
-      .then(function (cached) {
-        if (cached) {
-          return cached;
-        }
-
-        return updatePromise
-          .then(function (response) {
-            if (response && response.ok) {
+    fetch(request, { cache: 'no-store' })
+      .then(function (response) {
+        if (response && response.ok) {
+          var copy = response.clone();
+          return caches.open(CACHE)
+            .then(function (cache) {
+              return cache.put(request, copy);
+            })
+            .then(function () {
               return response;
+            });
+        }
+        return response;
+      })
+      .catch(function () {
+        return caches.match(request)
+          .then(function (cached) {
+            if (cached) return cached;
+            if (request.mode === 'navigate') {
+              return caches.match('./index.html');
             }
-
-            return caches.match('./index.html');
-          })
-          .catch(function () {
-            return caches.match('./index.html');
+            return Response.error();
           });
       })
   );
