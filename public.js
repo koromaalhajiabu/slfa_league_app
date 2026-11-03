@@ -321,6 +321,78 @@
       });
   }
 
+  // Video highlights and replays: published news posts that carry a video link
+  function loadVideos() {
+    var box = $('videoList'); if (!box) return;
+    var q = db.from('media_posts').select('id, title, category, video_url, published_at, league_id').eq('status', 'PUBLISHED').not('video_url', 'is', null);
+    if (currentLeague) q = q.or('league_id.is.null,league_id.eq.' + currentLeague);
+    q.order('published_at', { ascending: false }).limit(30).then(function (res) {
+      if (res.error) { box.innerHTML = empty('Videos are not available right now.'); return; }
+      var rows = res.data || [];
+      box.innerHTML = '<h3 class="sub">Highlights &amp; replays</h3>' + (rows.length ? rows.map(function (v) {
+        return '<article class="news"><div class="meta">' + esc(CAT_LABEL[v.category] || 'Video') + ' · ' + esc(fmt(v.published_at)) + '</div>' +
+          '<h3>' + esc(v.title) + '</h3>' +
+          '<a class="btnlink" href="' + esc(v.video_url) + '" target="_blank" rel="noopener">Watch</a></article>';
+      }).join('') : empty('No videos yet.'));
+    });
+  }
+
+  // Match predictions: one prediction per browser per match, until kick-off. Leaderboard from finished matches.
+  function loadPredict() {
+    var box = $('predictList'); if (!box) return;
+    // Do not redraw while a fan is typing a prediction
+    if (box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+    var savedName = ''; try { savedName = localStorage.getItem('slfa_fan_name') || ''; } catch (e) {}
+    var saved = {}; try { saved = JSON.parse(localStorage.getItem('slfa_predictions') || '{}'); } catch (e) {}
+    Promise.all([
+      db.from('matches').select('id, home_team, away_team, match_date, league_id').in('match_status', ['SCHEDULED', 'RESCHEDULED']).gte('match_date', new Date().toISOString()).order('match_date', { ascending: true }).limit(30),
+      db.rpc('prediction_leaderboard', { p_league_id: currentLeague ? Number(currentLeague) : null })
+    ]).then(function (all) {
+      var matches = (all[0].data || []).filter(function (m) { return !currentLeague || String(m.league_id) === currentLeague; });
+      var board = all[1].data || [];
+      var cards = matches.map(function (m) {
+        var s = saved[m.id] || {};
+        return '<article class="match pred" data-pred="' + esc(m.id) + '"><div class="meta">' + esc(fmt(m.match_date)) + ' · predictions close at kick-off</div>' +
+          '<div class="teams"><span>' + esc(m.home_team) + '</span>' +
+          '<span class="predIn"><input type="number" min="0" max="20" inputmode="numeric" value="' + esc(s.h != null ? s.h : '') + '" data-ph="' + esc(m.id) + '" aria-label="' + esc(m.home_team) + ' goals"> – ' +
+          '<input type="number" min="0" max="20" inputmode="numeric" value="' + esc(s.a != null ? s.a : '') + '" data-pa="' + esc(m.id) + '" aria-label="' + esc(m.away_team) + ' goals"></span>' +
+          '<span>' + esc(m.away_team) + '</span></div>' +
+          '<div class="btns"><button class="small" data-predict="' + esc(m.id) + '">' + (s.h != null ? 'Change prediction' : 'Save prediction') + '</button>' +
+          (s.h != null ? '<span class="muted">Your prediction: ' + esc(s.h) + '–' + esc(s.a) + '</span>' : '') + '</div></article>';
+      }).join('');
+      var rows = board.length ? '<table class="table lb"><thead><tr><th>#</th><th>Fan</th><th>Points</th><th>Exact</th><th>Right result</th></tr></thead><tbody>' +
+        board.map(function (r, i) {
+          return '<tr><td>' + (i + 1) + '</td><td class="club">' + esc(r.fan_name) + '</td><td class="pts">' + esc(r.points) + '</td><td>' + esc(r.exact_hits) + '</td><td>' + esc(r.right_results) + '</td></tr>';
+        }).join('') + '</tbody></table>' : empty('The leaderboard will appear after the first finished match.');
+      box.innerHTML = '<h3 class="sub">Predict the score</h3>' +
+        '<label for="fanName">Your name (shown on the leaderboard)</label><input id="fanName" type="text" maxlength="30" value="' + esc(savedName) + '" autocomplete="nickname">' +
+        '<p class="muted">Right result scores 1 point. Exact score scores 3 points.</p>' +
+        (cards || empty('No matches open for predictions right now.')) +
+        '<h3 class="sub">Leaderboard</h3>' + rows +
+        '<p class="status" id="predMsg" role="status"></p>';
+      box.querySelectorAll('[data-predict]').forEach(function (b) {
+        b.addEventListener('click', function () { submitPrediction(b.dataset.predict); });
+      });
+    });
+  }
+  function submitPrediction(matchId) {
+    var name = ($('fanName').value || '').trim(), msgEl = $('predMsg');
+    var h = document.querySelector('[data-ph="' + matchId + '"]').value, a = document.querySelector('[data-pa="' + matchId + '"]').value;
+    if (name.length < 2) { msgEl.textContent = 'Enter your name (at least 2 letters).'; return; }
+    if (h === '' || a === '') { msgEl.textContent = 'Enter a score for both teams.'; return; }
+    var key = voterKey();
+    if (!key) { msgEl.textContent = 'Predictions need your browser to store a small code. Turn off private browsing and try again.'; return; }
+    db.rpc('submit_prediction', { p_match_id: Number(matchId), p_fan_name: name, p_home: Number(h), p_away: Number(a), p_voter_key: key }).then(function (res) {
+      if (res.error) { msgEl.textContent = res.error.message; return; }
+      try {
+        localStorage.setItem('slfa_fan_name', name);
+        var saved = JSON.parse(localStorage.getItem('slfa_predictions') || '{}'); saved[matchId] = { h: Number(h), a: Number(a) };
+        localStorage.setItem('slfa_predictions', JSON.stringify(saved));
+      } catch (e) {}
+      loadPredict();
+    });
+  }
+
   // Fan polls: one vote per browser, enforced in the database
   var VOTER_KEY = 'slfa_voter_key', VOTES_KEY = 'slfa_votes';
   function voterKey() {
@@ -464,7 +536,7 @@
 
   function refreshAll() {
     loadLeagueData().then(function () {
-      loadMatches(); loadLive(); loadTable(); loadTeams(); loadPlayers(); loadNews(); loadPauseBanner();
+      loadMatches(); loadLive(); loadTable(); loadTeams(); loadPlayers(); loadNews(); loadVideos(); loadPredict(); loadPauseBanner();
     });
   }
 
