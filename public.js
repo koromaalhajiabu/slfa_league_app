@@ -24,7 +24,38 @@
 
   // Matches
   // Upcoming and results are loaded separately, so the newest results are never cut off
-  var resultsTeam = '', leagueSel = '', leaguesCache = [], dateSel = '', clubLogos = {};
+  var resultsTeam = '', leaguesCache = [], dateSel = '', clubLogos = {};
+  // The league chosen in the switcher above the tabs, remembered on this device
+  var currentLeague = '', leagueList = [], clubLeague = {};
+  try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch (e) {}
+  function loadLeagueData() {
+    return Promise.all([
+      db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
+      db.from('league_clubs').select('club_name, league_id').eq('is_active', true)
+    ]).then(function (all) {
+      leagueList = all[0].data || [];
+      clubLeague = {};
+      (all[1].data || []).forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; });
+      renderLeagueSwitch();
+    });
+  }
+  function renderLeagueSwitch() {
+    var box = $('leagueSwitch'); if (!box) return;
+    box.innerHTML = [{ id: '', name: 'All leagues' }].concat(leagueList).map(function (l) {
+      var on = String(l.id) === String(currentLeague);
+      return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-league="' + esc(l.id) + '" aria-pressed="' + on + '">' + esc(l.name) + '</button>';
+    }).join('');
+    box.querySelectorAll('[data-league]').forEach(function (b) {
+      b.addEventListener('click', function () { setLeague(b.dataset.league); });
+    });
+  }
+  function setLeague(id) {
+    currentLeague = String(id || '');
+    try { localStorage.setItem('slfa_league', currentLeague); } catch (e) {}
+    renderLeagueSwitch();
+    refreshAll();
+  }
+  function inLeague(rows) { return (rows || []).filter(function (r) { return !currentLeague || clubLeague[r.club] === currentLeague; }); }
   // Local calendar day as YYYY-MM-DD, so the date picker matches what the viewer sees
   function dayKey(d) {
     var x = new Date(d);
@@ -52,9 +83,6 @@
       var teamOpts = Object.keys(teams).sort().map(function (t) {
         return '<option value="' + esc(t) + '"' + (t === resultsTeam ? ' selected' : '') + '>' + esc(t) + '</option>';
       }).join('');
-      var leagueOpts = leaguesCache.map(function (l) {
-        return '<option value="' + esc(l.id) + '"' + (String(l.id) === leagueSel ? ' selected' : '') + '>' + esc(l.name) + '</option>';
-      }).join('');
       clubLogos = {};
       (all[3].data || []).forEach(function (c) { clubLogos[c.club_name] = c.logo_url; });
       $('matchList').innerHTML =
@@ -63,13 +91,11 @@
         '<input type="date" id="dateFilter" value="' + esc(dateSel) + '" aria-label="Choose a date">' +
         '<button class="small" data-day="1" aria-label="Next day">›</button>' +
         '<button class="small" id="dateAll">All dates</button></div>' +
-        '<label class="filter">League <select id="leagueFilter"><option value="">All leagues</option>' + leagueOpts + '</select></label>' +
         '<h3 class="sub">Playing now</h3><div id="playingNow">' + empty('Loading…') + '</div>' +
         '<h3 class="sub">Upcoming</h3><div id="upcomingList"></div>' +
         '<h3 class="sub">Results</h3>' +
         '<label class="filter">Team <select id="teamFilter"><option value="">All teams</option>' + teamOpts + '</select></label>' +
         '<div id="resultsList"></div></div>';
-      $('leagueFilter').addEventListener('change', function () { leagueSel = this.value; renderUpcoming(up); renderResults(done); });
       $('teamFilter').addEventListener('change', function () { resultsTeam = this.value; renderResults(done); });
       $('dateFilter').addEventListener('change', function () { dateSel = this.value; renderUpcoming(up); renderResults(done); });
       $('dateAll').addEventListener('click', function () { dateSel = ''; $('dateFilter').value = ''; renderUpcoming(up); renderResults(done); });
@@ -88,7 +114,7 @@
   function byLeague(rows) {
     var html = '';
     leaguesCache.concat([{ id: null, name: 'Other matches' }]).forEach(function (lg) {
-      if (leagueSel && String(lg.id) !== leagueSel) return;
+      if (currentLeague && String(lg.id) !== currentLeague) return;
       var items = rows.filter(function (m) { return (m.league_id || null) === (lg.id || null); });
       if (!items.length) return;
       html += '<h4 class="league-name">' + esc(lg.name) + '</h4>' + items.map(matchCard).join('');
@@ -97,7 +123,7 @@
   }
   function renderUpcoming(rows) {
     var list = onDate(rows);
-    $('upcomingList').innerHTML = byLeague(list) || empty(dateSel ? 'No upcoming matches on this date.' : leagueSel ? 'No upcoming matches in this league.' : 'No upcoming matches yet.');
+    $('upcomingList').innerHTML = byLeague(list) || empty(dateSel ? 'No upcoming matches on this date.' : currentLeague ? 'No upcoming matches in this league.' : 'No upcoming matches yet.');
   }
   function renderResults(rows) {
     var list = onDate(resultsTeam ? rows.filter(function (m) { return m.home_team === resultsTeam || m.away_team === resultsTeam; }) : rows);
@@ -185,6 +211,7 @@
       if (!rows.length) { $('tableBody').innerHTML = '<tr><td colspan="9">The table will appear after the first results.</td></tr>'; return; }
       var html = '';
       leagues.concat([{ id: null, name: 'Other' }]).forEach(function (lg) {
+        if (currentLeague && String(lg.id) !== currentLeague) return;
         var items = rows.filter(function (r) { return (r.league_id || null) === (lg.id || null); });
         if (!items.length) return;
         html += '<tr class="league-row"><td colspan="9">' + esc(lg.name) + '</td></tr>' + items.map(function (r) {
@@ -200,7 +227,8 @@
     db.from('league_clubs').select('id, club_name, logo_url').eq('is_active', true).order('club_name')
       .then(function (res) {
         if (res.error || !(res.data || []).length) { $('teamGrid').innerHTML = empty('Teams will appear here once they are added.'); return; }
-        $('teamGrid').innerHTML = res.data.map(function (c) {
+        var clubs = (res.data || []).filter(function (c) { return !currentLeague || clubLeague[c.club_name] === currentLeague; });
+        $('teamGrid').innerHTML = clubs.map(function (c) {
           return '<div class="team" role="button" tabindex="0" data-club="' + esc(c.id) + '" data-name="' + esc(c.club_name) + '">' + badge(c.logo_url, c.club_name) + '<span>' + esc(c.club_name) + '</span></div>';
         }).join('') + '<div id="squadPanel"></div>';
         document.querySelectorAll('[data-club]').forEach(function (el) {
@@ -258,15 +286,15 @@
   function loadPlayers() {
     db.from('top_scorers').select('player, club, goals, photo_url').order('goals', { ascending: false }).limit(10)
       .then(function (res) {
-        $('scorers').innerHTML = list((res.data || []).map(function (r) { return { name: r.player, club: r.club, photo_url: r.photo_url, goals: r.goals }; }), 'goals', 'goals');
+        $('scorers').innerHTML = list(inLeague(res.data).map(function (r) { return { name: r.player, club: r.club, photo_url: r.photo_url, goals: r.goals }; }), 'goals', 'goals');
       });
     db.from('top_assists').select('player, club, assists, photo_url').order('assists', { ascending: false }).limit(10)
       .then(function (res) {
-        $('assists').innerHTML = list((res.data || []).map(function (r) { return { name: r.player, club: r.club, photo_url: r.photo_url, assists: r.assists }; }), 'assists', 'assists');
+        $('assists').innerHTML = list(inLeague(res.data).map(function (r) { return { name: r.player, club: r.club, photo_url: r.photo_url, assists: r.assists }; }), 'assists', 'assists');
       });
     db.from('clean_sheets').select('goalkeeper, club, clean_sheets, photo_url').order('clean_sheets', { ascending: false }).limit(10)
       .then(function (res) {
-        $('cleanSheets').innerHTML = list((res.data || []).map(function (r) { return { name: r.goalkeeper, club: r.club, photo_url: r.photo_url, sheets: r.clean_sheets }; }), 'clean sheets', 'sheets');
+        $('cleanSheets').innerHTML = list(inLeague(res.data).map(function (r) { return { name: r.goalkeeper, club: r.club, photo_url: r.photo_url, sheets: r.clean_sheets }; }), 'clean sheets', 'sheets');
       });
   }
 
@@ -274,8 +302,10 @@
   var CAT_LABEL = { NEWS: 'News', PRESS_RELEASE: 'Press release', MATCH_REPORT: 'Match report', ANNOUNCEMENT: 'Announcement', FIXTURE: 'Fixture', RESULT: 'Result', PHOTO: 'Photo' };
   function loadNews() {
     loadPolls();
-    db.from('media_posts').select('id, category, title, body, image_url, video_url, published_at, status')
-      .eq('status', 'PUBLISHED').order('published_at', { ascending: false }).limit(20)
+    var news = db.from('media_posts').select('id, category, title, body, image_url, video_url, published_at, status, league_id')
+      .eq('status', 'PUBLISHED');
+    if (currentLeague) news = news.or('league_id.is.null,league_id.eq.' + currentLeague);
+    news.order('published_at', { ascending: false }).limit(20)
       .then(function (res) {
         if (res.error || !(res.data || []).length) { $('newsItems').innerHTML = empty('No news yet.'); return; }
         $('newsItems').innerHTML = res.data.map(function (p) {
@@ -400,11 +430,11 @@
   }
   // Live matches: the score is counted from goal events
   function loadLive() {
-    db.from('matches').select('id, match_date, venue, match_status, match_minute, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
+    db.from('matches').select('id, match_date, venue, match_status, match_minute, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
       .in('match_status', ['LIVE', 'HT']).order('match_date', { ascending: true })
       .then(function (res) {
         if (res.error) { setLive(empty('Live matches are not available right now.')); return; }
-        var rows = res.data || [];
+        var rows = (res.data || []).filter(function (m) { return !currentLeague || String(m.league_id) === currentLeague; });
         if (!rows.length) { setLive(empty('No live matches right now.')); return; }
         db.from('match_events').select('match_id, team_name, event_type').in('match_id', rows.map(function (m) { return String(m.id); })).eq('event_type', 'goal')
           .then(function (ev) {
@@ -433,7 +463,9 @@
   }
 
   function refreshAll() {
-    loadMatches(); loadLive(); loadTable(); loadTeams(); loadPlayers(); loadNews(); loadPauseBanner();
+    loadLeagueData().then(function () {
+      loadMatches(); loadLive(); loadTable(); loadTeams(); loadPlayers(); loadNews(); loadPauseBanner();
+    });
   }
 
   // Live updates: changes in the database refresh the screens, with a short pause to batch them
