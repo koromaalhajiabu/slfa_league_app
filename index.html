@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=38">
 </head>
 
 <body>
@@ -121,23 +121,23 @@
     <div class="leagueSwitch" id="leagueSwitch" aria-label="Choose league"></div>
 
     <nav class="tabs" role="tablist" aria-label="League sections">
-      <button type="button" role="tab" data-tab="live" aria-selected="false">Live</button>
-      <button type="button" role="tab" data-tab="matches" aria-selected="true">Matches</button>
-      <button type="button" role="tab" data-tab="table" aria-selected="false">Table</button>
-      <button type="button" role="tab" data-tab="teams" aria-selected="false">Teams</button>
-      <button type="button" role="tab" data-tab="players" aria-selected="false">Players</button>
-      <button type="button" role="tab" data-tab="news" aria-selected="false">News</button>
-      <button type="button" role="tab" data-tab="videos" aria-selected="false">Videos</button>
-      <button type="button" role="tab" data-tab="predict" aria-selected="false">Predict</button>
+      <a role="tab" class="tab-link" href="#liveList" data-tab="live" aria-selected="false" aria-controls="liveList">Live</a>
+      <a role="tab" class="tab-link" href="#matchList" data-tab="matches" aria-selected="true" aria-controls="matchList">Matches</a>
+      <a role="tab" class="tab-link" href="#tableView" data-tab="table" aria-selected="false" aria-controls="tableView">Table</a>
+      <a role="tab" class="tab-link" href="#teamGrid" data-tab="teams" aria-selected="false" aria-controls="teamGrid">Teams</a>
+      <a role="tab" class="tab-link" href="#playersView" data-tab="players" aria-selected="false" aria-controls="playersView">Players</a>
+      <a role="tab" class="tab-link" href="#newsList" data-tab="news" aria-selected="false" aria-controls="newsList">News</a>
+      <a role="tab" class="tab-link" href="#videoList" data-tab="videos" aria-selected="false" aria-controls="videoList">Videos</a>
+      <a role="tab" class="tab-link" href="#predictList" data-tab="predict" aria-selected="false" aria-controls="predictList">Predict</a>
     </nav>
 
-    <div data-view="live" class="view card" id="liveList" hidden></div>
+    <div data-view="live" class="view card" id="liveList"></div>
 
     <div data-view="matches" class="view card" id="matchList">
       Loading matches…
     </div>
 
-    <div data-view="table" class="view card" hidden>
+    <div id="tableView" data-view="table" class="view card">
       <h3 class="sub">Standings</h3>
 
       <div class="scroll">
@@ -162,11 +162,11 @@
       </div>
     </div>
 
-    <div data-view="teams" class="view card" id="teamGrid" hidden>
+    <div data-view="teams" class="view card" id="teamGrid">
       Loading teams…
     </div>
 
-    <div data-view="players" class="view" hidden>
+    <div id="playersView" data-view="players" class="view">
       <div class="card">
         <h3 class="sub">Top scorers</h3>
         <div id="scorers">Loading…</div>
@@ -188,16 +188,16 @@
       </div>
     </div>
 
-    <div data-view="news" class="view" id="newsList" hidden>
+    <div data-view="news" class="view" id="newsList">
       <div id="pollList"></div>
       <div id="newsItems">Loading news…</div>
     </div>
 
-    <div data-view="videos" class="view card" id="videoList" hidden>
+    <div data-view="videos" class="view card" id="videoList">
       Loading videos…
     </div>
 
-    <div data-view="predict" class="view card" id="predictList" hidden>
+    <div data-view="predict" class="view card" id="predictList">
       Loading…
     </div>
 
@@ -500,8 +500,8 @@
 </script>
 
 <!-- Public league data and additional features -->
-<script src="public.js"></script>
-<script src="enhancements.js"></script>
+<script src="public.js?v=38"></script>
+<script src="enhancements.js?v=38"></script>
 
 </body>
 </html>
