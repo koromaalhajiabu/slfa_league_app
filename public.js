@@ -29,12 +29,13 @@
       .then(function (res) {
         if (res.error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
         var rows = res.data || [];
-        var up = rows.filter(function (m) { return m.home_score == null; });
-        var done = rows.filter(function (m) { return m.home_score != null; }).reverse();
+        var up = rows.filter(function (m) { return m.match_status !== 'LIVE' && m.home_score == null; });
+        var done = rows.filter(function (m) { return m.match_status !== 'LIVE' && m.home_score != null; }).reverse();
         $('matchList').innerHTML =
+          '<h3 class="sub">Playing now</h3><div id="playingNow">' + empty('Loading…') + '</div>' +
           '<h3 class="sub">Upcoming</h3>' + (up.length ? up.map(matchCard).join('') : empty('No upcoming matches yet.')) +
           '<h3 class="sub">Results</h3>' + (done.length ? done.map(matchCard).join('') : empty('No results yet.'));
-        wireMatchDetails();
+        loadLive();
       });
   }
   function matchCard(m) {
@@ -48,11 +49,16 @@
 
   // Match details: goals, cards and substitutions, published events only
   function wireMatchDetails() {
-    document.querySelectorAll('.match[data-match]').forEach(function (card) {
-      card.addEventListener('click', function () { toggleDetail(card); });
-      card.addEventListener('keydown', function (e) { if (e.key === 'Enter') toggleDetail(card); });
-    });
+    // Listens once for the whole page, so cards re-rendered by a refresh still open
   }
+  document.addEventListener('click', function (e) {
+    var card = e.target.closest && e.target.closest('.match[data-match]');
+    if (card) toggleDetail(card);
+  });
+  document.addEventListener('keydown', function (e) {
+    var card = e.target.closest && e.target.closest('.match[data-match]');
+    if (card && e.key === 'Enter') toggleDetail(card);
+  });
   function toggleDetail(card) {
     var box = card.querySelector('.detail');
     if (!box.hidden) { box.hidden = true; return; }
@@ -213,24 +219,27 @@
     });
   }
 
+  function setLive(html) {
+    $('liveList').innerHTML = html;
+    if ($('playingNow')) $('playingNow').innerHTML = html;
+  }
   // Live matches: the score is counted from goal events
   function loadLive() {
     db.from('matches').select('id, match_date, venue, match_status, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
       .eq('match_status', 'LIVE').order('match_date', { ascending: true })
       .then(function (res) {
-        if (res.error) { $('liveList').innerHTML = empty('Live matches are not available right now.'); return; }
+        if (res.error) { setLive(empty('Live matches are not available right now.')); return; }
         var rows = res.data || [];
-        if (!rows.length) { $('liveList').innerHTML = empty('No live matches right now.'); return; }
+        if (!rows.length) { setLive(empty('No live matches right now.')); return; }
         db.from('match_events').select('match_id, team_name, event_type').in('match_id', rows.map(function (m) { return String(m.id); })).eq('event_type', 'goal')
           .then(function (ev) {
             var goals = ev.data || [];
-            $('liveList').innerHTML = rows.map(function (m) {
+            setLive(rows.map(function (m) {
               var mid = String(m.id);
               m.home_score = goals.filter(function (g) { return g.match_id === mid && g.team_name === m.home_team; }).length;
               m.away_score = goals.filter(function (g) { return g.match_id === mid && g.team_name === m.away_team; }).length;
               return matchCard(m);
-            }).join('');
-            wireMatchDetails();
+            }).join(''));
           });
       });
   }
