@@ -17,7 +17,7 @@
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
   function fmt(d) { try { return new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return d || ''; } }
   function badge(url, name) {
-    return url ? '<img class="badge" src="' + esc(url) + '" alt="">' : '<span class="badge ph">' + esc((name || '?').charAt(0)) + '</span>';
+    return url ? '<img class="badge" src="' + esc(url) + '" alt="" loading="lazy" decoding="async">' : '<span class="badge ph">' + esc((name || '?').charAt(0)) + '</span>';
   }
   function empty(msg) { return '<p class="muted empty">' + msg + '</p>'; }
 
@@ -38,11 +38,11 @@
   function loadLeagueData() {
     return Promise.all([
       db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
-      db.from('league_clubs').select('club_name, league_id').eq('is_active', true)
+      db.from('league_clubs').select('club_name, league_id, logo_url').eq('is_active', true)
     ]).then(function (all) {
       leagueList = all[0].data || [];
       clubLeague = {};
-      (all[1].data || []).forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; });
+      (all[1].data || []).forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; clubLogos[c.club_name] = c.logo_url || ''; });
       renderLeagueSwitch();
     });
   }
@@ -76,22 +76,18 @@
   var MATCH_COLS = 'id, match_date, venue, match_status, match_minute, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number';
   function loadMatches() {
     Promise.all([
-      db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
       db.from('matches').select(MATCH_COLS).in('match_status', ['SCHEDULED', 'RESCHEDULED', 'POSTPONED', 'CANCELLED']).order('match_date', { ascending: true }).limit(200),
-      db.from('matches').select(MATCH_COLS).eq('match_status', 'FT').order('match_date', { ascending: false }).limit(200),
-      db.from('league_clubs').select('club_name, logo_url').eq('is_active', true)
+      db.from('matches').select(MATCH_COLS).eq('match_status', 'FT').order('match_date', { ascending: false }).limit(200)
     ]).then(function (all) {
-      if (all[1].error || all[2].error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
-      leaguesCache = all[0].data || [];
-      var up = all[1].data || [];
-      var done = all[2].data || [];
+      if (all[0].error || all[1].error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
+      leaguesCache = leagueList;
+      var up = all[0].data || [];
+      var done = all[1].data || [];
       var teams = {};
       up.concat(done).forEach(function (m) { teams[m.home_team] = true; teams[m.away_team] = true; });
       var teamOpts = Object.keys(teams).sort().map(function (t) {
         return '<option value="' + esc(t) + '"' + (t === resultsTeam ? ' selected' : '') + '>' + esc(t) + '</option>';
       }).join('');
-      clubLogos = {};
-      (all[3].data || []).forEach(function (c) { clubLogos[c.club_name] = c.logo_url; });
       $('matchList').innerHTML =
         '<div class="mc">' +
         '<div class="datebar"><button class="small" data-day="-1" aria-label="Previous day">‹</button>' +
@@ -114,7 +110,6 @@
       });
       renderUpcoming(up);
       renderResults(done);
-      loadLive();
     });
   }
   // Matches grouped under each league's name, in league order; matches with no league go last
@@ -209,12 +204,9 @@
 
   // League table: one standings table per league
   function loadTable() {
-    Promise.all([
-      db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
-      db.from('league_standings').select('league_id, pos, club, mp, w, d, l, gf, ga, pts').order('pos', { ascending: true })
-    ]).then(function (all) {
-      if (all[1].error) { $('tableBody').innerHTML = '<tr><td colspan="9">The table is not available right now.</td></tr>'; return; }
-      var leagues = all[0].data || [], rows = all[1].data || [];
+    db.from('league_standings').select('league_id, pos, club, mp, w, d, l, gf, ga, pts').order('pos', { ascending: true }).then(function (res) {
+      if (res.error) { $('tableBody').innerHTML = '<tr><td colspan="9">The table is not available right now.</td></tr>'; return; }
+      var leagues = leagueList, rows = res.data || [];
       if (!rows.length) { $('tableBody').innerHTML = '<tr><td colspan="9">The table will appear after the first results.</td></tr>'; return; }
       var html = '';
       leagues.concat([{ id: null, name: 'Other' }]).forEach(function (lg) {
@@ -337,7 +329,7 @@
         if (res.error || !(res.data || []).length) { $('newsItems').innerHTML = empty('No news yet.'); return; }
         $('newsItems').innerHTML = res.data.map(function (p) {
           return '<article class="news">' +
-            (p.image_url ? '<img src="' + esc(p.image_url) + '" alt="">' : '') +
+            (p.image_url ? '<img src="' + esc(p.image_url) + '" alt="" loading="lazy" decoding="async">' : '') +
             '<div class="meta">' + esc(CAT_LABEL[p.category] || 'News') + ' · ' + esc(fmt(p.published_at)) + '</div>' +
             '<h3>' + esc(p.title) + '</h3>' +
             '<p>' + esc(p.body) + '</p>' +
@@ -585,7 +577,7 @@
       ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, scheduleRefresh);
     });
     ch.subscribe();
-    setInterval(refreshAll, 120000);
+    setInterval(loadLive, 60000);
   }
 
   refreshAll();
