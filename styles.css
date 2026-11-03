@@ -405,3 +405,131 @@ button.danger { color:#b3261e; background:linear-gradient(135deg, rgba(255,255,2
 .brand h1 { font-size:14px; letter-spacing:.1em; }
 button { font-family:inherit; }
 .admin-body .btns button { white-space:nowrap; font-size:13px; padding-left:8px; padding-right:8px; }
+
+
+/* ===== SLFA PREMIUM COMPACT DISPLAY ===== */
+
+/* MATCHES */
+.mc .match {
+  padding: 10px;
+  margin: 7px 0;
+  border-radius: 12px;
+}
+
+.mc .match .meta {
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.mc .teams {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  gap: 6px;
+}
+
+.mc .score {
+  font-size: 17px;
+  font-weight: 700;
+  padding: 3px 8px;
+}
+
+.mc .vs {
+  font-size: 11px;
+  padding: 3px 7px;
+}
+
+.mc .badge {
+  width: 22px;
+  height: 22px;
+}
+
+.mc .sub,
+.mc .league-name {
+  font-size: 11.5px;
+  margin: 12px 0 5px;
+}
+
+/* LEAGUE TABLE */
+.table {
+  font-size: 11px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 7px 4px;
+}
+
+.table th {
+  font-size: 9px;
+  letter-spacing: .04em;
+}
+
+.table .club {
+  min-width: 105px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.table .pts {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* TEAMS DIRECTORY */
+#teamGrid .team {
+  padding: 8px 10px;
+  margin: 5px 0;
+  gap: 8px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+#teamGrid .team .badge {
+  width: 25px;
+  height: 25px;
+}
+
+#teamGrid .team > span:last-child {
+  overflow-wrap: anywhere;
+}
+
+/* PHONE OPTIMIZATION */
+@media (max-width: 480px) {
+  .mc .teams {
+    font-size: 11px;
+    gap: 5px;
+  }
+
+  .mc .score {
+    font-size: 15px;
+    padding: 3px 6px;
+  }
+
+  .table {
+    font-size: 10px;
+  }
+
+  .table th {
+    font-size: 8px;
+    padding: 7px 3px;
+  }
+
+  .table td {
+    padding: 7px 3px;
+  }
+
+  .table .club {
+    font-size: 10px;
+    min-width: 95px;
+  }
+
+  #teamGrid .team {
+    font-size: 11px;
+  }
+}
