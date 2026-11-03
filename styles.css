@@ -802,3 +802,42 @@ button { font-family:inherit; }
 #matchList .mc .empty {
   color: #64748b !important;
 }
+
+/* ===== MATCH SECTIONS: LIGHT BACKGROUNDS ===== */
+#matchList .mc #playingNow,
+#matchList .mc #upcomingList,
+#matchList .mc #resultsList {
+  background: #f1f5f2 !important;
+  color: #183047 !important;
+  border: 1px solid #dce6df !important;
+  border-radius: 12px !important;
+  padding: 10px !important;
+}
+
+/* Keep individual match cards readable */
+#matchList .mc #playingNow .match,
+#matchList .mc #upcomingList .match,
+#matchList .mc #resultsList .match {
+  background: #ffffff !important;
+  color: #183047 !important;
+  border: 1px solid #d6e2da !important;
+}
+
+/* ===== DATE SELECTOR: SOFTER, LESS BRIGHT ===== */
+#matchList .mc .datebar {
+  background: #e5ebe7 !important;
+  border: 1px solid #d1dcd4 !important;
+}
+
+#matchList .mc .datebar input[type="date"] {
+  background: #e9eeeb !important;
+  color: #263b32 !important;
+  border: 1px solid #bdcbc2 !important;
+  color-scheme: light;
+}
+
+#matchList .mc .datebar button {
+  background: #dce6df !important;
+  color: #254735 !important;
+  border: 1px solid #bdcec2 !important;
+}
