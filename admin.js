@@ -600,7 +600,7 @@
       '<h2 class="rt">My matches</h2>' +
       '<label for="rfMatch">Match</label><select id="rfMatch"><option value="">Loading your matches…</option></select>' +
       '<div class="scores"><span id="rfScore" class="score-big">0 – 0</span></div>' +
-      '<div class="btns"><button class="secondary" id="rfStart">Start match</button><button class="primary" id="rfEnd">End and submit score</button></div>' +
+      '<div class="btns"><button class="secondary" id="rfStart">Start match</button><button class="primary" id="rfEnd">End and save final score</button></div>' +
       '<h2 class="rt">Events so far</h2><div id="rfEvents" class="muted">No events yet.</div>' +
       '<div id="rfPanel" class="hidden">' +
         '<div class="btns"><button class="secondary" id="rfHalf">Half time</button><button class="secondary" id="rfSecond">Second half</button></div>' +
@@ -635,13 +635,9 @@
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
       db.from('matches').select('id, home_team, away_team').eq('id', id).maybeSingle().then(function (r) {
         var m = r.data; var hg = goalsFor(m.home_team), ag = goalsFor(m.away_team);
-        if (!confirm('Submit ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + ' for the Super Admin to approve?')) return;
-        return db.auth.getUser().then(function (u) {
-          return db.from('match_results').insert([{ match_id: String(id), home_team: m.home_team, away_team: m.away_team, home_goals: hg, away_goals: ag, status: 'PENDING', recorded_by: u.data.user.id }]);
-        }).then(function (res) {
-          if (res.error) { msg(res.error.message); return; }
-          return setMatch(id, { match_status: 'FT', match_minute: null }).then(function () {
-            msg('Score submitted for approval.'); loadRefMatch(id); });
+        if (!confirm('Save ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + ' as the final score? It goes straight to the table.')) return;
+        return db.rpc('referee_submit_final', { p_match_id: Number(id), p_home: hg, p_away: ag }).then(function (res) {
+          msg(res.error ? res.error.message : 'Final score saved and the table updated.'); loadRefMatch(id);
         });
       });
     });
