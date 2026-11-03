@@ -23,20 +23,37 @@
   });
 
   // Matches
+  // Upcoming and results are loaded separately, so the newest results are never cut off
+  var resultsTeam = '';
+  var MATCH_COLS = 'id, match_date, venue, match_status, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number';
   function loadMatches() {
-    db.from('matches').select('id, match_date, venue, match_status, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
-      .order('match_date', { ascending: true }).limit(200)
-      .then(function (res) {
-        if (res.error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
-        var rows = res.data || [];
-        var up = rows.filter(function (m) { return m.match_status !== 'LIVE' && m.home_score == null; });
-        var done = rows.filter(function (m) { return m.match_status !== 'LIVE' && m.home_score != null; }).reverse();
-        $('matchList').innerHTML =
-          '<h3 class="sub">Playing now</h3><div id="playingNow">' + empty('Loading…') + '</div>' +
-          '<h3 class="sub">Upcoming</h3>' + (up.length ? up.map(matchCard).join('') : empty('No upcoming matches yet.')) +
-          '<h3 class="sub">Results</h3>' + (done.length ? done.map(matchCard).join('') : empty('No results yet.'));
-        loadLive();
-      });
+    Promise.all([
+      db.from('matches').select(MATCH_COLS).neq('match_status', 'LIVE').is('home_score', null).order('match_date', { ascending: true }).limit(200),
+      db.from('matches').select(MATCH_COLS).neq('match_status', 'LIVE').not('home_score', 'is', null).order('match_date', { ascending: false }).limit(200)
+    ]).then(function (all) {
+      if (all[0].error || all[1].error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
+      var up = all[0].data || [];
+      var done = all[1].data || [];
+      var teams = {};
+      up.concat(done).forEach(function (m) { teams[m.home_team] = true; teams[m.away_team] = true; });
+      var options = Object.keys(teams).sort().map(function (t) {
+        return '<option value="' + esc(t) + '"' + (t === resultsTeam ? ' selected' : '') + '>' + esc(t) + '</option>';
+      }).join('');
+      $('matchList').innerHTML =
+        '<h3 class="sub">Playing now</h3><div id="playingNow">' + empty('Loading…') + '</div>' +
+        '<h3 class="sub">Upcoming</h3>' + (up.length ? up.map(matchCard).join('') : empty('No upcoming matches yet.')) +
+        '<h3 class="sub">Results</h3>' +
+        '<label class="filter">Team <select id="teamFilter"><option value="">All teams</option>' + options + '</select></label>' +
+        '<div id="resultsList"></div>';
+      $('teamFilter').addEventListener('change', function () { resultsTeam = this.value; renderResults(done); });
+      renderResults(done);
+      loadLive();
+    });
+  }
+  function renderResults(rows) {
+    var list = resultsTeam ? rows.filter(function (m) { return m.home_team === resultsTeam || m.away_team === resultsTeam; }) : rows;
+    $('resultsList').innerHTML = list.length ? list.map(matchCard).join('')
+      : empty(resultsTeam ? 'No results for ' + esc(resultsTeam) + ' yet.' : 'No results yet.');
   }
   function matchCard(m) {
     var score = m.home_score == null ? '<span class="vs">v</span>' : '<span class="score">' + esc(m.home_score) + ' – ' + esc(m.away_score) + '</span>';
