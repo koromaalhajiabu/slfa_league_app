@@ -291,3 +291,81 @@ button.primary { background:var(--flag-blue); color:#ffffff; }
 
 /* Offline notice */
 .offline-banner { margin:8px 0; padding:10px 14px; border-radius:12px; background:#fff4d6; color:#4a3600; border:1px solid #e7c25a; font-size:14px; }
+
+/* ===== Premium green & white theme with glowing glass blue buttons ===== */
+:root {
+  --bg:#f3f9f5; --bg2:#ffffff; --card:#ffffff; --ink:#0d2416; --muted:#4f6b58;
+  --accent:#0c7a2b; --accent2:#0a5e24; --line:rgba(12,122,43,.16);
+  --glass-blue:#0a84ff; --glass-blue-deep:#0061c9; --glow:rgba(10,132,255,.55);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#05130b; --bg2:#0a2014; --card:#0e2a19; --ink:#f4fbf6; --muted:#a9c7b2;
+    --accent:#3ddc6a; --accent2:#e9fff0; --line:rgba(61,220,106,.22);
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#05130b; --bg2:#0a2014; --card:#0e2a19; --ink:#f4fbf6; --muted:#a9c7b2;
+  --accent:#3ddc6a; --accent2:#e9fff0; --line:rgba(61,220,106,.22);
+}
+body { background:radial-gradient(900px 500px at 90% -10%, rgba(12,122,43,.10), transparent 60%), var(--bg); }
+.topbar::after { background:linear-gradient(90deg, #0c7a2b, #3ddc6a 50%, #ffffff); }
+.card { border-top:4px solid #0c7a2b; box-shadow:0 10px 28px -18px rgba(12,80,35,.35); }
+.title, .kicker { color:var(--accent); }
+.table thead th { background:#0c7a2b; color:#ffffff; }
+.league-row td { color:var(--accent2); }
+
+/* Glass blue buttons: translucent, blurred, with a slow glow pulse and a moving sheen */
+button.primary, button.secondary, button.small, .btnlink, .tabs button, .leagueSwitch .chip {
+  position:relative; overflow:hidden; isolation:isolate;
+  -webkit-backdrop-filter:blur(14px) saturate(170%); backdrop-filter:blur(14px) saturate(170%);
+  border:1px solid rgba(255,255,255,.45); color:#0a2a52;
+  background:linear-gradient(135deg, rgba(10,132,255,.22), rgba(255,255,255,.55));
+  box-shadow:0 0 14px -4px var(--glow), inset 0 1px 0 rgba(255,255,255,.7);
+  transition:transform .15s ease, box-shadow .3s ease, filter .3s ease;
+}
+button.primary::before, button.secondary::before, button.small::before, .btnlink::before,
+.tabs button::before, .leagueSwitch .chip::before {
+  content:""; position:absolute; top:0; bottom:0; left:-60%; width:45%; z-index:-1; pointer-events:none;
+  background:linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
+  transform:skewX(-20deg); animation:glassSheen 4.5s ease-in-out infinite;
+}
+button.primary, .tabs button[aria-selected="true"], .leagueSwitch .chip.on {
+  background:linear-gradient(135deg, rgba(10,132,255,.92), rgba(0,97,201,.85) 55%, rgba(60,170,255,.9));
+  color:#ffffff; border-color:rgba(255,255,255,.55); text-shadow:0 1px 2px rgba(0,30,70,.35);
+  animation:glowPulse 3.2s ease-in-out infinite;
+}
+button.primary:hover, button.secondary:hover, button.small:hover, .tabs button:hover, .leagueSwitch .chip:hover {
+  transform:translateY(-1px); filter:brightness(1.06);
+}
+button.primary:disabled, button.secondary:disabled, button.small:disabled { opacity:.55; animation:none; }
+button.danger { color:#b3261e; background:linear-gradient(135deg, rgba(255,255,255,.7), rgba(255,220,216,.5)); border-color:rgba(179,38,30,.45); box-shadow:0 0 12px -4px rgba(179,38,30,.4); }
+.tabs button { color:#0061c9; }
+@keyframes glowPulse {
+  0%, 100% { box-shadow:0 0 14px -2px rgba(10,132,255,.45), 0 0 0 0 rgba(10,132,255,0), inset 0 1px 0 rgba(255,255,255,.5); }
+  50% { box-shadow:0 0 26px 2px rgba(10,132,255,.7), 0 0 60px -8px rgba(10,132,255,.45), inset 0 1px 0 rgba(255,255,255,.5); }
+}
+@keyframes glassSheen { 0%, 60% { left:-60%; } 100% { left:130%; } }
+@media (prefers-reduced-motion: reduce) {
+  button.primary, .tabs button[aria-selected="true"], .leagueSwitch .chip.on { animation:none; }
+  button.primary::before, button.secondary::before, button.small::before, .btnlink::before,
+  .tabs button::before, .leagueSwitch .chip::before { animation:none; display:none; }
+}
+
+/* Premium theme refinements: hero in green and white, readable glass buttons in dark mode */
+.hero { background:radial-gradient(120% 140% at 0% 0%, rgba(12,122,43,.14), transparent 55%), linear-gradient(135deg, #ffffff, #eef8f1); }
+.hero::after { border-color:rgba(12,122,43,.2); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hero { background:radial-gradient(120% 140% at 0% 0%, rgba(61,220,106,.22), transparent 55%), linear-gradient(135deg, #0c2a17, #071a0e); }
+  :root:not([data-theme="light"]) button.secondary, :root:not([data-theme="light"]) button.small, :root:not([data-theme="light"]) .btnlink,
+  :root:not([data-theme="light"]) .tabs button, :root:not([data-theme="light"]) .leagueSwitch .chip {
+    background:linear-gradient(135deg, rgba(10,132,255,.28), rgba(255,255,255,.08)); color:#f4fbf6; border-color:rgba(160,220,255,.4);
+  }
+  :root:not([data-theme="light"]) .tabs button { color:#f4fbf6; }
+}
+:root[data-theme="dark"] .hero { background:radial-gradient(120% 140% at 0% 0%, rgba(61,220,106,.22), transparent 55%), linear-gradient(135deg, #0c2a17, #071a0e); }
+:root[data-theme="dark"] button.secondary, :root[data-theme="dark"] button.small, :root[data-theme="dark"] .btnlink,
+:root[data-theme="dark"] .tabs button, :root[data-theme="dark"] .leagueSwitch .chip {
+  background:linear-gradient(135deg, rgba(10,132,255,.28), rgba(255,255,255,.08)); color:#f4fbf6; border-color:rgba(160,220,255,.4);
+}
+:root[data-theme="dark"] .tabs button { color:#f4fbf6; }
