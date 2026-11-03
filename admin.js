@@ -317,19 +317,65 @@
   // ---------- TECHNICAL DIRECTOR: assign roles ----------
   var clubsCache = [];
   var ROLE_OPTIONS = [['VIEWER','Viewer'],['PLAYER','Player'],['CLUB_ADMIN','Club Manager'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['FINANCE_OFFICER','Finance Officer'],['STAFF','Staff (read-only)'],['SUPER_ADMIN','Super Admin']];
+  var devUser = null;
   function developer(p) {
+    devUser = p;
     box().innerHTML =
       '<h2 class="rt">League status</h2><div id="leagueState" class="muted">Checking…</div>' +
       '<div class="btns"><button class="secondary" id="pauseBtn">Freeze league</button><button class="primary" id="resumeBtn">Resume league</button></div>' +
+      '<h2 class="rt">Assign a role</h2><p class="muted">Enter the person\'s email and choose the role. If they already have an account, the role applies now. If not, it applies as soon as they create one.</p>' +
+      input('ivEmail', 'Email address', 'email') +
+      '<label for="ivRole">Role</label><select id="ivRole">' + ROLE_OPTIONS.map(function (o) { return '<option value="' + o[0] + '">' + esc(o[1]) + '</option>'; }).join('') + '</select>' +
+      '<label for="ivClub">Club (Club Managers only)</label><select id="ivClub"><option value="">Loading clubs…</option></select>' +
+      input('ivReason', 'Reason (kept in the log)') +
+      '<div class="btns"><button class="primary" id="ivSave">Save role</button></div>' +
+      '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>' +
       '<h2 class="rt">Accounts</h2><p class="muted">Assign roles, suspend or restore. Each change needs a reason and is logged.</p>' +
       '<div id="roleList" class="muted">Loading accounts…</div>' +
       '<h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
-    loadLeagueState(); loadAccountsDev(p); loadRoleLog();
+    loadLeagueState(); loadAccountsDev(p); loadRoleLog(); loadInviteForm();
 
     $('pauseBtn').addEventListener('click', function () { setPause(true); });
     $('resumeBtn').addEventListener('click', function () { setPause(false); });
+  }
+
+  function loadInviteForm() {
+    db.from('league_clubs').select('id, club_name').order('club_name').then(function (c) {
+      $('ivClub').innerHTML = '<option value="">No club</option>' + (c.data || []).map(function (k) {
+        return '<option value="' + esc(k.id) + '">' + esc(k.club_name) + '</option>';
+      }).join('');
+    });
+    $('ivSave').addEventListener('click', saveInvite);
+    loadInvites();
+  }
+  function saveInvite() {
+    var email = $('ivEmail').value.trim(), role = $('ivRole').value, club = $('ivClub').value || null, reason = $('ivReason').value.trim();
+    if (!email) { msg('Enter the email address.'); return; }
+    if (reason.length < 5) { msg('Give a reason of at least 5 characters.'); return; }
+    db.rpc('invite_user', { p_email: email, p_role: role, p_club: club, p_reason: reason }).then(function (res) {
+      if (res.error) { msg(res.error.message); return; }
+      msg(res.data || 'Saved.');
+      $('ivEmail').value = ''; $('ivReason').value = '';
+      loadInvites(); loadRoleLog(); if (devUser) loadAccountsDev(devUser);
+    });
+  }
+  function loadInvites() {
+    db.from('role_invitations').select('email, system_role, invited_at').order('invited_at', { ascending: false }).then(function (r) {
+      var rows = r.data || [];
+      $('ivList').innerHTML = rows.length ? rows.map(function (x) {
+        return '<div class="post"><strong>' + esc(x.email) + '</strong><div class="muted">' + esc(x.system_role) + ' · waiting for sign-up</div>' +
+          '<div class="btns"><button class="small danger" data-cancel="' + esc(x.email) + '">Cancel</button></div></div>';
+      }).join('') : 'No pending role assignments.';
+      document.querySelectorAll('[data-cancel]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          db.from('role_invitations').delete().eq('email', b.dataset.cancel).then(function (res) {
+            msg(res.error ? res.error.message : 'Cancelled.'); loadInvites();
+          });
+        });
+      });
+    });
   }
 
   function loadLeagueState() {
