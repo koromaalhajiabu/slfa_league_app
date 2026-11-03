@@ -236,8 +236,7 @@
           el.addEventListener('click', function () { loadSquadPublic(el.dataset.club, el.dataset.name); });
           el.addEventListener('keydown', function (e) { if (e.key === 'Enter') loadSquadPublic(el.dataset.club, el.dataset.name); });
         });
-        if (selectedClub) loadSquadPublic(selectedClub.id, selectedClub.name);
-      });
+    if (selectedClub) loadSquadPublic(selectedClub.id, selectedClub.name);
   }
 
   // Squad for one club: approved, active players for the current season
