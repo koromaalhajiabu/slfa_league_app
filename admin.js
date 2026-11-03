@@ -44,10 +44,17 @@
       '<label for="resMatch">Match</label><select id="resMatch"><option value="">Loading matches…</option></select>' +
       '<div class="scores"><input id="resHome" type="number" min="0" placeholder="Home"><span>–</span><input id="resAway" type="number" min="0" placeholder="Away"></div>' +
       '<div class="btns"><button class="primary" id="resSave">Record result</button></div>' +
+      '<h2 class="rt">Match status</h2>' +
+      '<label for="msMatch">Match</label><select id="msMatch"><option value="">Loading matches…</option></select>' +
+      '<label for="msStatus">Status</label><select id="msStatus"><option value="SCHEDULED">Scheduled</option><option value="POSTPONED">Postponed</option><option value="RESCHEDULED">Rescheduled</option><option value="CANCELLED">Cancelled</option></select>' +
+      input('msReason', 'Reason (optional)') +
+      '<div class="btns"><button class="primary" id="msSave">Save status</button></div>' +
       '<h2 class="rt">Live match</h2>' +
       '<label for="lvMatch">Match</label><select id="lvMatch"><option value="">Loading matches…</option></select>' +
       '<div class="btns"><button class="secondary" id="lvStart">Start match</button><button class="primary" id="lvEnd">End match</button></div>' +
       '<div id="lvPanel" class="hidden">' +
+        '<div class="btns"><button class="secondary" id="lvHalf">Half time</button><button class="secondary" id="lvSecond">Second half</button></div>' +
+        input('lvMin', 'Current minute', 'number', 'min="0" max="130"') + '<div class="btns"><button class="secondary" id="lvMinSave">Update minute</button></div>' +
         '<label for="lvTeam">Team</label><select id="lvTeam"></select>' +
         input('lvPlayer', 'Player') + input('lvAssist', 'Assist (optional)') + input('lvOff', 'Player off (substitutions only)') +
         '<label for="lvType">Event</label><select id="lvType"><option value="goal">Goal</option><option value="yellow_card">Yellow card</option><option value="red_card">Red card</option><option value="substitution">Substitution</option></select>' +
@@ -68,7 +75,7 @@
       var h = $('fxHome').value.trim(), a = $('fxAway').value.trim(), d = $('fxDate').value, v = $('fxVenue').value.trim();
       if (!h || !a || !d) { msg('Enter both teams and the date.'); return; }
       db.from('seasons').select('id').order('id', { ascending: false }).limit(1).maybeSingle().then(function (s) {
-        return db.from('matches').insert([{ home_team: h, away_team: a, match_date: new Date(d).toISOString(), venue: v || null, season_id: s.data ? s.data.id : null }]);
+        return db.from('matches').insert([{ home_team: h, away_team: a, match_date: new Date(d).toISOString(), venue: v || null, season_id: s.data ? s.data.id : null, home_score: null, away_score: null, match_status: 'SCHEDULED' }]);
       }).then(function (r) {
         if (r.error) { msg(r.error.message); return; }
         msg('Fixture added.'); $('fxHome').value = ''; $('fxAway').value = ''; $('fxVenue').value = ''; loadMatchesForResult();
@@ -81,13 +88,23 @@
       if (!id || isNaN(h) || isNaN(a)) { msg('Choose a match and enter both scores.'); return; }
       db.rpc('record_match_result', { p_match_id: Number(id), p_home: h, p_away: a }).then(function (r) {
         if (r.error) { msg(r.error.message); return; }
-        msg('Result recorded and the table updated.'); $('resHome').value = ''; $('resAway').value = ''; loadMatchesForResult();
+        return setMatch(id, { match_status: 'FT', match_minute: null }).then(function () {
+          msg('Result recorded and the table updated.'); $('resHome').value = ''; $('resAway').value = ''; loadMatchesForResult();
+        });
       });
     });
 
     loadReview();
     loadSquadReview();
     loadTransferReview();
+    $('msSave').addEventListener('click', function () {
+      var id = $('msMatch').value, st = $('msStatus').value, reason = $('msReason').value.trim();
+      if (!id) { msg('Choose a match.'); return; }
+      setMatch(id, { match_status: st, status_reason: reason || null, status_set_at: new Date().toISOString() }).then(function (r) {
+        msg(r.error ? r.error.message : 'Status saved.'); $('msReason').value = ''; loadStatusOptions();
+      });
+    });
+    loadStatusOptions();
     wireLive();
     loadAssignOptions();
     loadPendingResults();
@@ -142,7 +159,7 @@
     $('lvMatch').addEventListener('change', function () { liveMatch = null; loadLiveMatch(this.value); });
     $('lvStart').addEventListener('click', function () {
       var id = $('lvMatch').value; if (!id) { msg('Choose a match.'); return; }
-      db.from('matches').update({ match_status: 'LIVE' }).eq('id', id).then(function (r) {
+      setMatch(id, { match_status: 'LIVE', match_minute: 0 }).then(function (r) {
         msg(r.error ? r.error.message : 'Match is live.'); loadLiveMatch(id); loadLiveOptions();
       });
     });
@@ -152,11 +169,12 @@
       if (!confirm('End the match at ' + liveMatch.home_team + ' ' + hg + ' – ' + ag + ' ' + liveMatch.away_team + '? This saves the result to the table.')) return;
       db.rpc('record_match_result', { p_match_id: Number(id), p_home: hg, p_away: ag }).then(function (r) {
         if (r.error) { msg(r.error.message); return; }
-        return db.from('matches').update({ match_status: 'FINISHED' }).eq('id', id).then(function () {
+        return setMatch(id, { match_status: 'FT', match_minute: null }).then(function () {
           msg('Match finished and the table updated.'); liveMatch = null; loadLiveOptions(); loadLiveMatch('');
         });
       });
     });
+    wireMatchTime('lv', 'lvMatch');
     $('lvAdd').addEventListener('click', function () {
       if (!liveMatch) { msg('Choose a live match.'); return; }
       var type = $('lvType').value, player = $('lvPlayer').value.trim(), minute = parseInt($('lvMinute').value, 10);
@@ -195,7 +213,7 @@
       liveMatch = r.data;
       if (!liveMatch) return;
       $('lvTeam').innerHTML = '<option>' + esc(liveMatch.home_team) + '</option><option>' + esc(liveMatch.away_team) + '</option>';
-      $('lvPanel').classList.toggle('hidden', liveMatch.match_status !== 'LIVE');
+      $('lvPanel').classList.toggle('hidden', liveMatch.match_status !== 'LIVE' && liveMatch.match_status !== 'HT');
       db.from('match_events').select('event_type, team_name, player_name, minute').eq('match_id', String(id)).order('minute', { ascending: true })
         .then(function (e) { liveEvents = e.data || []; });
     });
@@ -211,6 +229,13 @@
       });
   }
 
+  function loadStatusOptions() {
+    db.from('matches').select('id, home_team, away_team, match_status').order('match_date', { ascending: false }).limit(60).then(function (r) {
+      $('msMatch').innerHTML = '<option value="">Choose a match…</option>' + (r.data || []).map(function (m) {
+        return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + ' · ' + esc(m.match_status) + '</option>';
+      }).join('');
+    });
+  }
   function loadReview() {
     db.from('media_posts').select('id, title, category, body, created_by_name, submitted_at').eq('status', 'SUBMITTED').order('submitted_at', { ascending: true })
       .then(function (r) {
@@ -574,6 +599,8 @@
       '<div class="btns"><button class="secondary" id="rfStart">Start match</button><button class="primary" id="rfEnd">End and submit score</button></div>' +
       '<h2 class="rt">Events so far</h2><div id="rfEvents" class="muted">No events yet.</div>' +
       '<div id="rfPanel" class="hidden">' +
+        '<div class="btns"><button class="secondary" id="rfHalf">Half time</button><button class="secondary" id="rfSecond">Second half</button></div>' +
+        input('rfMin', 'Current minute', 'number', 'min="0" max="130"') + '<div class="btns"><button class="secondary" id="rfMinSave">Update minute</button></div>' +
         '<label for="rfTeam">Team</label><select id="rfTeam"></select>' +
         input('rfPlayer', 'Player') + input('rfAssist', 'Assist (optional)') + input('rfOff', 'Player off (substitutions only)') +
         '<label for="rfType">Event</label><select id="rfType"><option value="goal">Goal</option><option value="yellow_card">Yellow card</option><option value="red_card">Red card</option><option value="substitution">Substitution</option></select>' +
@@ -597,7 +624,7 @@
     $('rfMatch').addEventListener('change', function () { loadRefMatch(this.value); });
     $('rfStart').addEventListener('click', function () {
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
-      db.from('matches').update({ match_status: 'LIVE' }).eq('id', id).then(function (r) {
+      setMatch(id, { match_status: 'LIVE', match_minute: 0 }).then(function (r) {
         msg(r.error ? r.error.message : 'Match is live.'); loadRefMatch(id); });
     });
     $('rfEnd').addEventListener('click', function () {
@@ -609,11 +636,12 @@
           return db.from('match_results').insert([{ match_id: String(id), home_team: m.home_team, away_team: m.away_team, home_goals: hg, away_goals: ag, status: 'PENDING', recorded_by: u.data.user.id }]);
         }).then(function (res) {
           if (res.error) { msg(res.error.message); return; }
-          return db.from('matches').update({ match_status: 'FINISHED' }).eq('id', id).then(function () {
+          return setMatch(id, { match_status: 'FT', match_minute: null }).then(function () {
             msg('Score submitted for approval.'); loadRefMatch(id); });
         });
       });
     });
+    wireMatchTime('rf', 'rfMatch');
     $('rfAdd').addEventListener('click', function () {
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
       var type = $('rfType').value, player = $('rfPlayer').value.trim(), minute = parseInt($('rfMinute').value, 10);
@@ -630,13 +658,25 @@
       });
     });
   }
+  function setMatch(id, fields) { return db.from('matches').update(fields).eq('id', id); }
+  // Half time, second half and the current minute, for the Super Admin or the referee
+  function wireMatchTime(prefix, matchSel) {
+    $(prefix + 'Half').addEventListener('click', function () { var id = $(matchSel).value; if (!id) return; setMatch(id, { match_status: 'HT', match_minute: 45 }).then(function (r) { msg(r.error ? r.error.message : 'Half time.'); }); });
+    $(prefix + 'Second').addEventListener('click', function () { var id = $(matchSel).value; if (!id) return; setMatch(id, { match_status: 'LIVE', match_minute: 46 }).then(function (r) { msg(r.error ? r.error.message : 'Second half started.'); }); });
+    $(prefix + 'MinSave').addEventListener('click', function () {
+      var id = $(matchSel).value, n = parseInt($(prefix + 'Min').value, 10);
+      if (!id) return;
+      if (isNaN(n) || n < 0 || n > 130) { msg('Enter a minute between 0 and 130.'); return; }
+      setMatch(id, { match_minute: n }).then(function (r) { msg(r.error ? r.error.message : 'Minute updated.'); });
+    });
+  }
   function goalsFor(team) { return refEvents.filter(function (e) { return e.event_type === 'goal' && e.team_name === team; }).length; }
   function loadRefMatch(id) {
     if (!id) { $('rfPanel').classList.add('hidden'); return; }
     db.from('matches').select('id, home_team, away_team, match_status').eq('id', id).maybeSingle().then(function (r) {
       var m = r.data; if (!m) return;
       $('rfTeam').innerHTML = '<option>' + esc(m.home_team) + '</option><option>' + esc(m.away_team) + '</option>';
-      $('rfPanel').classList.toggle('hidden', m.match_status !== 'LIVE');
+      $('rfPanel').classList.toggle('hidden', m.match_status !== 'LIVE' && m.match_status !== 'HT');
       db.from('match_events').select('id, event_type, team_name, player_name, player_off_name, minute').eq('match_id', String(id)).order('minute', { ascending: true }).then(function (e) {
         refEvents = e.data || [];
         $('rfScore').textContent = goalsFor(m.home_team) + ' – ' + goalsFor(m.away_team);
