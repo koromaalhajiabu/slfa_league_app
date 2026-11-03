@@ -124,16 +124,18 @@
   function renderUpcoming(rows) {
     var list = onDate(rows);
     $('upcomingList').innerHTML = byLeague(list) || empty(dateSel ? 'No upcoming matches on this date.' : currentLeague ? 'No upcoming matches in this league.' : 'No upcoming matches yet.');
+    restoreOpenDetails();
   }
   function renderResults(rows) {
     var list = onDate(resultsTeam ? rows.filter(function (m) { return m.home_team === resultsTeam || m.away_team === resultsTeam; }) : rows);
     $('resultsList').innerHTML = byLeague(list) || empty(dateSel ? 'No results on this date.' : resultsTeam ? 'No results for ' + esc(resultsTeam) + ' yet.' : 'No results yet.');
+    restoreOpenDetails();
   }
   function matchCard(m) {
     var st = m.match_status;
     var playing = st === 'LIVE' || st === 'HT' || st === 'FT';
     var score = playing && m.home_score != null ? '<span class="score">' + esc(m.home_score) + ' – ' + esc(m.away_score) + '</span>' : '<span class="vs">v</span>';
-    var label = st === 'LIVE' ? (m.match_minute != null ? esc(m.match_minute) + "'" : 'Live')
+    var label = st === 'LIVE' ? '<span class="livedot" aria-hidden="true"></span>' + (m.match_minute != null ? esc(m.match_minute) + "'" : 'Live')
       : st === 'HT' ? 'Half time' : st === 'FT' ? 'Full time'
       : st === 'POSTPONED' ? 'Postponed' : st === 'CANCELLED' ? 'Cancelled' : st === 'RESCHEDULED' ? 'Rescheduled' : '';
     var motm = m.motm_name ? '<div class="meta">Man of the Match: ' + esc(m.motm_name) + (m.motm_jersey_number ? ' (#' + esc(m.motm_jersey_number) + ')' : '') + '</div>' : '';
@@ -143,61 +145,85 @@
       motm + '<div class="detail" hidden></div></article>';
   }
 
-  // Match details: goals, cards and substitutions, published events only
-  function wireMatchDetails() {
-    // Listens once for the whole page, so cards re-rendered by a refresh still open
-  }
+  // Match details: score, timeline and lineups. A match stays open while it is live,
+  // and the open details are redrawn whenever the screens refresh.
+  var openMatches = {}, detailSeq = 0;
   document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('.detail')) return; // taps inside the details do not close them
     var card = e.target.closest && e.target.closest('.match[data-match]');
     if (card) toggleDetail(card);
   });
   document.addEventListener('keydown', function (e) {
     var card = e.target.closest && e.target.closest('.match[data-match]');
-    if (card && e.key === 'Enter') toggleDetail(card);
+    if (card && e.key === 'Enter' && !(e.target.closest && e.target.closest('.detail'))) toggleDetail(card);
   });
   function toggleDetail(card) {
-    var box = card.querySelector('.detail');
-    if (!box.hidden) { box.hidden = true; return; }
-    box.hidden = false;
-    if (box.dataset.loaded) return;
-    box.textContent = 'Loading…';
-    db.from('match_events').select('event_type, team_name, player_name, player_off_name, assist_player_name, minute')
-      .eq('match_id', String(card.dataset.match))
-      .order('minute', { ascending: true })
-      .then(function (res) {
-        box.dataset.loaded = '1';
-        if (res.error) { box.textContent = 'Details are not available right now.'; return; }
-        var ev = res.data || [];
-        box.innerHTML = ev.length ? ev.map(eventLine).join('') : '<p class="muted">No match events yet.</p>';
-        loadLineups(String(card.dataset.match), box);
-      });
+    var id = String(card.dataset.match), box = card.querySelector('.detail');
+    if (!box) return;
+    if (openMatches[id]) { delete openMatches[id]; box.hidden = true; return; }
+    openMatches[id] = true;
+    loadDetail(card);
   }
-  function loadLineups(matchId, box) {
-    db.from('match_lineups').select('is_starter, league_clubs(club_name), club_squad(player_name, jersey_number)').eq('match_id', matchId)
-      .then(function (r) {
-        var rows = r.data || [];
-        if (r.error || !rows.length) return;
-        var byClub = {};
-        rows.forEach(function (x) {
-          var c = x.league_clubs ? x.league_clubs.club_name : 'Club';
-          byClub[c] = byClub[c] || { xi: [], bench: [] };
-          var pl = x.club_squad || {};
-          var label = (pl.jersey_number ? '#' + pl.jersey_number + ' ' : '') + (pl.player_name || '');
-          (x.is_starter ? byClub[c].xi : byClub[c].bench).push(label);
-        });
-        box.insertAdjacentHTML('beforeend', '<div class="lineups"><h4 class="league-name">Lineups</h4>' + Object.keys(byClub).map(function (c) {
-          return '<div class="ev"><span class="etxt"><strong>' + esc(c) + '</strong><small>Starting XI: ' + esc(byClub[c].xi.join(', ') || '—') + '</small><small>Bench: ' + esc(byClub[c].bench.join(', ') || '—') + '</small></span></div>';
-        }).join('') + '</div>');
-      });
+  function restoreOpenDetails() {
+    document.querySelectorAll('.match[data-match]').forEach(function (card) {
+      if (openMatches[card.dataset.match]) loadDetail(card);
+    });
+  }
+  function loadDetail(card) {
+    var id = String(card.dataset.match), box = card.querySelector('.detail');
+    if (!box) return;
+    box.hidden = false;
+    if (!box.dataset.loaded) box.textContent = 'Loading…';
+    var seq = ++detailSeq; box.dataset.seq = seq;
+    Promise.all([
+      db.from('matches').select('home_team, away_team, home_score, away_score, match_status, match_minute').eq('id', id).maybeSingle(),
+      db.from('match_events').select('event_type, team_name, player_name, player_off_name, assist_player_name, minute').eq('match_id', id).order('minute', { ascending: true }),
+      db.from('match_lineups').select('is_starter, league_clubs(club_name), club_squad(player_name, jersey_number)').eq('match_id', id)
+    ]).then(function (all) {
+      if (String(box.dataset.seq) !== String(seq)) return; // a newer load has started for this card
+      if (all[0].error || all[1].error) { box.textContent = 'Details are not available right now.'; return; }
+      var m = all[0].data;
+      if (!m) { box.textContent = 'Details are not available right now.'; return; }
+      var ev = all[1].data || [], hs = 0, as = 0;
+      var timeline = ev.map(function (e) {
+        if (String(e.event_type).toUpperCase() === 'GOAL') {
+          if (e.team_name === m.home_team) hs++; else if (e.team_name === m.away_team) as++;
+          return eventLine(e, hs + ' – ' + as);
+        }
+        return eventLine(e);
+      }).join('');
+      var status = m.match_status === 'LIVE' ? (m.match_minute != null ? m.match_minute + "'" : 'Live')
+        : m.match_status === 'HT' ? 'Half time' : m.match_status === 'FT' ? 'Full time' : esc(m.match_status || '');
+      var html = '<div class="dHead"><span class="dScore">' + esc(m.home_team) + ' <strong>' + esc(hs) + ' – ' + esc(as) + '</strong> ' + esc(m.away_team) + '</span>' +
+        '<small>' + status + '</small></div>';
+      html += timeline ? '<div class="dTimeline">' + timeline + '</div>' : '<p class="muted">No match events yet.</p>';
+      box.innerHTML = html;
+      box.dataset.loaded = '1';
+      renderLineups(all[2].data || [], box);
+    });
+  }
+  function renderLineups(rows, box) {
+    if (!rows.length) return;
+    var byClub = {};
+    rows.forEach(function (x) {
+      var c = x.league_clubs ? x.league_clubs.club_name : 'Club';
+      byClub[c] = byClub[c] || { xi: [], bench: [] };
+      var pl = x.club_squad || {};
+      var label = (pl.jersey_number ? '#' + pl.jersey_number + ' ' : '') + (pl.player_name || '');
+      (x.is_starter ? byClub[c].xi : byClub[c].bench).push(label);
+    });
+    box.insertAdjacentHTML('beforeend', '<div class="lineups"><h4 class="league-name">Lineups</h4>' + Object.keys(byClub).map(function (c) {
+      return '<div class="ev"><span class="etxt"><strong>' + esc(c) + '</strong><small>Starting XI: ' + esc(byClub[c].xi.join(', ') || '—') + '</small><small>Bench: ' + esc(byClub[c].bench.join(', ') || '—') + '</small></span></div>';
+    }).join('') + '</div>');
   }
   var ICON = { goal:'⚽', yellow_card:'🟨', red_card:'🟥', sub:'🔁' };
-  function eventLine(e) {
+  function eventLine(e, runningScore) {
     var t = String(e.event_type || '').toLowerCase();
     var who = e.player_name || '';
     var text = t === 'sub' ? (who + ' on, ' + (e.player_off_name || '') + ' off')
       : t === 'goal' ? (who + (e.assist_player_name ? ' (assist ' + e.assist_player_name + ')' : ''))
       : who;
-    return '<div class="ev"><span class="min">' + esc(e.minute) + "'</span><span class=\"ico\">" + (ICON[t] || '•') + '</span><span class="etxt">' + esc(text) + '<small>' + esc(e.team_name || '') + '</small></span></div>';
+    return '<div class="ev' + (t === 'goal' ? ' goal' : '') + '"><span class="min">' + esc(e.minute) + "'</span><span class=\"ico\">" + (ICON[t] || '•') + '</span><span class="etxt">' + esc(text) + '<small>' + esc(e.team_name || '') + (runningScore ? ' · ' + esc(runningScore) : '') + '</small></span></div>';
   }
 
   // League table: one standings table per league
@@ -519,6 +545,7 @@
   function setLive(html) {
     $('liveList').innerHTML = html;
     if ($('playingNow')) $('playingNow').innerHTML = html;
+    restoreOpenDetails();
   }
   // Live matches: the score is counted from goal events
   function loadLive() {

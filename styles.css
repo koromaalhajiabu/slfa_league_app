@@ -942,3 +942,12 @@ details.admin > summary {
   padding: 5px 8px !important;
   min-height: 28px !important;
 }
+/* ===== Interactive live match centre ===== */
+.livedot { display:inline-block; width:8px; height:8px; margin-right:6px; border-radius:50%; background:#e11d48; vertical-align:middle; animation:livePulse 1.6s ease-out infinite; }
+@keyframes livePulse { 0% { box-shadow:0 0 0 0 rgba(225,29,72,.55); } 70% { box-shadow:0 0 0 8px rgba(225,29,72,0); } 100% { box-shadow:0 0 0 0 rgba(225,29,72,0); } }
+.dHead { display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 0 12px; border-bottom:1px solid var(--line); margin-bottom:6px; text-align:center; }
+.dHead .dScore { font-size:16px; font-weight:600; }
+.dHead .dScore strong { font-family:"Fraunces",Georgia,serif; font-size:24px; color:var(--accent); padding:0 8px; font-variant-numeric:tabular-nums; }
+.dHead small { color:var(--muted); letter-spacing:.08em; text-transform:uppercase; font-size:11px; }
+.dTimeline .ev { animation:rise .35s ease both; }
+.dTimeline .ev.goal .etxt { font-weight:600; }
