@@ -313,7 +313,7 @@
 
   // ---------- TECHNICAL DIRECTOR: assign roles ----------
   var clubsCache = [];
-  var ROLE_OPTIONS = [['VIEWER','Viewer'],['PLAYER','Player'],['CLUB_ADMIN','Club Manager'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['FINANCE_OFFICER','Finance Officer'],['STAFF','Staff (read-only)'],['SUPER_ADMIN','Super Admin']];
+  var ROLE_OPTIONS = [['VIEWER','Viewer'],['PLAYER','Player'],['CLUB_ADMIN','Club Manager'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['SUPER_ADMIN','Super Admin']];
   var devUser = null;
   function developer(p) {
     devUser = p;
