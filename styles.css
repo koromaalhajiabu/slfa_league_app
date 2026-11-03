@@ -255,3 +255,36 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
 .pred .predIn input { width:64px; min-height:44px; font-size:20px; text-align:center; }
 .btnlink { display:inline-block; min-height:44px; line-height:44px; padding:0 16px; border-radius:12px; border:1px solid var(--line); color:var(--accent); text-decoration:none; font-weight:600; }
 .lb td.pts { font-weight:700; }
+
+/* ===== National flag layout: green, white and blue (Sierra Leone) ===== */
+:root {
+  --flag-green:#1eb53a; --flag-blue:#0072c6;
+  --bg:#f2f6f4; --bg2:#ffffff; --card:#ffffff; --ink:#0c1f14; --muted:#4a5d52;
+  --accent:#138a2b; --accent2:#0072c6; --danger:#b3261e; --line:rgba(0,114,198,.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#06121c; --bg2:#0a1a28; --card:#0e2032; --ink:#f2f7f4; --muted:#a3b8c7;
+    --accent:#2fd151; --accent2:#4ea8ff; --danger:#ff7a6b; --line:rgba(78,168,255,.25);
+  }
+}
+body { background:var(--bg); color:var(--ink); }
+.topbar { background:var(--card); border-bottom:none; box-shadow:0 2px 0 rgba(0,114,198,.08); }
+.topbar::after { content:""; position:absolute; left:0; right:0; bottom:-6px; height:6px;
+  background:linear-gradient(to bottom, #1eb53a 0 33.3%, #e9eeeb 33.3% 66.6%, #0072c6 66.6% 100%); }
+.card { background:var(--card); border:1px solid var(--line); border-top:4px solid var(--flag-green); border-radius:16px; box-shadow:0 8px 22px rgba(0,40,80,.08); }
+.kicker { color:var(--accent); }
+.title { color:var(--accent2); }
+.tabs button { background:var(--card); color:var(--accent2); border:1px solid var(--flag-blue); }
+.tabs button:hover { background:rgba(0,114,198,.08); color:var(--accent2); }
+.tabs button[aria-selected="true"] { background:var(--flag-blue); color:#ffffff; border-color:var(--flag-blue); box-shadow:0 6px 16px -6px rgba(0,114,198,.6); }
+button.primary { background:var(--flag-blue); color:#ffffff; }
+.leagueSwitch .chip { border-color:var(--flag-blue); color:var(--accent2); }
+.leagueSwitch .chip.on { background:var(--flag-blue); border-color:var(--flag-blue); color:#ffffff; }
+.table thead th { background:var(--flag-blue); color:#ffffff; }
+.league-name { color:var(--accent); }
+.league-row td { color:var(--accent2); }
+/* Match Center keeps its dark, high-contrast look, with flag green for scores */
+.mc .score { color:#2fd151; }
+.mc .league-name { color:#4ea8ff; }
+.mc .match .meta strong { color:#2fd151; }
