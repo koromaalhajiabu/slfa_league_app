@@ -244,6 +244,7 @@
   }
 
   // News and media (published only)
+  var CAT_LABEL = { NEWS: 'News', PRESS_RELEASE: 'Press release', MATCH_REPORT: 'Match report', ANNOUNCEMENT: 'Announcement', FIXTURE: 'Fixture', RESULT: 'Result', PHOTO: 'Photo' };
   function loadNews() {
     loadPolls();
     db.from('media_posts').select('id, category, title, body, image_url, video_url, published_at, status')
@@ -253,7 +254,7 @@
         $('newsItems').innerHTML = res.data.map(function (p) {
           return '<article class="news">' +
             (p.image_url ? '<img src="' + esc(p.image_url) + '" alt="">' : '') +
-            '<div class="meta">' + esc(p.category || 'News') + ' · ' + esc(fmt(p.published_at)) + '</div>' +
+            '<div class="meta">' + esc(CAT_LABEL[p.category] || 'News') + ' · ' + esc(fmt(p.published_at)) + '</div>' +
             '<h3>' + esc(p.title) + '</h3>' +
             '<p>' + esc(p.body) + '</p>' +
             (p.video_url ? '<a href="' + esc(p.video_url) + '" target="_blank" rel="noopener">Watch video</a>' : '') +

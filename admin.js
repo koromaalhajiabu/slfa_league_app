@@ -11,6 +11,10 @@
     return b;
   }
   function msg(text) { var m = $('roleMsg'); if (m) m.textContent = text; }
+  var CAT_LABEL = { NEWS: 'News', PRESS_RELEASE: 'Press release', MATCH_REPORT: 'Match report', ANNOUNCEMENT: 'Announcement', FIXTURE: 'Fixture', RESULT: 'Result', PHOTO: 'Photo' };
+  var luMatches = {}, LINEUP_LEAD_MS = 20 * 60 * 1000;
+  function lineupOpen(m) { return Date.now() < new Date(m.match_date).getTime() - LINEUP_LEAD_MS; }
+  function lineupCloses(m) { return new Date(new Date(m.match_date).getTime() - LINEUP_LEAD_MS).toLocaleString(); }
   function input(id, label, type, extra) {
     return '<label for="' + id + '">' + label + '</label><input id="' + id + '" type="' + (type || 'text') + '" ' + (extra || '') + '>';
   }
@@ -361,16 +365,24 @@
     if (!myClub) return;
     db.from('matches').select('id, home_team, away_team, match_date, match_status').in('match_status', ['SCHEDULED', 'RESCHEDULED']).order('match_date', { ascending: true }).limit(60).then(function (r) {
       var mine = (r.data || []).filter(function (m) { return m.home_team === myClub.club_name || m.away_team === myClub.club_name; });
+      mine.forEach(function (m) { luMatches[m.id] = m; });
       $('luMatch').innerHTML = mine.length ? '<option value="">Choose a match…</option>' + mine.map(function (m) {
-        return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + ' · ' + esc(new Date(m.match_date).toLocaleDateString()) + '</option>';
+        return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + ' · ' + esc(new Date(m.match_date).toLocaleString()) + (lineupOpen(m) ? '' : ' · lineup closed') + '</option>';
       }).join('') : '<option value="">No upcoming matches for your club</option>';
       loadLineupPlayers();
     });
   }
   function loadLineupPlayers() {
     var id = $('luMatch').value;
-    if (!id || !myClub) { $('luPlayers').innerHTML = ''; return; }
+    if (!id || !myClub) { $('luPlayers').innerHTML = ''; $('luSave').disabled = false; return; }
     if (!currentSeason) { $('luPlayers').innerHTML = 'No season is set yet. Ask the Super Admin to set the current season.'; return; }
+    var chosen = luMatches[id];
+    if (chosen && !lineupOpen(chosen)) {
+      $('luSave').disabled = true;
+      $('luPlayers').innerHTML = '<p class="muted">Lineups are closed for this match. They close 20 minutes before kick-off.</p>';
+      return;
+    }
+    $('luSave').disabled = false;
     Promise.all([
       db.from('club_squad').select('id, player_name, position, jersey_number').eq('club_id', myClub.id).eq('season_id', currentSeason.id)
         .eq('registration_status', 'Approved').eq('status', 'Active').order('jersey_number', { ascending: true, nullsFirst: false }).order('player_name'),
@@ -379,7 +391,8 @@
       var players = all[0].data || [];
       var existing = {};
       (all[1].data || []).forEach(function (l) { existing[l.player_id] = l.is_starter ? 'XI' : 'BENCH'; });
-      $('luPlayers').innerHTML = players.length ? '<p class="muted">Pick up to 11 for the Starting XI and up to 23 in total. Players left blank are not in the matchday squad.</p>' + players.map(function (x) {
+      var closes = chosen ? '<p class="muted">Lineup closes ' + esc(lineupCloses(chosen)) + ' (20 minutes before kick-off).</p>' : '';
+      $('luPlayers').innerHTML = players.length ? closes + '<p class="muted">Pick up to 11 for the Starting XI and up to 23 in total. Players left blank are not in the matchday squad.</p>' + players.map(function (x) {
         var v = existing[x.id] || '';
         return '<div class="row"><span>' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + ' <span class="muted">' + esc(x.position) + '</span></span>' +
           '<select data-lu="' + esc(x.id) + '"><option value="">Not in squad</option><option value="XI"' + (v === 'XI' ? ' selected' : '') + '>Starting XI</option><option value="BENCH"' + (v === 'BENCH' ? ' selected' : '') + '>Bench</option></select></div>';
@@ -389,6 +402,7 @@
   function saveLineup() {
     var id = $('luMatch').value;
     if (!id || !myClub) { msg('Choose a match first.'); return; }
+    if (luMatches[id] && !lineupOpen(luMatches[id])) { msg('Lineups closed 20 minutes before kick-off.'); return; }
     var picks = [];
     document.querySelectorAll('[data-lu]').forEach(function (s) { if (s.value) picks.push({ player_id: Number(s.dataset.lu), is_starter: s.value === 'XI' }); });
     if (!picks.length) { msg('Choose the players for this match.'); return; }
@@ -833,7 +847,7 @@
   function mediaOfficer(p) {
     box().innerHTML =
       '<h2 class="rt">New news post</h2>' +
-      '<label for="npCat">Category</label><select id="npCat"><option>News</option><option>Match report</option><option>Announcement</option></select>' +
+      '<label for="npCat">Category</label><select id="npCat"><option value="NEWS">News</option><option value="PRESS_RELEASE">Press release</option><option value="MATCH_REPORT">Match report</option><option value="ANNOUNCEMENT">Announcement</option></select>' +
       '<label for="npMatch">Match (for match reports, optional)</label><select id="npMatch"><option value="">Not linked to a match</option></select>' +
       input('npTitle', 'Title') +
       '<label for="npBody">Story</label><textarea id="npBody" rows="5"></textarea>' +
@@ -868,6 +882,7 @@
     $('npPublish').addEventListener('click', function () { save('PUBLISHED'); });
     $('npMatch').addEventListener('change', function () {
       var opt = this.options[this.selectedIndex];
+      if (opt && opt.value) $('npCat').value = 'MATCH_REPORT';
       if (opt && opt.dataset.title && !$('npTitle').value.trim()) $('npTitle').value = opt.dataset.title;
     });
     db.from('matches').select('id, home_team, away_team, home_score, away_score, match_date').eq('match_status', 'FT').order('match_date', { ascending: false }).limit(40).then(function (r) {
@@ -920,7 +935,7 @@
       var rows = r.data || [];
       $('myPosts').innerHTML = rows.length ? rows.map(function (x) {
         var open = x.status !== 'PUBLISHED';
-        return '<div class="post"><strong>' + esc(x.title) + '</strong><div class="muted">' + esc(x.category) + ' · ' + esc(x.status) + '</div>' +
+        return '<div class="post"><strong>' + esc(x.title) + '</strong><div class="muted">' + esc(CAT_LABEL[x.category] || x.category) + ' · ' + esc(x.status) + '</div>' +
           (open ? '<div class="btns"><button class="small" data-sub="' + esc(x.id) + '">Submit for approval</button><button class="small" data-pub="' + esc(x.id) + '">Publish now</button></div>' : '') + '</div>';
       }).join('') : 'No posts yet.';
       document.querySelectorAll('[data-sub]').forEach(function (b) {
