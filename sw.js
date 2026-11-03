@@ -1,63 +1,247 @@
-// SLFA League App service worker.
-// 1. Keeps the app shell available offline (pages, scripts, styles, images).
-// 2. Shows league alerts sent as push messages.
-// League data always comes from the network, so scores and news are never stale.
-const CACHE = 'slfa-app-v35';
-// Saved copies of public league data, so fans can still read the last information when offline
-const DATA_CACHE = CACHE + '-data';
-const PUBLIC_TABLES = ['matches', 'league_standings', 'league_clubs', 'club_squad', 'media_posts', 'leagues', 'match_events', 'match_lineups', 'club_announcements', 'top_scorers', 'top_assists', 'clean_sheets', 'motm_awards', 'polls', 'poll_options'];
-const SHELL = ['./', './index.html', './config.js', './public.js', './enhancements.js', './admin.js', './portal.js', './sw-update.js', './styles.css', './developer.html', './super-admin.html', './referee.html', './media.html', './disciplinary.html', './club.html', './manifest.json',
-  './icon-192.png', './icon-512.png', './slfa-logo.png'];
+// SLFA League App - Performance-Optimised Service Worker
+// App files load from cache immediately.
+// New versions are downloaded in the background.
+// Supabase league data stays network-first with offline fallback.
 
-self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
+const CACHE = 'slfa-app-v36';
+const DATA_CACHE = CACHE + '-data';
+
+const PUBLIC_TABLES = [
+  'matches',
+  'league_standings',
+  'league_clubs',
+  'club_squad',
+  'media_posts',
+  'leagues',
+  'match_events',
+  'match_lineups',
+  'club_announcements',
+  'top_scorers',
+  'top_assists',
+  'clean_sheets',
+  'motm_awards',
+  'polls',
+  'poll_options'
+];
+
+const SHELL = [
+  './',
+  './index.html',
+  './config.js',
+  './public.js',
+  './enhancements.js',
+  './admin.js',
+  './portal.js',
+  './sw-update.js',
+  './styles.css',
+  './developer.html',
+  './super-admin.html',
+  './referee.html',
+  './media.html',
+  './disciplinary.html',
+  './club.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './slfa-logo.png'
+];
+
+// Install and prepare the new app cache.
+self.addEventListener('install', function (event) {
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(function (cache) {
+        return cache.addAll(SHELL);
+      })
+      .then(function () {
+        return self.skipWaiting();
+      })
+  );
 });
-self.addEventListener('activate', function (e) {
-  e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== CACHE && k !== DATA_CACHE; }).map(function (k) { return caches.delete(k); }));
-  }).then(function () { return self.clients.claim(); }));
+
+// Remove old app caches and activate the new version.
+self.addEventListener('activate', function (event) {
+  event.waitUntil(
+    caches.keys()
+      .then(function (keys) {
+        return Promise.all(
+          keys
+            .filter(function (key) {
+              return key !== CACHE && key !== DATA_CACHE;
+            })
+            .map(function (key) {
+              return caches.delete(key);
+            })
+        );
+      })
+      .then(function () {
+        return self.clients.claim();
+      })
+  );
 });
-// Public league data from the database. Signed-in responses are never saved, so they cannot show on a shared phone.
+
+// Identify public, anonymous Supabase data requests.
 function jwtRole(token) {
-  try { return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).role || ''; } catch (e) { return ''; }
+  try {
+    return JSON.parse(
+      atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))
+    ).role || '';
+  } catch (error) {
+    return '';
+  }
 }
-function isPublicDataRequest(req) {
-  var u = new URL(req.url);
-  if (req.method !== 'GET' || u.hostname.slice(-'.supabase.co'.length) !== '.supabase.co' || u.pathname.indexOf('/rest/v1/') !== 0) return false;
-  if (PUBLIC_TABLES.indexOf(u.pathname.slice('/rest/v1/'.length).split('/')[0]) === -1) return false;
-  var auth = req.headers.get('Authorization') || '';
-  if (auth && auth.indexOf('Bearer sb_publishable_') !== 0 && jwtRole(auth.replace(/^Bearer\s+/i, '')) !== 'anon') return false;
+
+function isPublicDataRequest(request) {
+  var url = new URL(request.url);
+
+  if (
+    request.method !== 'GET' ||
+    !url.hostname.endsWith('.supabase.co') ||
+    url.pathname.indexOf('/rest/v1/') !== 0
+  ) {
+    return false;
+  }
+
+  var table = url.pathname
+    .slice('/rest/v1/'.length)
+    .split('/')[0];
+
+  if (PUBLIC_TABLES.indexOf(table) === -1) {
+    return false;
+  }
+
+  var auth = request.headers.get('Authorization') || '';
+
+  if (
+    auth &&
+    auth.indexOf('Bearer sb_publishable_') !== 0 &&
+    jwtRole(auth.replace(/^Bearer\s+/i, '')) !== 'anon'
+  ) {
+    return false;
+  }
+
   return true;
 }
 
-self.addEventListener('fetch', function (e) {
-  var req = e.request;
-  if (isPublicDataRequest(req)) {
-    e.respondWith(fetch(req).then(function (res) {
-      if (res.ok) { var copy = res.clone(); caches.open(DATA_CACHE).then(function (c) { c.put(req, copy); }); }
-      return res;
-    }).catch(function () {
-      return caches.open(DATA_CACHE).then(function (c) { return c.match(req); }).then(function (hit) { return hit || Response.error(); });
-    }));
+// Handle app files and public data.
+self.addEventListener('fetch', function (event) {
+  var request = event.request;
+  var url = new URL(request.url);
+
+  if (request.method !== 'GET') return;
+
+  // Public league data: network first, cached fallback.
+  if (isPublicDataRequest(request)) {
+    event.respondWith(
+      fetch(request)
+        .then(function (response) {
+          if (response.ok) {
+            var copy = response.clone();
+
+            event.waitUntil(
+              caches.open(DATA_CACHE).then(function (cache) {
+                return cache.put(request, copy);
+              })
+            );
+          }
+
+          return response;
+        })
+        .catch(function () {
+          return caches.open(DATA_CACHE)
+            .then(function (cache) {
+              return cache.match(request);
+            })
+            .then(function (cached) {
+              return cached || Response.error();
+            });
+        })
+    );
+
     return;
   }
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
-  e.respondWith(fetch(req).then(function (res) {
-    if (res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
-    return res;
-  }).catch(function () {
-    return caches.match(req).then(function (hit) { return hit || caches.match('./index.html'); });
-  }));
+
+  // Only cache files belonging to this app.
+  if (url.origin !== self.location.origin) return;
+
+  // Start downloading the newest version in the background.
+  var updatePromise = fetch(request)
+    .then(function (response) {
+      if (response.ok) {
+        var copy = response.clone();
+
+        return caches.open(CACHE)
+          .then(function (cache) {
+            return cache.put(request, copy);
+          })
+          .then(function () {
+            return response;
+          });
+      }
+
+      return response;
+    });
+
+  event.waitUntil(updatePromise.catch(function () {}));
+
+  // Return the saved copy immediately when available.
+  event.respondWith(
+    caches.match(request)
+      .then(function (cached) {
+        if (cached) {
+          return cached;
+        }
+
+        return updatePromise
+          .then(function (response) {
+            if (response && response.ok) {
+              return response;
+            }
+
+            return caches.match('./index.html');
+          })
+          .catch(function () {
+            return caches.match('./index.html');
+          });
+      })
+  );
 });
 
+// League notification support.
 self.addEventListener('push', function (event) {
   var data = {};
-  try { data = event.data ? event.data.json() : {}; } catch (e) { data = { title: 'The SLFA League App', body: event.data ? event.data.text() : '' }; }
-  event.waitUntil(self.registration.showNotification(data.title || 'The SLFA League App', {
-    body: data.body || '', icon: 'icon-192.png', badge: 'icon-192.png', data: { url: data.url || './' }
-  }));
+
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (error) {
+    data = {
+      title: 'The SLFA League App',
+      body: event.data ? event.data.text() : ''
+    };
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(
+      data.title || 'The SLFA League App',
+      {
+        body: data.body || '',
+        icon: 'icon-192.png',
+        badge: 'icon-192.png',
+        data: {
+          url: data.url || './'
+        }
+      }
+    )
+  );
 });
+
+// Open the correct page when a notification is tapped.
 self.addEventListener('notificationclick', function (event) {
   event.notification.close();
-  event.waitUntil(clients.openWindow(event.notification.data.url || './'));
+
+  event.waitUntil(
+    clients.openWindow(
+      event.notification.data.url || './'
+    )
+  );
 });
