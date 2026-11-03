@@ -416,7 +416,7 @@
   }
   function subscribeLive() {
     var ch = db.channel('public-league');
-    ['matches', 'match_events', 'league_standings', 'league_clubs', 'club_squad', 'top_scorers', 'top_assists', 'clean_sheets', 'media_posts', 'system_pause'].forEach(function (t) {
+    ['matches', 'match_events', 'league_standings', 'league_clubs', 'club_squad', 'top_scorers', 'top_assists', 'clean_sheets', 'media_posts', 'system_pause', 'club_announcements', 'match_lineups', 'polls', 'poll_options'].forEach(function (t) {
       ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, scheduleRefresh);
     });
     ch.subscribe();

@@ -1,3 +1,10 @@
+// Portal pages: reload once when a new version of the app takes over, so no manual refresh is needed
+if ('serviceWorker' in navigator) {
+  var portalHadController = !!navigator.serviceWorker.controller, portalReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (portalHadController && !portalReloaded) { portalReloaded = true; location.reload(); }
+  });
+}
 // Portal pages: each role has its own page. This checks the sign-in and opens the matching tools.
 (function () {
   var cfg = window.SLFA_CONFIG;

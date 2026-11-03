@@ -129,7 +129,16 @@
   });
   window.addEventListener('appinstalled', function () { document.getElementById('installBtn').hidden = true; });
   if (isIOS) document.getElementById('iosHint').hidden = false;
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+  // New version of the app: reload once so the phone runs the latest code without a manual refresh
+  if ('serviceWorker' in navigator) {
+    var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (hadController && !reloaded) { reloaded = true; location.reload(); }
+    });
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      setInterval(function () { reg.update().catch(function () {}); }, 10 * 60 * 1000);
+    }).catch(function () {});
+  }
 })();
 </script>
 <script>
