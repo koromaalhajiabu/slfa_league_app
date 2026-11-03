@@ -2,9 +2,16 @@
 // Read-only. Uses only data the database already exposes to the public.
 (function () {
   var cfg = window.SLFA_CONFIG;
-  var db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
+  var db = window.slfaDb || window.supabase.createClient(
+  cfg.supabaseUrl,
+  cfg.supabasePublishableKey,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true
+    }
+  }
+);
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
