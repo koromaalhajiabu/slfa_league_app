@@ -207,3 +207,20 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
 .poll-row { display:grid; grid-template-columns:1fr auto; gap:4px 10px; margin:8px 0; }
 .poll-bar { grid-column:1 / -1; height:8px; border-radius:6px; background:var(--line); overflow:hidden; }
 .poll-bar span { display:block; height:100%; background:var(--accent); }
+
+/* Match-day touch screen (referee): high contrast, large tap targets */
+.touchpad { background:#000; color:#fff; padding:14px; border-radius:16px; border:2px solid #fff; margin:14px 0; }
+.touchpad .tp-score { font-size:24px; font-weight:800; text-align:center; margin-bottom:8px; }
+.touchpad .tp-minute { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:10px; font-size:28px; font-weight:800; }
+.touchpad .tp-small { min-width:72px; min-height:56px; font-size:22px; border-radius:12px; border:2px solid #fff; background:#000; color:#fff; }
+.touchpad .tp-note { font-size:18px; color:#fff; margin:8px 0; }
+.touchpad .tp-btn { display:block; width:100%; min-height:96px; margin:10px 0; font-size:24px; font-weight:800; border-radius:16px; border:0; color:#000; cursor:pointer; }
+.touchpad .tp-player { min-height:72px; font-size:20px; background:#fff; }
+.touchpad .tp-goal { background:#1eb53a; color:#000; }
+.touchpad .tp-yellow { background:#ffd60a; color:#000; }
+.touchpad .tp-red { background:#ff3b30; color:#fff; }
+.touchpad .tp-sub { background:#0a84ff; color:#fff; }
+.touchpad .tp-team { background:#fff; color:#000; }
+.touchpad .tp-input { width:100%; min-height:60px; font-size:20px; border-radius:12px; border:2px solid #fff; background:#000; color:#fff; padding:10px; box-sizing:border-box; margin-top:8px; }
+.touchpad .tp-back { display:block; width:100%; min-height:60px; margin:10px 0; font-size:18px; border-radius:12px; border:2px solid #fff; background:transparent; color:#fff; }
+.touchpad button:disabled { opacity:.35; }

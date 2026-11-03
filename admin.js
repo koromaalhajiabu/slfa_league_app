@@ -737,6 +737,121 @@
     });
   }
 
+  // ---------- MATCH-DAY TOUCH SCREEN (referee) ----------
+  // Big buttons: event, then team, then player (and a second player for a substitution). One tap records the event.
+  var tp = { id: null, match: null, events: [], players: [], step: 'type', type: null, team: null, on: null, minute: 0, lastId: null };
+  var TP_LABEL = { goal: 'Goal', yellow_card: 'Yellow card', red_card: 'Red card', substitution: 'Substitution' };
+  function initTouchPad() {
+    $('touchPad').addEventListener('click', tpClick);
+    $('rfMatch').addEventListener('change', function () { tpLoad(this.value); });
+    tpLoad('');
+  }
+  function tpLoad(id) {
+    tp.id = id || null; tp.match = null; tp.events = []; tp.players = []; tp.step = 'type'; tp.type = null; tp.team = null; tp.on = null; tp.lastId = null;
+    if (!id) { tpRender('Choose a match above to use the match-day screen.'); return; }
+    Promise.all([
+      db.from('matches').select('id, home_team, away_team, match_status, match_minute').eq('id', id).maybeSingle(),
+      db.from('match_events').select('id, event_type, team_name, player_name, minute').eq('match_id', String(id)).order('minute', { ascending: true }),
+      db.from('match_lineups').select('is_starter, league_clubs(club_name), club_squad(player_name, jersey_number)').eq('match_id', id)
+    ]).then(function (all) {
+      tp.match = all[0].data || null;
+      if (!tp.match) { tpRender('This match could not be loaded.'); return; }
+      tp.events = all[1].data || [];
+      tp.players = (all[2].data || []).filter(function (x) { return x.club_squad; }).map(function (x) {
+        return { team: x.league_clubs ? x.league_clubs.club_name : '', name: x.club_squad.player_name, no: x.club_squad.jersey_number };
+      });
+      tp.minute = tp.match.match_minute || 0;
+      tpRender();
+    });
+  }
+  function tpScore(team) { return tp.events.filter(function (e) { return e.event_type === 'goal' && e.team_name === team; }).length; }
+  function tpRoster(team) { return tp.players.filter(function (x) { return x.team === team; }); }
+  function tpRender(note) {
+    var m = tp.match, box = $('touchPad');
+    if (!m) { box.innerHTML = '<div class="touchpad"><p class="tp-note">' + esc(note || '') + '</p></div>'; return; }
+    var live = m.match_status === 'LIVE' || m.match_status === 'HT';
+    var h = '<div class="touchpad">';
+    h += '<div class="tp-score">' + esc(m.home_team) + ' ' + tpScore(m.home_team) + ' – ' + tpScore(m.away_team) + ' ' + esc(m.away_team) + '</div>';
+    h += '<div class="tp-minute"><button class="tp-small" data-tp="min" data-d="-1">−1</button><span>' + esc(tp.minute) + "'</span><button class=\"tp-small\" data-tp=\"min\" data-d=\"1\">+1</button></div>";
+    if (!live) {
+      h += '<p class="tp-note">Start the match to log events. Status: ' + esc(m.match_status) + '.</p>' +
+           '<button class="tp-back" data-tp="refresh">Refresh</button></div>';
+      box.innerHTML = h; return;
+    }
+    if (tp.step === 'type') {
+      h += '<button class="tp-btn tp-goal" data-tp="type" data-v="goal">GOAL</button>' +
+           '<button class="tp-btn tp-yellow" data-tp="type" data-v="yellow_card">YELLOW CARD</button>' +
+           '<button class="tp-btn tp-red" data-tp="type" data-v="red_card">RED CARD</button>' +
+           '<button class="tp-btn tp-sub" data-tp="type" data-v="substitution">SUBSTITUTION</button>';
+    } else if (tp.step === 'team') {
+      h += '<p class="tp-note">' + esc(TP_LABEL[tp.type]) + ': which team?</p>' +
+           '<button class="tp-btn tp-team" data-tp="team" data-v="' + esc(m.home_team) + '">' + esc(m.home_team) + '</button>' +
+           '<button class="tp-btn tp-team" data-tp="team" data-v="' + esc(m.away_team) + '">' + esc(m.away_team) + '</button>';
+    } else {
+      var label = tp.type === 'substitution' ? (tp.step === 'on' ? 'Player coming ON' : 'Player going OFF') : 'Player';
+      h += '<p class="tp-note">' + esc(label) + ' · ' + esc(tp.team) + '</p>';
+      var roster = tpRoster(tp.team).filter(function (x) { return x.name !== tp.on; });
+      h += roster.length ? roster.map(function (x) {
+        return '<button class="tp-btn tp-player" data-tp="player" data-v="' + esc(x.name) + '">' + (x.no ? '#' + esc(x.no) + ' ' : '') + esc(x.name) + '</button>';
+      }).join('') : '<p class="tp-note">No squad list for this team yet. Type the name below.</p>';
+      h += '<input class="tp-input" id="tpName" type="text" placeholder="Or type the name" autocomplete="off">' +
+           '<button class="tp-btn tp-player" data-tp="typed">Use typed name</button>';
+    }
+    if (tp.step !== 'type') h += '<button class="tp-back" data-tp="back">Back</button>';
+    h += '<button class="tp-back" data-tp="undo"' + (tp.lastId ? '' : ' disabled') + '>Undo last event</button>';
+    h += '</div>';
+    box.innerHTML = h;
+  }
+  function tpClick(e) {
+    var b = e.target.closest && e.target.closest('[data-tp]'); if (!b || b.disabled) return;
+    var act = b.dataset.tp, v = b.dataset.v;
+    if (act === 'refresh') { tpLoad(tp.id); return; }
+    if (act === 'min') { tp.minute = Math.max(0, Math.min(130, tp.minute + Number(b.dataset.d))); tpRender(); return; }
+    if (act === 'type') { tp.type = v; tp.step = 'team'; tpRender(); return; }
+    if (act === 'team') { tp.team = v; tp.step = 'on'; tpRender(); return; }
+    if (act === 'player' || act === 'typed') {
+      var name = act === 'typed' ? ($('tpName') ? $('tpName').value.trim() : '') : v;
+      if (!name) { msg('Type the player name.'); return; }
+      if (tp.step === 'on') {
+        tp.on = name;
+        if (tp.type === 'substitution') { tp.step = 'off'; tpRender(); return; }
+        tpRecord(name, null); return;
+      }
+      if (tp.step === 'off') { tpRecord(tp.on, name); return; }
+    }
+    if (act === 'back') {
+      if (tp.step === 'off') { tp.step = 'on'; tp.on = null; }
+      else if (tp.step === 'on') { tp.step = 'team'; tp.team = null; }
+      else { tp.step = 'type'; tp.type = null; }
+      tpRender(); return;
+    }
+    if (act === 'undo') {
+      if (!tp.lastId) return;
+      var reason = prompt('Why are you undoing this event? (at least 5 characters)');
+      if (reason == null) return;
+      if (reason.trim().length < 5) { msg('Give a reason of at least 5 characters.'); return; }
+      db.rpc('reverse_match_event', { p_event_id: Number(tp.lastId), p_reason: reason.trim() }).then(function (res) {
+        msg(res.error ? res.error.message : 'Reversed and logged.');
+        tpLoad(tp.id);
+      });
+    }
+  }
+  function tpRecord(player, off) {
+    db.auth.getUser().then(function (u) {
+      return db.from('match_events').insert([{
+        match_id: String(tp.id), event_type: tp.type, team_name: tp.team, player_name: player, player_off_name: off || null,
+        minute: tp.minute, recorded_by: u.data.user.id, recorded_at: new Date().toISOString(), published_at: new Date().toISOString()
+      }]).select('id').single();
+    }).then(function (r) {
+      if (r.error) { msg(r.error.message); tp.step = 'type'; tp.type = null; tp.team = null; tp.on = null; tpRender(); return; }
+      tp.lastId = r.data.id;
+      msg('Recorded: ' + TP_LABEL[tp.type] + ' · ' + tp.team + ' · ' + player + " " + tp.minute + "'");
+      tp.step = 'type'; tp.type = null; tp.team = null; tp.on = null;
+      return db.from('match_events').select('id, event_type, team_name, player_name, minute').eq('match_id', String(tp.id)).order('minute', { ascending: true })
+        .then(function (e) { tp.events = e.data || []; tpRender(); });
+    });
+  }
+
   // ---------- REFEREE ----------
   var refEvents = [];
   function referee(p) {
@@ -746,6 +861,7 @@
       '<div class="scores"><span id="rfScore" class="score-big">0 – 0</span></div>' +
       '<div class="btns"><button class="secondary" id="rfStart">Start match</button><button class="primary" id="rfEnd">End and save final score</button></div>' +
       '<h2 class="rt">Events so far</h2><div id="rfEvents" class="muted">No events yet.</div>' +
+      '<div id="touchPad"></div>' +
       '<div id="rfPanel" class="hidden">' +
         '<div class="btns"><button class="secondary" id="rfHalf">Half time</button><button class="secondary" id="rfSecond">Second half</button></div>' +
         input('rfMin', 'Current minute', 'number', 'min="0" max="130"') + '<div class="btns"><button class="secondary" id="rfMinSave">Update minute</button></div>' +
@@ -770,6 +886,7 @@
     });
 
     $('rfMatch').addEventListener('change', function () { loadRefMatch(this.value); });
+    initTouchPad();
     $('rfStart').addEventListener('click', function () {
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
       setMatch(id, { match_status: 'LIVE', match_minute: 0 }).then(function (r) {
