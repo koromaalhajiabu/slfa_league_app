@@ -756,3 +756,49 @@ button { font-family:inherit; }
   color: #176b31 !important;
   border: 1px solid #cbded0 !important;
 }
+
+/* ===== FIX INNER MATCH CONTAINER — BOTH LEAGUES ===== */
+
+#matchList .mc {
+  background: #ffffff !important;
+  color: #183047 !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 12px;
+}
+
+#matchList .mc .datebar {
+  background: #f2f8f4 !important;
+  padding: 8px;
+  border-radius: 10px;
+}
+
+#matchList .mc .datebar button,
+#matchList .mc button {
+  background: #e8f5ec !important;
+  color: #176b31 !important;
+  border: 1px solid #c6dfce !important;
+}
+
+#matchList .mc .datebar input[type="date"],
+#matchList .mc select {
+  background: #ffffff !important;
+  color: #183047 !important;
+  border: 1px solid #cbd9d0 !important;
+}
+
+#matchList .mc label {
+  color: #334b60 !important;
+}
+
+#matchList .mc .sub {
+  color: #13852d !important;
+}
+
+#matchList .mc .league-name {
+  color: #0072c6 !important;
+}
+
+#matchList .mc .empty {
+  color: #64748b !important;
+}
