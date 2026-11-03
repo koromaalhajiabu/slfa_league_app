@@ -116,6 +116,25 @@
         if (res.error) { box.textContent = 'Details are not available right now.'; return; }
         var ev = res.data || [];
         box.innerHTML = ev.length ? ev.map(eventLine).join('') : '<p class="muted">No match events yet.</p>';
+        loadLineups(String(card.dataset.match), box);
+      });
+  }
+  function loadLineups(matchId, box) {
+    db.from('match_lineups').select('is_starter, league_clubs(club_name), club_squad(player_name, jersey_number)').eq('match_id', matchId)
+      .then(function (r) {
+        var rows = r.data || [];
+        if (r.error || !rows.length) return;
+        var byClub = {};
+        rows.forEach(function (x) {
+          var c = x.league_clubs ? x.league_clubs.club_name : 'Club';
+          byClub[c] = byClub[c] || { xi: [], bench: [] };
+          var pl = x.club_squad || {};
+          var label = (pl.jersey_number ? '#' + pl.jersey_number + ' ' : '') + (pl.player_name || '');
+          (x.is_starter ? byClub[c].xi : byClub[c].bench).push(label);
+        });
+        box.insertAdjacentHTML('beforeend', '<div class="lineups"><h4 class="league-name">Lineups</h4>' + Object.keys(byClub).map(function (c) {
+          return '<div class="ev"><span class="etxt"><strong>' + esc(c) + '</strong><small>Starting XI: ' + esc(byClub[c].xi.join(', ') || '—') + '</small><small>Bench: ' + esc(byClub[c].bench.join(', ') || '—') + '</small></span></div>';
+        }).join('') + '</div>');
       });
   }
   var ICON = { goal:'⚽', yellow_card:'🟨', red_card:'🟥', substitution:'🔁' };
@@ -172,15 +191,33 @@
     selectedClub = { id: id, name: name };
     var panel = $('squadPanel');
     if (!panel) return;
-    panel.innerHTML = '<h3 class="sub">' + esc(name) + ' squad</h3><p class="muted">Loading…</p>';
-    db.from('club_squad').select('player_name, position, photo_url').eq('club_id', id).order('player_name')
-      .then(function (res) {
-        if (res.error) { panel.innerHTML = '<h3 class="sub">' + esc(name) + ' squad</h3>' + empty('The squad is not available right now.'); return; }
-        var rows = res.data || [];
-        panel.innerHTML = '<h3 class="sub">' + esc(name) + ' squad</h3>' + (rows.length ? rows.map(function (x) {
-          return '<div class="row">' + badge(x.photo_url, x.player_name) + '<span class="pname">' + esc(x.player_name) + '<small>' + esc(POS[x.position] || x.position) + '</small></span></div>';
-        }).join('') : empty('No approved players for this season yet.'));
-      });
+    panel.innerHTML = '<h3 class="sub">' + esc(name) + '</h3><p class="muted">Loading…</p>';
+    Promise.all([
+      db.from('league_clubs').select('stadium, city, founded_year, about').eq('id', id).maybeSingle(),
+      db.from('club_announcements').select('title, body, created_at').eq('club_id', id).order('created_at', { ascending: false }).limit(10),
+      db.from('club_squad').select('player_name, position, photo_url, jersey_number').eq('club_id', id).order('jersey_number', { ascending: true, nullsFirst: false }).order('player_name')
+    ]).then(function (all) {
+      var profile = all[0].data || {};
+      var facts = [profile.stadium ? 'Ground: ' + profile.stadium : '', profile.city || '', profile.founded_year ? 'Founded ' + profile.founded_year : ''].filter(Boolean);
+      var html = '<h3 class="sub">' + esc(name) + '</h3>';
+      if (facts.length) html += '<p class="muted">' + facts.map(function (f) { return esc(f); }).join(' · ') + '</p>';
+      if (profile.about) html += '<p>' + esc(profile.about) + '</p>';
+      var ann = all[1].data || [];
+      if (ann.length) {
+        html += '<h4 class="league-name">Announcements</h4>' + ann.map(function (a) {
+          return '<div class="post"><strong>' + esc(a.title) + '</strong><div class="muted">' + esc(fmt(a.created_at)) + '</div>' + (a.body ? '<p>' + esc(a.body) + '</p>' : '') + '</div>';
+        }).join('');
+      }
+      html += '<h4 class="league-name">Squad</h4>';
+      if (all[2].error) { html += empty('The squad is not available right now.'); }
+      else {
+        var rows = all[2].data || [];
+        html += rows.length ? rows.map(function (x) {
+          return '<div class="row">' + badge(x.photo_url, x.player_name) + '<span class="pname">' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + '<small>' + esc(POS[x.position] || x.position) + '</small></span></div>';
+        }).join('') : empty('No approved players for this season yet.');
+      }
+      panel.innerHTML = html;
+    });
   }
 
   // Players: top scorers, assists, clean sheets
@@ -208,11 +245,12 @@
 
   // News and media (published only)
   function loadNews() {
+    loadPolls();
     db.from('media_posts').select('id, category, title, body, image_url, video_url, published_at, status')
       .eq('status', 'PUBLISHED').order('published_at', { ascending: false }).limit(20)
       .then(function (res) {
-        if (res.error || !(res.data || []).length) { $('newsList').innerHTML = empty('No news yet.'); return; }
-        $('newsList').innerHTML = res.data.map(function (p) {
+        if (res.error || !(res.data || []).length) { $('newsItems').innerHTML = empty('No news yet.'); return; }
+        $('newsItems').innerHTML = res.data.map(function (p) {
           return '<article class="news">' +
             (p.image_url ? '<img src="' + esc(p.image_url) + '" alt="">' : '') +
             '<div class="meta">' + esc(p.category || 'News') + ' · ' + esc(fmt(p.published_at)) + '</div>' +
@@ -223,6 +261,62 @@
         }).join('');
         wireShare();
       });
+  }
+
+  // Fan polls: one vote per browser, enforced in the database
+  var VOTER_KEY = 'slfa_voter_key', VOTES_KEY = 'slfa_votes';
+  function voterKey() {
+    try {
+      var k = localStorage.getItem(VOTER_KEY);
+      if (!k) {
+        k = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+        localStorage.setItem(VOTER_KEY, k);
+      }
+      return k;
+    } catch (e) { return null; }
+  }
+  function getVoted() { try { return JSON.parse(localStorage.getItem(VOTES_KEY) || '{}'); } catch (e) { return {}; } }
+  function setVoted(pollId, optionId) { try { var v = getVoted(); v[pollId] = optionId; localStorage.setItem(VOTES_KEY, JSON.stringify(v)); } catch (e) {} }
+  function loadPolls() {
+    var box = $('pollList'); if (!box) return;
+    db.from('polls').select('id, question, is_open, poll_options(id, label, sort_order)').order('created_at', { ascending: false }).limit(5)
+      .then(function (r) {
+        var polls = r.data || [];
+        if (r.error || !polls.length) { box.innerHTML = ''; return; }
+        box.innerHTML = polls.map(function (p) {
+          return '<div class="news poll"><div class="meta">Fan poll · ' + (p.is_open ? 'Open' : 'Closed') + '</div><h3>' + esc(p.question) + '</h3><div data-poll-body="' + esc(p.id) + '"></div></div>';
+        }).join('');
+        polls.forEach(renderPoll);
+      });
+  }
+  function renderPoll(p) {
+    var body = document.querySelector('[data-poll-body="' + p.id + '"]'); if (!body) return;
+    var opts = (p.poll_options || []).slice().sort(function (a, b) { return a.sort_order - b.sort_order; });
+    if (!p.is_open || getVoted()[p.id]) { showResults(p, opts, body); return; }
+    body.innerHTML = opts.map(function (o) { return '<button class="small" data-vote="' + esc(o.id) + '">' + esc(o.label) + '</button> '; }).join('');
+    body.querySelectorAll('[data-vote]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var key = voterKey();
+        if (!key) { body.insertAdjacentHTML('beforeend', '<p class="muted">Voting needs your browser to store a small code. Turn off private browsing and try again.</p>'); return; }
+        db.rpc('cast_poll_vote', { p_poll_id: p.id, p_option_id: Number(b.dataset.vote), p_voter_key: key }).then(function (res) {
+          if (res.error && !/already voted/i.test(res.error.message)) {
+            body.insertAdjacentHTML('beforeend', '<p class="muted">' + esc(res.error.message) + '</p>'); return;
+          }
+          setVoted(p.id, Number(b.dataset.vote));
+          showResults(p, opts, body);
+        });
+      });
+    });
+  }
+  function showResults(p, opts, body) {
+    db.rpc('poll_results', { p_poll_id: p.id }).then(function (r) {
+      var counts = {}, total = 0;
+      (r.data || []).forEach(function (x) { counts[x.option_id] = Number(x.votes); total += Number(x.votes); });
+      body.innerHTML = opts.map(function (o) {
+        var n = counts[o.id] || 0, pct = total ? Math.round(n * 100 / total) : 0;
+        return '<div class="poll-row"><span>' + esc(o.label) + '</span><span class="muted">' + pct + '% (' + n + ')</span><div class="poll-bar"><span style="width:' + pct + '%"></span></div></div>';
+      }).join('') + '<p class="muted">' + total + ' vote' + (total === 1 ? '' : 's') + (p.is_open ? '' : ' · poll closed') + '</p>';
+    });
   }
 
   // Sharing
