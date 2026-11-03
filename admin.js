@@ -23,18 +23,15 @@
     });
   }
 
-  function render() {
-    currentUser().then(function (p) {
-      if (!p) { var old = $('roleTools'); if (old) old.remove(); return; }
-      var role = String(p.system_role).toUpperCase();
-      if (role === 'SUPER_ADMIN') return superAdmin(p);
-      if (role === 'MEDIA_OFFICER') return mediaOfficer(p);
-      if (role === 'REFEREE') return referee(p);
-      if (role === 'DEVELOPER') return developer(p);
-      if (role === 'CLUB_ADMIN') return clubManager(p);
-      box().innerHTML = '';
-    });
-  }
+  // Called by portal.js on the matching portal page only
+  window.slfaRenderRole = function (p) {
+    var role = String(p.system_role).toUpperCase();
+    if (role === 'SUPER_ADMIN') return superAdmin(p);
+    if (role === 'MEDIA_OFFICER') return mediaOfficer(p);
+    if (role === 'REFEREE') return referee(p);
+    if (role === 'DEVELOPER') return developer(p);
+    if (role === 'CLUB_ADMIN') return clubManager(p);
+  };
 
   // ---------- SUPER ADMIN ----------
   function superAdmin(p) {
@@ -622,8 +619,6 @@
     });
   }
 
-  db.auth.onAuthStateChange(function () { setTimeout(render, 0); });
-  render();
 
   // LIVE ADMIN: lists update when a result, news post, event or assignment changes
   var adminTimer = null;
