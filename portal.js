@@ -30,7 +30,7 @@
   function gate() {
     db.auth.getUser().then(function (u) {
       if (!u.data || !u.data.user) return showSignIn('');
-      return db.from('user_profiles').select('id, system_role, status, full_name, email, club_id').eq('id', u.data.user.id).maybeSingle()
+      return db.from('user_profiles').select('id, system_role, status, full_name, email, club_id, official_title').eq('id', u.data.user.id).maybeSingle()
         .then(function (r) {
           var p = r.data;
           if (!p || String(p.status).toLowerCase() !== 'active') {
@@ -42,13 +42,13 @@
             if (PAGES[role] && PAGES[role] !== location.pathname.split('/').pop()) { location.replace(PAGES[role]); return; }
             $('signIn').hidden = true; $('portalArea').hidden = false;
             $('whoName').textContent = p.full_name || p.email;
-            $('whoRole').textContent = role.replace(/_/g, ' ');
+            $('whoRole').textContent = p.official_title || role.replace(/_/g, ' ');
             $('roleTools').innerHTML = '<p class="muted">Your role does not have a portal yet. Ask the Technical Director.</p>';
             return;
           }
           $('signIn').hidden = true; $('portalArea').hidden = false;
           $('whoName').textContent = p.full_name || p.email;
-          $('whoRole').textContent = role.replace(/_/g, ' ');
+          $('whoRole').textContent = p.official_title || role.replace(/_/g, ' ');
           window.slfaRenderRole(p);
         });
     });
