@@ -61,6 +61,7 @@
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<h2 class="rt">Player registrations awaiting approval</h2><div id="squadReview" class="muted">Loading…</div>' +
+      '<h2 class="rt">Transfer requests awaiting approval</h2><div id="transferReview" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
     $('fxSave').addEventListener('click', function () {
@@ -86,6 +87,7 @@
 
     loadReview();
     loadSquadReview();
+    loadTransferReview();
     wireLive();
     loadAssignOptions();
     loadPendingResults();
@@ -245,46 +247,119 @@
       '<h2 class="rt">Add a player</h2>' +
       input('spName', 'Full name') + input('spNin', 'National ID number') + input('spDob', 'Date of birth', 'date') +
       '<label for="spPos">Position</label><select id="spPos"><option value="GK">Goalkeeper</option><option value="DF">Defender</option><option value="MF">Midfielder</option><option value="FW">Forward</option></select>' +
+      '<label for="spPhoto">Photo (optional)</label><input id="spPhoto" type="file" accept="image/*">' +
       '<div class="btns"><button class="primary" id="spSave">Add player</button></div>' +
       '<h2 class="rt">Your players</h2><div id="squadList" class="muted">Loading…</div>' +
+      '<h2 class="rt">Transfers</h2><div id="transferList" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
     db.from('league_clubs').select('club_name').eq('id', p.club_id).maybeSingle().then(function (r) {
       $('clubName').innerHTML = '<strong>' + esc(r.data ? r.data.club_name : 'Your club') + '</strong>';
     });
     $('spSave').addEventListener('click', function () { addPlayer(p); });
-    loadSquad(p);
-  }
-  function addPlayer(p) {
-    var name = $('spName').value.trim(), nin = $('spNin').value.trim(), dob = $('spDob').value, pos = $('spPos').value;
-    if (!name || !nin || !dob) { msg('Enter the name, ID number and date of birth.'); return; }
-    db.auth.getUser().then(function (u) {
-      return db.from('club_squad').insert({ player_name: name, player_nin: nin, date_of_birth: dob, position: pos,
-        status: 'Active', registration_status: 'Pending', club_id: p.club_id, created_by: u.data.user.id });
-    }).then(function (r) {
-      if (r.error) { msg(r.error.message); return; }
-      msg('Player added. The Super Admin will approve the registration.');
-      ['spName', 'spNin', 'spDob'].forEach(function (x) { $(x).value = ''; });
+    Promise.all([loadCurrentSeason(), db.from('league_clubs').select('id, club_name').eq('is_active', true).order('club_name')]).then(function (all) {
+      clubsList = all[1].data || [];
       loadSquad(p);
     });
   }
+  var currentSeason = null, clubsList = [];
+  function loadCurrentSeason() {
+    return db.from('seasons').select('id, name').eq('is_current', true).maybeSingle().then(function (r) { currentSeason = r.data || null; });
+  }
+  function clubOptions(exceptId) {
+    return clubsList.filter(function (c) { return c.id !== exceptId; }).map(function (c) {
+      return '<option value="' + esc(c.id) + '">' + esc(c.club_name) + '</option>';
+    }).join('');
+  }
+  function uploadPhoto(clubId, file, playerId) {
+    var clean = String(file.name || 'photo').replace(/[^a-zA-Z0-9._-]/g, '_');
+    var path = clubId + '/' + Date.now() + '-' + clean;
+    return db.storage.from('player-photos').upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false }).then(function (up) {
+      if (up.error) throw up.error;
+      var url = db.storage.from('player-photos').getPublicUrl(path).data.publicUrl;
+      return db.from('club_squad').update({ photo_url: url }).eq('id', playerId).then(function (res) { if (res.error) throw res.error; });
+    });
+  }
+  function addPlayer(p) {
+    var name = $('spName').value.trim(), nin = $('spNin').value.trim(), dob = $('spDob').value, pos = $('spPos').value;
+    var file = $('spPhoto').files[0];
+    if (!name || !nin || !dob) { msg('Enter the name, ID number and date of birth.'); return; }
+    if (!currentSeason) { msg('No season is set yet. Ask the Super Admin to set the current season.'); return; }
+    db.auth.getUser().then(function (u) {
+      return db.from('club_squad').insert({ player_name: name, player_nin: nin, date_of_birth: dob, position: pos,
+        status: 'Active', registration_status: 'Pending', club_id: p.club_id, created_by: u.data.user.id, season_id: currentSeason.id })
+        .select('id').single();
+    }).then(function (r) {
+      if (r.error) throw r.error;
+      return file ? uploadPhoto(p.club_id, file, r.data.id) : null;
+    }).then(function () {
+      msg('Player added. The Super Admin will approve the registration.');
+      ['spName', 'spNin', 'spDob', 'spPhoto'].forEach(function (x) { $(x).value = ''; });
+      loadSquad(p);
+    }).catch(function (e) { msg(e.message || 'Could not save the player.'); });
+  }
   function loadSquad(p) {
-    db.from('club_squad').select('id, player_name, position, status, registration_status').eq('club_id', p.club_id).order('player_name')
+    db.from('club_squad').select('id, player_name, position, status, registration_status, photo_url, season_id').eq('club_id', p.club_id).order('player_name')
       .then(function (r) {
         var rows = r.data || [];
         $('squadList').innerHTML = rows.length ? rows.map(function (x) {
           var on = String(x.status) === 'Active';
-          return '<div class="post"><strong>' + esc(x.player_name) + '</strong> <span class="muted">' + esc(x.position) + '</span>' +
-            '<div class="muted">' + esc(x.registration_status) + ' · ' + (on ? 'Active' : 'Inactive') + '</div>' +
-            '<div class="btns"><button class="small" data-toggle="' + esc(x.id) + '" data-next="' + (on ? 'Inactive' : 'Active') + '">' + (on ? 'Mark inactive' : 'Mark active') + '</button></div></div>';
+          var needsRenewal = currentSeason && x.season_id !== currentSeason.id;
+          var img = x.photo_url ? '<img class="badge" src="' + esc(x.photo_url) + '" alt="">' : '<span class="badge ph">' + esc(String(x.player_name).charAt(0)) + '</span>';
+          return '<div class="post"><div class="row">' + img + '<span><strong>' + esc(x.player_name) + '</strong> <span class="muted">' + esc(x.position) + '</span>' +
+            '<div class="muted">' + esc(x.registration_status) + ' · ' + (on ? 'Active' : 'Inactive') + (needsRenewal ? ' · from an earlier season' : '') + '</div></span></div>' +
+            '<div class="btns"><button class="small" data-toggle="' + esc(x.id) + '" data-next="' + (on ? 'Inactive' : 'Active') + '">' + (on ? 'Mark inactive' : 'Mark active') + '</button>' +
+            (needsRenewal ? '<button class="small" data-renew="' + esc(x.id) + '">Renew for ' + esc(currentSeason.name) + '</button>' : '') + '</div>' +
+            '<label>Change photo</label><input type="file" accept="image/*" data-photo-for="' + esc(x.id) + '">' +
+            '<label>Transfer to</label><select data-transfer-for="' + esc(x.id) + '"><option value="">Choose a club…</option>' + clubOptions(p.club_id) + '</select>' +
+            '<div class="btns"><button class="small" data-transfer="' + esc(x.id) + '">Request transfer</button></div>' +
+            '</div>';
         }).join('') : 'No players yet.';
-        document.querySelectorAll('[data-toggle]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            db.from('club_squad').update({ status: b.dataset.next }).eq('id', b.dataset.toggle).then(function (res) {
-              msg(res.error ? res.error.message : 'Updated.'); loadSquad(p);
-            });
-          });
+        wireSquadRows(p);
+      });
+    loadMyTransfers(p);
+  }
+  function wireSquadRows(p) {
+    document.querySelectorAll('[data-toggle]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        db.from('club_squad').update({ status: b.dataset.next }).eq('id', b.dataset.toggle).then(function (res) {
+          msg(res.error ? res.error.message : 'Updated.'); loadSquad(p);
         });
       });
+    });
+    document.querySelectorAll('[data-renew]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        db.from('club_squad').update({ season_id: currentSeason.id, registration_status: 'Pending' }).eq('id', b.dataset.renew).then(function (res) {
+          msg(res.error ? res.error.message : 'Renewal sent to the Super Admin for approval.'); loadSquad(p);
+        });
+      });
+    });
+    document.querySelectorAll('[data-photo-for]').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var f = inp.files[0]; if (!f) return;
+        msg('Uploading photo…');
+        uploadPhoto(p.club_id, f, inp.dataset.photoFor).then(function () { msg('Photo saved.'); loadSquad(p); })
+          .catch(function (e) { msg(e.message || 'Photo could not be saved.'); });
+      });
+    });
+    document.querySelectorAll('[data-transfer]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var to = document.querySelector('[data-transfer-for="' + b.dataset.transfer + '"]').value;
+        if (!to) { msg('Choose the club the player is moving to.'); return; }
+        db.from('squad_transfers').insert({ player_id: Number(b.dataset.transfer), from_club: p.club_id, to_club: to }).then(function (res) {
+          msg(res.error ? res.error.message : 'Transfer request sent to the Super Admin.'); loadMyTransfers(p);
+        });
+      });
+    });
+  }
+  function loadMyTransfers(p) {
+    db.from('squad_transfers').select('id, status, from_club, to_club, club_squad(player_name)').order('requested_at', { ascending: false }).limit(20).then(function (r) {
+      var rows = r.data || [];
+      var names = {}; clubsList.forEach(function (k) { names[k.id] = k.club_name; });
+      $('transferList').innerHTML = rows.length ? rows.map(function (x) {
+        var dir = x.from_club === p.club_id ? 'Out to ' + (names[x.to_club] || 'another club') : 'In from ' + (names[x.from_club] || 'another club');
+        return '<div class="ev"><span class="etxt">' + esc(x.club_squad ? x.club_squad.player_name : 'Player') + ' · ' + esc(dir) + '<small>' + esc(x.status) + '</small></span></div>';
+      }).join('') : 'No transfer requests yet.';
+    });
   }
 
   // ---------- SUPER ADMIN: player registrations ----------
@@ -304,6 +379,29 @@
             b.addEventListener('click', function () {
               db.from('club_squad').update({ registration_status: b.dataset.to }).eq('id', b.dataset.sq).then(function (res) {
                 msg(res.error ? res.error.message : (b.dataset.to === 'Approved' ? 'Player approved.' : 'Player rejected.')); loadSquadReview();
+              });
+            });
+          });
+        });
+      });
+  }
+
+  function loadTransferReview() {
+    db.from('squad_transfers').select('id, from_club, to_club, club_squad(player_name, position)').eq('status', 'Pending').order('requested_at', { ascending: true })
+      .then(function (r) {
+        var rows = r.data || [];
+        if (!rows.length) { $('transferReview').innerHTML = 'No transfer requests waiting.'; return; }
+        db.from('league_clubs').select('id, club_name').then(function (c) {
+          var names = {}; (c.data || []).forEach(function (k) { names[k.id] = k.club_name; });
+          $('transferReview').innerHTML = rows.map(function (x) {
+            return '<div class="post"><strong>' + esc(x.club_squad ? x.club_squad.player_name : 'Player') + '</strong> <span class="muted">' + esc(x.club_squad ? x.club_squad.position : '') + '</span>' +
+              '<div class="muted">' + esc(names[x.from_club] || '?') + ' → ' + esc(names[x.to_club] || '?') + '</div>' +
+              '<div class="btns"><button class="primary" data-tr="' + esc(x.id) + '" data-ok="1">Approve</button><button class="secondary" data-tr="' + esc(x.id) + '" data-ok="0">Reject</button></div></div>';
+          }).join('');
+          document.querySelectorAll('[data-tr]').forEach(function (b) {
+            b.addEventListener('click', function () {
+              db.rpc('decide_transfer', { p_id: Number(b.dataset.tr), p_approve: b.dataset.ok === '1' }).then(function (res) {
+                msg(res.error ? res.error.message : (b.dataset.ok === '1' ? 'Transfer approved.' : 'Transfer rejected.')); loadTransferReview();
               });
             });
           });
@@ -627,6 +725,7 @@
     if ($('pendingResults')) loadPendingResults();
     if ($('reviewList')) loadReview();
     if ($('squadReview')) loadSquadReview();
+    if ($('transferReview')) loadTransferReview();
     if ($('myPosts')) loadMine();
     if ($('rfMatch') && $('rfMatch').value) loadRefMatch($('rfMatch').value);
     if ($('lvMatch') && $('lvMatch').value) loadLiveMatch($('lvMatch').value);

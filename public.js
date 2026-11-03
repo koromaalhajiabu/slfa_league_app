@@ -96,8 +96,31 @@
       .then(function (res) {
         if (res.error || !(res.data || []).length) { $('teamGrid').innerHTML = empty('Teams will appear here once they are added.'); return; }
         $('teamGrid').innerHTML = res.data.map(function (c) {
-          return '<div class="team">' + badge(c.logo_url, c.club_name) + '<span>' + esc(c.club_name) + '</span></div>';
-        }).join('');
+          return '<div class="team" role="button" tabindex="0" data-club="' + esc(c.id) + '" data-name="' + esc(c.club_name) + '">' + badge(c.logo_url, c.club_name) + '<span>' + esc(c.club_name) + '</span></div>';
+        }).join('') + '<div id="squadPanel"></div>';
+        document.querySelectorAll('[data-club]').forEach(function (el) {
+          el.addEventListener('click', function () { loadSquadPublic(el.dataset.club, el.dataset.name); });
+          el.addEventListener('keydown', function (e) { if (e.key === 'Enter') loadSquadPublic(el.dataset.club, el.dataset.name); });
+        });
+        if (selectedClub) loadSquadPublic(selectedClub.id, selectedClub.name);
+      });
+  }
+
+  // Squad for one club: approved, active players for the current season
+  var selectedClub = null;
+  var POS = { GK: 'Goalkeeper', DF: 'Defender', MF: 'Midfielder', FW: 'Forward' };
+  function loadSquadPublic(id, name) {
+    selectedClub = { id: id, name: name };
+    var panel = $('squadPanel');
+    if (!panel) return;
+    panel.innerHTML = '<h3 class="sub">' + esc(name) + ' squad</h3><p class="muted">Loading…</p>';
+    db.from('club_squad').select('player_name, position, photo_url').eq('club_id', id).order('player_name')
+      .then(function (res) {
+        if (res.error) { panel.innerHTML = '<h3 class="sub">' + esc(name) + ' squad</h3>' + empty('The squad is not available right now.'); return; }
+        var rows = res.data || [];
+        panel.innerHTML = '<h3 class="sub">' + esc(name) + ' squad</h3>' + (rows.length ? rows.map(function (x) {
+          return '<div class="row">' + badge(x.photo_url, x.player_name) + '<span class="pname">' + esc(x.player_name) + '<small>' + esc(POS[x.position] || x.position) + '</small></span></div>';
+        }).join('') : empty('No approved players for this season yet.'));
       });
   }
 
@@ -237,7 +260,7 @@
   }
   function subscribeLive() {
     var ch = db.channel('public-league');
-    ['matches', 'match_events', 'league_standings', 'league_clubs', 'top_scorers', 'top_assists', 'clean_sheets', 'media_posts', 'system_pause'].forEach(function (t) {
+    ['matches', 'match_events', 'league_standings', 'league_clubs', 'club_squad', 'top_scorers', 'top_assists', 'clean_sheets', 'media_posts', 'system_pause'].forEach(function (t) {
       ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, scheduleRefresh);
     });
     ch.subscribe();
