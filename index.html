@@ -1,213 +1,296 @@
+
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a4a8a">
-<meta name="application-name" content="The SLFA League App">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="The SLFA League App">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-<link rel="apple-touch-icon" href="icon-192.png">
-<title>The SLFA League App</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a4a8a">
+  <meta name="application-name" content="The SLFA League App">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="The SLFA League App">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <title>The SLFA League App</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
+
 <header class="topbar">
   <div class="brand">
     <img class="crest" src="slfa-logo.png" alt="SLFA logo">
-    <div><h1>The SLFA League App</h1><p>Sierra Leone Football Association</p></div>
+    <div>
+      <h1>The SLFA League App</h1>
+      <p>Sierra Leone Football Association</p>
+    </div>
   </div>
-<details class="admin" id="adminDropdown">
+
+  <details class="admin" id="adminDropdown">
     <summary>Admin</summary>
+
     <div class="admin-body">
 
       <div id="signedOut">
         <p class="admin-intro">Staff sign-in</p>
+
         <label for="email">Email</label>
         <input id="email" type="email" autocomplete="username">
+
         <label for="password">Password</label>
         <input id="password" type="password" autocomplete="current-password">
+
         <div class="btns">
-          <button class="primary" id="signinBtn">Sign in</button>
-          <button class="secondary" id="showCreateBtn">Create account</button>
+          <button class="primary" id="signinBtn" type="button">Sign in</button>
+          <button class="secondary" id="showCreateBtn" type="button">Create account</button>
         </div>
+
         <div id="createBox" class="hidden">
           <label for="fullName">Full name</label>
           <input id="fullName" type="text" autocomplete="name">
+
           <div class="btns">
-            <button class="primary" id="createBtn">Create my account</button>
+            <button class="primary" id="createBtn" type="button">Create my account</button>
           </div>
-          <p class="muted">A new account can view the league. A Technical Director must assign your role before you can make changes.</p>
+
+          <p class="muted">
+            A new account can view the league. A Technical Director must assign your role before you can make changes.
+          </p>
         </div>
+
         <div class="status" id="authStatus"></div>
       </div>
 
       <div id="signedIn" class="hidden">
-        <div class="row"><span id="whoName"></span><span class="muted" id="whoRole"></span></div>
-        <div class="btns"><button class="primary" id="openPortal" hidden>Open my portal</button></div>
-        <div class="btns"><button class="secondary" id="signoutBtn">Sign out</button></div>
+        <div class="row">
+          <span id="whoName"></span>
+          <span class="muted" id="whoRole"></span>
+        </div>
+
+        <div class="btns">
+          <button class="primary" id="openPortal" type="button" hidden>Open my portal</button>
+        </div>
+
+        <div class="btns">
+          <button class="secondary" id="signoutBtn" type="button">Sign out</button>
+        </div>
       </div>
 
     </div>
   </details>
+
   <div class="install-wrap">
-    <button class="install-btn" id="installBtn" hidden>Install app</button>
-    <div class="install-hint" id="iosHint" hidden>To install on iPhone: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.</div>
+    <button class="install-btn" id="installBtn" type="button" hidden>Install app</button>
+    <div class="install-hint" id="iosHint" hidden>
+      To install on iPhone: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.
+    </div>
   </div>
 </header>
+
 <main>
-  <!-- PUBLIC VIEWER: the main screen everyone sees -->
+
   <section id="public" class="public" aria-label="League information">
+
     <div class="pause-banner" id="pauseBanner" hidden></div>
-    <div class="offline-banner" id="offlineBanner" role="status" hidden>You are offline. Showing the last information saved on this phone.</div>
+
+    <div class="offline-banner" id="offlineBanner" role="status" hidden>
+      You are offline. Showing the last information saved on this phone.
+    </div>
+
     <div class="hero">
       <div>
         <p class="kicker">Sierra Leone Football Association</p>
         <h2 class="title">League Centre</h2>
       </div>
-      <div class="hero-actions"><button class="share-app" id="alertBtn">Get alerts</button><button class="share-app" id="shareApp">Share</button></div>
+
+      <div class="hero-actions">
+        <button class="share-app" id="alertBtn" type="button">Get alerts</button>
+        <button class="share-app" id="shareApp" type="button">Share</button>
+      </div>
+
       <div class="status" id="alertStatus"></div>
     </div>
+
     <div class="leagueSwitch" id="leagueSwitch" aria-label="Choose league"></div>
+
     <nav class="tabs" role="tablist" aria-label="League sections">
-      <button role="tab" data-tab="live" aria-selected="false">Live</button>
-      <button role="tab" data-tab="matches" aria-selected="true">Matches</button>
-      <button role="tab" data-tab="table" aria-selected="false">Table</button>
-      <button role="tab" data-tab="teams" aria-selected="false">Teams</button>
-      <button role="tab" data-tab="players" aria-selected="false">Players</button>
-      <button role="tab" data-tab="news" aria-selected="false">News</button>
-      <button role="tab" data-tab="videos" aria-selected="false">Videos</button>
-      <button role="tab" data-tab="predict" aria-selected="false">Predict</button>
+      <button type="button" role="tab" data-tab="live" aria-selected="false">Live</button>
+      <button type="button" role="tab" data-tab="matches" aria-selected="true">Matches</button>
+      <button type="button" role="tab" data-tab="table" aria-selected="false">Table</button>
+      <button type="button" role="tab" data-tab="teams" aria-selected="false">Teams</button>
+      <button type="button" role="tab" data-tab="players" aria-selected="false">Players</button>
+      <button type="button" role="tab" data-tab="news" aria-selected="false">News</button>
+      <button type="button" role="tab" data-tab="videos" aria-selected="false">Videos</button>
+      <button type="button" role="tab" data-tab="predict" aria-selected="false">Predict</button>
     </nav>
 
     <div data-view="live" class="view card" id="liveList" hidden></div>
 
-    <div data-view="matches" class="view card" id="matchList">Loading matches…</div>
+    <div data-view="matches" class="view card" id="matchList">
+      Loading matches…
+    </div>
 
     <div data-view="table" class="view card" hidden>
       <h3 class="sub">Standings</h3>
+
       <div class="scroll">
         <table class="table">
-          <thead><tr><th>#</th><th class="club">Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>Pts</th></tr></thead>
-          <tbody id="tableBody"><tr><td colspan="9">Loading the table…</td></tr></tbody>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="club">Club</th>
+              <th>P</th>
+              <th>W</th>
+              <th>D</th>
+              <th>L</th>
+              <th>GF</th>
+              <th>GA</th>
+              <th>Pts</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="9">Loading the table…</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
 
-    <div data-view="teams" class="view card" id="teamGrid" hidden>Loading teams…</div>
-
-    <div data-view="players" class="view" hidden>
-      <div class="card"><h3 class="sub">Top scorers</h3><div id="scorers">Loading…</div></div>
-      <div class="card"><h3 class="sub">Top assists</h3><div id="assists">Loading…</div></div>
-      <div class="card"><h3 class="sub">Clean sheets</h3><div id="cleanSheets">Loading…</div></div>
-      <div class="card"><h3 class="sub">Man of the Match</h3><div id="motm">Loading…</div></div>
+    <div data-view="teams" class="view card" id="teamGrid" hidden>
+      Loading teams…
     </div>
 
-    <div data-view="news" class="view" id="newsList" hidden><div id="pollList"></div><div id="newsItems">Loading news…</div></div>
-    <div data-view="videos" class="view card" id="videoList" hidden>Loading videos…</div>
-    <div data-view="predict" class="view card" id="predictList" hidden>Loading…</div>
+    <div data-view="players" class="view" hidden>
+      <div class="card">
+        <h3 class="sub">Top scorers</h3>
+        <div id="scorers">Loading…</div>
+      </div>
 
-    <div hidden><div id="fixtures"></div><div id="results"></div><div id="connStatus"></div></div>
+      <div class="card">
+        <h3 class="sub">Top assists</h3>
+        <div id="assists">Loading…</div>
+      </div>
+
+      <div class="card">
+        <h3 class="sub">Clean sheets</h3>
+        <div id="cleanSheets">Loading…</div>
+      </div>
+
+      <div class="card">
+        <h3 class="sub">Man of the Match</h3>
+        <div id="motm">Loading…</div>
+      </div>
+    </div>
+
+    <div data-view="news" class="view" id="newsList" hidden>
+      <div id="pollList"></div>
+      <div id="newsItems">Loading news…</div>
+    </div>
+
+    <div data-view="videos" class="view card" id="videoList" hidden>
+      Loading videos…
+    </div>
+
+    <div data-view="predict" class="view card" id="predictList" hidden>
+      Loading…
+    </div>
+
+    <div hidden>
+      <div id="fixtures"></div>
+      <div id="results"></div>
+      <div id="connStatus"></div>
+    </div>
+
   </section>
-
 </main>
 
+<!-- Navigation works independently of the database connection -->
+<script>
+(function () {
+  function activateTab(button) {
+    var tab = button.getAttribute('data-tab');
+
+    document.querySelectorAll('[data-tab]').forEach(function (item) {
+      item.setAttribute('aria-selected', String(item === button));
+    });
+
+    document.querySelectorAll('[data-view]').forEach(function (view) {
+      view.hidden = view.getAttribute('data-view') !== tab;
+    });
+  }
+
+  document.querySelectorAll('[data-tab]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      activateTab(button);
+    });
+  });
+})();
+</script>
+
+<!-- Supabase and application configuration -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="sw-update.js"></script>
+
+<!-- App installation -->
 <script>
-// Install: Android and desktop get a button; iPhone gets a short instruction.
 (function () {
   var deferred = null;
+
   var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  var standalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+
   if (standalone) return;
+
   window.addEventListener('beforeinstallprompt', function (e) {
-    e.preventDefault(); deferred = e; document.getElementById('installBtn').hidden = false;
+    e.preventDefault();
+    deferred = e;
+
+    var btn = document.getElementById('installBtn');
+    if (btn) btn.hidden = false;
   });
-  document.getElementById('installBtn').addEventListener('click', function () {
-    if (!deferred) return;
-    deferred.prompt();
-    deferred.userChoice.then(function () { deferred = null; this.hidden = true; }.bind(this));
+
+  var installButton = document.getElementById('installBtn');
+
+  if (installButton) {
+    installButton.addEventListener('click', function () {
+      if (!deferred) return;
+
+      deferred.prompt();
+
+      deferred.userChoice.then(function () {
+        deferred = null;
+        installButton.hidden = true;
+      });
+    });
+  }
+
+  window.addEventListener('appinstalled', function () {
+    if (installButton) installButton.hidden = true;
   });
-  window.addEventListener('appinstalled', function () { document.getElementById('installBtn').hidden = true; });
-  if (isIOS) document.getElementById('iosHint').hidden = false;
+
+  if (isIOS) {
+    var hint = document.getElementById('iosHint');
+    if (hint) hint.hidden = false;
+  }
+})();
 </script>
+
+<!-- Admin authentication and portal routing -->
 <script>
 (function () {
-  var cfg = window.SLFA_CONFIG;
-  var db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
-    auth: { persistSession: true, autoRefreshToken: true }
-  });
-  window.slfaDb = db;
-
-  function $(id) { return document.getElementById(id); }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
-  function fmtDate(d) { try { return new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return d; } }
-
-  // PUBLIC: fixtures and results only
-  function loadPublic() {
-    db.from('matches').select('id, match_date, venue, match_status, home_team, away_team, home_score, away_score')
-      .order('match_date', { ascending: true }).limit(50)
-      .then(function (res) {
-        if (res.error) {
-          $('fixtures').textContent = 'Could not load fixtures.';
-          $('results').textContent = '';
-          $('connStatus').textContent = 'Not connected to the league database.';
-          return;
-        }
-        var rows = res.data || [];
-        var up = rows.filter(function (m) { return m.home_score == null; });
-        var done = rows.filter(function (m) { return m.home_score != null; }).reverse();
-        $('fixtures').innerHTML = up.length ? up.slice(0, 10).map(matchRow).join('') : 'No upcoming fixtures yet.';
-        $('results').innerHTML = done.length ? done.slice(0, 10).map(matchRow).join('') : 'No results yet.';
-        $('connStatus').textContent = 'Connected to the league database.';
-      });
+  function $(id) {
+    return document.getElementById(id);
   }
-  function matchRow(m) {
-    var score = m.home_score == null ? esc(fmtDate(m.match_date)) : esc(m.home_score) + ' – ' + esc(m.away_score);
-    return '<div class="row"><span>' + esc(m.home_team) + ' v ' + esc(m.away_team) + '</span><span>' + score + '</span></div>';
-  }
-
-  // ADMINISTRATION: sign in, create account, sign out
-  $('showCreateBtn').addEventListener('click', function () {
-    $('createBox').classList.toggle('hidden');
-    $('authStatus').textContent = '';
-  });
-
-  $('signinBtn').addEventListener('click', function () {
-    $('authStatus').textContent = 'Signing in…';
-    db.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value })
-      .then(function (res) {
-        if (res.error) { $('authStatus').textContent = 'Sign-in failed. Check your email and password.'; return; }
-        $('password').value = '';
-        return showAdmin(true);
-      });
-  });
-
-  $('createBtn').addEventListener('click', function () {
-    var email = $('email').value.trim();
-    var password = $('password').value;
-    if (!email || password.length < 8) { $('authStatus').textContent = 'Enter an email and a password of at least 8 characters above.'; return; }
-    $('authStatus').textContent = 'Creating account…';
-    db.auth.signUp({ email: email, password: password, options: { data: { full_name: $('fullName').value.trim() } } })
-      .then(function (res) {
-        if (res.error) { $('authStatus').textContent = res.error.message; return; }
-        $('authStatus').textContent = 'Account created. Check your email to confirm it, then sign in.';
-        $('password').value = '';
-      });
-  });
-
-  $('signoutBtn').addEventListener('click', function () {
-    db.auth.signOut().then(showSignedOut);
-  });
 
   function showSignedOut() {
     $('signedOut').classList.remove('hidden');
@@ -216,49 +299,180 @@
     $('authStatus').textContent = '';
   }
 
-  var PORTALS = { DEVELOPER: 'developer.html', SUPER_ADMIN: 'super-admin.html', REFEREE: 'referee.html', MEDIA_OFFICER: 'media.html', DISCIPLINARY_OFFICER: 'disciplinary.html', CLUB_ADMIN: 'club.html' };
+  var cfg = window.SLFA_CONFIG;
+
+  if (!cfg || !window.supabase || !window.supabase.createClient) {
+    $('authStatus').textContent =
+      'The database connection library could not load. Please check your internet connection and refresh.';
+    return;
+  }
+
+  var db = window.supabase.createClient(
+    cfg.supabaseUrl,
+    cfg.supabasePublishableKey,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true
+      }
+    }
+  );
+
+  window.slfaDb = db;
+
+  var PORTALS = {
+    DEVELOPER: 'developer.html',
+    SUPER_ADMIN: 'super-admin.html',
+    REFEREE: 'referee.html',
+    MEDIA_OFFICER: 'media.html',
+    DISCIPLINARY_OFFICER: 'disciplinary.html',
+    CLUB_ADMIN: 'club.html'
+  };
+
+  $('showCreateBtn').addEventListener('click', function () {
+    $('createBox').classList.toggle('hidden');
+    $('authStatus').textContent = '';
+  });
+
+  $('signinBtn').addEventListener('click', function () {
+    $('authStatus').textContent = 'Signing in…';
+
+    db.auth.signInWithPassword({
+      email: $('email').value.trim(),
+      password: $('password').value
+    }).then(function (res) {
+      if (res.error) {
+        $('authStatus').textContent =
+          'Sign-in failed. Check your email and password.';
+        return;
+      }
+
+      $('password').value = '';
+      return showAdmin(true);
+    }).catch(function () {
+      $('authStatus').textContent = 'Unable to sign in. Please try again.';
+    });
+  });
+
+  $('createBtn').addEventListener('click', function () {
+    var email = $('email').value.trim();
+    var password = $('password').value;
+
+    if (!email || password.length < 8) {
+      $('authStatus').textContent =
+        'Enter an email and a password of at least 8 characters above.';
+      return;
+    }
+
+    $('authStatus').textContent = 'Creating account…';
+
+    db.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          full_name: $('fullName').value.trim()
+        }
+      }
+    }).then(function (res) {
+      if (res.error) {
+        $('authStatus').textContent = res.error.message;
+        return;
+      }
+
+      $('authStatus').textContent =
+        'Account created. Check your email to confirm it, then sign in.';
+
+      $('password').value = '';
+    }).catch(function () {
+      $('authStatus').textContent = 'Unable to create account. Please try again.';
+    });
+  });
+
+  $('signoutBtn').addEventListener('click', function () {
+    db.auth.signOut().then(showSignedOut);
+  });
+
   $('openPortal').addEventListener('click', function () {
     db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) return showSignedOut();
-      return db.from('user_profiles').select('system_role').eq('id', u.data.user.id).maybeSingle().then(function (r) {
-        var page = r.data && PORTALS[String(r.data.system_role).toUpperCase()];
-        if (page) location.href = page;
-      });
+      if (!u.data || !u.data.user) {
+        showSignedOut();
+        return;
+      }
+
+      return db.from('user_profiles')
+        .select('system_role')
+        .eq('id', u.data.user.id)
+        .maybeSingle()
+        .then(function (r) {
+          var page = r.data &&
+            PORTALS[String(r.data.system_role).toUpperCase()];
+
+          if (page) location.href = page;
+        });
     });
   });
 
   function showAdmin(openAfter) {
     return db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) return showSignedOut();
-      return db.from('user_profiles').select('system_role, status, full_name, email').eq('id', u.data.user.id).maybeSingle()
+      if (!u.data || !u.data.user) {
+        showSignedOut();
+        return;
+      }
+
+      return db.from('user_profiles')
+        .select('system_role, status, full_name, email')
+        .eq('id', u.data.user.id)
+        .maybeSingle()
         .then(function (res) {
           var p = res.data;
+
           if (!p || String(p.status).toLowerCase() !== 'active') {
-            $('authStatus').textContent = p && String(p.status) === 'Pending' ? 'Your account is waiting for a role. Ask the Technical Director to assign one.' : 'This account is not active. Ask the Technical Director to check it.';
+            $('authStatus').textContent =
+              p && String(p.status) === 'Pending'
+                ? 'Your account is waiting for a role. Ask the Technical Director to assign one.'
+                : 'This account is not active. Ask the Technical Director to check it.';
+
             return db.auth.signOut().then(showSignedOut);
           }
+
           var role = String(p.system_role).toUpperCase();
           var page = PORTALS[role];
-          if (openAfter && page) { location.href = page; return; }
+
+          if (openAfter && page) {
+            location.href = page;
+            return;
+          }
+
           $('signedOut').classList.add('hidden');
           $('signedIn').classList.remove('hidden');
+
           $('whoName').textContent = p.full_name || p.email;
           $('whoRole').textContent = role.replace(/_/g, ' ');
           $('openPortal').hidden = !page;
-          if (!page) $('authStatus').textContent = 'Your role does not have a portal yet. Ask the Technical Director.';
+
+          if (!page) {
+            $('authStatus').textContent =
+              'Your role does not have a portal yet. Ask the Technical Director.';
+          }
         });
+    }).catch(function () {
+      $('authStatus').textContent =
+        'Unable to check your account. Please refresh and try again.';
     });
   }
 
   db.auth.onAuthStateChange(function (event) {
     if (event === 'SIGNED_OUT') showSignedOut();
   });
-  loadPublic();
-  showAdmin();
+
+  showAdmin(false);
 })();
 </script>
+
+<!-- Public league data and additional features -->
 <script src="public.js"></script>
 <script src="enhancements.js"></script>
+
 </body>
 </html>
-
