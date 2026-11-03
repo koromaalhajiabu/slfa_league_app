@@ -34,7 +34,8 @@
         .then(function (r) {
           var p = r.data;
           if (!p || String(p.status).toLowerCase() !== 'active') {
-            return db.auth.signOut().then(function () { showSignIn('This account is not active. Ask the Technical Director to check it.'); });
+            var msg = p && String(p.status) === 'Pending' ? 'Your account is waiting for a role. Ask the Technical Director to assign one.' : 'This account is not active. Ask the Technical Director to check it.';
+            return db.auth.signOut().then(function () { showSignIn(msg); });
           }
           var role = String(p.system_role).toUpperCase();
           if (role !== portal) {
