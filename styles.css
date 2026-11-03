@@ -942,3 +942,12 @@ details.admin > summary {
   padding: 5px 8px !important;
   min-height: 28px !important;
 }
+/* ===== Live search ===== */
+.searchBox { margin:10px 0 6px; }
+.searchBox input[type="search"] { width:100%; min-height:46px; padding:10px 16px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:15px; box-shadow:0 8px 20px -14px rgba(0,60,120,.35); }
+.searchBox input[type="search"]:focus { border-color:var(--flag-blue); box-shadow:0 0 0 4px rgba(0,114,198,.14); outline:none; }
+.searchResults { margin:0 0 12px; padding:10px 14px; border-radius:16px; background:var(--card); border:1px solid var(--line); box-shadow:0 14px 34px -18px rgba(0,40,80,.35); max-height:60vh; overflow-y:auto; }
+.searchResults .sub { margin:10px 0 6px; }
+.searchResults .sr { display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:8px 4px; border:0; border-bottom:1px solid rgba(128,128,128,.14); background:transparent; color:var(--ink); text-align:left; font-size:15px; cursor:pointer; }
+.searchResults .sr small { display:block; color:var(--muted); font-size:12px; }
+.searchResults .sr:hover { background:rgba(0,114,198,.06); }

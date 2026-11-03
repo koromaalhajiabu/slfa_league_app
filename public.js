@@ -22,6 +22,51 @@
     });
   });
 
+  // Live search: clubs, players and published news as you type
+  var searchTimer = null, searchBox = $('liveSearch'), searchOut = $('searchResults');
+  function cleanQ(v) { return String(v || '').trim().replace(/[%_,()*]/g, ''); }
+  function showTab(name) { var b = document.querySelector('[data-tab="' + name + '"]'); if (b) b.click(); }
+  function clearSearch() { if (searchOut) { searchOut.hidden = true; searchOut.innerHTML = ''; } }
+  function closeSearch() { if (searchBox) searchBox.value = ''; clearSearch(); }
+  if (searchBox) {
+    searchBox.addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      var q = cleanQ(searchBox.value);
+      if (q.length < 2) { clearSearch(); return; }
+      searchTimer = setTimeout(function () { runSearch(q); }, 250);
+    });
+    searchBox.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSearch(); });
+  }
+  function runSearch(q) {
+    var pat = '%' + q + '%';
+    Promise.all([
+      db.from('league_clubs').select('id, club_name, logo_url').eq('is_active', true).ilike('club_name', pat).limit(8),
+      db.from('club_squad').select('id, player_name, jersey_number, club_id, league_clubs(club_name)').eq('registration_status', 'Approved').ilike('player_name', pat).limit(8),
+      db.from('media_posts').select('id, title, category').eq('status', 'PUBLISHED').ilike('title', pat).order('published_at', { ascending: false }).limit(6)
+    ]).then(function (all) {
+      if (cleanQ(searchBox.value) !== q) return; // a newer search has started
+      var clubs = (all[0].data || []).filter(function (c) { return !currentLeague || clubLeague[c.club_name] === currentLeague; });
+      var players = (all[1].data || []).filter(function (p) { var n = p.league_clubs && p.league_clubs.club_name; return !currentLeague || clubLeague[n] === currentLeague; });
+      var news = all[2].data || [];
+      var html = '';
+      if (clubs.length) html += '<h4 class="sub">Clubs</h4>' + clubs.map(function (c) {
+        return '<button class="sr" data-sr-club="' + esc(c.id) + '" data-sr-name="' + esc(c.club_name) + '">' + badge(c.logo_url, c.club_name) + '<span>' + esc(c.club_name) + '</span></button>'; }).join('');
+      if (players.length) html += '<h4 class="sub">Players</h4>' + players.map(function (p) {
+        var club = p.league_clubs ? p.league_clubs.club_name : '';
+        return '<button class="sr" data-sr-club="' + esc(p.club_id) + '" data-sr-name="' + esc(club) + '"><span>' + (p.jersey_number ? '#' + esc(p.jersey_number) + ' ' : '') + esc(p.player_name) + '<small>' + esc(club) + '</small></span></button>'; }).join('');
+      if (news.length) html += '<h4 class="sub">News</h4>' + news.map(function (n) {
+        return '<button class="sr" data-sr-news="1"><span>' + esc(n.title) + '<small>' + esc(CAT_LABEL[n.category] || 'News') + '</small></span></button>'; }).join('');
+      searchOut.innerHTML = html || '<p class="muted empty">No matches for “' + esc(q) + '”.</p>';
+      searchOut.hidden = false;
+      searchOut.querySelectorAll('[data-sr-club]').forEach(function (b) {
+        b.addEventListener('click', function () { showTab('teams'); loadSquadPublic(b.dataset.srClub, b.dataset.srName); closeSearch(); });
+      });
+      searchOut.querySelectorAll('[data-sr-news]').forEach(function (b) {
+        b.addEventListener('click', function () { showTab('news'); closeSearch(); });
+      });
+    });
+  }
+
   // Matches
   // Upcoming and results are loaded separately, so the newest results are never cut off
   var resultsTeam = '', leaguesCache = [], dateSel = '', clubLogos = {};
