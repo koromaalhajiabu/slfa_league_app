@@ -3,7 +3,7 @@
 // New versions are downloaded in the background.
 // Supabase league data stays network-first with offline fallback.
 
-const CACHE = 'slfa-app-v39';
+const CACHE = 'slfa-app-v40';
 const DATA_CACHE = CACHE + '-data';
 
 const PUBLIC_TABLES = [
