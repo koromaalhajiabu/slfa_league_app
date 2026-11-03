@@ -313,7 +313,7 @@
 
   // ---------- TECHNICAL DIRECTOR: assign roles ----------
   var clubsCache = [];
-  var ROLE_OPTIONS = [['VIEWER','Viewer'],['PLAYER','Player'],['CLUB_ADMIN','Club Manager'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['SUPER_ADMIN','Super Admin']];
+  var ROLE_OPTIONS = [['CLUB_ADMIN','Club Manager'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['SUPER_ADMIN','Super Admin']];
   var devUser = null;
   function developer(p) {
     devUser = p;
@@ -410,7 +410,8 @@
         var isMe = u.id === p.id;
         var isDev = String(u.system_role).toUpperCase() === 'DEVELOPER';
         var active = String(u.status).toLowerCase() === 'active';
-        var opts = ROLE_OPTIONS.map(function (o) { return '<option value="' + o[0] + '"' + (String(u.system_role).toUpperCase() === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('');
+        var waiting = String(u.system_role).toUpperCase() === 'NONE';
+        var opts = (waiting ? '<option value="NONE" selected>Waiting for a role</option>' : '') + ROLE_OPTIONS.map(function (o) { return '<option value="' + o[0] + '"' + (String(u.system_role).toUpperCase() === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('');
         return '<div class="post"><strong>' + esc(u.full_name || u.email) + (isMe ? ' <span class="muted">(you)</span>' : '') + '</strong>' +
           '<div class="muted">' + esc(u.email) + ' · ' + esc(u.status) + '</div>' +
           (isDev ? '<div class="muted">Technical Director</div>' :

@@ -227,7 +227,7 @@
         .then(function (res) {
           var p = res.data;
           if (!p || String(p.status).toLowerCase() !== 'active') {
-            $('authStatus').textContent = 'This account is not active. Ask the Technical Director to check it.';
+            $('authStatus').textContent = p && String(p.status) === 'Pending' ? 'Your account is waiting for a role. Ask the Technical Director to assign one.' : 'This account is not active. Ask the Technical Director to check it.';
             return db.auth.signOut().then(showSignedOut);
           }
           var role = String(p.system_role).toUpperCase();
