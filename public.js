@@ -272,7 +272,7 @@
   function toggleFav(clubId, clubs) {
     var status = function (t) { var el = document.getElementById('favStatus'); if (el) el.textContent = t; };
     db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) { status('Sign in under Administration (top right) to save favourite clubs.'); return; }
+      if (!u.data || !u.data.user) { status('Sign in under Admin (top right) to save favourite clubs.'); return; }
       var on = !!myFavIds[clubId];
       var q = on
         ? db.from('user_favorite_clubs').delete().eq('user_id', u.data.user.id).eq('club_id', clubId)
