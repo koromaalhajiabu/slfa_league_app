@@ -210,14 +210,18 @@
   </section>
 </main>
 
-<!-- Navigation works independently of the database connection -->
+<!-- Mobile-safe navigation works independently of the database connection. -->
 <script>
 (function () {
   function activateTab(button) {
+    if (!button) return;
     var tab = button.getAttribute('data-tab');
+    if (!tab) return;
 
-    document.querySelectorAll('[data-tab]').forEach(function (item) {
-      item.setAttribute('aria-selected', String(item === button));
+    document.querySelectorAll('.tabs [data-tab]').forEach(function (item) {
+      var active = item === button;
+      item.setAttribute('aria-selected', String(active));
+      item.setAttribute('tabindex', active ? '0' : '-1');
     });
 
     document.querySelectorAll('[data-view]').forEach(function (view) {
@@ -225,11 +229,36 @@
     });
   }
 
-  document.querySelectorAll('[data-tab]').forEach(function (button) {
-    button.addEventListener('click', function () {
-      activateTab(button);
-    });
+  // Delegated capture-phase handling survives later content redraws and
+  // does not depend on Supabase or public.js finishing initialization.
+  document.addEventListener('click', function (event) {
+    var target = event.target;
+    var button = target && target.closest ? target.closest('.tabs [data-tab]') : null;
+    if (!button) return;
+    event.preventDefault();
+    activateTab(button);
+  }, true);
+
+  document.addEventListener('keydown', function (event) {
+    var button = event.target && event.target.closest
+      ? event.target.closest('.tabs [data-tab]') : null;
+    if (!button) return;
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.tabs [data-tab]'));
+    var index = tabs.indexOf(button);
+    var next = null;
+    if (event.key === 'ArrowRight') next = tabs[(index + 1) % tabs.length];
+    if (event.key === 'ArrowLeft') next = tabs[(index - 1 + tabs.length) % tabs.length];
+    if (event.key === 'Home') next = tabs[0];
+    if (event.key === 'End') next = tabs[tabs.length - 1];
+    if (next) {
+      event.preventDefault();
+      activateTab(next);
+      next.focus();
+    }
   });
+
+  var initial = document.querySelector('.tabs [data-tab][aria-selected="true"]');
+  if (initial) activateTab(initial);
 })();
 </script>
 
