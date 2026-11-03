@@ -24,13 +24,24 @@
 
   // Matches
   // Upcoming and results are loaded separately, so the newest results are never cut off
-  var resultsTeam = '', leagueSel = '', leaguesCache = [];
+  var resultsTeam = '', leagueSel = '', leaguesCache = [], dateSel = '', clubLogos = {};
+  // Local calendar day as YYYY-MM-DD, so the date picker matches what the viewer sees
+  function dayKey(d) {
+    var x = new Date(d);
+    return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+  }
+  function shiftDay(key, n) {
+    var p = key.split('-').map(Number);
+    return dayKey(new Date(p[0], p[1] - 1, p[2] + n));
+  }
+  function onDate(rows) { return dateSel ? rows.filter(function (m) { return dayKey(m.match_date) === dateSel; }) : rows; }
   var MATCH_COLS = 'id, match_date, venue, match_status, match_minute, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number';
   function loadMatches() {
     Promise.all([
       db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
       db.from('matches').select(MATCH_COLS).in('match_status', ['SCHEDULED', 'RESCHEDULED', 'POSTPONED', 'CANCELLED']).order('match_date', { ascending: true }).limit(200),
-      db.from('matches').select(MATCH_COLS).eq('match_status', 'FT').order('match_date', { ascending: false }).limit(200)
+      db.from('matches').select(MATCH_COLS).eq('match_status', 'FT').order('match_date', { ascending: false }).limit(200),
+      db.from('league_clubs').select('club_name, logo_url').eq('is_active', true)
     ]).then(function (all) {
       if (all[1].error || all[2].error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
       leaguesCache = all[0].data || [];
@@ -44,15 +55,30 @@
       var leagueOpts = leaguesCache.map(function (l) {
         return '<option value="' + esc(l.id) + '"' + (String(l.id) === leagueSel ? ' selected' : '') + '>' + esc(l.name) + '</option>';
       }).join('');
+      clubLogos = {};
+      (all[3].data || []).forEach(function (c) { clubLogos[c.club_name] = c.logo_url; });
       $('matchList').innerHTML =
+        '<div class="mc">' +
+        '<div class="datebar"><button class="small" data-day="-1" aria-label="Previous day">‹</button>' +
+        '<input type="date" id="dateFilter" value="' + esc(dateSel) + '" aria-label="Choose a date">' +
+        '<button class="small" data-day="1" aria-label="Next day">›</button>' +
+        '<button class="small" id="dateAll">All dates</button></div>' +
         '<label class="filter">League <select id="leagueFilter"><option value="">All leagues</option>' + leagueOpts + '</select></label>' +
         '<h3 class="sub">Playing now</h3><div id="playingNow">' + empty('Loading…') + '</div>' +
         '<h3 class="sub">Upcoming</h3><div id="upcomingList"></div>' +
         '<h3 class="sub">Results</h3>' +
         '<label class="filter">Team <select id="teamFilter"><option value="">All teams</option>' + teamOpts + '</select></label>' +
-        '<div id="resultsList"></div>';
+        '<div id="resultsList"></div></div>';
       $('leagueFilter').addEventListener('change', function () { leagueSel = this.value; renderUpcoming(up); renderResults(done); });
       $('teamFilter').addEventListener('change', function () { resultsTeam = this.value; renderResults(done); });
+      $('dateFilter').addEventListener('change', function () { dateSel = this.value; renderUpcoming(up); renderResults(done); });
+      $('dateAll').addEventListener('click', function () { dateSel = ''; $('dateFilter').value = ''; renderUpcoming(up); renderResults(done); });
+      document.querySelectorAll('.mc [data-day]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          dateSel = shiftDay(dateSel || dayKey(new Date()), Number(b.dataset.day));
+          $('dateFilter').value = dateSel; renderUpcoming(up); renderResults(done);
+        });
+      });
       renderUpcoming(up);
       renderResults(done);
       loadLive();
@@ -70,11 +96,12 @@
     return html;
   }
   function renderUpcoming(rows) {
-    $('upcomingList').innerHTML = byLeague(rows) || empty(leagueSel ? 'No upcoming matches in this league.' : 'No upcoming matches yet.');
+    var list = onDate(rows);
+    $('upcomingList').innerHTML = byLeague(list) || empty(dateSel ? 'No upcoming matches on this date.' : leagueSel ? 'No upcoming matches in this league.' : 'No upcoming matches yet.');
   }
   function renderResults(rows) {
-    var list = resultsTeam ? rows.filter(function (m) { return m.home_team === resultsTeam || m.away_team === resultsTeam; }) : rows;
-    $('resultsList').innerHTML = byLeague(list) || empty(resultsTeam ? 'No results for ' + esc(resultsTeam) + ' yet.' : 'No results yet.');
+    var list = onDate(resultsTeam ? rows.filter(function (m) { return m.home_team === resultsTeam || m.away_team === resultsTeam; }) : rows);
+    $('resultsList').innerHTML = byLeague(list) || empty(dateSel ? 'No results on this date.' : resultsTeam ? 'No results for ' + esc(resultsTeam) + ' yet.' : 'No results yet.');
   }
   function matchCard(m) {
     var st = m.match_status;
@@ -86,7 +113,7 @@
     var motm = m.motm_name ? '<div class="meta">Man of the Match: ' + esc(m.motm_name) + (m.motm_jersey_number ? ' (#' + esc(m.motm_jersey_number) + ')' : '') + '</div>' : '';
     return '<article class="match" data-match="' + esc(m.id) + '" tabindex="0">' +
       '<div class="meta">' + (label ? '<strong>' + label + '</strong> · ' : '') + esc(fmt(m.match_date)) + (m.venue ? ' · ' + esc(m.venue) : '') + '</div>' +
-      '<div class="teams"><span>' + esc(m.home_team) + '</span>' + score + '<span>' + esc(m.away_team) + '</span></div>' +
+      '<div class="teams"><span class="tm">' + badge(clubLogos[m.home_team], m.home_team) + '<span>' + esc(m.home_team) + '</span></span>' + score + '<span class="tm"><span>' + esc(m.away_team) + '</span>' + badge(clubLogos[m.away_team], m.away_team) + '</span></div>' +
       motm + '<div class="detail" hidden></div></article>';
   }
 
