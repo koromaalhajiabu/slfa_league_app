@@ -190,6 +190,60 @@
     });
   }
 
+  // Live matches: the score is counted from goal events
+  function loadLive() {
+    db.from('matches').select('id, match_date, venue, match_status, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
+      .eq('match_status', 'LIVE').order('match_date', { ascending: true })
+      .then(function (res) {
+        if (res.error) { $('liveList').innerHTML = empty('Live matches are not available right now.'); return; }
+        var rows = res.data || [];
+        if (!rows.length) { $('liveList').innerHTML = empty('No live matches right now.'); return; }
+        db.from('match_events').select('match_id, team_name, event_type').in('match_id', rows.map(function (m) { return String(m.id); })).eq('event_type', 'goal')
+          .then(function (ev) {
+            var goals = ev.data || [];
+            $('liveList').innerHTML = rows.map(function (m) {
+              var mid = String(m.id);
+              m.home_score = goals.filter(function (g) { return g.match_id === mid && g.team_name === m.home_team; }).length;
+              m.away_score = goals.filter(function (g) { return g.match_id === mid && g.team_name === m.away_team; }).length;
+              return matchCard(m);
+            }).join('');
+            wireMatchDetails();
+          });
+      });
+  }
+
+  // Freeze banner: shown to everyone while the league is frozen
+  function loadPauseBanner() {
+    db.from('system_pause').select('paused, reason').eq('id', 1).maybeSingle().then(function (res) {
+      var el = $('pauseBanner');
+      if (!el) return;
+      var st = res.data;
+      el.hidden = !(st && st.paused);
+      el.textContent = st && st.paused
+        ? 'The league is frozen for now. Results and fixtures cannot change until it is resumed.' + (st.reason ? ' Reason: ' + st.reason : '')
+        : '';
+    });
+  }
+
+  function refreshAll() {
+    loadMatches(); loadLive(); loadTable(); loadTeams(); loadPlayers(); loadNews(); loadPauseBanner();
+  }
+
+  // Live updates: changes in the database refresh the screens, with a short pause to batch them
+  var refreshTimer = null;
+  function scheduleRefresh() {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(refreshAll, 400);
+  }
+  function subscribeLive() {
+    var ch = db.channel('public-league');
+    ['matches', 'match_events', 'league_standings', 'league_clubs', 'top_scorers', 'top_assists', 'clean_sheets', 'media_posts', 'system_pause'].forEach(function (t) {
+      ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, scheduleRefresh);
+    });
+    ch.subscribe();
+    setInterval(refreshAll, 120000);
+  }
+
   refreshAll();
   subscribeLive();
 })();
