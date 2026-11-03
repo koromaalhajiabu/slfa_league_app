@@ -894,3 +894,51 @@ details.admin > summary {
     width: min(250px, calc(100vw - 20px));
   }
 }
+
+/* EXTRA-COMPACT ADMIN PANEL */
+.admin-body {
+  width: 220px !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: 55vh !important;
+  padding: 10px !important;
+  border-radius: 12px !important;
+  overflow-y: auto !important;
+  right: 0 !important;
+}
+
+.admin-body label {
+  font-size: 9px !important;
+  margin: 5px 0 3px !important;
+}
+
+.admin-body input,
+.admin-body select {
+  padding: 6px 7px !important;
+  font-size: 11px !important;
+  min-height: 30px !important;
+}
+
+.admin-body button,
+.admin-body .btns button {
+  padding: 6px 8px !important;
+  min-height: 29px !important;
+  font-size: 10px !important;
+}
+
+.admin-body h2,
+.admin-body h3 {
+  font-size: 13px !important;
+  margin: 5px 0 !important;
+}
+
+.admin-body p,
+.admin-body .muted,
+.admin-body .status {
+  font-size: 10px !important;
+}
+
+details.admin > summary {
+  font-size: 9px !important;
+  padding: 5px 8px !important;
+  min-height: 28px !important;
+}
