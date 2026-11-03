@@ -288,3 +288,6 @@ button.primary { background:var(--flag-blue); color:#ffffff; }
 .mc .score { color:#2fd151; }
 .mc .league-name { color:#4ea8ff; }
 .mc .match .meta strong { color:#2fd151; }
+
+/* Offline notice */
+.offline-banner { margin:8px 0; padding:10px 14px; border-radius:12px; background:#fff4d6; color:#4a3600; border:1px solid #e7c25a; font-size:14px; }
