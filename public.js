@@ -2,51 +2,23 @@
 // Read-only. Uses only data the database already exposes to the public.
 (function () {
   var cfg = window.SLFA_CONFIG;
-  var db = window.slfaDb || window.supabase.createClient(
-  cfg.supabaseUrl,
-  cfg.supabasePublishableKey,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true
-    }
-  }
-);
+  var db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
   function fmt(d) { try { return new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return d || ''; } }
   function badge(url, name) {
-    return url ? '<img class="badge" src="' + esc(url) + '" alt="" loading="lazy" decoding="async">' : '<span class="badge ph">' + esc((name || '?').charAt(0)) + '</span>';
+    return url ? '<img class="badge" src="' + esc(url) + '" alt="">' : '<span class="badge ph">' + esc((name || '?').charAt(0)) + '</span>';
   }
   function empty(msg) { return '<p class="muted empty">' + msg + '</p>'; }
-
-  // Prevent a stalled network request from leaving a section on "Loading…" forever.
-  function guardRequest(promise, label) {
-    var timer;
-    return Promise.race([
-      promise,
-      new Promise(function (_, reject) {
-        timer = setTimeout(function () {
-          reject(new Error(label + ' request timed out. Check your connection and try again.'));
-        }, 10000);
-      })
-    ]).then(function (value) {
-      clearTimeout(timer);
-      return value;
-    }).catch(function (error) {
-      clearTimeout(timer);
-      throw error;
-    });
-  }
 
   // Tabs
   document.querySelectorAll('[data-tab]').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      activeTab = btn.dataset.tab;
       document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b === btn)); });
       document.querySelectorAll('[data-view]').forEach(function (v) { v.hidden = v.dataset.view !== btn.dataset.tab; });
-      loadTab(activeTab, false);
     });
   });
 
@@ -54,24 +26,16 @@
   // Upcoming and results are loaded separately, so the newest results are never cut off
   var resultsTeam = '', leaguesCache = [], dateSel = '', clubLogos = {};
   // The league chosen in the switcher above the tabs, remembered on this device
-  var currentLeague = '', leagueList = [], clubLeague = {}, activeClubRows = [];
-  var activeTab = 'matches', loadedViews = {};
+  var currentLeague = '', leagueList = [], clubLeague = {};
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch (e) {}
   function loadLeagueData() {
-    return guardRequest(Promise.all([
+    return Promise.all([
       db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
-      db.from('league_clubs').select('id, club_name, league_id, logo_url').eq('is_active', true).order('club_name')
-    ]), 'League information').then(function (all) {
+      db.from('league_clubs').select('club_name, league_id').eq('is_active', true)
+    ]).then(function (all) {
       leagueList = all[0].data || [];
-      activeClubRows = all[1].data || [];
       clubLeague = {};
-      activeClubRows.forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; clubLogos[c.club_name] = c.logo_url || ''; });
-      renderLeagueSwitch();
-    }).catch(function (error) {
-      console.error('[SLFA] League information failed:', error);
-      leagueList = [];
-      activeClubRows = [];
-      clubLeague = {};
+      (all[1].data || []).forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; });
       renderLeagueSwitch();
     });
   }
@@ -104,19 +68,23 @@
   function onDate(rows) { return dateSel ? rows.filter(function (m) { return dayKey(m.match_date) === dateSel; }) : rows; }
   var MATCH_COLS = 'id, match_date, venue, match_status, match_minute, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number';
   function loadMatches() {
-    guardRequest(Promise.all([
+    Promise.all([
+      db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
       db.from('matches').select(MATCH_COLS).in('match_status', ['SCHEDULED', 'RESCHEDULED', 'POSTPONED', 'CANCELLED']).order('match_date', { ascending: true }).limit(200),
-      db.from('matches').select(MATCH_COLS).eq('match_status', 'FT').order('match_date', { ascending: false }).limit(200)
-    ]), 'Matches').then(function (all) {
-      if (all[0].error || all[1].error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
-      leaguesCache = leagueList;
-      var up = all[0].data || [];
-      var done = all[1].data || [];
+      db.from('matches').select(MATCH_COLS).eq('match_status', 'FT').order('match_date', { ascending: false }).limit(200),
+      db.from('league_clubs').select('club_name, logo_url').eq('is_active', true)
+    ]).then(function (all) {
+      if (all[1].error || all[2].error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
+      leaguesCache = all[0].data || [];
+      var up = all[1].data || [];
+      var done = all[2].data || [];
       var teams = {};
       up.concat(done).forEach(function (m) { teams[m.home_team] = true; teams[m.away_team] = true; });
       var teamOpts = Object.keys(teams).sort().map(function (t) {
         return '<option value="' + esc(t) + '"' + (t === resultsTeam ? ' selected' : '') + '>' + esc(t) + '</option>';
       }).join('');
+      clubLogos = {};
+      (all[3].data || []).forEach(function (c) { clubLogos[c.club_name] = c.logo_url; });
       $('matchList').innerHTML =
         '<div class="mc">' +
         '<div class="datebar"><button class="small" data-day="-1" aria-label="Previous day">‹</button>' +
@@ -139,9 +107,7 @@
       });
       renderUpcoming(up);
       renderResults(done);
-    }).catch(function (error) {
-      console.error('[SLFA] Matches failed:', error);
-      $('matchList').innerHTML = empty(esc(error.message || 'Matches could not be loaded. Please refresh and try again.'));
+      loadLive();
     });
   }
   // Matches grouped under each league's name, in league order; matches with no league go last
@@ -236,9 +202,12 @@
 
   // League table: one standings table per league
   function loadTable() {
-    guardRequest(db.from('league_standings').select('league_id, pos, club, mp, w, d, l, gf, ga, pts').order('pos', { ascending: true }), 'League table').then(function (res) {
-      if (res.error) { $('tableBody').innerHTML = '<tr><td colspan="9">The table is not available right now.</td></tr>'; return; }
-      var leagues = leagueList, rows = res.data || [];
+    Promise.all([
+      db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
+      db.from('league_standings').select('league_id, pos, club, mp, w, d, l, gf, ga, pts').order('pos', { ascending: true })
+    ]).then(function (all) {
+      if (all[1].error) { $('tableBody').innerHTML = '<tr><td colspan="9">The table is not available right now.</td></tr>'; return; }
+      var leagues = all[0].data || [], rows = all[1].data || [];
       if (!rows.length) { $('tableBody').innerHTML = '<tr><td colspan="9">The table will appear after the first results.</td></tr>'; return; }
       var html = '';
       leagues.concat([{ id: null, name: 'Other' }]).forEach(function (lg) {
@@ -250,16 +219,15 @@
         }).join('');
       });
       $('tableBody').innerHTML = html;
-    }).catch(function (error) {
-      console.error('[SLFA] Table failed:', error);
-      $('tableBody').innerHTML = '<tr><td colspan="9">' + esc(error.message || 'The table could not be loaded. Please refresh and try again.') + '</td></tr>';
     });
   }
 
   // Teams
   function loadTeams() {
-    var clubs = activeClubRows.filter(function (c) { return !currentLeague || clubLeague[c.club_name] === currentLeague; });
-    if (!clubs.length) { $('teamGrid').innerHTML = empty('Teams will appear here once they are added.'); return; }
+    db.from('league_clubs').select('id, club_name, logo_url').eq('is_active', true).order('club_name')
+      .then(function (res) {
+        if (res.error || !(res.data || []).length) { $('teamGrid').innerHTML = empty('Teams will appear here once they are added.'); return; }
+        var clubs = (res.data || []).filter(function (c) { return !currentLeague || clubLeague[c.club_name] === currentLeague; });
         $('teamGrid').innerHTML = clubs.map(function (c) {
           return '<div class="team" role="button" tabindex="0" data-club="' + esc(c.id) + '" data-name="' + esc(c.club_name) + '">' + badge(c.logo_url, c.club_name) + '<span>' + esc(c.club_name) + '</span></div>';
         }).join('') + '<div id="squadPanel"></div>';
@@ -267,7 +235,8 @@
           el.addEventListener('click', function () { loadSquadPublic(el.dataset.club, el.dataset.name); });
           el.addEventListener('keydown', function (e) { if (e.key === 'Enter') loadSquadPublic(el.dataset.club, el.dataset.name); });
         });
-    if (selectedClub) loadSquadPublic(selectedClub.id, selectedClub.name);
+        if (selectedClub) loadSquadPublic(selectedClub.id, selectedClub.name);
+      });
   }
 
   // Squad for one club: approved, active players for the current season
@@ -361,7 +330,7 @@
         if (res.error || !(res.data || []).length) { $('newsItems').innerHTML = empty('No news yet.'); return; }
         $('newsItems').innerHTML = res.data.map(function (p) {
           return '<article class="news">' +
-            (p.image_url ? '<img src="' + esc(p.image_url) + '" alt="" loading="lazy" decoding="async">' : '') +
+            (p.image_url ? '<img src="' + esc(p.image_url) + '" alt="">' : '') +
             '<div class="meta">' + esc(CAT_LABEL[p.category] || 'News') + ' · ' + esc(fmt(p.published_at)) + '</div>' +
             '<h3>' + esc(p.title) + '</h3>' +
             '<p>' + esc(p.body) + '</p>' +
@@ -585,24 +554,9 @@
     });
   }
 
-  function loadTab(tab, force) {
-    if (!force && loadedViews[tab]) return;
-    loadedViews[tab] = true;
-    if (tab === 'live') { loadLive(); return; }
-    if (tab === 'matches') { loadMatches(); loadLive(); return; }
-    if (tab === 'table') { loadTable(); return; }
-    if (tab === 'teams') { loadTeams(); return; }
-    if (tab === 'players') { loadPlayers(); return; }
-    if (tab === 'news') { loadNews(); return; }
-    if (tab === 'videos') { loadVideos(); return; }
-    if (tab === 'predict') { loadPredict(); return; }
-  }
-
   function refreshAll() {
     loadLeagueData().then(function () {
-      loadedViews = {};
-      loadTab(activeTab, true);
-      loadPauseBanner();
+      loadMatches(); loadLive(); loadTable(); loadTeams(); loadPlayers(); loadNews(); loadVideos(); loadPredict(); loadPauseBanner();
     });
   }
 
@@ -624,7 +578,7 @@
       ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, scheduleRefresh);
     });
     ch.subscribe();
-    setInterval(loadLive, 60000);
+    setInterval(refreshAll, 120000);
   }
 
   refreshAll();
