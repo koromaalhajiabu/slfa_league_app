@@ -25,11 +25,11 @@
   // Matches
   // Upcoming and results are loaded separately, so the newest results are never cut off
   var resultsTeam = '';
-  var MATCH_COLS = 'id, match_date, venue, match_status, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number';
+  var MATCH_COLS = 'id, match_date, venue, match_status, match_minute, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number';
   function loadMatches() {
     Promise.all([
-      db.from('matches').select(MATCH_COLS).neq('match_status', 'LIVE').is('home_score', null).order('match_date', { ascending: true }).limit(200),
-      db.from('matches').select(MATCH_COLS).neq('match_status', 'LIVE').not('home_score', 'is', null).order('match_date', { ascending: false }).limit(200)
+      db.from('matches').select(MATCH_COLS).in('match_status', ['SCHEDULED', 'RESCHEDULED', 'POSTPONED', 'CANCELLED']).order('match_date', { ascending: true }).limit(200),
+      db.from('matches').select(MATCH_COLS).eq('match_status', 'FT').order('match_date', { ascending: false }).limit(200)
     ]).then(function (all) {
       if (all[0].error || all[1].error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
       var up = all[0].data || [];
@@ -56,10 +56,15 @@
       : empty(resultsTeam ? 'No results for ' + esc(resultsTeam) + ' yet.' : 'No results yet.');
   }
   function matchCard(m) {
-    var score = m.home_score == null ? '<span class="vs">v</span>' : '<span class="score">' + esc(m.home_score) + ' – ' + esc(m.away_score) + '</span>';
+    var st = m.match_status;
+    var playing = st === 'LIVE' || st === 'HT' || st === 'FT';
+    var score = playing && m.home_score != null ? '<span class="score">' + esc(m.home_score) + ' – ' + esc(m.away_score) + '</span>' : '<span class="vs">v</span>';
+    var label = st === 'LIVE' ? (m.match_minute != null ? esc(m.match_minute) + "'" : 'Live')
+      : st === 'HT' ? 'Half time' : st === 'FT' ? 'Full time'
+      : st === 'POSTPONED' ? 'Postponed' : st === 'CANCELLED' ? 'Cancelled' : st === 'RESCHEDULED' ? 'Rescheduled' : '';
     var motm = m.motm_name ? '<div class="meta">Man of the Match: ' + esc(m.motm_name) + (m.motm_jersey_number ? ' (#' + esc(m.motm_jersey_number) + ')' : '') + '</div>' : '';
     return '<article class="match" data-match="' + esc(m.id) + '" tabindex="0">' +
-      '<div class="meta">' + esc(fmt(m.match_date)) + (m.venue ? ' · ' + esc(m.venue) : '') + '</div>' +
+      '<div class="meta">' + (label ? '<strong>' + label + '</strong> · ' : '') + esc(fmt(m.match_date)) + (m.venue ? ' · ' + esc(m.venue) : '') + '</div>' +
       '<div class="teams"><span>' + esc(m.home_team) + '</span>' + score + '<span>' + esc(m.away_team) + '</span></div>' +
       motm + '<div class="detail" hidden></div></article>';
   }
@@ -242,8 +247,8 @@
   }
   // Live matches: the score is counted from goal events
   function loadLive() {
-    db.from('matches').select('id, match_date, venue, match_status, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
-      .eq('match_status', 'LIVE').order('match_date', { ascending: true })
+    db.from('matches').select('id, match_date, venue, match_status, match_minute, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
+      .in('match_status', ['LIVE', 'HT']).order('match_date', { ascending: true })
       .then(function (res) {
         if (res.error) { setLive(empty('Live matches are not available right now.')); return; }
         var rows = res.data || [];
