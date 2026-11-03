@@ -122,9 +122,9 @@
       $('asMatch').innerHTML = '<option value="">Choose a match…</option>' + (r.data || []).map(function (m) {
         return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + '</option>'; }).join('');
     });
-    db.from('user_profiles').select('id, full_name, email').eq('system_role', 'REFEREE').then(function (r) {
+    db.from('user_profiles').select('id, full_name, email, official_title').eq('system_role', 'REFEREE').then(function (r) {
       $('asRef').innerHTML = '<option value="">Choose a referee…</option>' + (r.data || []).map(function (u) {
-        return '<option value="' + esc(u.id) + '">' + esc(u.full_name || u.email) + '</option>'; }).join('') || '<option value="">No referees yet</option>';
+        return '<option value="' + esc(u.id) + '">' + esc(u.full_name || u.email) + (u.official_title ? ' (' + esc(u.official_title) + ')' : '') + '</option>'; }).join('') || '<option value="">No referees yet</option>';
     });
   }
 
@@ -436,7 +436,7 @@
 
   // ---------- TECHNICAL DIRECTOR: assign roles ----------
   var clubsCache = [];
-  var ROLE_OPTIONS = [['CLUB_ADMIN','Club Manager'],['REFEREE','Match Official (Referee)'],['MEDIA_OFFICER','Media Officer'],['SUPER_ADMIN','Super Admin']];
+  var ROLE_OPTIONS = [['CLUB_ADMIN','Club Manager'],['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],['MEDIA_OFFICER','Media Officer'],['SUPER_ADMIN','Super Admin']];
   var devUser = null;
   function developer(p) {
     devUser = p;
@@ -523,10 +523,14 @@
     return '<label>Club</label><select data-club-for="' + esc(u.id) + '">' + opts + '</select>' +
       '<div class="btns"><button class="small" data-club-apply="' + esc(u.id) + '">Apply club</button></div>';
   }
+  function currentRoleKey(u) {
+    var r = String(u.system_role).toUpperCase();
+    return r === 'REFEREE' && u.official_title === 'Match Commissioner' ? 'MATCH_COMMISSIONER' : r;
+  }
   function loadAccountsDev(p) {
     db.from('league_clubs').select('id, club_name').order('club_name').then(function (c) {
       clubsCache = c.data || [];
-      return db.from('user_profiles').select('id, full_name, email, system_role, status, club_id').order('email').limit(300);
+      return db.from('user_profiles').select('id, full_name, email, system_role, status, club_id, official_title').order('email').limit(300);
     }).then(function (r) {
       var rows = r.data || [];
       $('roleList').innerHTML = rows.length ? rows.map(function (u) {
@@ -534,7 +538,7 @@
         var isDev = String(u.system_role).toUpperCase() === 'DEVELOPER';
         var active = String(u.status).toLowerCase() === 'active';
         var waiting = String(u.system_role).toUpperCase() === 'NONE';
-        var opts = (waiting ? '<option value="NONE" selected>Waiting for a role</option>' : '') + ROLE_OPTIONS.map(function (o) { return '<option value="' + o[0] + '"' + (String(u.system_role).toUpperCase() === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('');
+        var opts = (waiting ? '<option value="NONE" selected>Waiting for a role</option>' : '') + ROLE_OPTIONS.map(function (o) { return '<option value="' + o[0] + '"' + (currentRoleKey(u) === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('');
         return '<div class="post"><strong>' + esc(u.full_name || u.email) + (isMe ? ' <span class="muted">(you)</span>' : '') + '</strong>' +
           '<div class="muted">' + esc(u.email) + ' · ' + esc(u.status) + '</div>' +
           (isDev ? '<div class="muted">Technical Director</div>' :
