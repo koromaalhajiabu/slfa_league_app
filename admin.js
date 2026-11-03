@@ -271,6 +271,7 @@
   }
 
   // ---------- CLUB MANAGER: squad ----------
+  var myClub = null;
   function clubManager(p) {
     if (!p.club_id) {
       box().innerHTML = '<h2 class="rt">Club squad</h2><p class="muted">Your account is not linked to a club yet. The Technical Director needs to assign your club.</p>';
@@ -281,19 +282,127 @@
       '<h2 class="rt">Add a player</h2>' +
       input('spName', 'Full name') + input('spNin', 'National ID number') + input('spDob', 'Date of birth', 'date') +
       '<label for="spPos">Position</label><select id="spPos"><option value="GK">Goalkeeper</option><option value="DF">Defender</option><option value="MF">Midfielder</option><option value="FW">Forward</option></select>' +
+      input('spJersey', 'Jersey number (1–99, optional)', 'number', 'min="1" max="99"') +
       '<label for="spPhoto">Photo (optional)</label><input id="spPhoto" type="file" accept="image/*">' +
       '<div class="btns"><button class="primary" id="spSave">Add player</button></div>' +
       '<h2 class="rt">Your players</h2><div id="squadList" class="muted">Loading…</div>' +
+      '<h2 class="rt">Club profile</h2>' +
+      input('cpStadium', 'Stadium / home ground') + input('cpCity', 'City or town') + input('cpFounded', 'Year founded', 'number', 'min="1850" max="2100"') +
+      '<label for="cpAbout">About the club</label><textarea id="cpAbout" rows="3"></textarea>' +
+      '<div class="btns"><button class="secondary" id="cpSave">Save club profile</button></div>' +
+      '<h2 class="rt">Club announcements</h2>' +
+      input('anTitle', 'Announcement title') +
+      '<label for="anBody">Message (optional)</label><textarea id="anBody" rows="3"></textarea>' +
+      '<div class="btns"><button class="secondary" id="anSave">Post announcement</button></div>' +
+      '<div id="announceList" class="muted">Loading…</div>' +
+      '<h2 class="rt">Matchday lineup</h2>' +
+      '<label for="luMatch">Upcoming match</label><select id="luMatch"><option value="">Loading…</option></select>' +
+      '<div id="luPlayers" class="muted"></div>' +
+      '<div class="btns"><button class="primary" id="luSave">Save lineup</button></div>' +
       '<h2 class="rt">Transfers</h2><div id="transferList" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
-    db.from('league_clubs').select('club_name').eq('id', p.club_id).maybeSingle().then(function (r) {
-      $('clubName').innerHTML = '<strong>' + esc(r.data ? r.data.club_name : 'Your club') + '</strong>';
-    });
     $('spSave').addEventListener('click', function () { addPlayer(p); });
-    Promise.all([loadCurrentSeason(), db.from('league_clubs').select('id, club_name').eq('is_active', true).order('club_name')]).then(function (all) {
-      clubsList = all[1].data || [];
+    $('cpSave').addEventListener('click', function () { saveProfile(); });
+    $('anSave').addEventListener('click', function () { postAnnouncement(); });
+    $('luSave').addEventListener('click', function () { saveLineup(); });
+    $('luMatch').addEventListener('change', loadLineupPlayers);
+    Promise.all([
+      db.from('league_clubs').select('id, club_name, stadium, city, founded_year, about').eq('id', p.club_id).maybeSingle(),
+      loadCurrentSeason(),
+      db.from('league_clubs').select('id, club_name').eq('is_active', true).order('club_name')
+    ]).then(function (all) {
+      myClub = all[0].data || null;
+      clubsList = all[2].data || [];
+      $('clubName').innerHTML = '<strong>' + esc(myClub ? myClub.club_name : 'Your club') + '</strong>';
+      if (myClub) {
+        $('cpStadium').value = myClub.stadium || ''; $('cpCity').value = myClub.city || '';
+        $('cpFounded').value = myClub.founded_year || ''; $('cpAbout').value = myClub.about || '';
+      }
       loadSquad(p);
+      loadAnnouncements();
+      loadLineupMatches();
     });
+  }
+  function saveProfile() {
+    if (!myClub) { msg('The club has not loaded yet.'); return; }
+    var founded = $('cpFounded').value ? Number($('cpFounded').value) : null;
+    if (founded !== null && (founded < 1850 || founded > 2100)) { msg('Enter a year between 1850 and 2100.'); return; }
+    db.from('league_clubs').update({
+      stadium: $('cpStadium').value.trim() || null, city: $('cpCity').value.trim() || null,
+      founded_year: founded, about: $('cpAbout').value.trim() || null
+    }).eq('id', myClub.id).then(function (r) { msg(r.error ? r.error.message : 'Club profile saved.'); });
+  }
+  function postAnnouncement() {
+    if (!myClub) { msg('The club has not loaded yet.'); return; }
+    var t = $('anTitle').value.trim();
+    if (!t) { msg('Give the announcement a title.'); return; }
+    db.from('club_announcements').insert({ club_id: myClub.id, title: t, body: $('anBody').value.trim() || null }).then(function (r) {
+      if (r.error) { msg(r.error.message); return; }
+      msg('Announcement posted.'); $('anTitle').value = ''; $('anBody').value = ''; loadAnnouncements();
+    });
+  }
+  function loadAnnouncements() {
+    if (!myClub) return;
+    db.from('club_announcements').select('id, title, body, created_at').eq('club_id', myClub.id).order('created_at', { ascending: false }).limit(20).then(function (r) {
+      var rows = r.data || [];
+      $('announceList').innerHTML = rows.length ? rows.map(function (x) {
+        return '<div class="post"><strong>' + esc(x.title) + '</strong><div class="muted">' + esc(new Date(x.created_at).toLocaleDateString()) + '</div>' +
+          (x.body ? '<p>' + esc(x.body) + '</p>' : '') +
+          '<div class="btns"><button class="small" data-del-ann="' + esc(x.id) + '">Delete</button></div></div>';
+      }).join('') : 'No announcements yet.';
+      document.querySelectorAll('[data-del-ann]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          db.from('club_announcements').delete().eq('id', b.dataset.delAnn).then(function (res) { msg(res.error ? res.error.message : 'Deleted.'); loadAnnouncements(); });
+        });
+      });
+    });
+  }
+  function loadLineupMatches() {
+    if (!myClub) return;
+    db.from('matches').select('id, home_team, away_team, match_date, match_status').in('match_status', ['SCHEDULED', 'RESCHEDULED']).order('match_date', { ascending: true }).limit(60).then(function (r) {
+      var mine = (r.data || []).filter(function (m) { return m.home_team === myClub.club_name || m.away_team === myClub.club_name; });
+      $('luMatch').innerHTML = mine.length ? '<option value="">Choose a match…</option>' + mine.map(function (m) {
+        return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + ' · ' + esc(new Date(m.match_date).toLocaleDateString()) + '</option>';
+      }).join('') : '<option value="">No upcoming matches for your club</option>';
+      loadLineupPlayers();
+    });
+  }
+  function loadLineupPlayers() {
+    var id = $('luMatch').value;
+    if (!id || !myClub) { $('luPlayers').innerHTML = ''; return; }
+    if (!currentSeason) { $('luPlayers').innerHTML = 'No season is set yet. Ask the Super Admin to set the current season.'; return; }
+    Promise.all([
+      db.from('club_squad').select('id, player_name, position, jersey_number').eq('club_id', myClub.id).eq('season_id', currentSeason.id)
+        .eq('registration_status', 'Approved').eq('status', 'Active').order('jersey_number', { ascending: true, nullsFirst: false }).order('player_name'),
+      db.from('match_lineups').select('player_id, is_starter').eq('match_id', id).eq('club_id', myClub.id)
+    ]).then(function (all) {
+      var players = all[0].data || [];
+      var existing = {};
+      (all[1].data || []).forEach(function (l) { existing[l.player_id] = l.is_starter ? 'XI' : 'BENCH'; });
+      $('luPlayers').innerHTML = players.length ? '<p class="muted">Pick up to 11 for the Starting XI and up to 23 in total. Players left blank are not in the matchday squad.</p>' + players.map(function (x) {
+        var v = existing[x.id] || '';
+        return '<div class="row"><span>' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + ' <span class="muted">' + esc(x.position) + '</span></span>' +
+          '<select data-lu="' + esc(x.id) + '"><option value="">Not in squad</option><option value="XI"' + (v === 'XI' ? ' selected' : '') + '>Starting XI</option><option value="BENCH"' + (v === 'BENCH' ? ' selected' : '') + '>Bench</option></select></div>';
+      }).join('') : 'No approved players for this season yet.';
+    });
+  }
+  function saveLineup() {
+    var id = $('luMatch').value;
+    if (!id || !myClub) { msg('Choose a match first.'); return; }
+    var picks = [];
+    document.querySelectorAll('[data-lu]').forEach(function (s) { if (s.value) picks.push({ player_id: Number(s.dataset.lu), is_starter: s.value === 'XI' }); });
+    if (!picks.length) { msg('Choose the players for this match.'); return; }
+    if (picks.filter(function (x) { return x.is_starter; }).length > 11) { msg('A starting XI can have at most 11 players.'); return; }
+    if (picks.length > 23) { msg('A matchday squad can have at most 23 players.'); return; }
+    db.from('match_lineups').delete().eq('match_id', id).eq('club_id', myClub.id).then(function (d) {
+      if (d.error) throw d.error;
+      return db.from('match_lineups').insert(picks.map(function (x) {
+        return { match_id: Number(id), club_id: myClub.id, player_id: x.player_id, is_starter: x.is_starter };
+      }));
+    }).then(function (r) {
+      if (r.error) throw r.error;
+      msg('Lineup saved. You can change it until kick-off.');
+    }).catch(function (e) { msg((e && e.message) || 'Could not save the lineup. Check the lineup and try again.'); });
   }
   var currentSeason = null, clubsList = [];
   function loadCurrentSeason() {
@@ -315,11 +424,13 @@
   }
   function addPlayer(p) {
     var name = $('spName').value.trim(), nin = $('spNin').value.trim(), dob = $('spDob').value, pos = $('spPos').value;
+    var jersey = $('spJersey').value ? Number($('spJersey').value) : null;
     var file = $('spPhoto').files[0];
     if (!name || !nin || !dob) { msg('Enter the name, ID number and date of birth.'); return; }
+    if (jersey !== null && (!Number.isInteger(jersey) || jersey < 1 || jersey > 99)) { msg('The jersey number must be between 1 and 99.'); return; }
     if (!currentSeason) { msg('No season is set yet. Ask the Super Admin to set the current season.'); return; }
     db.auth.getUser().then(function (u) {
-      return db.from('club_squad').insert({ player_name: name, player_nin: nin, date_of_birth: dob, position: pos,
+      return db.from('club_squad').insert({ player_name: name, player_nin: nin, date_of_birth: dob, position: pos, jersey_number: jersey,
         status: 'Active', registration_status: 'Pending', club_id: p.club_id, created_by: u.data.user.id, season_id: currentSeason.id })
         .select('id').single();
     }).then(function (r) {
@@ -327,22 +438,23 @@
       return file ? uploadPhoto(p.club_id, file, r.data.id) : null;
     }).then(function () {
       msg('Player added. The Super Admin will approve the registration.');
-      ['spName', 'spNin', 'spDob', 'spPhoto'].forEach(function (x) { $(x).value = ''; });
+      ['spName', 'spNin', 'spDob', 'spJersey', 'spPhoto'].forEach(function (x) { $(x).value = ''; });
       loadSquad(p);
     }).catch(function (e) { msg(e.message || 'Could not save the player.'); });
   }
   function loadSquad(p) {
-    db.from('club_squad').select('id, player_name, position, status, registration_status, photo_url, season_id').eq('club_id', p.club_id).order('player_name')
+    db.from('club_squad').select('id, player_name, position, status, registration_status, photo_url, season_id, jersey_number').eq('club_id', p.club_id).order('player_name')
       .then(function (r) {
         var rows = r.data || [];
         $('squadList').innerHTML = rows.length ? rows.map(function (x) {
           var on = String(x.status) === 'Active';
           var needsRenewal = currentSeason && x.season_id !== currentSeason.id;
           var img = x.photo_url ? '<img class="badge" src="' + esc(x.photo_url) + '" alt="">' : '<span class="badge ph">' + esc(String(x.player_name).charAt(0)) + '</span>';
-          return '<div class="post"><div class="row">' + img + '<span><strong>' + esc(x.player_name) + '</strong> <span class="muted">' + esc(x.position) + '</span>' +
+          return '<div class="post"><div class="row">' + img + '<span><strong>' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + '</strong> <span class="muted">' + esc(x.position) + '</span>' +
             '<div class="muted">' + esc(x.registration_status) + ' · ' + (on ? 'Active' : 'Inactive') + (needsRenewal ? ' · from an earlier season' : '') + '</div></span></div>' +
             '<div class="btns"><button class="small" data-toggle="' + esc(x.id) + '" data-next="' + (on ? 'Inactive' : 'Active') + '">' + (on ? 'Mark inactive' : 'Mark active') + '</button>' +
             (needsRenewal ? '<button class="small" data-renew="' + esc(x.id) + '">Renew for ' + esc(currentSeason.name) + '</button>' : '') + '</div>' +
+            '<label>Jersey number (1–99)</label><input type="number" min="1" max="99" value="' + esc(x.jersey_number || '') + '" data-jersey-for="' + esc(x.id) + '">' +
             '<label>Change photo</label><input type="file" accept="image/*" data-photo-for="' + esc(x.id) + '">' +
             '<label>Transfer to</label><select data-transfer-for="' + esc(x.id) + '"><option value="">Choose a club…</option>' + clubOptions(p.club_id) + '</select>' +
             '<div class="btns"><button class="small" data-transfer="' + esc(x.id) + '">Request transfer</button></div>' +
@@ -353,6 +465,15 @@
     loadMyTransfers(p);
   }
   function wireSquadRows(p) {
+    document.querySelectorAll('[data-jersey-for]').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var v = inp.value.trim() ? Number(inp.value) : null;
+        if (v !== null && (!Number.isInteger(v) || v < 1 || v > 99)) { msg('The jersey number must be between 1 and 99.'); loadSquad(p); return; }
+        db.from('club_squad').update({ jersey_number: v }).eq('id', inp.dataset.jerseyFor).then(function (res) {
+          msg(res.error ? 'That jersey number is already taken in your squad this season.' : 'Jersey number saved.'); loadSquad(p);
+        });
+      });
+    });
     document.querySelectorAll('[data-toggle]').forEach(function (b) {
       b.addEventListener('click', function () {
         db.from('club_squad').update({ status: b.dataset.next }).eq('id', b.dataset.toggle).then(function (res) {
@@ -713,11 +834,16 @@
     box().innerHTML =
       '<h2 class="rt">New news post</h2>' +
       '<label for="npCat">Category</label><select id="npCat"><option>News</option><option>Match report</option><option>Announcement</option></select>' +
+      '<label for="npMatch">Match (for match reports, optional)</label><select id="npMatch"><option value="">Not linked to a match</option></select>' +
       input('npTitle', 'Title') +
       '<label for="npBody">Story</label><textarea id="npBody" rows="5"></textarea>' +
       input('npImage', 'Photo link (optional)', 'url') + input('npVideo', 'Video link (optional)', 'url') +
       '<div class="btns"><button class="secondary" id="npDraft">Save draft</button><button class="secondary" id="npSubmit">Submit for approval</button><button class="primary" id="npPublish">Publish now</button></div>' +
       '<h2 class="rt">My posts</h2><div id="myPosts" class="muted">Loading…</div>' +
+      '<h2 class="rt">Fan poll</h2>' +
+      input('pqQ', 'Question') + input('pqO1', 'Option 1') + input('pqO2', 'Option 2') + input('pqO3', 'Option 3 (optional)') + input('pqO4', 'Option 4 (optional)') +
+      '<div class="btns"><button class="primary" id="pqSave">Publish poll</button></div>' +
+      '<div id="pollList" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
     function save(status) {
@@ -725,7 +851,7 @@
       if (!t) { msg('Give the post a title.'); return; }
       db.auth.getUser().then(function (u) {
         return db.from('media_posts').insert([{
-          category: $('npCat').value, title: t, body: $('npBody').value.trim(),
+          category: $('npCat').value, title: t, body: $('npBody').value.trim(), match_id: $('npMatch').value || null,
           image_url: $('npImage').value.trim() || null, video_url: $('npVideo').value.trim() || null,
           status: status, created_by: u.data.user.id, created_by_name: p.full_name || p.email,
           submitted_at: status === 'SUBMITTED' ? new Date().toISOString() : null,
@@ -734,13 +860,58 @@
       }).then(function (r) {
         if (r.error) { msg(r.error.message); return; }
         msg(status === 'SUBMITTED' ? 'Sent to the Super Admin for approval.' : status === 'PUBLISHED' ? 'Published.' : 'Draft saved.');
-        $('npTitle').value = ''; $('npBody').value = ''; $('npImage').value = ''; $('npVideo').value = ''; loadMine();
+        $('npTitle').value = ''; $('npBody').value = ''; $('npImage').value = ''; $('npVideo').value = ''; $('npMatch').value = ''; loadMine();
       });
     }
     $('npDraft').addEventListener('click', function () { save('DRAFT'); });
     $('npSubmit').addEventListener('click', function () { save('SUBMITTED'); });
     $('npPublish').addEventListener('click', function () { save('PUBLISHED'); });
+    $('npMatch').addEventListener('change', function () {
+      var opt = this.options[this.selectedIndex];
+      if (opt && opt.dataset.title && !$('npTitle').value.trim()) $('npTitle').value = opt.dataset.title;
+    });
+    db.from('matches').select('id, home_team, away_team, home_score, away_score, match_date').eq('match_status', 'FT').order('match_date', { ascending: false }).limit(40).then(function (r) {
+      $('npMatch').innerHTML = '<option value="">Not linked to a match</option>' + (r.data || []).map(function (m) {
+        var t = 'Match report: ' + m.home_team + ' ' + m.home_score + '–' + m.away_score + ' ' + m.away_team;
+        return '<option value="' + esc(m.id) + '" data-title="' + esc(t) + '">' + esc(m.home_team) + ' ' + esc(m.home_score) + '–' + esc(m.away_score) + ' ' + esc(m.away_team) + ' · ' + esc(new Date(m.match_date).toLocaleDateString()) + '</option>';
+      }).join('');
+    });
+    $('pqSave').addEventListener('click', savePoll);
     loadMine();
+    loadPolls();
+  }
+  function savePoll() {
+    var q = $('pqQ').value.trim();
+    var opts = ['pqO1', 'pqO2', 'pqO3', 'pqO4'].map(function (x) { return $(x).value.trim(); }).filter(Boolean);
+    if (!q) { msg('Write the poll question.'); return; }
+    if (opts.length < 2) { msg('Give at least two options.'); return; }
+    db.auth.getUser().then(function (u) {
+      return db.from('polls').insert({ question: q, created_by: u.data.user.id }).select('id').single();
+    }).then(function (r) {
+      if (r.error) throw r.error;
+      return db.from('poll_options').insert(opts.map(function (label, i) { return { poll_id: r.data.id, label: label, sort_order: i }; }));
+    }).then(function (r) {
+      if (r.error) throw r.error;
+      msg('Poll published.');
+      ['pqQ', 'pqO1', 'pqO2', 'pqO3', 'pqO4'].forEach(function (x) { $(x).value = ''; });
+      loadPolls();
+    }).catch(function (e) { msg((e && e.message) || 'Could not create the poll.'); });
+  }
+  function loadPolls() {
+    db.from('polls').select('id, question, is_open').order('created_at', { ascending: false }).limit(20).then(function (r) {
+      var rows = r.data || [];
+      $('pollList').innerHTML = rows.length ? rows.map(function (x) {
+        return '<div class="post"><strong>' + esc(x.question) + '</strong><div class="muted">' + (x.is_open ? 'Open for votes' : 'Closed') + '</div>' +
+          '<div class="btns"><button class="small" data-poll-toggle="' + esc(x.id) + '" data-next="' + (x.is_open ? 'false' : 'true') + '">' + (x.is_open ? 'Close poll' : 'Reopen poll') + '</button></div></div>';
+      }).join('') : 'No polls yet.';
+      document.querySelectorAll('[data-poll-toggle]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          db.from('polls').update({ is_open: b.dataset.next === 'true' }).eq('id', b.dataset.pollToggle).then(function (res) {
+            msg(res.error ? res.error.message : 'Poll updated.'); loadPolls();
+          });
+        });
+      });
+    });
   }
   function loadMine() {
     db.auth.getUser().then(function (u) {
