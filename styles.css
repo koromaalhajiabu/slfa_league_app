@@ -676,3 +676,83 @@ button { font-family:inherit; }
     font-size: 10px;
   }
 }
+
+/* ===== BRIGHT MATCH PANEL — BOTH LEAGUES ===== */
+
+#matchList {
+  background: #ffffff !important;
+  color: #183047 !important;
+  border: 1px solid #e2ebe5 !important;
+  box-shadow: 0 5px 18px rgba(20, 60, 40, .07);
+}
+
+#matchList .match {
+  background: #f7faf8 !important;
+  color: #183047 !important;
+  border: 1px solid #e0eae3 !important;
+  border-radius: 13px;
+  margin: 8px 0;
+}
+
+#matchList .match:hover {
+  background: #edf7f0 !important;
+}
+
+#matchList .match.live {
+  background: #eaf8ee !important;
+  border: 1px solid #1eb53a !important;
+}
+
+#matchList .meta,
+#matchList .detail {
+  color: #526579 !important;
+}
+
+#matchList .meta strong {
+  color: #13852d !important;
+}
+
+#matchList .teams {
+  color: #183047 !important;
+}
+
+#matchList .score {
+  color: #13852d !important;
+}
+
+#matchList .vs {
+  color: #718096 !important;
+}
+
+#matchList .sub {
+  color: #13852d !important;
+}
+
+#matchList .league-name {
+  color: #0072c6 !important;
+}
+
+#matchList .empty {
+  color: #64748b !important;
+}
+
+#matchList .badge {
+  background: #e8f0eb !important;
+}
+
+#matchList label {
+  color: #334b60 !important;
+}
+
+#matchList select,
+#matchList input[type="date"] {
+  background: #ffffff !important;
+  color: #183047 !important;
+  border: 1px solid #cbd9d0 !important;
+}
+
+#matchList button {
+  background: #eef7f0 !important;
+  color: #176b31 !important;
+  border: 1px solid #cbded0 !important;
+}
