@@ -370,6 +370,28 @@ button.danger { color:#b3261e; background:linear-gradient(135deg, rgba(255,255,2
 }
 :root[data-theme="dark"] .tabs button { color:#f4fbf6; }
 
+/* ===== Flag look: Sierra Leone green, white and blue, in professional bands ===== */
+:root { --flag-green:#1eb53a; --flag-blue:#0072c6; --flag-navy:#0b2e52; --flag-green-ink:#0f7f2c; }
+.topbar::after { content:""; position:absolute; left:0; right:0; bottom:-10px; height:10px;
+  background:linear-gradient(to bottom, var(--flag-green) 0 33.33%, #ffffff 33.33% 66.66%, var(--flag-blue) 66.66% 100%);
+  box-shadow:0 3px 12px rgba(0,60,120,.14); }
+.card { position:relative; border-top:1px solid var(--line); }
+.card::before { content:""; position:absolute; left:0; top:0; bottom:0; width:6px; border-radius:16px 0 0 16px;
+  background:linear-gradient(to bottom, var(--flag-green) 0 33.33%, #ffffff 33.33% 66.66%, var(--flag-blue) 66.66% 100%); }
+.hero::before { content:""; position:absolute; left:0; top:0; bottom:0; width:10px; z-index:1;
+  background:linear-gradient(to bottom, var(--flag-green) 0 33.33%, #ffffff 33.33% 66.66%, var(--flag-blue) 66.66% 100%); }
+.title { color:var(--flag-navy); }
+.brand h1 { color:var(--flag-navy); }
+.card h2, .sub, .rt, .kicker { color:var(--flag-green-ink); }
+.league-name, .league-row td { color:var(--flag-blue); }
+.table thead th { background:var(--flag-blue); color:#ffffff; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --flag-navy:#e9fff0; --flag-green-ink:#3ddc6a; }
+  :root:not([data-theme="light"]) .league-name, :root:not([data-theme="light"]) .league-row td { color:#7fc0ff; }
+}
+:root[data-theme="dark"] { --flag-navy:#e9fff0; --flag-green-ink:#3ddc6a; }
+:root[data-theme="dark"] .league-name, :root[data-theme="dark"] .league-row td { color:#7fc0ff; }
+.tabs { padding:14px 8px 16px; margin:-6px 0; }
 /* ===== Administration panel: narrower, flag-banded, clearer ===== */
 .admin-body { width:min(300px, calc(100vw - 32px)); padding:22px 18px 18px; border-radius:18px; }
 .admin-body::before { content:""; position:absolute; top:0; left:0; right:0; height:6px; border-radius:18px 18px 0 0;
