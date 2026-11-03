@@ -216,7 +216,7 @@
     $('authStatus').textContent = '';
   }
 
-  var PORTALS = { DEVELOPER: 'developer.html', SUPER_ADMIN: 'super-admin.html', REFEREE: 'referee.html', MEDIA_OFFICER: 'media.html', CLUB_ADMIN: 'club.html' };
+  var PORTALS = { DEVELOPER: 'developer.html', SUPER_ADMIN: 'super-admin.html', REFEREE: 'referee.html', MEDIA_OFFICER: 'media.html', DISCIPLINARY_OFFICER: 'disciplinary.html', CLUB_ADMIN: 'club.html' };
   $('openPortal').addEventListener('click', function () {
     db.auth.getUser().then(function (u) {
       if (!u.data || !u.data.user) return showSignedOut();

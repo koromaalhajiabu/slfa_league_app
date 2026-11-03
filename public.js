@@ -190,11 +190,11 @@
         }).join('') + '</div>');
       });
   }
-  var ICON = { goal:'⚽', yellow_card:'🟨', red_card:'🟥', substitution:'🔁' };
+  var ICON = { goal:'⚽', yellow_card:'🟨', red_card:'🟥', sub:'🔁' };
   function eventLine(e) {
     var t = String(e.event_type || '').toLowerCase();
     var who = e.player_name || '';
-    var text = t === 'substitution' ? (who + ' on, ' + (e.player_off_name || '') + ' off')
+    var text = t === 'sub' ? (who + ' on, ' + (e.player_off_name || '') + ' off')
       : t === 'goal' ? (who + (e.assist_player_name ? ' (assist ' + e.assist_player_name + ')' : ''))
       : who;
     return '<div class="ev"><span class="min">' + esc(e.minute) + "'</span><span class=\"ico\">" + (ICON[t] || '•') + '</span><span class="etxt">' + esc(text) + '<small>' + esc(e.team_name || '') + '</small></span></div>';
@@ -250,7 +250,9 @@
     Promise.all([
       db.from('league_clubs').select('stadium, city, founded_year, about').eq('id', id).maybeSingle(),
       db.from('club_announcements').select('title, body, created_at').eq('club_id', id).order('created_at', { ascending: false }).limit(10),
-      db.from('club_squad').select('player_name, position, photo_url, jersey_number').eq('club_id', id).order('jersey_number', { ascending: true, nullsFirst: false }).order('player_name')
+      db.from('club_squad').select('id, player_name, position, photo_url, jersey_number').eq('club_id', id).order('jersey_number', { ascending: true, nullsFirst: false }).order('player_name'),
+      db.from('suspensions').select('player_id, matches_total, matches_served').eq('status', 'ACTIVE'),
+      db.from('disciplinary_actions').select('player_id, action_type, amount, currency, reason, decided_at').eq('published', true).order('decided_at', { ascending: false }).limit(200)
     ]).then(function (all) {
       var profile = all[0].data || {};
       var facts = [profile.stadium ? 'Ground: ' + profile.stadium : '', profile.city || '', profile.founded_year ? 'Founded ' + profile.founded_year : ''].filter(Boolean);
@@ -263,13 +265,24 @@
           return '<div class="post"><strong>' + esc(a.title) + '</strong><div class="muted">' + esc(fmt(a.created_at)) + '</div>' + (a.body ? '<p>' + esc(a.body) + '</p>' : '') + '</div>';
         }).join('');
       }
+      var rows = all[2].error ? [] : (all[2].data || []);
+      var susp = {}, nameById = {}, squadIds = {};
+      rows.forEach(function (x) { squadIds[x.id] = true; nameById[x.id] = x.player_name; });
+      (all[3].data || []).forEach(function (s) { if (squadIds[s.player_id] && s.matches_served < s.matches_total) susp[s.player_id] = s.matches_total - s.matches_served; });
+      var records = all[4].error ? [] : (all[4].data || []).filter(function (x) { return squadIds[x.player_id]; });
       html += '<h4 class="league-name">Squad</h4>';
       if (all[2].error) { html += empty('The squad is not available right now.'); }
       else {
-        var rows = all[2].data || [];
         html += rows.length ? rows.map(function (x) {
-          return '<div class="row">' + badge(x.photo_url, x.player_name) + '<span class="pname">' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + '<small>' + esc(POS[x.position] || x.position) + '</small></span></div>';
+          return '<div class="row">' + badge(x.photo_url, x.player_name) + '<span class="pname">' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + '<small>' + esc(POS[x.position] || x.position) + (susp[x.id] ? ' · Suspended, ' + susp[x.id] + ' match' + (susp[x.id] === 1 ? '' : 'es') + ' left' : '') + '</small></span></div>';
         }).join('') : empty('No approved players for this season yet.');
+      }
+      if (records.length) {
+        var kinds = { FINE: 'Fine', PROTEST: 'Protest', BAN: 'Match ban', RULING: 'Official ruling', NOTE: 'Note' };
+        html += '<h4 class="league-name">Disciplinary record</h4>' + records.map(function (x) {
+          return '<div class="post"><strong>' + esc(kinds[x.action_type] || x.action_type) + '</strong> · ' + esc(nameById[x.player_id] || 'Player') +
+            (x.amount ? ' · ' + esc(x.currency) + ' ' + esc(x.amount) : '') + '<div class="muted">' + esc(fmt(x.decided_at)) + '</div><p>' + esc(x.reason) + '</p></div>';
+        }).join('');
       }
       panel.innerHTML = html;
     });
@@ -508,7 +521,7 @@
         if (res.error) { setLive(empty('Live matches are not available right now.')); return; }
         var rows = (res.data || []).filter(function (m) { return !currentLeague || String(m.league_id) === currentLeague; });
         if (!rows.length) { setLive(empty('No live matches right now.')); return; }
-        db.from('match_events').select('match_id, team_name, event_type').in('match_id', rows.map(function (m) { return String(m.id); })).eq('event_type', 'goal')
+        db.from('match_events').select('match_id, team_name, event_type').in('match_id', rows.map(function (m) { return String(m.id); })).eq('event_type', 'GOAL')
           .then(function (ev) {
             var goals = ev.data || [];
             setLive(rows.map(function (m) {
