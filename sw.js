@@ -3,7 +3,7 @@
 // New versions are downloaded in the background.
 // Supabase league data stays network-first with offline fallback.
 
-const CACHE = 'slfa-app-v37';
+const CACHE = 'slfa-app-v39';
 const DATA_CACHE = CACHE + '-data';
 
 const PUBLIC_TABLES = [
@@ -161,35 +161,38 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // Only handle files belonging to this app. Always ask the network for
-  // the newest shell first; use the saved copy only when the device is offline.
+  // Only handle files belonging to this app.
   if (url.origin !== self.location.origin) return;
 
+  // Stale-while-revalidate: show the saved app shell immediately, then refresh
+  // that cache entry quietly. This avoids waiting for GitHub Pages on every
+  // repeat visit while still keeping the next visit up to date.
+  var refresh = fetch(request).then(function (response) {
+    if (response && response.ok) {
+      var copy = response.clone();
+      return caches.open(CACHE).then(function (cache) {
+        return cache.put(request, copy).then(function () {
+          return response;
+        });
+      });
+    }
+    return response;
+  });
+
+  event.waitUntil(refresh.then(function () {}).catch(function () {}));
+
   event.respondWith(
-    fetch(request, { cache: 'no-store' })
-      .then(function (response) {
-        if (response && response.ok) {
-          var copy = response.clone();
-          return caches.open(CACHE)
-            .then(function (cache) {
-              return cache.put(request, copy);
-            })
-            .then(function () {
-              return response;
-            });
-        }
-        return response;
-      })
-      .catch(function () {
-        return caches.match(request)
-          .then(function (cached) {
-            if (cached) return cached;
-            if (request.mode === 'navigate') {
-              return caches.match('./index.html');
-            }
-            return Response.error();
-          });
-      })
+    caches.open(CACHE).then(function (cache) {
+      return cache.match(request, { ignoreSearch: true }).then(function (cached) {
+        if (cached) return cached;
+        return refresh.catch(function () {
+          if (request.mode === 'navigate') {
+            return cache.match('./index.html');
+          }
+          return Response.error();
+        });
+      });
+    })
   );
 });
 
