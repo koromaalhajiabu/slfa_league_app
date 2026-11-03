@@ -737,7 +737,7 @@
     window.addEventListener('online', refreshMatches);
 
     // Keep favourite fixtures reasonably fresh.
-    window.setInterval(refreshMatches, 60000);
+    window.setInterval(refreshMatches, 180000);
   }
 
   if (document.readyState === 'loading') {
