@@ -540,6 +540,12 @@
     });
   }
 
+  // Offline: say so, and refresh the screens when the connection comes back
+  function showOnline() { var b = $('offlineBanner'); if (b) b.hidden = navigator.onLine !== false; }
+  window.addEventListener('offline', showOnline);
+  window.addEventListener('online', function () { showOnline(); refreshAll(); });
+  showOnline();
+
   // Live updates: changes in the database refresh the screens, with a short pause to batch them
   var refreshTimer = null;
   function scheduleRefresh() {
