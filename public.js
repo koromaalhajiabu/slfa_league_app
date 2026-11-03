@@ -21,6 +21,25 @@
   }
   function empty(msg) { return '<p class="muted empty">' + msg + '</p>'; }
 
+  // Prevent a stalled network request from leaving a section on "Loading…" forever.
+  function guardRequest(promise, label) {
+    var timer;
+    return Promise.race([
+      promise,
+      new Promise(function (_, reject) {
+        timer = setTimeout(function () {
+          reject(new Error(label + ' request timed out. Check your connection and try again.'));
+        }, 10000);
+      })
+    ]).then(function (value) {
+      clearTimeout(timer);
+      return value;
+    }).catch(function (error) {
+      clearTimeout(timer);
+      throw error;
+    });
+  }
+
   // Tabs
   document.querySelectorAll('[data-tab]').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -39,14 +58,20 @@
   var activeTab = 'matches', loadedViews = {};
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch (e) {}
   function loadLeagueData() {
-    return Promise.all([
+    return guardRequest(Promise.all([
       db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
       db.from('league_clubs').select('id, club_name, league_id, logo_url').eq('is_active', true).order('club_name')
-    ]).then(function (all) {
+    ]), 'League information').then(function (all) {
       leagueList = all[0].data || [];
       activeClubRows = all[1].data || [];
       clubLeague = {};
       activeClubRows.forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; clubLogos[c.club_name] = c.logo_url || ''; });
+      renderLeagueSwitch();
+    }).catch(function (error) {
+      console.error('[SLFA] League information failed:', error);
+      leagueList = [];
+      activeClubRows = [];
+      clubLeague = {};
       renderLeagueSwitch();
     });
   }
@@ -79,10 +104,10 @@
   function onDate(rows) { return dateSel ? rows.filter(function (m) { return dayKey(m.match_date) === dateSel; }) : rows; }
   var MATCH_COLS = 'id, match_date, venue, match_status, match_minute, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number';
   function loadMatches() {
-    Promise.all([
+    guardRequest(Promise.all([
       db.from('matches').select(MATCH_COLS).in('match_status', ['SCHEDULED', 'RESCHEDULED', 'POSTPONED', 'CANCELLED']).order('match_date', { ascending: true }).limit(200),
       db.from('matches').select(MATCH_COLS).eq('match_status', 'FT').order('match_date', { ascending: false }).limit(200)
-    ]).then(function (all) {
+    ]), 'Matches').then(function (all) {
       if (all[0].error || all[1].error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
       leaguesCache = leagueList;
       var up = all[0].data || [];
@@ -114,6 +139,9 @@
       });
       renderUpcoming(up);
       renderResults(done);
+    }).catch(function (error) {
+      console.error('[SLFA] Matches failed:', error);
+      $('matchList').innerHTML = empty(esc(error.message || 'Matches could not be loaded. Please refresh and try again.'));
     });
   }
   // Matches grouped under each league's name, in league order; matches with no league go last
@@ -208,7 +236,7 @@
 
   // League table: one standings table per league
   function loadTable() {
-    db.from('league_standings').select('league_id, pos, club, mp, w, d, l, gf, ga, pts').order('pos', { ascending: true }).then(function (res) {
+    guardRequest(db.from('league_standings').select('league_id, pos, club, mp, w, d, l, gf, ga, pts').order('pos', { ascending: true }), 'League table').then(function (res) {
       if (res.error) { $('tableBody').innerHTML = '<tr><td colspan="9">The table is not available right now.</td></tr>'; return; }
       var leagues = leagueList, rows = res.data || [];
       if (!rows.length) { $('tableBody').innerHTML = '<tr><td colspan="9">The table will appear after the first results.</td></tr>'; return; }
@@ -222,6 +250,9 @@
         }).join('');
       });
       $('tableBody').innerHTML = html;
+    }).catch(function (error) {
+      console.error('[SLFA] Table failed:', error);
+      $('tableBody').innerHTML = '<tr><td colspan="9">' + esc(error.message || 'The table could not be loaded. Please refresh and try again.') + '</td></tr>';
     });
   }
 
