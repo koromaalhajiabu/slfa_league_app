@@ -224,3 +224,24 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
 .touchpad .tp-input { width:100%; min-height:60px; font-size:20px; border-radius:12px; border:2px solid #fff; background:#000; color:#fff; padding:10px; box-sizing:border-box; margin-top:8px; }
 .touchpad .tp-back { display:block; width:100%; min-height:60px; margin:10px 0; font-size:18px; border-radius:12px; border:2px solid #fff; background:transparent; color:#fff; }
 .touchpad button:disabled { opacity:.35; }
+
+/* Match Center: dark, high-contrast match list with a date bar */
+.mc { background:#0b0b0c; color:#fff; border-radius:18px; padding:14px; }
+.mc .datebar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.mc .datebar input[type=date] { flex:1; min-width:150px; min-height:44px; font-size:16px; background:#000; color:#fff; border:2px solid #3a3a40; border-radius:12px; padding:8px; }
+.mc .datebar button { min-height:44px; min-width:44px; font-size:18px; background:#1b1b1f; color:#fff; border:2px solid #3a3a40; border-radius:12px; }
+.mc label { color:#d6d6da; }
+.mc select { background:#000; color:#fff; border:2px solid #3a3a40; }
+.mc .sub { color:#fff; font-size:15px; letter-spacing:.08em; text-transform:uppercase; margin:18px 0 6px; }
+.mc .league-name { color:#ff7a1a; font-size:15px; letter-spacing:.06em; text-transform:uppercase; margin:18px 0 4px; }
+.mc .match { background:#151518; border:1px solid #2a2a30; border-radius:14px; padding:12px; margin:10px 0; }
+.mc .match .meta { color:#a8a8b0; font-size:13px; }
+.mc .match .meta strong { color:#1eb53a; }
+.mc .teams { font-size:17px; font-weight:700; color:#fff; }
+.mc .score { color:#ff7a1a; font-size:28px; font-weight:900; letter-spacing:.02em; }
+.mc .vs { color:#6e6e76; font-weight:600; }
+.mc .tm { display:inline-flex; align-items:center; gap:8px; }
+.mc .badge { width:28px; height:28px; border-radius:50%; object-fit:cover; background:#222; }
+.mc .badge.ph { display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:13px; }
+.mc .empty { color:#a8a8b0; }
+.mc .detail { color:#e6e6ea; }
