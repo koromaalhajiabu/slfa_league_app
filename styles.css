@@ -942,3 +942,9 @@ details.admin > summary {
   padding: 5px 8px !important;
   min-height: 28px !important;
 }
+/* ===== Favourite clubs ===== */
+.team .fav { margin-left:auto; flex:0 0 auto; width:40px; height:40px; border-radius:50%; border:1px solid rgba(255,255,255,.45); background:linear-gradient(135deg, rgba(10,132,255,.22), rgba(255,255,255,.55)); color:#0a2a52; font-size:18px; line-height:1; cursor:pointer; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); box-shadow:0 0 12px -4px var(--glow); transition:transform .15s ease, box-shadow .3s ease; }
+.team .fav:hover { transform:scale(1.08); }
+.team .fav.on { background:linear-gradient(135deg, rgba(10,132,255,.92), rgba(0,97,201,.85)); color:#ffd54a; border-color:rgba(255,255,255,.55); }
+.team .fav:focus-visible { outline:3px solid var(--flag-green); outline-offset:2px; }
+.favNote { font-size:13px; min-height:18px; }

@@ -25,6 +25,8 @@
   // Matches
   // Upcoming and results are loaded separately, so the newest results are never cut off
   var resultsTeam = '', leaguesCache = [], dateSel = '', clubLogos = {};
+  // Favourite clubs for the signed-in fan (empty when signed out)
+  var myFavIds = {}, myFavNames = {}, myFavList = [];
   // The league chosen in the switcher above the tabs, remembered on this device
   var currentLeague = '', leagueList = [], clubLeague = {};
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch (e) {}
@@ -80,7 +82,7 @@
       var done = all[2].data || [];
       var teams = {};
       up.concat(done).forEach(function (m) { teams[m.home_team] = true; teams[m.away_team] = true; });
-      var teamOpts = Object.keys(teams).sort().map(function (t) {
+      var teamOpts = (myFavList.length ? '<option value="__fav__"' + (resultsTeam === '__fav__' ? ' selected' : '') + '>My clubs</option>' : '') + Object.keys(teams).sort().map(function (t) {
         return '<option value="' + esc(t) + '"' + (t === resultsTeam ? ' selected' : '') + '>' + esc(t) + '</option>';
       }).join('');
       clubLogos = {};
@@ -126,8 +128,9 @@
     $('upcomingList').innerHTML = byLeague(list) || empty(dateSel ? 'No upcoming matches on this date.' : currentLeague ? 'No upcoming matches in this league.' : 'No upcoming matches yet.');
   }
   function renderResults(rows) {
-    var list = onDate(resultsTeam ? rows.filter(function (m) { return m.home_team === resultsTeam || m.away_team === resultsTeam; }) : rows);
-    $('resultsList').innerHTML = byLeague(list) || empty(dateSel ? 'No results on this date.' : resultsTeam ? 'No results for ' + esc(resultsTeam) + ' yet.' : 'No results yet.');
+    var mine = function (m) { return resultsTeam === '__fav__' ? !!(myFavNames[m.home_team] || myFavNames[m.away_team]) : (m.home_team === resultsTeam || m.away_team === resultsTeam); };
+    var list = onDate(resultsTeam ? rows.filter(mine) : rows);
+    $('resultsList').innerHTML = byLeague(list) || empty(dateSel ? 'No results on this date.' : resultsTeam === '__fav__' ? 'No results for your clubs yet.' : resultsTeam ? 'No results for ' + esc(resultsTeam) + ' yet.' : 'No results yet.');
   }
   function matchCard(m) {
     var st = m.match_status;
@@ -228,16 +231,60 @@
       .then(function (res) {
         if (res.error || !(res.data || []).length) { $('teamGrid').innerHTML = empty('Teams will appear here once they are added.'); return; }
         var clubs = (res.data || []).filter(function (c) { return !currentLeague || clubLeague[c.club_name] === currentLeague; });
-        $('teamGrid').innerHTML = clubs.map(function (c) {
-          return '<div class="team" role="button" tabindex="0" data-club="' + esc(c.id) + '" data-name="' + esc(c.club_name) + '">' + badge(c.logo_url, c.club_name) + '<span>' + esc(c.club_name) + '</span></div>';
-        }).join('') + '<div id="squadPanel"></div>';
+        var mine = clubs.filter(function (c) { return myFavIds[c.id]; });
+        var others = clubs.filter(function (c) { return !myFavIds[c.id]; });
+        function card(c) {
+          var on = !!myFavIds[c.id];
+          return '<div class="team" role="button" tabindex="0" data-club="' + esc(c.id) + '" data-name="' + esc(c.club_name) + '">' + badge(c.logo_url, c.club_name) +
+            '<span>' + esc(c.club_name) + '</span>' +
+            '<button class="fav' + (on ? ' on' : '') + '" data-fav="' + esc(c.id) + '" aria-pressed="' + (on ? 'true' : 'false') + '" aria-label="' +
+            (on ? 'Remove ' : 'Save ') + esc(c.club_name) + ' as a favourite">' + (on ? '★' : '☆') + '</button></div>';
+        }
+        var head = '<div class="favNote" style="grid-column:1/-1"><span id="favStatus" class="muted"></span></div>';
+        var yours = mine.length ? '<h3 class="sub" style="grid-column:1/-1">Your clubs</h3>' + mine.map(card).join('') + '<h3 class="sub" style="grid-column:1/-1">All clubs</h3>' : '';
+        $('teamGrid').innerHTML = head + yours + others.map(card).join('');
         document.querySelectorAll('[data-club]').forEach(function (el) {
           el.addEventListener('click', function () { loadSquadPublic(el.dataset.club, el.dataset.name); });
           el.addEventListener('keydown', function (e) { if (e.key === 'Enter') loadSquadPublic(el.dataset.club, el.dataset.name); });
         });
+        document.querySelectorAll('[data-fav]').forEach(function (b) {
+          b.addEventListener('click', function (e) { e.stopPropagation(); toggleFav(b.dataset.fav, clubs); });
+        });
         if (selectedClub) loadSquadPublic(selectedClub.id, selectedClub.name);
       });
   }
+
+  // Favourite clubs: saved to the fan's account; signed-out fans are asked to sign in
+  function loadFavs() {
+    return db.auth.getUser().then(function (u) {
+      if (!u.data || !u.data.user) { myFavIds = {}; myFavNames = {}; myFavList = []; return; }
+      return db.from('user_favorite_clubs').select('club_id, league_clubs(club_name)').eq('user_id', u.data.user.id).then(function (r) {
+        myFavIds = {}; myFavNames = {}; myFavList = [];
+        (r.data || []).forEach(function (f) {
+          var name = f.league_clubs && f.league_clubs.club_name;
+          if (!name) return;
+          myFavIds[f.club_id] = true; myFavNames[name] = true; myFavList.push({ id: f.club_id, name: name });
+        });
+      });
+    }).then(function () { loadTeams(); });
+  }
+  function refreshFavs() { loadFavs().then(function () { loadMatches(); }); }
+  function toggleFav(clubId, clubs) {
+    var status = function (t) { var el = document.getElementById('favStatus'); if (el) el.textContent = t; };
+    db.auth.getUser().then(function (u) {
+      if (!u.data || !u.data.user) { status('Sign in under Administration (top right) to save favourite clubs.'); return; }
+      var on = !!myFavIds[clubId];
+      var q = on
+        ? db.from('user_favorite_clubs').delete().eq('user_id', u.data.user.id).eq('club_id', clubId)
+        : db.from('user_favorite_clubs').insert({ user_id: u.data.user.id, club_id: clubId });
+      return q.then(function (r) {
+        if (r.error) { status(r.error.message); return; }
+        status(on ? 'Removed from your clubs.' : 'Saved to your clubs.');
+        refreshFavs();
+      });
+    });
+  }
+  db.auth.onAuthStateChange(function () { refreshFavs(); });
 
   // Squad for one club: approved, active players for the current season
   var selectedClub = null;
@@ -583,4 +630,5 @@
 
   refreshAll();
   subscribeLive();
+  loadFavs();
 })();
