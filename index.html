@@ -328,14 +328,13 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
 })();
 </script>
-<script src="public.js"></script>
-<script src="admin.js"></script>
 <script>
 (function () {
   var cfg = window.SLFA_CONFIG;
   var db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
     auth: { persistSession: true, autoRefreshToken: true }
   });
+  window.slfaDb = db;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -465,5 +464,7 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
   showAdmin();
 })();
 </script>
+<script src="public.js"></script>
+<script src="admin.js"></script>
 </body>
 </html>
