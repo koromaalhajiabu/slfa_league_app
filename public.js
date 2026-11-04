@@ -94,6 +94,7 @@
     currentLeague = String(id || '');
     try { localStorage.setItem('slfa_league', currentLeague); } catch (e) {}
     renderLeagueSwitch();
+    document.dispatchEvent(new CustomEvent('slfa:league-change', { detail: { leagueId: currentLeague } }));
     refreshAll();
   }
   function inLeague(rows) { return (rows || []).filter(function (r) { return !currentLeague || clubLeague[r.club] === currentLeague; }); }
