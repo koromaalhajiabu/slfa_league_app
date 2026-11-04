@@ -22,8 +22,30 @@
     if (s === 'LIVE') return 'LIVE' + (m.match_minute == null ? '' : ' · '+m.match_minute+"'");
     return ({HT:'HALF TIME',FT:'FULL TIME',SCHEDULED:'UPCOMING',RESCHEDULED:'RESCHEDULED',POSTPONED:'POSTPONED',CANCELLED:'CANCELLED',ABANDONED:'ABANDONED'})[s] || s.replace(/_/g,' ') || 'STATUS PENDING';
   }
+  var CLUB_LOGO_FALLBACKS = {
+    baiburehwarriors: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bai%20Burah%20Warrior%20FC%20Logo.jpeg',
+    bhantalfc: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bhantal%20FC%20Logo.jpeg',
+    borangers: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bo%20Rangers.png',
+    bullomstars: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bullom%20Stars%20Logo.png',
+    fckallon: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Kallon_FC.jpg',
+    kamboieagles: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Kambo%20Eagles%20Logo.png',
+    mightyblackpool: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Mighty%20Blackpool%20Logo.png',
+    oldedwardians: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Old%20Edwardian%20Logo.png',
+    ports: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Port%20Authority%20Logo.png',
+    starsportacademy: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Star%20Sport%20Logo.png',
+    waterloofc: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/waterloo%20fc.jpeg',
+    wilberforcestrikers: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Wilberforce%20Strikers%20Logo.png',
+    wusumstars: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Wusum%20Stars%20Logo.png'
+  };
+  function clubLogoFallback(name) {
+    var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
+    if (key === 'portsauthority') key = 'ports';
+    if (key === 'starssa' || key === 'starsport') key = 'starsportacademy';
+    return CLUB_LOGO_FALLBACKS[key] || '';
+  }
   function crest(name) {
-    return clubLogos[name] ? '<img class="slfa-mc-crest" src="'+esc(clubLogos[name])+'" alt="" loading="lazy">' :
+    var logo = clubLogos[name] || clubLogoFallback(name);
+    return logo ? '<img class="slfa-mc-crest" src="'+esc(logo)+'" alt="" loading="lazy">' :
       '<span class="slfa-mc-crest slfa-mc-crest-fallback" aria-hidden="true">'+esc((name || '?').charAt(0).toUpperCase())+'</span>';
   }
   function selected() {
@@ -96,7 +118,7 @@
       if(a[0].error)return false;
       matches=a[0].data||[];leagueNames={};clubLogos={};
       (a[1].data||[]).forEach(function(x){leagueNames[String(x.id)]=x.name;});
-      (a[2].data||[]).forEach(function(x){clubLogos[x.club_name]=x.logo_url;});
+      (a[2].data||[]).forEach(function(x){clubLogos[x.club_name]=x.logo_url || clubLogoFallback(x.club_name);});
       var live=matches.filter(function(m){var s=status(m);return s==='LIVE'||s==='HT';});
       var goalQuery=live.length?db.from('match_events').select('match_id,team_name').in('match_id',live.map(function(m){return String(m.id);})).eq('event_type','GOAL'):Promise.resolve({data:[]});
       return goalQuery.then(function(g){
