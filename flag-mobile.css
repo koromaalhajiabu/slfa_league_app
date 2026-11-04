@@ -117,3 +117,33 @@ img,video,iframe { max-width:100%; }
   background:linear-gradient(110deg,#1eb53a 0%,#087cbd 100%) !important;
   border:1px solid rgba(255,255,255,.75) !important;
 }
+
+
+/* Brighter, gently moving typography — presentation only */
+.brand h1,.portal-head h1,.hero .title,.ps-hero h2,.news-centre-hero h2 {
+  color:#fff !important;
+  background:linear-gradient(100deg,#fff 0%,#b9ffd0 24%,#fff 46%,#9edcff 68%,#fff 100%);
+  background-size:220% auto;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  text-shadow:0 0 18px rgba(125,220,255,.16);
+  animation:slfaTextShimmer 5.5s ease-in-out infinite,slfaTextLift 4.5s ease-in-out infinite;
+}
+.brand p,.kicker,.news-eyebrow,.ps-eyebrow {
+  color:#b7ffc7 !important;text-shadow:0 0 12px rgba(30,181,58,.32);
+  animation:slfaTextGlow 3.4s ease-in-out infinite;
+}
+.card h2,.card h3,.sub,.portal .card h2,.portal .card h3 {
+  color:#d8ffe2 !important;text-shadow:0 0 13px rgba(30,181,58,.24);
+  animation:slfaTextGlow 4s ease-in-out infinite;
+}
+.score,.score-big,.pval,.table .pts,.rt {
+  color:#a9e4ff !important;text-shadow:0 0 12px rgba(0,160,255,.34);
+}
+@keyframes slfaTextShimmer {0%,100%{background-position:100% center}50%{background-position:0% center}}
+@keyframes slfaTextLift {0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes slfaTextGlow {0%,100%{filter:brightness(1)}50%{filter:brightness(1.22)}}
+@media (prefers-reduced-motion:reduce) {
+ .brand h1,.portal-head h1,.hero .title,.ps-hero h2,.news-centre-hero h2,
+ .brand p,.kicker,.news-eyebrow,.ps-eyebrow,.card h2,.card h3,.sub,
+ .portal .card h2,.portal .card h3 {animation:none!important;transform:none!important}
+}
