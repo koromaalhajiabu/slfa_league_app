@@ -75,7 +75,68 @@
       });
     }).catch(function () {});
   }
-  window.addEventListener('online', syncPendingRefereeEvents);
+  function refereeResultQueueKey(uid) { return 'slfa_referee_result_queue_v1_' + uid; }
+  function readRefereeResultQueue(uid) {
+    try { var value = JSON.parse(localStorage.getItem(refereeResultQueueKey(uid)) || '[]'); return Array.isArray(value) ? value : []; }
+    catch (e) { return []; }
+  }
+  function writeRefereeResultQueue(uid, rows) {
+    try { localStorage.setItem(refereeResultQueueKey(uid), JSON.stringify(rows)); return true; }
+    catch (e) { return false; }
+  }
+  function submitRefereeResult(submission) {
+    return db.rpc('referee_submit_final_idempotent', {
+      p_client_submission_id: submission.client_submission_id,
+      p_match_id: submission.match_id,
+      p_home: submission.home_goals,
+      p_away: submission.away_goals
+    });
+  }
+  function queueAndSyncRefereeResult(submission) {
+    var queue = readRefereeResultQueue(submission.submitted_by);
+    if (!queue.some(function (x) { return x.client_submission_id === submission.client_submission_id; })) queue.push(submission);
+    if (!writeRefereeResultQueue(submission.submitted_by, queue)) {
+      return Promise.resolve({ queued: false, error: new Error('This browser could not save the final score offline. Keep this page open and retry when connected.') });
+    }
+    if (!navigator.onLine) return Promise.resolve({ queued: true });
+    return submitRefereeResult(submission).then(function (r) {
+      if (r.error) {
+        var networkFailure = !navigator.onLine || r.error.status === 0 || /failed to fetch|network|timeout|load failed/i.test(r.error.message || '');
+        return { queued: networkFailure, error: r.error };
+      }
+      writeRefereeResultQueue(submission.submitted_by, readRefereeResultQueue(submission.submitted_by).filter(function (x) {
+        return x.client_submission_id !== submission.client_submission_id;
+      }));
+      return { queued: false };
+    });
+  }
+  function syncPendingRefereeResults() {
+    if (!navigator.onLine) return;
+    db.auth.getUser().then(function (u) {
+      var user = u.data && u.data.user;
+      if (!user) return;
+      var queue = readRefereeResultQueue(user.id);
+      if (!queue.length) return;
+      return queue.reduce(function (chain, item) {
+        return chain.then(function (failed) {
+          if (failed) return true;
+          return submitRefereeResult(item).then(function (r) {
+            if (r.error) { msg('A final score is still waiting to sync: ' + r.error.message); return true; }
+            writeRefereeResultQueue(user.id, readRefereeResultQueue(user.id).filter(function (x) {
+              return x.client_submission_id !== item.client_submission_id;
+            }));
+            return false;
+          });
+        });
+      }, Promise.resolve(false)).then(function (failed) {
+        if (!failed) msg('All queued referee final scores have synced.');
+      });
+    }).catch(function () {});
+  }
+  window.addEventListener('online', function () {
+    syncPendingRefereeEvents();
+    syncPendingRefereeResults();
+  });
 
   // Called by portal.js on the matching portal page only
   window.slfaRenderRole = function (p) {
@@ -949,9 +1010,10 @@
   }
 
   // ---------- REFEREE ----------
-  var refEvents = [];
+  var refEvents = [], currentRefMatch = null;
   function referee(p) {
     syncPendingRefereeEvents();
+    syncPendingRefereeResults();
     box().innerHTML =
       '<h2 class="rt">My matches</h2>' +
       '<label for="rfMatch">Match</label><select id="rfMatch"><option value="">Loading your matches…</option></select>' +
@@ -993,13 +1055,28 @@
     });
     $('rfEnd').addEventListener('click', function () {
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
-      db.from('matches').select('id, home_team, away_team').eq('id', id).maybeSingle().then(function (r) {
-        var m = r.data; var hg = goalsFor(m.home_team), ag = goalsFor(m.away_team);
-        if (!confirm('Save ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + ' as the final score? It goes straight to the table.')) return;
-        return db.rpc('referee_submit_final', { p_match_id: Number(id), p_home: hg, p_away: ag }).then(function (res) {
-          msg(res.error ? res.error.message : 'Final score saved and the table updated.'); loadRefMatch(id);
+      var cached = currentRefMatch && String(currentRefMatch.id) === String(id) ? currentRefMatch : null;
+      var matchRequest = cached ? Promise.resolve({ data: cached }) :
+        db.from('matches').select('id, home_team, away_team, match_status, match_date').eq('id', id).maybeSingle();
+      matchRequest.then(function (r) {
+        var m = r.data;
+        if (!m) { msg('Match details are unavailable. Open the match while connected before using offline mode.'); return; }
+        var hg = goalsFor(m.home_team), ag = goalsFor(m.away_team);
+        if (!confirm('Submit ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + ' as the final score for approval?')) return;
+        return db.auth.getUser().then(function (u) {
+          if (!u.data || !u.data.user) throw new Error('Sign in again before submitting the final score.');
+          var submission = {
+            client_submission_id: makeClientEventId(), match_id: Number(id), home_goals: hg, away_goals: ag,
+            submitted_by: u.data.user.id
+          };
+          return queueAndSyncRefereeResult(submission).then(function (res) {
+            if (res.error && !res.queued) { msg(res.error.message); return; }
+            msg(res.queued ? 'Final score saved on this phone. It will sync automatically when internet returns.' :
+              'Final score submitted. It is now awaiting Super Admin approval.');
+            if (!res.queued) loadRefMatch(id);
+          });
         });
-      });
+      }).catch(function (err) { msg(err.message || 'Could not submit the final score.'); });
     });
     wireMatchTime('rf', 'rfMatch');
     $('rfMotmSave').addEventListener('click', saveMotm);
@@ -1018,6 +1095,11 @@
           msg(res.queued ? 'Saved on this phone. This event will sync automatically when internet returns.' : 'Recorded.');
           ['rfPlayer','rfAssist','rfOff','rfMinute'].forEach(function (x) { $(x).value = ''; });
           if (!res.queued) loadRefMatch(id);
+          else {
+            refEvents.push(event);
+            var m = currentRefMatch;
+            if (m) $('rfScore').textContent = goalsFor(m.home_team) + ' – ' + goalsFor(m.away_team);
+          }
         });
       }).catch(function (err) { msg(err.message || 'Could not save the match event.'); });
     });
@@ -1067,6 +1149,7 @@
     if (!id) { $('rfPanel').classList.add('hidden'); return; }
     db.from('matches').select('id, home_team, away_team, match_status, motm_player_id').eq('id', id).maybeSingle().then(function (r) {
       var m = r.data; if (!m) return;
+      currentRefMatch = m;
       loadMotm(m);
       $('rfTeam').innerHTML = '<option>' + esc(m.home_team) + '</option><option>' + esc(m.away_team) + '</option>';
       $('rfPanel').classList.toggle('hidden', m.match_status !== 'LIVE' && m.match_status !== 'HT');
