@@ -1,0 +1,32 @@
+/* Premium public player profile dialog */
+.player-profile-trigger { cursor:pointer; }
+.player-profile-trigger:focus-visible { outline:3px solid #238b54; outline-offset:3px; border-radius:10px; }
+.player-profile-dialog { width:min(560px,calc(100% - 24px)); max-width:560px; max-height:min(86vh,760px); padding:0; border:0; border-radius:22px; color:#183b29; background:#fff; box-shadow:0 24px 80px rgba(0,0,0,.28); }
+.player-profile-dialog::backdrop { background:rgba(5,18,12,.68); backdrop-filter:blur(4px); }
+.player-profile-shell { position:relative; padding:24px; }
+.player-profile-close { position:absolute; top:12px; right:12px; z-index:2; width:38px; height:38px; border:1px solid #dce9e0; border-radius:50%; background:#f4f8f5; color:#244b34; font-size:25px; line-height:1; cursor:pointer; }
+.pp-heading { display:flex; align-items:center; gap:18px; padding:8px 36px 22px 0; }
+.pp-photo { width:104px; height:104px; flex:0 0 104px; object-fit:cover; border-radius:22px; background:#e9f2ec; border:3px solid #e2efe6; }
+.pp-placeholder { display:grid; place-items:center; color:#16733d; font-size:38px; font-weight:800; }
+.pp-kicker { color:#168144; font-size:9px; font-weight:800; letter-spacing:.15em; }
+.pp-identity h2 { margin:7px 0 4px; color:#173e2a; font-size:clamp(21px,5vw,28px); line-height:1.12; overflow-wrap:anywhere; }
+.pp-identity p { margin:0; color:#607468; font-size:13px; }
+.pp-meta { margin-top:8px; color:#168144; font-size:11px; font-weight:700; }
+.pp-stats { padding:17px; border:1px solid #dfebe2; border-radius:17px; background:linear-gradient(145deg,#f8fcf9,#edf7f0); }
+.pp-stats h3 { margin:0 0 13px; color:#1a4930; font-size:14px; }
+.pp-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.pp-metric { min-width:0; padding:13px; border-radius:12px; background:#fff; border:1px solid #e5eee8; }
+.pp-metric span { display:block; color:#6d7d72; font-size:10px; }
+.pp-metric strong { display:block; margin-top:5px; color:#087a3b; font-size:25px; font-variant-numeric:tabular-nums; }
+.pp-note { margin:14px 2px 0; color:#718077; font-size:10px; line-height:1.55; }
+.pp-loading { padding:40px 12px; text-align:center; color:#63786a; }
+@media(max-width:440px) { .player-profile-shell { padding:19px; } .pp-heading { gap:12px; } .pp-photo { width:82px; height:82px; flex-basis:82px; border-radius:18px; } }
+@media(prefers-color-scheme:dark) {
+  .player-profile-dialog { color:#eaf5ed; background:#10271a; }
+  .pp-identity h2,.pp-stats h3 { color:#effaf2; }
+  .pp-identity p,.pp-note { color:#adc0b2; }
+  .pp-stats { background:#173624; border-color:#2b5239; }
+  .pp-metric { background:#10291b; border-color:#2a4d36; }
+  .pp-metric span { color:#adc0b2; }
+  .player-profile-close { color:#eaf5ed; background:#1b3a28; border-color:#315840; }
+}
