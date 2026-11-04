@@ -174,8 +174,7 @@
       '<div class="btns"><button class="primary" id="msSave">Save status</button></div>' +
       '<h2 class="rt">Live match</h2>' +
       '<label for="lvMatch">Match</label><select id="lvMatch"><option value="">Loading matches…</option></select>' +
-      '<p class="muted">The referee starts, pauses and times the match. You can end it here.</p>' +
-      '<div class="btns"><button class="primary" id="lvEnd">End match</button></div>' +
+      '<p class="muted">The referee starts, pauses, times and ends the match.</p>' +
       '<div id="lvPanel" class="hidden">' +
         '<label for="lvTeam">Team</label><select id="lvTeam"></select>' +
         input('lvPlayer', 'Player') + input('lvAssist', 'Assist (optional)') + input('lvOff', 'Player off (substitutions only)') +
@@ -284,17 +283,6 @@
   function wireLive() {
     loadLiveOptions();
     $('lvMatch').addEventListener('change', function () { liveMatch = null; loadLiveMatch(this.value); });
-    $('lvEnd').addEventListener('click', function () {
-      var id = $('lvMatch').value; if (!id || !liveMatch) { msg('Choose a live match first.'); return; }
-      var hg = goalsFor(liveMatch.home_team), ag = goalsFor(liveMatch.away_team);
-      if (!confirm('End the match at ' + liveMatch.home_team + ' ' + hg + ' – ' + ag + ' ' + liveMatch.away_team + '? This saves the result to the table.')) return;
-      db.rpc('record_match_result', { p_match_id: Number(id), p_home: hg, p_away: ag }).then(function (r) {
-        if (r.error) { msg(r.error.message); return; }
-        return setMatch(id, { match_status: 'FT', match_minute: null }).then(function () {
-          msg('Match finished and the table updated.'); liveMatch = null; loadLiveOptions(); loadLiveMatch('');
-        });
-      });
-    });
     $('lvAdd').addEventListener('click', function () {
       if (!liveMatch) { msg('Choose a live match.'); return; }
       var type = $('lvType').value, player = $('lvPlayer').value.trim(), minute = parseInt($('lvMinute').value, 10);
@@ -1054,7 +1042,10 @@
         var m = r.data;
         if (!m) { msg('Match details are unavailable. Open the match while connected before using offline mode.'); return; }
         var hg = goalsFor(m.home_team), ag = goalsFor(m.away_team);
-        if (!confirm('Submit ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + ' as the final score for approval?')) return;
+        if (!confirm('Submit ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + ' as the final score for approval? This also marks the match as full time.')) return;
+        var finish = setMatch(id, { match_status: 'FT', match_minute: null }).then(function (r) {
+          return r.error ? r.error.message : '';
+        }, function () { return 'Full time could not be set. Set it again when you are back online.'; });
         return db.auth.getUser().then(function (u) {
           if (!u.data || !u.data.user) throw new Error('Sign in again before submitting the final score.');
           var submission = {
@@ -1063,8 +1054,9 @@
           };
           return queueAndSyncRefereeResult(submission).then(function (res) {
             if (res.error && !res.queued) { msg(res.error.message); return; }
-            msg(res.queued ? 'Final score saved on this phone. It will sync automatically when internet returns.' :
-              'Final score submitted. It is now awaiting Super Admin approval.');
+            var text = res.queued ? 'Final score saved on this phone. It will sync automatically when internet returns.' :
+              'Final score submitted. It is now awaiting Super Admin approval.';
+            finish.then(function (e) { msg(e || text); });
             if (!res.queued) loadRefMatch(id);
           });
         });
