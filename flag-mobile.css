@@ -272,3 +272,29 @@ body [data-status="live"] {
     transition-duration:.01ms !important;
   }
 }
+
+
+/* Public hero actions: bright premium SLFA blue, never inherit dark secondary styling */
+#public .hero-actions .share-app,
+#public #alertBtn,
+#public #shareApp {
+  color:#ffffff !important;
+  background:linear-gradient(115deg,#087bda 0%,#079df0 52%,#0876d5 100%) !important;
+  border:1px solid rgba(191,232,255,.82) !important;
+  box-shadow:0 5px 18px rgba(0,126,220,.34),inset 0 1px 0 rgba(255,255,255,.28) !important;
+  text-shadow:0 1px 2px rgba(0,35,75,.45) !important;
+  font-weight:700 !important;
+  opacity:1 !important;
+}
+#public .hero-actions .share-app:active,
+#public #alertBtn:active,
+#public #shareApp:active {
+  transform:translateY(1px) scale(.98);
+  filter:brightness(1.12);
+}
+#public .hero-actions .share-app:hover,
+#public #alertBtn:hover,
+#public #shareApp:hover {
+  background:linear-gradient(115deg,#079bdb 0%,#16b5ff 52%,#087ee0 100%) !important;
+  box-shadow:0 7px 22px rgba(0,145,255,.46),inset 0 1px 0 rgba(255,255,255,.34) !important;
+}
