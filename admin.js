@@ -174,10 +174,9 @@
       '<div class="btns"><button class="primary" id="msSave">Save status</button></div>' +
       '<h2 class="rt">Live match</h2>' +
       '<label for="lvMatch">Match</label><select id="lvMatch"><option value="">Loading matches…</option></select>' +
-      '<div class="btns"><button class="secondary" id="lvStart">Start match</button><button class="primary" id="lvEnd">End match</button></div>' +
+      '<p class="muted">The referee starts, pauses and times the match. You can end it here.</p>' +
+      '<div class="btns"><button class="primary" id="lvEnd">End match</button></div>' +
       '<div id="lvPanel" class="hidden">' +
-        '<div class="btns"><button class="secondary" id="lvHalf">Half time</button><button class="secondary" id="lvSecond">Second half</button></div>' +
-        input('lvMin', 'Current minute', 'number', 'min="0" max="130"') + '<div class="btns"><button class="secondary" id="lvMinSave">Update minute</button></div>' +
         '<label for="lvTeam">Team</label><select id="lvTeam"></select>' +
         input('lvPlayer', 'Player') + input('lvAssist', 'Assist (optional)') + input('lvOff', 'Player off (substitutions only)') +
         '<label for="lvType">Event</label><select id="lvType"><option value="GOAL">Goal</option><option value="YELLOW_CARD">Yellow card</option><option value="RED_CARD">Red card</option><option value="SUB">Substitution</option></select>' +
@@ -285,12 +284,6 @@
   function wireLive() {
     loadLiveOptions();
     $('lvMatch').addEventListener('change', function () { liveMatch = null; loadLiveMatch(this.value); });
-    $('lvStart').addEventListener('click', function () {
-      var id = $('lvMatch').value; if (!id) { msg('Choose a match.'); return; }
-      setMatch(id, { match_status: 'LIVE', match_minute: 0 }).then(function (r) {
-        msg(r.error ? r.error.message : 'Match is live.'); loadLiveMatch(id); loadLiveOptions();
-      });
-    });
     $('lvEnd').addEventListener('click', function () {
       var id = $('lvMatch').value; if (!id || !liveMatch) { msg('Choose a live match first.'); return; }
       var hg = goalsFor(liveMatch.home_team), ag = goalsFor(liveMatch.away_team);
@@ -302,7 +295,6 @@
         });
       });
     });
-    wireMatchTime('lv', 'lvMatch');
     $('lvAdd').addEventListener('click', function () {
       if (!liveMatch) { msg('Choose a live match.'); return; }
       var type = $('lvType').value, player = $('lvPlayer').value.trim(), minute = parseInt($('lvMinute').value, 10);
@@ -1104,7 +1096,13 @@
       }).catch(function (err) { msg(err.message || 'Could not save the match event.'); });
     });
   }
-  function setMatch(id, fields) { return db.from('matches').update(fields).eq('id', id); }
+  // Every status or minute change stamps status_set_at, so the public clock can count on from it
+  function setMatch(id, fields) {
+    if (fields && (fields.match_status !== undefined || fields.match_minute !== undefined) && fields.status_set_at === undefined) {
+      fields = Object.assign({}, fields, { status_set_at: new Date().toISOString() });
+    }
+    return db.from('matches').update(fields).eq('id', id);
+  }
   // Man of the Match: approved players of both clubs in the match, grouped by club
   function loadMotm(m) {
     var sel = $('rfMotm'); if (!sel) return;
