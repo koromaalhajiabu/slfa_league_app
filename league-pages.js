@@ -46,7 +46,8 @@
     starsportacademy: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Star%20Sport%20Logo.png',
     waterloofc: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/waterloo%20fc.jpeg',
     wilberforcestrikers: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Wilberforce%20Strikers%20Logo.png',
-    wusumstars: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Wusum%20Stars%20Logo.png'
+    wusumstars: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Wusum%20Stars%20Logo.png',
+    eastendlions: 'https://pbs.twimg.com/profile_images/1640109457047711746/tdyyWD6m_400x400.jpg'
   };
   function clubLogoFallback(name) {
     var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
