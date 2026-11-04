@@ -52,7 +52,7 @@
 .slfa-mc-empty p{margin:5px 0 0;color:var(--muted);font-size:11px}
 .slfa-mc-footnote{margin:14px 2px 3px;color:var(--muted);font-size:9px;line-height:1.5}
 @media(max-width:640px){.slfa-mc-grid{grid-template-columns:1fr}.slfa-mc-heading{align-items:flex-start;flex-direction:column;padding:16px}.slfa-mc-heading h3{font-size:23px}.slfa-mc-update{align-self:flex-end;margin-top:-2px}.slfa-mc-selects{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.slfa-mc-reset{grid-column:1/-1;width:100%}.slfa-mc-team{font-size:12px}.slfa-mc-crest{width:48px;height:48px}}
-@media(prefers-color-scheme:light){.slfa-mc-card{background:linear-gradient(150deg,#fff,#f6f8fb);border-color:rgba(20,43,68,.1)}.slfa-mc-card.is-live{background:linear-gradient(145deg,#fff4f3,#fff)}.slfa-mc-score{color:#173d5f}.slfa-mc-card-bottom{border-color:rgba(20,43,68,.1)}.slfa-mc-detail{background:#f6f8fb;border-color:rgba(20,43,68,.08)}.slfa-mc-event{border-color:rgba(20,43,68,.08)}.slfa-mc-lineups>div{background:#edf2f7}.slfa-mc-details-btn{color:#72581f;background:#fbf6e9}.slfa-mc-empty{border-color:rgba(20,43,68,.2)}}
+@media(prefers-color-scheme:light){.slfa-mc-card{background:linear-gradient(150deg,#fff,#f6f8fb);border-color:rgba(20,43,68,.1)}.slfa-mc-card.is-live{background:linear-gradient(145deg,#fff4f3,#fff)}.slfa-mc-score{color:#173d5f}.slfa-mc-card-bottom{border-color:rgba(20,43,68,.1)}.slfa-mc-detail{background:#f6f8fb;border-color:rgba(20,43,68,.08)}.slfa-mc-event{border-color:rgba(20,43,68,.08)}.slfa-mc-lineups>div{background:#edf2f7}.slfa-mc-details-btn{color:#0a4f8a;background:rgba(0,114,198,.06);border-color:rgba(0,114,198,.22)}.slfa-mc-empty{border-color:rgba(20,43,68,.2)}}
 
 
 /* v2.1 — emerald live match experience */
@@ -75,7 +75,7 @@
 .slfa-mc-filter.active{color:#042f20;background:linear-gradient(135deg,#9bf2bd,#42cf89);border-color:#9bf2bd}
 .slfa-mc-crest{border:1px solid rgba(122,235,171,.15);background:rgba(3,72,45,.28)}
 .slfa-mc-score{color:#d9ffe8;text-shadow:0 2px 16px rgba(60,220,135,.16)}
-.slfa-mc-details-btn{border-color:rgba(105,231,163,.24);background:rgba(7,112,69,.16);color:#aaf4c8}
+.slfa-mc-details-btn{border-color:rgba(140,190,255,.26);background:rgba(0,114,198,.12);color:#d6e9ff}
 .slfa-mc-detail{background:rgba(1,45,29,.28);border-color:rgba(104,230,163,.13)}
 .slfa-mc-detail h4{color:#aaf4c8}
 .slfa-mc-empty{border-color:rgba(104,230,163,.22);background:rgba(5,91,57,.08)}
