@@ -52,7 +52,10 @@
     }
     if (!navigator.onLine) return Promise.resolve({ queued: true });
     return db.from('match_events').upsert([event], { onConflict: 'client_event_id', ignoreDuplicates: true }).select('id').maybeSingle().then(function (r) {
-      if (r.error) return { queued: true, error: r.error };
+      if (r.error) {
+        var networkFailure = !navigator.onLine || r.error.status === 0 || /failed to fetch|network|timeout|load failed/i.test(r.error.message || '');
+        return { queued: networkFailure, error: r.error };
+      }
       var remaining = readRefereeQueue(event.recorded_by).filter(function (x) { return x.client_event_id !== event.client_event_id; });
       writeRefereeQueue(event.recorded_by, remaining);
       return { queued: false, id: r.data ? r.data.id : null };
