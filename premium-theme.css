@@ -330,3 +330,121 @@ a,.news a,.news-watch { color:#82c5ff !important; }
 #matchList .slfa-mc-crest-fallback { color:#a6f2c8 !important; }
 #matchList .slfa-mc-vs { color:#c0d8cb !important; background:rgba(255,255,255,.09) !important; }
 #matchList .slfa-mc-lineups > div { background:rgba(1,27,19,.5) !important; }
+/* ===== Actual v2 Match Centre markup: force Emerald Glass in every OS theme =====
+   match-centre.js renders slfa-* classes (not the legacy .mc/.match classes). */
+#matchList.view.card {
+  color:#f4fff8 !important;
+  background:linear-gradient(145deg,rgba(15,91,61,.68),rgba(4,43,30,.86)) !important;
+  border:1px solid rgba(125,241,184,.24) !important;
+  box-shadow:var(--shadow) !important;
+}
+#matchList .slfa-match-centre-v2 {
+  color:#f4fff8 !important;
+}
+#matchList .slfa-mc-heading {
+  color:#f4fff8 !important;
+  background:
+    radial-gradient(100% 130% at 0% 0%,rgba(45,221,145,.25),transparent 60%),
+    linear-gradient(135deg,rgba(7,91,57,.96),rgba(3,37,27,.97)) !important;
+  border:1px solid rgba(124,245,183,.3) !important;
+}
+#matchList .slfa-mc-heading h3,
+#matchList .slfa-mc-heading p,
+#matchList .slfa-mc-eyebrow,
+#matchList .slfa-mc-update { color:#f4fff8 !important; }
+#matchList .slfa-mc-tools,
+#matchList .slfa-mc-grid,
+#matchList .slfa-mc-empty {
+  color:#f4fff8 !important;
+  background:transparent !important;
+}
+#matchList .slfa-mc-card,
+#matchList .slfa-mc-card.is-live {
+  color:#f4fff8 !important;
+  background:linear-gradient(145deg,rgba(15,91,61,.72),rgba(3,37,27,.88)) !important;
+  border:1px solid rgba(125,241,184,.24) !important;
+  box-shadow:0 14px 30px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.04) !important;
+}
+#matchList .slfa-mc-card.is-live {
+  background:linear-gradient(145deg,rgba(94,30,42,.5),rgba(3,37,27,.88)) !important;
+  border-color:rgba(255,123,131,.48) !important;
+}
+#matchList .slfa-mc-card *,
+#matchList .slfa-mc-detail,
+#matchList .slfa-mc-lineups > div {
+  color:#f0fff6;
+}
+#matchList .slfa-mc-league,
+#matchList .slfa-mc-card-bottom,
+#matchList .slfa-mc-count,
+#matchList .slfa-mc-footnote,
+#matchList .slfa-mc-minute,
+#matchList .slfa-mc-event small,
+#matchList .slfa-mc-lineups p,
+#matchList .slfa-mc-empty p,
+#matchList .slfa-mc-no-events,
+#matchList .slfa-mc-detail-loading {
+  color:#c0d8cb !important;
+}
+#matchList .slfa-mc-score,
+#matchList .slfa-mc-status.status-ft,
+#matchList .slfa-mc-motm,
+#matchList .slfa-mc-detail h4 {
+  color:#9cf3c1 !important;
+}
+#matchList .slfa-mc-filter {
+  color:#eafff3 !important;
+  background:rgba(3,39,28,.8) !important;
+  border:1px solid rgba(125,241,184,.25) !important;
+}
+#matchList .slfa-mc-filter.active {
+  color:#fff !important;
+  background:linear-gradient(120deg,#075c45,#0878d8) !important;
+  border-color:rgba(100,190,255,.8) !important;
+  box-shadow:0 0 16px rgba(0,132,255,.28) !important;
+}
+#matchList .slfa-mc-selects input,
+#matchList .slfa-mc-selects select {
+  color:#f5fff9 !important;
+  color-scheme:dark !important;
+  background:rgba(1,27,19,.9) !important;
+  border:1px solid rgba(116,221,168,.35) !important;
+}
+#matchList .slfa-mc-selects label { color:#c9e4d5 !important; }
+#matchList .slfa-mc-reset,
+#matchList .slfa-mc-details-btn {
+  color:#fff !important;
+  background:linear-gradient(120deg,#0875dc,#159cff 52%,#0864c8) !important;
+  border:1px solid rgba(133,204,255,.62) !important;
+  box-shadow:0 0 14px rgba(0,132,255,.22) !important;
+}
+#matchList .slfa-mc-detail {
+  color:#eaf8ef !important;
+  background:rgba(1,27,19,.72) !important;
+  border:1px solid rgba(140,224,180,.2) !important;
+}
+#matchList .slfa-mc-card-bottom { border-color:rgba(140,224,180,.2) !important; }
+#matchList .slfa-mc-crest { background:rgba(255,255,255,.09) !important; }
+#matchList .slfa-mc-crest-fallback { color:#a6f2c8 !important; }
+#matchList .slfa-mc-vs { color:#c0d8cb !important; background:rgba(255,255,255,.09) !important; }
+#matchList .slfa-mc-lineups > div { background:rgba(1,27,19,.5) !important; }
+
+
+/* Competition identity marks in the league selector */
+.leagueSwitch .chip { display:inline-flex !important; align-items:center; gap:9px; padding:6px 13px 6px 7px !important; min-height:48px; white-space:nowrap; }
+.league-chip-logo { display:inline-block; flex:0 0 34px; width:34px; height:34px; border-radius:50%; object-fit:contain; background:#fff; border:1px solid rgba(255,255,255,.42); box-shadow:0 2px 10px rgba(0,0,0,.25); }
+.league-chip-logo-marampa {
+  background-color:#fff !important;
+  background-image:url("https://static.wixstatic.com/media/f4fd4d_6ca7c93546ee41bfbea014cfd4468fb4~mv2.jpeg") !important;
+  background-repeat:no-repeat !important;
+  background-position:left top !important;
+  background-size:244px 244px !important;
+}
+.league-chip-name { display:inline-block; line-height:1.2; white-space:normal; text-align:left; max-width:170px; }
+.leagueSwitch .chip.on .league-chip-logo { border-color:rgba(255,255,255,.9); box-shadow:0 0 0 2px rgba(99,230,160,.24),0 0 15px rgba(66,165,255,.28); }
+@media(max-width:480px) {
+  .leagueSwitch .chip { min-height:46px; gap:7px; padding-right:10px !important; }
+  .league-chip-logo { width:31px; height:31px; flex-basis:31px; }
+  .league-chip-name { max-width:145px; font-size:12px; }
+  .league-chip-logo-marampa { background-size:222px 222px !important; }
+}
