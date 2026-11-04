@@ -217,10 +217,12 @@
   function loadTable() {
     Promise.all([
       db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
-      db.from('league_standings').select('league_id, pos, club, mp, w, d, l, gf, ga, pts').order('pos', { ascending: true })
+      db.from('league_standings').select('league_id, pos, club, mp, w, d, l, gf, ga, pts').order('pos', { ascending: true }),
+      db.from('league_clubs').select('club_name, logo_url').eq('is_active', true)
     ]).then(function (all) {
       if (all[1].error) { $('tableBody').innerHTML = '<tr><td colspan="9">The table is not available right now.</td></tr>'; return; }
-      var leagues = all[0].data || [], rows = all[1].data || [];
+      var leagues = all[0].data || [], rows = all[1].data || [], logos = {};
+      (all[2].data || []).forEach(function (c) { logos[c.club_name] = c.logo_url; });
       if (!rows.length) { $('tableBody').innerHTML = '<tr><td colspan="9">The table will appear after the first results.</td></tr>'; return; }
       var html = '';
       leagues.concat([{ id: null, name: 'Other' }]).forEach(function (lg) {
@@ -228,7 +230,7 @@
         var items = rows.filter(function (r) { return (r.league_id || null) === (lg.id || null); });
         if (!items.length) return;
         html += '<tr class="league-row"><td colspan="9">' + esc(lg.name) + '</td></tr>' + items.map(function (r) {
-          return '<tr><td>' + esc(r.pos) + '</td><td class="club">' + esc(r.club) + '</td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
+          return '<tr><td>' + esc(r.pos) + '</td><td class="club"><span class="table-club">' + (logos[r.club] ? '<img class="table-club-logo" src="' + esc(logos[r.club]) + '" alt="" loading="lazy">' : '<span class="table-club-logo table-club-fallback">' + esc((r.club || '?').charAt(0).toUpperCase()) + '</span>') + '<span>' + esc(r.club) + '</span></span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
         }).join('');
       });
       $('tableBody').innerHTML = html;
