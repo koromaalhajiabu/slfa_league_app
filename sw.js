@@ -7,7 +7,7 @@ const CACHE = 'slfa-app-v95';
 const DATA_CACHE = CACHE + '-data';
 const PUBLIC_TABLES = ['matches', 'league_standings', 'league_clubs', 'club_squad', 'media_posts', 'leagues', 'match_events', 'match_lineups', 'club_announcements', 'top_scorers', 'top_assists', 'clean_sheets', 'motm_awards', 'polls', 'poll_options'];
 const SHELL = ['./', './index.html', './config.js', './public.js', './match-centre.js', './match-centre.css', './league-pages.js', './league-pages.css', './player-stats.css', './player-profile.js', './player-profile.css', './player-directory.js', './player-directory.css', './news-centre.css', './premium-theme.css', './flag-mobile.css', './home-dashboard.css', './public-contrast.css', './home-dashboard.js', './developer-panel.css', './admin.js', './portal.js', './sw-update.js', './styles.css', './developer.html', './super-admin.html', './referee.html', './media.html', './disciplinary.html', './club.html', './manifest.json',
-  './icon-192.png', './icon-512.png'];
+  './icon-192.png', './icon-512.png', './logos/women/bamoi-queens-fc.jpg', './logos/women/fc-kallon-female.jpg', './logos/women/jonathan-child-care-fc.jpg', './logos/women/kahunla-queens-fc.jpg', './logos/women/koya-queens-fc.jpg', './logos/women/mena-queens.jpg', './logos/women/mogbwemo-queens-fc.jpg', './logos/women/patricia-umu-strikers.jpg', './logos/women/ram-kamara-fc.jpg', './logos/women/rising-queens-fc.jpg', './logos/women/sierra-leone-police-female-2026.jpg', './logos/women/vem-buck-fc.jpg'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
