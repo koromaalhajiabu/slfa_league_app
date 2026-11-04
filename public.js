@@ -34,7 +34,7 @@
     kahunlaqueens: 'logos/women/kahunla-queens-fc.jpg',
     koyaqueens: 'logos/women/koya-queens-fc.jpg',
     menaqueens: 'logos/women/mena-queens.jpg',
-    mogbwemoqueens: 'logos/women/mogbwemo-queens-fc.jpg',
+    mogbwemoqueens: 'logos/women/mogbwemo-queens.jpg',
     patriciaumustrikers: 'logos/women/patricia-umu-strikers.jpg',
     ramkamara: 'logos/women/ram-kamara-fc.jpg',
     risingqueens: 'logos/women/rising-queens-fc.jpg',
@@ -65,7 +65,7 @@
   }
   function isSlfaLogoUrl(url) { return String(url || '').toLowerCase().indexOf('slfa-logo') !== -1; }
   function badge(url, name) {
-    var fallback = clubLogoFallback(name), primary = isSlfaLogoUrl(url) ? (fallback || '') : (url || fallback);
+    var fallback = clubLogoFallback(name), normalized = String(name || '').toLowerCase().replace(/fc/g, '').replace(/[^a-z0-9]/g, ''), isWomens = !!WOMENS_CLUB_LOGOS[normalized] || normalized.indexOf('kallonfemale') !== -1 || normalized.indexOf('sierraleonepolicefemale') !== -1, primary = isWomens ? (fallback || url || '') : (isSlfaLogoUrl(url) ? (fallback || '') : (url || fallback));
     var initial = esc((name || '?').charAt(0).toUpperCase());
     if (!primary) return '<span class="badge ph">' + initial + '</span>';
     return '<img class="badge" src="' + esc(primary) + '" data-fallback="' + esc(fallback && primary !== fallback ? fallback : '') + '" alt="" onerror="if(this.dataset.fallback){var next=this.dataset.fallback;this.dataset.fallback=\'\';this.src=next;}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="badge ph" hidden>' + initial + '</span>';
