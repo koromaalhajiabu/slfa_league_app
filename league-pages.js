@@ -126,7 +126,7 @@
     });
   }
   function clubKey(value) {
-    return String(value || '').toLowerCase().replace(/\\bfc\\b/g, '').replace(/[^a-z0-9]/g, '');
+    return String(value || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
   }
   function sameClub(a, b) { return clubKey(a) === clubKey(b); }
   function renderClubProfile(club, lg) {
