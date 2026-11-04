@@ -1,0 +1,36 @@
+/* Developer workspace accents: Sierra Leone flag colours. */
+body[data-portal="DEVELOPER"] .portal-head {
+  border-bottom: 4px solid #16834a;
+  background: linear-gradient(110deg, #ffffff 0%, #f5fff8 58%, #edf6ff 100%);
+}
+body[data-portal="DEVELOPER"] .portal-head h1 { color: #0756a5; }
+body[data-portal="DEVELOPER"] #portalArea {
+  border-top: 5px solid #16834a;
+  background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(242,250,255,.98));
+}
+body[data-portal="DEVELOPER"] #roleTools h2.rt {
+  color: #08783f;
+  border-left: 4px solid #08783f;
+  padding-left: 10px;
+}
+body[data-portal="DEVELOPER"] #roleTools label { color: #0756a5; }
+body[data-portal="DEVELOPER"] #roleTools input,
+body[data-portal="DEVELOPER"] #roleTools select {
+  border-color: rgba(7,86,165,.32);
+  background: #fff;
+}
+body[data-portal="DEVELOPER"] #roleTools button.primary {
+  background: #0756a5;
+  border-color: #0756a5;
+  box-shadow: 0 4px 14px rgba(7,86,165,.18);
+}
+body[data-portal="DEVELOPER"] #roleTools button.secondary {
+  border: 1px solid #16834a;
+  color: #08783f;
+  background: #f2fff6;
+}
+body[data-portal="DEVELOPER"] #roleTools .post {
+  border-left: 3px solid #16834a;
+  background: #fff;
+}
+body[data-portal="DEVELOPER"] #roleTools .status { color: #0756a5; }
