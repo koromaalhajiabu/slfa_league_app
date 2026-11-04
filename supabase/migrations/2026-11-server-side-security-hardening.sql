@@ -121,11 +121,28 @@ declare
     'disciplinary_actions',
     'suspensions',
     'league_clubs',
-    'leagues'
+    'leagues',
+    'app_settings',
+    'club_registration_applications',
+    'finance_transactions',
+    'league_board_members',
+    'league_verification_requests',
+    'man_of_the_match',
+    'role_access_requests',
+    'role_invitations',
+    'staff_departments',
+    'staff_registry'
   ];
 begin
   foreach t in array protected_tables loop
-    if to_regclass(format('public.%I', t)) is not null then
+    if exists (
+      select 1
+        from pg_class c
+        join pg_namespace n on n.oid = c.relnamespace
+       where n.nspname = 'public'
+         and c.relname = t
+         and c.relkind in ('r', 'p')
+    ) then
       execute format('drop trigger if exists enforce_slfa_application_controls on public.%I', t);
       execute format(
         'create trigger enforce_slfa_application_controls before insert or update or delete on public.%I for each row execute function public.enforce_slfa_application_controls()',
