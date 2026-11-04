@@ -29,14 +29,17 @@
   };
   function clubLogoFallback(name) {
     var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
-    if (key === 'portsauthority') key = 'ports';
-    if (key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
-    if (key === 'western' || key === 'westernunitedfc') key = 'westernunited';
+    if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
+    if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
+    if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
+    if (key === 'kallonfemale' || key === 'fckallonfemale') key = 'kallon';
     return CLUB_LOGO_FALLBACKS[key] || '';
   }
   function badge(url, name) {
-    url = url || clubLogoFallback(name);
-    return url ? '<img class="badge" src="' + esc(url) + '" alt="">' : '<span class="badge ph">' + esc((name || '?').charAt(0)) + '</span>';
+    var fallback = clubLogoFallback(name), primary = url || fallback;
+    var initial = esc((name || '?').charAt(0).toUpperCase());
+    if (!primary) return '<span class="badge ph">' + initial + '</span>';
+    return '<img class="badge" src="' + esc(primary) + '" data-fallback="' + esc(url && fallback && url !== fallback ? fallback : '') + '" alt="" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="badge ph" hidden>' + initial + '</span>';
   }
   function empty(msg) { return '<p class="muted empty">' + msg + '</p>'; }
 
