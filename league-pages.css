@@ -1,0 +1,62 @@
+/* Premium public competition pages */
+.slfa-lp-host{padding:14px!important}
+.slfa-league-pages{color:var(--ink)}
+.slfa-lp-hero{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:23px 20px;border-radius:20px;background:linear-gradient(125deg,#092b4a 0%,#07513d 100%);color:#fff;border:1px solid rgba(212,185,116,.28);box-shadow:0 16px 34px -22px #001b2b}
+.slfa-lp-eyebrow{margin:0 0 7px;color:#e2ca8e;font-size:9px;font-weight:800;letter-spacing:.19em}
+.slfa-lp-hero h3{margin:0;color:#fff;font-family:"Fraunces",Georgia,serif;font-size:27px;font-weight:500;line-height:1.2}
+.slfa-lp-hero p:not(.slfa-lp-eyebrow){margin:7px 0 0;color:#d5e1e9;font-size:12px;line-height:1.55}
+.slfa-lp-hero-mark{display:flex;align-items:center;justify-content:center;flex:0 0 58px;width:58px;height:58px;border:1px solid rgba(226,202,142,.55);border-radius:50%;color:#f1dba5;font-family:"Fraunces",Georgia,serif;font-size:14px;letter-spacing:.08em;background:rgba(255,255,255,.06)}
+.slfa-lp-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:20px 0 11px}
+.slfa-lp-section-head span{display:block;color:var(--accent2);font-size:9px;font-weight:800;letter-spacing:.15em}
+.slfa-lp-section-head h4{margin:4px 0 0;color:var(--ink);font-family:"Fraunces",Georgia,serif;font-size:19px;font-weight:500}
+.slfa-lp-section-head>small{color:var(--muted);font-size:10px}
+.slfa-lp-directory{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.slfa-lp-league-card{display:flex;align-items:center;gap:12px;min-width:0;padding:15px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);text-align:left;box-shadow:0 8px 22px -19px #001b2b;cursor:pointer;transition:transform .18s,border-color .18s}
+.slfa-lp-league-card:hover{transform:translateY(-2px);border-color:var(--accent2)}
+.slfa-lp-card-icon{display:flex;align-items:center;justify-content:center;flex:0 0 42px;width:42px;height:42px;border-radius:13px;background:rgba(19,138,43,.09);font-size:21px}
+.slfa-lp-card-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.slfa-lp-card-copy strong{font-size:13px;line-height:1.35}
+.slfa-lp-card-copy small,.slfa-lp-card-stats{color:var(--muted);font-size:9px;line-height:1.45}
+.slfa-lp-arrow{color:var(--accent2);font-size:24px}
+.slfa-lp-source,.slfa-lp-note{margin:15px 2px 3px;color:var(--muted);font-size:10px;line-height:1.6}
+.slfa-lp-detail-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0}
+.slfa-lp-detail-actions button{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--accent2);font-size:11px;font-weight:700}
+.slfa-lp-detail-actions span{color:var(--muted);font-size:10px}
+.slfa-lp-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0 15px}
+.slfa-lp-kpi{display:flex;min-width:0;flex-direction:column;gap:4px;padding:13px 11px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.slfa-lp-kpi strong{color:var(--accent2);font-family:"Fraunces",Georgia,serif;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.slfa-lp-kpi span{color:var(--ink);font-size:10px;font-weight:700;line-height:1.3}
+.slfa-lp-kpi small{color:var(--muted);font-size:9px}
+.slfa-lp-panel{min-width:0;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--card);margin:0 0 12px}
+.slfa-lp-panel .slfa-lp-section-head{margin:0 0 12px}
+.slfa-lp-table-wrap{overflow-x:auto}
+.slfa-lp-table{width:100%;min-width:590px;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums}
+.slfa-lp-table th,.slfa-lp-table td{padding:10px 7px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+.slfa-lp-table th{background:rgba(0,114,198,.08);color:var(--muted);font-size:9px;letter-spacing:.08em}
+.slfa-lp-table td.club{text-align:left;font-weight:650}
+.slfa-lp-table td.pts{color:var(--accent2);font-weight:800}
+.slfa-lp-table tbody tr:first-child td:first-child{color:#b48a2d;font-weight:900}
+.slfa-lp-two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+.slfa-lp-clubs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slfa-lp-club{display:flex;align-items:center;gap:9px;min-width:0;padding:9px;border:1px solid var(--line);border-radius:12px}
+.slfa-lp-club>div{min-width:0}
+.slfa-lp-club strong{display:block;overflow-wrap:anywhere;font-size:10px;line-height:1.4}
+.slfa-lp-club small{display:block;margin-top:3px;color:var(--muted);font-size:8px;line-height:1.4}
+.slfa-lp-badge{width:34px;height:34px;flex:0 0 34px;object-fit:contain;border-radius:50%;background:rgba(0,114,198,.06);padding:3px}
+.slfa-lp-placeholder{display:flex;align-items:center;justify-content:center;color:var(--accent2);font-size:14px;font-weight:800}
+.slfa-lp-match{padding:10px 0;border-bottom:1px solid var(--line)}
+.slfa-lp-match:last-child{border-bottom:0}
+.slfa-lp-match-meta{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:8px}
+.slfa-lp-match-meta span{color:var(--accent2);font-weight:800;letter-spacing:.08em}
+.slfa-lp-match-meta time{text-align:right}
+.slfa-lp-match-teams{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:7px;margin:8px 0;font-size:10px;font-weight:650}
+.slfa-lp-match-teams span:last-child{text-align:right}
+.slfa-lp-match-teams>b{color:var(--accent2);font-family:"Fraunces",Georgia,serif;font-size:17px;white-space:nowrap}
+.slfa-lp-match-teams .slfa-lp-vs{color:var(--muted);font-family:Inter,sans-serif;font-size:10px}
+.slfa-lp-match-venue{color:var(--muted);font-size:8px}
+.slfa-lp-match-panels{display:grid;gap:12px}
+.slfa-lp-empty,.slfa-lp-loading{padding:16px 10px;color:var(--muted);font-size:11px;line-height:1.6;text-align:center}
+@media(max-width:700px){.slfa-lp-directory{grid-template-columns:1fr}.slfa-lp-two-col{grid-template-columns:1fr}.slfa-lp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.slfa-lp-hero{padding:18px}.slfa-lp-hero h3{font-size:24px}.slfa-lp-clubs{grid-template-columns:1fr 1fr}}
+@media(max-width:380px){.slfa-lp-host{padding:10px!important}.slfa-lp-clubs{grid-template-columns:1fr}.slfa-lp-kpi strong{font-size:21px}}
+@media(prefers-color-scheme:dark){.slfa-lp-league-card,.slfa-lp-panel,.slfa-lp-kpi{background:#0e2032}.slfa-lp-club{border-color:rgba(78,168,255,.2)}.slfa-lp-table th{background:rgba(78,168,255,.12)}}
+@media(prefers-reduced-motion:reduce){.slfa-lp-league-card{transition:none}}
