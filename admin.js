@@ -27,6 +27,53 @@
     });
   }
 
+  // Offline referee events are stored on this device and synced with a stable UUID.
+  // The unique database key makes retries safe if the connection drops after a server commit.
+  function refereeQueueKey(uid) { return 'slfa_referee_event_queue_v1_' + uid; }
+  function readRefereeQueue(uid) {
+    try { var value = JSON.parse(localStorage.getItem(refereeQueueKey(uid)) || '[]'); return Array.isArray(value) ? value : []; }
+    catch (e) { return []; }
+  }
+  function writeRefereeQueue(uid, rows) {
+    try { localStorage.setItem(refereeQueueKey(uid), JSON.stringify(rows)); return true; }
+    catch (e) { return false; }
+  }
+  function makeClientEventId() {
+    if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+    });
+  }
+  function queueAndSyncRefereeEvent(event) {
+    var queue = readRefereeQueue(event.recorded_by);
+    if (!queue.some(function (x) { return x.client_event_id === event.client_event_id; })) queue.push(event);
+    if (!writeRefereeQueue(event.recorded_by, queue)) {
+      return Promise.resolve({ queued: false, error: new Error('This browser could not save the event offline. Keep this page open and retry when connected.') });
+    }
+    if (!navigator.onLine) return Promise.resolve({ queued: true });
+    return db.from('match_events').upsert([event], { onConflict: 'client_event_id', ignoreDuplicates: true }).select('id').maybeSingle().then(function (r) {
+      if (r.error) return { queued: true, error: r.error };
+      var remaining = readRefereeQueue(event.recorded_by).filter(function (x) { return x.client_event_id !== event.client_event_id; });
+      writeRefereeQueue(event.recorded_by, remaining);
+      return { queued: false, id: r.data ? r.data.id : null };
+    });
+  }
+  function syncPendingRefereeEvents() {
+    if (!navigator.onLine) return;
+    db.auth.getUser().then(function (u) {
+      var user = u.data && u.data.user;
+      if (!user) return;
+      var queue = readRefereeQueue(user.id);
+      if (!queue.length) return;
+      return db.from('match_events').upsert(queue, { onConflict: 'client_event_id', ignoreDuplicates: true }).then(function (r) {
+        if (r.error) { msg('Offline match events are still waiting to sync: ' + r.error.message); return; }
+        writeRefereeQueue(user.id, []);
+        msg(queue.length + ' offline match event(s) synced successfully.');
+      });
+    }).catch(function () {});
+  }
+  window.addEventListener('online', syncPendingRefereeEvents);
+
   // Called by portal.js on the matching portal page only
   window.slfaRenderRole = function (p) {
     var role = String(p.system_role).toUpperCase();
@@ -707,7 +754,7 @@
       '<h2 class="rt">Whole application</h2><div id="appState" class="muted">Checking…</div><div class="btns"><button class="secondary" id="freezeAppBtn">Freeze entire app</button><button class="primary" id="unfreezeAppBtn">Unfreeze entire app</button></div>'+
       '<h2 class="rt">Assign a role</h2><p class="muted">Full name, email (unique account ID), and a round photo selected from your phone gallery.</p>'+
       '<label for="ivName">Full name</label><input id="ivName" type="text" autocomplete="name">'+input('ivEmail','Email address','email')+
-      '<label for="ivPhoto">Round profile photo</label><input id="ivPhoto" type="file" accept="image/*" capture="user"><div id="ivPhotoPreview" class="muted">No photo selected.</div>'+
+      '<label for="ivPhoto">Round profile photo</label><input id="ivPhoto" type="file" accept="image/jpeg,image/png,image/webp"><div id="ivPhotoPreview" class="muted">No photo selected.</div>'+
       '<label for="ivRole">Role</label><select id="ivRole">'+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join('')+'</select>'+
       '<label for="ivClub">Club (Club Managers only)</label><select id="ivClub"><option value="">Loading clubs…</option></select><div class="btns"><button class="primary" id="ivSave">Save role</button></div>'+
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
@@ -716,13 +763,14 @@
     loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();
     $('pauseBtn').onclick=function(){setPause(true);};$('resumeBtn').onclick=function(){setPause(false);};
     $('freezeAppBtn').onclick=function(){setAppFreeze(true);};$('unfreezeAppBtn').onclick=function(){setAppFreeze(false);};
-    $('ivPhoto').onchange=function(){var f=this.files&&this.files[0];if(!f){$('ivPhotoPreview').textContent='No photo selected.';return;}if(!/^image\\//i.test(f.type)){this.value='';msg('Choose an image file.');return;}var u=URL.createObjectURL(f);$('ivPhotoPreview').innerHTML='<img src="'+u+'" alt="Profile preview" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #16834a">';};
+    $('ivPhoto').onchange=function(){var f=this.files&&this.files[0];if(!f){$('ivPhotoPreview').textContent='No photo selected.';return;}if(['image/jpeg','image/png','image/webp'].indexOf(f.type)===-1||f.size>4*1024*1024){this.value='';msg('Choose a JPG, PNG or WebP photo no larger than 4 MB.');return;}var u=URL.createObjectURL(f);$('ivPhotoPreview').innerHTML='<img src="'+u+'" alt="Profile preview" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #16834a">';};
   }
   function uploadDevPhoto(email,file){
     if(!file)return Promise.resolve(null);
-    var ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-    var path=encodeURIComponent(email.toLowerCase())+'/'+Date.now()+'.'+ext;
-    return db.storage.from('developer-profiles').upload(path,file,{upsert:true,contentType:file.type||'image/jpeg'}).then(function(r){
+    if(['image/jpeg','image/png','image/webp'].indexOf(file.type)===-1||file.size>4*1024*1024)return Promise.reject(new Error('Choose a JPG, PNG or WebP photo no larger than 4 MB.'));
+    var ext=file.type==='image/png'?'png':(file.type==='image/webp'?'webp':'jpg');
+    var path=encodeURIComponent(email.toLowerCase())+'/'+Date.now()+'-'+makeClientEventId()+'.'+ext;
+    return db.storage.from('developer-profiles').upload(path,file,{upsert:false,contentType:file.type}).then(function(r){
       if(r.error)throw r.error;return db.storage.from('developer-profiles').getPublicUrl(path).data.publicUrl;
     });
   }
@@ -880,18 +928,21 @@
   }
   function tpRecord(player, off) {
     db.auth.getUser().then(function (u) {
-      return db.from('match_events').insert([{
-        match_id: String(tp.id), event_type: tp.type, team_name: tp.team, player_name: player, player_off_name: off || null,
-        minute: tp.minute, recorded_by: u.data.user.id, recorded_at: new Date().toISOString(), published_at: new Date().toISOString()
-      }]).select('id').single();
-    }).then(function (r) {
-      if (r.error) { msg(r.error.message); tp.step = 'type'; tp.type = null; tp.team = null; tp.on = null; tpRender(); return; }
-      tp.lastId = r.data.id;
-      msg('Recorded: ' + TP_LABEL[tp.type] + ' · ' + tp.team + ' · ' + player + " " + tp.minute + "'");
-      tp.step = 'type'; tp.type = null; tp.team = null; tp.on = null;
-      return db.from('match_events').select('id, event_type, team_name, player_name, minute').eq('match_id', String(tp.id)).order('minute', { ascending: true })
-        .then(function (e) { tp.events = e.data || []; tpRender(); });
-    });
+      if (!u.data || !u.data.user) throw new Error('Sign in again before recording a match event.');
+      var event = {
+        client_event_id: makeClientEventId(), match_id: String(tp.id), event_type: tp.type, team_name: tp.team,
+        player_name: player, player_off_name: off || null, minute: tp.minute, recorded_by: u.data.user.id,
+        recorded_at: new Date().toISOString(), published_at: new Date().toISOString()
+      };
+      return queueAndSyncRefereeEvent(event).then(function (result) {
+        if (result.error && !result.queued) { msg(result.error.message); return; }
+        tp.lastId = result.id || null;
+        tp.events.push(event);
+        msg(result.queued ? 'Saved on this phone. This event will sync automatically when internet returns.' :
+          'Recorded: ' + TP_LABEL[tp.type] + ' · ' + tp.team + ' · ' + player + " " + tp.minute + "'");
+        tp.step = 'type'; tp.type = null; tp.team = null; tp.on = null; tpRender();
+      });
+    }).catch(function (err) { msg(err.message || 'Could not save the match event.'); });
   }
 
   // ---------- REFEREE ----------
@@ -954,14 +1005,17 @@
       if (!player || isNaN(minute)) { msg('Enter the player and the minute.'); return; }
       if (type === 'SUB' && !$('rfOff').value.trim()) { msg('Enter the player coming off.'); return; }
       db.auth.getUser().then(function (u) {
-        return db.from('match_events').insert([{ match_id: String(id), event_type: type, team_name: $('rfTeam').value, player_name: player,
+        if (!u.data || !u.data.user) throw new Error('Sign in again before recording a match event.');
+        var event = { client_event_id: makeClientEventId(), match_id: String(id), event_type: type, team_name: $('rfTeam').value, player_name: player,
           assist_player_name: $('rfAssist').value.trim() || null, player_off_name: $('rfOff').value.trim() || null, minute: minute,
-          recorded_by: u.data.user.id, recorded_at: new Date().toISOString(), published_at: new Date().toISOString() }]);
-      }).then(function (res) {
-        if (res.error) { msg(res.error.message); return; }
-        msg('Recorded.'); ['rfPlayer','rfAssist','rfOff','rfMinute'].forEach(function (x) { $(x).value = ''; });
-        loadRefMatch(id);
-      });
+          recorded_by: u.data.user.id, recorded_at: new Date().toISOString(), published_at: new Date().toISOString() };
+        return queueAndSyncRefereeEvent(event).then(function (res) {
+          if (res.error && !res.queued) { msg(res.error.message); return; }
+          msg(res.queued ? 'Saved on this phone. This event will sync automatically when internet returns.' : 'Recorded.');
+          ['rfPlayer','rfAssist','rfOff','rfMinute'].forEach(function (x) { $(x).value = ''; });
+          if (!res.queued) loadRefMatch(id);
+        });
+      }).catch(function (err) { msg(err.message || 'Could not save the match event.'); });
     });
   }
   function setMatch(id, fields) { return db.from('matches').update(fields).eq('id', id); }
