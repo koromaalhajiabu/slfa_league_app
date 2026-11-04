@@ -16,33 +16,48 @@
 <link rel="stylesheet" href="premium-theme.css">
 <link rel="stylesheet" href="flag-mobile.css?v=1">
 <style id="slfa-live-text-motion">
-/* High-visibility text motion and brightness */
-@keyframes slfaLiveTextMove {
-  0%,100% { transform:translateX(0); }
-  50% { transform:translateX(6px); }
+/* Premium SLFA typography: restrained motion, clean contrast and flag-inspired accents */
+@keyframes slfaPremiumTitle {
+  0%,100% { text-shadow:0 1px 2px rgba(0,0,0,.18),0 0 5px rgba(120,255,175,.10); }
+  50% { text-shadow:0 1px 2px rgba(0,0,0,.18),0 0 10px rgba(120,255,175,.22),0 0 15px rgba(95,175,255,.12); }
 }
-@keyframes slfaLiveTextGlow {
-  0%,100% { text-shadow:0 0 3px rgba(255,255,255,.12); filter:brightness(1); }
-  50% { text-shadow:0 0 12px rgba(145,255,190,.55),0 0 18px rgba(80,185,255,.28); filter:brightness(1.28); }
+@keyframes slfaPremiumAccent {
+  0%,100% { opacity:.82; }
+  50% { opacity:1; }
 }
 body h1,body h2,body h3,
 body .brand p,body .kicker,body .sub,
 body .portal-head p,body .portal-head .eyebrow,
 body .news-eyebrow,body .ps-eyebrow {
-  animation:slfaLiveTextMove 4s ease-in-out infinite,slfaLiveTextGlow 3s ease-in-out infinite !important;
-  color:#f1fff5 !important;
+  color:#f5fff8 !important;
+  animation:slfaPremiumTitle 5.5s ease-in-out infinite !important;
 }
-body .tabs button,body nav button,body .portal nav a,
+body h1,body .portal-head h1 {
+  letter-spacing:.0em;
+  text-wrap:balance;
+}
+body .brand p,body .portal-head .eyebrow,
+body .news-eyebrow,body .ps-eyebrow,body .kicker {
+  color:#c8f6dc !important;
+}
+body .tabs button,body nav button,body .portal nav a {
+  color:#edf8ff !important;
+  transition:color .22s ease,text-shadow .22s ease,transform .22s ease,background-color .22s ease;
+}
+body .tabs button:hover,body nav button:hover,body .portal nav a:hover {
+  color:#ffffff !important;
+  text-shadow:0 0 9px rgba(90,190,255,.30);
+}
 body .score,body .score-big,body .table th {
-  color:#e6f7ff !important;
-  text-shadow:0 0 9px rgba(90,190,255,.32) !important;
-  animation:slfaLiveTextGlow 3s ease-in-out infinite !important;
+  color:#effaff !important;
+  text-shadow:0 1px 5px rgba(75,170,255,.18) !important;
 }
+body button,body a { -webkit-tap-highlight-color:transparent; }
 @media (prefers-reduced-motion:reduce) {
   body h1,body h2,body h3,body .brand p,body .kicker,body .sub,
   body .portal-head p,body .portal-head .eyebrow,body .news-eyebrow,
-  body .ps-eyebrow,body .tabs button,body nav button,body .portal nav a,
-  body .score,body .score-big,body .table th { animation:none !important; }
+  body .ps-eyebrow { animation:none !important; }
+  body .tabs button,body nav button,body .portal nav a { transition:none !important; }
 }
 </style>
 
