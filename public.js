@@ -41,11 +41,21 @@
       renderLeagueSwitch();
     });
   }
+  function leagueLogo(l) {
+    var n = String(l.name || '').toLowerCase();
+    if (n.indexOf('leone rock') !== -1) {
+      return '<img class="league-chip-logo" src="https://pbs.twimg.com/profile_images/1714750858435391488/vjKgPtIj.jpg" alt="Leone Rock Premier League logo" loading="lazy">';
+    }
+    if (n.indexOf('marampa') !== -1 && n.indexOf('women') !== -1) {
+      return '<span class="league-chip-logo league-chip-logo-marampa" role="img" aria-label="Marampa Mines Women\'s Premier League logo"></span>';
+    }
+    return '';
+  }
   function renderLeagueSwitch() {
     var box = $('leagueSwitch'); if (!box) return;
     box.innerHTML = [{ id: '', name: 'All leagues' }].concat(leagueList).map(function (l) {
       var on = String(l.id) === String(currentLeague);
-      return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-league="' + esc(l.id) + '" aria-pressed="' + on + '">' + esc(l.name) + '</button>';
+      return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-league="' + esc(l.id) + '" aria-pressed="' + on + '">' + leagueLogo(l) + '<span class="league-chip-name">' + esc(l.name) + '</span></button>';
     }).join('');
     box.querySelectorAll('[data-league]').forEach(function (b) {
       b.addEventListener('click', function () { setLeague(b.dataset.league); });
