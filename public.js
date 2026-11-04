@@ -338,31 +338,60 @@
     });
   }
 
-  // Players: top scorers, assists, clean sheets
-  function list(rows, label, valueKey) {
-    if (!rows || !rows.length) return empty('No ' + label + ' yet.');
+  // Premium player statistics: public, read-only leaderboards from published statistics tables.
+  function playerRows(rows, nameKey, valueKey, metric) {
+    if (!rows || !rows.length) return empty('No published ' + metric.toLowerCase() + ' records yet.');
     return rows.map(function (r, i) {
-      return '<div class="row"><span class="rank">' + (i + 1) + '</span>' + badge(r.photo_url, r.name) +
-        '<span class="pname">' + esc(r.name) + '<small>' + esc(r.club) + '</small></span><span class="pval">' + esc(r[valueKey]) + '</span></div>';
+      return '<article class="ps-row' + (i === 0 ? ' ps-leader' : '') + '">' +
+        '<span class="ps-rank">' + (i === 0 ? '1' : i + 1) + '</span>' +
+        badge(r.photo_url, r[nameKey]) +
+        '<span class="ps-player"><strong>' + esc(r[nameKey]) + '</strong><small>' + esc(r.club || 'Club not listed') + '</small></span>' +
+        '<span class="ps-value"><strong>' + esc(r[valueKey]) + '</strong><small>' + esc(metric) + '</small></span></article>';
     }).join('');
   }
   function loadPlayers() {
-    db.from('top_scorers').select('player, club, goals, photo_url').order('goals', { ascending: false }).limit(10)
-      .then(function (res) {
-        $('scorers').innerHTML = list(inLeague(res.data).map(function (r) { return { name: r.player, club: r.club, photo_url: r.photo_url, goals: r.goals }; }), 'goals', 'goals');
+    var jobs = [
+      db.from('top_scorers').select('player, club, goals, photo_url').order('goals', { ascending: false }).limit(500),
+      db.from('top_assists').select('player, club, assists, photo_url').order('assists', { ascending: false }).limit(500),
+      db.from('clean_sheets').select('goalkeeper, club, clean_sheets, photo_url').order('clean_sheets', { ascending: false }).limit(500),
+      db.from('motm_awards').select('player, club, awards, photo_url').order('awards', { ascending: false }).limit(500)
+    ];
+    Promise.all(jobs).then(function (all) {
+      var datasets = all.map(function (res) { return res.error ? [] : (res.data || []); });
+      var scorers = inLeague(datasets[0]).sort(function (a,b) { return Number(b.goals || 0)-Number(a.goals || 0); }).slice(0,20);
+      var assists = inLeague(datasets[1]).sort(function (a,b) { return Number(b.assists || 0)-Number(a.assists || 0); }).slice(0,20);
+      var sheets = inLeague(datasets[2]).sort(function (a,b) { return Number(b.clean_sheets || 0)-Number(a.clean_sheets || 0); }).slice(0,20);
+      var motm = inLeague(datasets[3]).sort(function (a,b) { return Number(b.awards || 0)-Number(a.awards || 0); }).slice(0,20);
+      var summary = $('playerStatsSummary');
+      if (summary) {
+        var leaders = [
+          {label:'Golden Boot',row:scorers[0],name:'player',value:'goals',unit:'goals'},
+          {label:'Top Playmaker',row:assists[0],name:'player',value:'assists',unit:'assists'},
+          {label:'Golden Glove',row:sheets[0],name:'goalkeeper',value:'clean_sheets',unit:'clean sheets'},
+          {label:'Most Awards',row:motm[0],name:'player',value:'awards',unit:'awards'}
+        ];
+        summary.innerHTML = leaders.map(function (x) {
+          return '<article class="ps-summary-card"><span>' + esc(x.label) + '</span>' +
+            (x.row ? '<strong>' + esc(x.row[x.name]) + '</strong><small>' + esc(x.row[x.value]) + ' ' + esc(x.unit) + (x.row.club ? ' · ' + esc(x.row.club) : '') + '</small>' :
+              '<strong>—</strong><small>Awaiting published statistics</small>') + '</article>';
+        }).join('');
+      }
+      var panels = [
+        {id:'scorers',title:'Golden Boot',subtitle:'Most goals scored',rows:scorers,name:'player',value:'goals',metric:'GOALS'},
+        {id:'assists',title:'Playmakers',subtitle:'Most assists recorded',rows:assists,name:'player',value:'assists',metric:'ASSISTS'},
+        {id:'cleanSheets',title:'Golden Glove',subtitle:'Most clean sheets',rows:sheets,name:'goalkeeper',value:'clean_sheets',metric:'CLEAN SHEETS'},
+        {id:'motm',title:'Man of the Match',subtitle:'Most match awards',rows:motm,name:'player',value:'awards',metric:'AWARDS'}
+      ];
+      panels.forEach(function (x) {
+        var box = $(x.id);
+        if (!box) return;
+        var unavailable = all[['scorers','assists','cleanSheets','motm'].indexOf(x.id)].error;
+        box.innerHTML = '<div class="ps-panel-head"><div><span class="ps-eyebrow">PLAYER LEADERBOARD</span><h3>' + esc(x.title) + '</h3><p>' + esc(x.subtitle) + '</p></div><span class="ps-count">' + x.rows.length + ' ranked</span></div>' +
+          (unavailable ? empty('This statistic is temporarily unavailable.') : playerRows(x.rows,x.name,x.value,x.metric));
       });
-    db.from('top_assists').select('player, club, assists, photo_url').order('assists', { ascending: false }).limit(10)
-      .then(function (res) {
-        $('assists').innerHTML = list(inLeague(res.data).map(function (r) { return { name: r.player, club: r.club, photo_url: r.photo_url, assists: r.assists }; }), 'assists', 'assists');
-      });
-    db.from('clean_sheets').select('goalkeeper, club, clean_sheets, photo_url').order('clean_sheets', { ascending: false }).limit(10)
-      .then(function (res) {
-        $('cleanSheets').innerHTML = list(inLeague(res.data).map(function (r) { return { name: r.goalkeeper, club: r.club, photo_url: r.photo_url, sheets: r.clean_sheets }; }), 'clean sheets', 'sheets');
-      });
-    db.from('motm_awards').select('player, club, awards, photo_url').order('awards', { ascending: false }).limit(10)
-      .then(function (res) {
-        $('motm').innerHTML = list(inLeague(res.data).map(function (r) { return { name: r.player, club: r.club, photo_url: r.photo_url, awards: r.awards }; }), 'Man of the Match awards', 'awards');
-      });
+    }).catch(function () {
+      ['scorers','assists','cleanSheets','motm'].forEach(function (id) { if ($(id)) $(id).innerHTML = empty('Player statistics are temporarily unavailable.'); });
+    });
   }
 
   // News and media (published only)
