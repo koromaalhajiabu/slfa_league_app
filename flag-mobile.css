@@ -684,3 +684,98 @@ body::before {
 @media (prefers-reduced-motion:reduce) {
   body { animation:none !important; }
 }
+
+
+/* ── SLFA premium single-emerald theme v14 ──
+   Replaces the white/green blend with a unified diamond-emerald finish.
+   Bright, high-contrast typography and clearly legible form controls. */
+@keyframes slfaEmeraldAtmosphere {
+  0%,100% { background-position:0% 0%,100% 100%,50% 50%; }
+  50% { background-position:100% 20%,0% 80%,100% 50%; }
+}
+html {
+  background:#063b28 !important;
+}
+body {
+  color:#f4fff8 !important;
+  background:
+    radial-gradient(ellipse at 12% 0%,rgba(34,166,104,.40),transparent 48%),
+    radial-gradient(ellipse at 92% 100%,rgba(8,105,66,.55),transparent 52%),
+    linear-gradient(135deg,#052d20 0%,#075536 48%,#063b28 100%) !important;
+  background-size:180% 180%,180% 180%,220% 220% !important;
+  background-attachment:fixed !important;
+  animation:slfaEmeraldAtmosphere 28s ease-in-out infinite !important;
+}
+body::before {
+  background:linear-gradient(115deg,transparent 0%,rgba(99,255,174,.055) 48%,transparent 76%) !important;
+}
+.topbar,.portal-head {
+  color:#f7fff9 !important;
+  background:linear-gradient(135deg,rgba(5,65,42,.97),rgba(8,91,57,.96)) !important;
+  border-color:rgba(130,255,185,.24) !important;
+}
+.card,.news-card,.news-controls,.admin-body,.detail,.team,.match,.news,
+.ps-panel,.ps-summary-card,.ps-hero,.news-centre-hero,.portal .card {
+  color:#f4fff8 !important;
+  background:linear-gradient(145deg,rgba(17,112,69,.94),rgba(7,70,46,.96)) !important;
+  background:linear-gradient(145deg,rgba(17,112,69,.94),rgba(7,70,46,.96)) !important;
+  border:1px solid rgba(133,255,190,.24) !important;
+  box-shadow:0 12px 34px rgba(0,18,10,.22),inset 0 1px 0 rgba(225,255,238,.07) !important;
+  backdrop-filter:blur(16px) saturate(125%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(125%) !important;
+}
+.hero {
+  color:#fff !important;
+  background:linear-gradient(135deg,#117849 0%,#075333 100%) !important;
+  border:1px solid rgba(148,255,196,.30) !important;
+}
+body :where(h1,h2,h3,h4,.brand h1,.portal-head h1,.hero .title,.section-title) {
+  color:#ffffff !important;
+  background:none !important;
+  -webkit-background-clip:border-box !important;
+  background-clip:border-box !important;
+  -webkit-text-fill-color:#ffffff !important;
+  text-shadow:0 1px 0 rgba(0,0,0,.18),0 0 12px rgba(181,255,211,.16) !important;
+  font-weight:800 !important;
+  letter-spacing:.01em !important;
+  animation:slfaText3DMove 7s ease-in-out infinite !important;
+}
+body :where(p,li,label,small,strong,em,span,td,th,a,button,.muted,.sub,.rt,.kicker,.news-eyebrow,.ps-eyebrow) {
+  color:#f0fff6 !important;
+  text-shadow:none !important;
+  filter:none !important;
+}
+body .muted, body .sub, body small, body .rt {
+  color:#d5f6e2 !important;
+}
+body :where(input,textarea,select) {
+  color:#ffffff !important;
+  caret-color:#ffffff !important;
+  background:rgba(2,48,31,.82) !important;
+  border:1px solid rgba(157,255,199,.48) !important;
+  box-shadow:inset 0 1px 4px rgba(0,0,0,.16) !important;
+}
+body :where(input,textarea,select)::placeholder {
+  color:#c9ead7 !important;
+  opacity:1 !important;
+}
+body :where(input,textarea,select):focus {
+  border-color:#a5ffd0 !important;
+  outline:2px solid rgba(165,255,208,.28) !important;
+  outline-offset:1px !important;
+}
+body :where(button,.btn) {
+  color:#ffffff !important;
+  background:linear-gradient(135deg,#15965b,#087044) !important;
+  border:1px solid rgba(177,255,211,.42) !important;
+  text-shadow:none !important;
+}
+body a { color:#b9ffda !important; }
+body :where(table,th,td) { color:#f3fff7 !important; }
+@media (prefers-reduced-motion:reduce) {
+  body { animation:none !important; }
+  body :where(h1,h2,h3,h4,.brand h1,.portal-head h1,.hero .title,.section-title) {
+    animation:none !important;
+    transform:none !important;
+  }
+}
