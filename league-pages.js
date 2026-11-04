@@ -60,7 +60,7 @@
     if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
     if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
     if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
-    return CLUB_LOGO_FALLBACKS[key] || 'slfa-logo.png';
+    return isWomensLeagueClub(name) ? '' : (CLUB_LOGO_FALLBACKS[key] || 'slfa-logo.png');
   }
   function clubBadge(c) {
     var fallback = clubLogoFallback(c.club_name), logo = isWomensLeagueClub(c.club_name) ? '' : (c.logo_url || fallback);
