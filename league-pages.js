@@ -46,6 +46,13 @@
     return '<div class="slfa-lp-kpi"><strong>' + esc(value) + '</strong><span>' + esc(label) + '</span>' +
       (note ? '<small>' + esc(note) + '</small>' : '') + '</div>';
   }
+  function matchClub(name) {
+    return clubs.find(function (c) { return c.club_name === name; }) || { club_name: name, logo_url: '' };
+  }
+  function matchTeam(name) {
+    var c = matchClub(name);
+    return '<span class="slfa-lp-match-team">' + clubBadge(c) + '<span>' + esc(name) + '</span></span>';
+  }
   function matchRow(m) {
     var hasScore = m.home_score != null && m.away_score != null;
     var score = hasScore ? '<b>' + esc(m.home_score) + ' : ' + esc(m.away_score) + '</b>' : '<b class="slfa-lp-vs">VS</b>';
@@ -53,7 +60,7 @@
     var tag = state === 'FT' ? 'FULL TIME' : state === 'LIVE' ? 'LIVE' : state === 'HT' ? 'HALF TIME' :
       state === 'RESCHEDULED' ? 'RESCHEDULED' : 'UPCOMING';
     return '<article class="slfa-lp-match"><div class="slfa-lp-match-meta"><span>' + esc(tag) + '</span><time>' + esc(dateLabel(m.match_date)) + '</time></div>' +
-      '<div class="slfa-lp-match-teams"><span>' + esc(m.home_team) + '</span>' + score + '<span>' + esc(m.away_team) + '</span></div>' +
+      '<div class="slfa-lp-match-teams">' + matchTeam(m.home_team) + score + matchTeam(m.away_team) + '</div>' +
       '<div class="slfa-lp-match-venue">' + esc(m.venue || 'Venue to be confirmed') + '</div></article>';
   }
   function renderDirectory() {
@@ -98,7 +105,7 @@
     var tableHtml = table.length ? '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table"><thead><tr><th>#</th><th>Club</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead><tbody>' +
       table.map(function (r) {
         var gd = Number(r.gf || 0) - Number(r.ga || 0);
-        return '<tr><td>' + esc(r.pos) + '</td><td class="club">' + esc(r.club) + '</td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) +
+        return '<tr><td>' + esc(r.pos) + '</td><td class="club"><span class="slfa-lp-table-club">' + clubBadge(matchClub(r.club)) + '<span>' + esc(r.club) + '</span></span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) +
           '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) +
           '</td><td>' + (gd > 0 ? '+' : '') + gd + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
       }).join('') + '</tbody></table></div>' : '<p class="slfa-lp-empty">The official standings will appear here when published.</p>';
