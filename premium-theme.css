@@ -1,0 +1,132 @@
+/* Premium Emerald Glass theme — shared public and staff portal skin */
+:root {
+  color-scheme: dark;
+  --bg:#031b14;
+  --bg2:#06291d;
+  --card:rgba(8,54,37,.68);
+  --ink:#f4fff8;
+  --muted:#c0d8cb;
+  --accent:#63e6a0;
+  --accent2:#42a5ff;
+  --danger:#ff7b83;
+  --line:rgba(112,235,171,.24);
+  --radius:20px;
+  --shadow:0 18px 48px rgba(0,0,0,.34), 0 0 26px rgba(37,190,125,.07);
+}
+* { box-sizing:border-box; }
+html { min-height:100%; background:#031b14; }
+body {
+  color:var(--ink) !important;
+  background:
+    radial-gradient(900px 520px at 8% -8%,rgba(28,196,125,.25),transparent 62%),
+    radial-gradient(760px 500px at 100% 8%,rgba(24,113,91,.24),transparent 60%),
+    radial-gradient(680px 500px at 55% 110%,rgba(0,111,85,.20),transparent 65%),
+    linear-gradient(145deg,#03170f 0%,#06291d 48%,#031b14 100%) !important;
+  background-attachment:fixed;
+}
+body::before {
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(115deg,transparent 0%,rgba(123,255,190,.035) 48%,transparent 72%);
+  background-size:220% 220%; animation:emerald-drift 18s ease-in-out infinite alternate;
+}
+@keyframes emerald-drift { from { background-position:0% 20%; } to { background-position:100% 80%; } }
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
+}
+.topbar,.portal-head {
+  color:var(--ink) !important;
+  background:rgba(3,27,19,.78) !important;
+  border-bottom:1px solid rgba(112,235,171,.22) !important;
+  -webkit-backdrop-filter:blur(20px) saturate(145%);
+  backdrop-filter:blur(20px) saturate(145%);
+  box-shadow:0 10px 34px rgba(0,0,0,.2);
+}
+.brand h1,.portal-head h1 { color:#f5fff9 !important; }
+.brand p,.muted,.meta,.news-card-meta { color:var(--muted) !important; }
+main { color:var(--ink); }
+.card,.news-card,.news-controls,.admin-body,.detail,.team,.match,.news,.ps-panel,
+.ps-summary-card,.ps-hero,.news-centre-hero,.portal .card {
+  color:var(--ink) !important;
+  background:linear-gradient(145deg,rgba(15,91,61,.63),rgba(4,43,30,.72)) !important;
+  border:1px solid rgba(125,241,184,.20) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(145%);
+  backdrop-filter:blur(18px) saturate(145%);
+  box-shadow:var(--shadow);
+}
+.hero {
+  background:
+    radial-gradient(100% 130% at 0% 0%,rgba(45,221,145,.34),transparent 60%),
+    radial-gradient(100% 130% at 100% 100%,rgba(0,117,255,.18),transparent 58%),
+    linear-gradient(135deg,rgba(7,91,57,.96),rgba(3,37,27,.97)) !important;
+  border:1px solid rgba(124,245,183,.3) !important;
+  box-shadow:0 22px 55px rgba(0,0,0,.32),0 0 32px rgba(48,216,143,.12);
+}
+.title,.news-centre-hero h2,.ps-hero h2 { color:#fff !important; -webkit-text-fill-color:#fff !important; }
+.kicker,.news-eyebrow,.ps-eyebrow { color:#9feac0 !important; }
+.card h2,.sub,.rt,.score,.score-big,.pval,.table .pts { color:#9cf3c1 !important; }
+.news-card h3,.news h3,.pname,.team,.row,.match,.table td { color:#f3fff8 !important; }
+.news-card p,.news-centre-hero p,.ps-hero p,.ps-disclaimer { color:#c5ddd0 !important; }
+.tabs { scrollbar-color:rgba(76,199,145,.55) transparent; }
+.tabs button,.share-app,details.admin > summary,.share {
+  color:#e9fff4 !important;
+  background:rgba(9,71,50,.64) !important;
+  border:1px solid rgba(113,226,169,.26) !important;
+}
+.tabs button:hover,.share-app:hover,details.admin > summary:hover,.share:hover {
+  border-color:rgba(89,176,255,.8) !important;
+  box-shadow:0 0 18px rgba(36,139,255,.22);
+}
+.tabs button[aria-selected="true"] {
+  color:#fff !important;
+  background:linear-gradient(120deg,#075c45,#0878d8) !important;
+  border-color:rgba(100,190,255,.8) !important;
+  box-shadow:0 0 0 1px rgba(99,185,255,.18),0 0 22px rgba(0,132,255,.45),0 8px 24px rgba(0,0,0,.24) !important;
+}
+button,.button,.btn,button.primary,button.secondary,.install-btn,.back {
+  transition:transform .18s ease,box-shadow .22s ease,filter .22s ease,border-color .22s ease;
+}
+button.primary,.btns button.primary,.install-btn {
+  color:#fff !important;
+  background:linear-gradient(120deg,#0875dc,#159cff 52%,#0864c8) !important;
+  border:1px solid rgba(133,204,255,.78) !important;
+  box-shadow:0 0 0 1px rgba(53,158,255,.14),0 0 16px rgba(0,132,255,.46),0 8px 22px rgba(0,0,0,.28) !important;
+  text-shadow:0 1px 2px rgba(0,0,0,.22);
+}
+button.primary:hover,.btns button.primary:hover,.install-btn:hover {
+  transform:translateY(-1px);
+  filter:brightness(1.12);
+  box-shadow:0 0 22px rgba(0,145,255,.68),0 10px 28px rgba(0,0,0,.3) !important;
+}
+button.secondary,.btns button.secondary {
+  color:#eaf6ff !important;
+  background:rgba(11,67,105,.72) !important;
+  border:1px solid rgba(93,177,255,.38) !important;
+}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible {
+  outline:2px solid #66baff !important; outline-offset:3px;
+}
+input,select,textarea {
+  color:#f5fff9 !important;
+  background:rgba(1,27,19,.72) !important;
+  border:1px solid rgba(116,221,168,.28) !important;
+  box-shadow:inset 0 1px 4px rgba(0,0,0,.18);
+}
+input::placeholder,textarea::placeholder { color:#9dbbab !important; opacity:1; }
+select option { color:#f5fff9; background:#073321; }
+label { color:#c9e4d5 !important; }
+a,.news a,.news-watch { color:#82c5ff !important; }
+.table th { color:#b9d5c7 !important; }
+.table td,.row,.match,.team,.news { border-color:rgba(140,224,180,.14) !important; }
+.match.live { border-color:rgba(93,220,157,.55) !important; }
+.badge.ph { color:#a6f2c8 !important; background:rgba(40,154,104,.22) !important; }
+.score { background:rgba(15,117,82,.35) !important; }
+.admin-body { background:rgba(4,42,29,.96) !important; }
+.news-category { color:#a5f1c8 !important; }
+.news-hero-mark { color:#a5f1c8 !important; background:rgba(4,66,44,.5) !important; }
+.status,.offline-banner,.pause-banner { color:#f2fff8; }
+@media(max-width:540px) {
+  .topbar { padding:10px 12px !important; }
+  main { padding-left:12px !important; padding-right:12px !important; }
+  .hero { padding:22px 16px !important; }
+  .tabs button { padding:9px 13px !important; }
+}
