@@ -3,7 +3,7 @@
   'use strict';
   var db = window.slfaDb, host = document.getElementById('matchList');
   if (!db || !host) return;
-  var matches = [], leagueNames = {}, clubLogos = {}, filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer;
+  var matches = [], leagueNames = {}, clubLogos = {}, liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer;
 
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function league() { try { return localStorage.getItem('slfa_league') || ''; } catch (e) { return ''; } }
@@ -71,6 +71,20 @@
       return new Date(b.match_date)-new Date(a.match_date);
     });
   }
+  function livePreview(m) {
+    var events = liveEvents.filter(function (e) { return String(e.match_id) === String(m.id); });
+    if (!events.length) return '<div class="slfa-mc-live-feed"><span class="slfa-mc-feed-empty">Live event updates will appear here</span></div>';
+    var goals = events.filter(function (e) { return e.event_type === 'GOAL'; }).length;
+    var yellows = events.filter(function (e) { return e.event_type === 'YELLOW_CARD'; }).length;
+    var reds = events.filter(function (e) { return e.event_type === 'RED_CARD'; }).length;
+    var recent = events.slice().sort(function (a,b) { return Number(b.minute || 0) - Number(a.minute || 0); }).slice(0,3);
+    return '<div class="slfa-mc-live-feed"><div class="slfa-mc-live-counts"><span>⚽ '+goals+' goals</span><span>🟨 '+yellows+' yellow</span><span>🟥 '+reds+' red</span></div>' +
+      '<div class="slfa-mc-live-events">'+recent.map(function(e){
+        var type=e.event_type==='GOAL'?'Goal':e.event_type==='YELLOW_CARD'?'Yellow card':e.event_type==='RED_CARD'?'Red card':'Substitution';
+        var player=e.event_type==='SUB'?(e.player_name||'Player on')+' on':(e.player_name||type);
+        return '<span><b>'+esc(e.minute==null?'—':e.minute+"'")+'</b> '+esc(type)+' · '+esc(player)+'</span>';
+      }).join('')+'</div></div>';
+  }
   function card(m) {
     var s = status(m), g = group(m), score = m.home_score != null && m.away_score != null ?
       '<strong class="slfa-mc-score">'+esc(m.home_score)+'<i>:</i>'+esc(m.away_score)+'</strong>' : '<span class="slfa-mc-vs">VS</span>';
@@ -78,6 +92,7 @@
       '<div class="slfa-mc-teams"><div class="slfa-mc-team">'+crest(m.home_team)+'<span>'+esc(m.home_team)+'</span></div>'+score+'<div class="slfa-mc-team">'+crest(m.away_team)+'<span>'+esc(m.away_team)+'</span></div></div>'+
       '<div class="slfa-mc-card-bottom"><span>'+esc(dateText(m.match_date))+'</span><span>'+esc(m.venue || 'Venue TBC')+'</span></div>'+
       (m.motm_name?'<p class="slfa-mc-motm">★ Man of the Match: '+esc(m.motm_name)+(m.motm_jersey_number?' · #'+esc(m.motm_jersey_number):'')+'</p>':'')+
+      (g==='live'?livePreview(m):'')+
       '<button class="slfa-mc-details-btn" type="button" data-mc-details="'+esc(m.id)+'" aria-expanded="false">Match details <span>＋</span></button><div class="slfa-mc-detail" id="mc-detail-'+esc(m.id)+'" hidden></div></article>';
   }
   function render() {
@@ -134,13 +149,14 @@
       (a[1].data||[]).forEach(function(x){leagueNames[String(x.id)]=x.name;});
       (a[2].data||[]).forEach(function(x){clubLogos[x.club_name]=x.logo_url || clubLogoFallback(x.club_name);});
       var live=matches.filter(function(m){return group(m)==='live';});
-      var goalQuery=live.length?db.from('match_events').select('match_id,team_name').in('match_id',live.map(function(m){return String(m.id);})).eq('event_type','GOAL'):Promise.resolve({data:[]});
-      return goalQuery.then(function(g){
+      var eventQuery=live.length?db.from('match_events').select('match_id,event_type,team_name,player_name,minute').in('match_id',live.map(function(m){return String(m.id);})).order('minute',{ascending:true}):Promise.resolve({data:[]});
+      return eventQuery.then(function(g){
+        liveEvents=g.error?[]:(g.data||[]);
         if(!g.error&&live.length){
           live.forEach(function(m){
-            var id=String(m.id);
-            if(m.home_score==null)m.home_score=(g.data||[]).filter(function(x){return String(x.match_id)===id&&x.team_name===m.home_team;}).length;
-            if(m.away_score==null)m.away_score=(g.data||[]).filter(function(x){return String(x.match_id)===id&&x.team_name===m.away_team;}).length;
+            var id=String(m.id), goals=liveEvents.filter(function(x){return String(x.match_id)===id&&x.event_type==='GOAL';});
+            if(m.home_score==null)m.home_score=goals.filter(function(x){return x.team_name===m.home_team;}).length;
+            if(m.away_score==null)m.away_score=goals.filter(function(x){return x.team_name===m.away_team;}).length;
           });
         }
         updated=new Date();render();return true;
