@@ -91,3 +91,7 @@
 .slfa-mc-live-events span{overflow-wrap:anywhere}
 .slfa-mc-live-events b{display:inline-block;min-width:28px;color:#a8f5ca}
 .slfa-mc-feed-empty{color:var(--muted);font-size:10px}
+.slfa-mc-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 12px}
+.slfa-mc-stats>div{border:1px solid rgba(140,190,255,.18);border-radius:12px;padding:9px 10px;background:rgba(0,114,198,.07);display:grid;gap:3px;font-size:11px}
+.slfa-mc-stats strong{font-size:12px}
+@media(max-width:360px){.slfa-mc-stats{grid-template-columns:1fr}}
