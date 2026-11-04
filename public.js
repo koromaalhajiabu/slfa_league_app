@@ -109,49 +109,9 @@
   }
   function onDate(rows) { return dateSel ? rows.filter(function (m) { return dayKey(m.match_date) === dateSel; }) : rows; }
   var MATCH_COLS = 'id, match_date, venue, match_status, match_minute, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number';
-  function loadMatches() {
-    Promise.all([
-      db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
-      db.from('matches').select(MATCH_COLS).in('match_status', ['SCHEDULED', 'RESCHEDULED', 'POSTPONED', 'CANCELLED']).order('match_date', { ascending: true }).limit(200),
-      db.from('matches').select(MATCH_COLS).eq('match_status', 'FT').order('match_date', { ascending: false }).limit(200),
-      db.from('league_clubs').select('club_name, logo_url').eq('is_active', true)
-    ]).then(function (all) {
-      if (all[1].error || all[2].error) { $('matchList').innerHTML = empty('Matches are not available right now.'); return; }
-      leaguesCache = all[0].data || [];
-      var up = all[1].data || [];
-      var done = all[2].data || [];
-      var teams = {};
-      up.concat(done).forEach(function (m) { teams[m.home_team] = true; teams[m.away_team] = true; });
-      var teamOpts = (myFavList.length ? '<option value="__fav__"' + (resultsTeam === '__fav__' ? ' selected' : '') + '>My clubs</option>' : '') + Object.keys(teams).sort().map(function (t) {
-        return '<option value="' + esc(t) + '"' + (t === resultsTeam ? ' selected' : '') + '>' + esc(t) + '</option>';
-      }).join('');
-      clubLogos = {};
-      (all[3].data || []).forEach(function (c) { clubLogos[c.club_name] = c.logo_url || clubLogoFallback(c.club_name); });
-      $('matchList').innerHTML =
-        '<div class="mc">' +
-        '<div class="datebar"><button class="small" data-day="-1" aria-label="Previous day">‹</button>' +
-        '<input type="date" id="dateFilter" value="' + esc(dateSel) + '" aria-label="Choose a date">' +
-        '<button class="small" data-day="1" aria-label="Next day">›</button>' +
-        '<button class="small" id="dateAll">All dates</button></div>' +
-        '<h3 class="sub">Playing now</h3><div id="playingNow">' + empty('Loading…') + '</div>' +
-        '<h3 class="sub">Upcoming</h3><div id="upcomingList"></div>' +
-        '<h3 class="sub">Results</h3>' +
-        '<label class="filter">Team <select id="teamFilter"><option value="">All teams</option>' + teamOpts + '</select></label>' +
-        '<div id="resultsList"></div></div>';
-      $('teamFilter').addEventListener('change', function () { resultsTeam = this.value; renderResults(done); });
-      $('dateFilter').addEventListener('change', function () { dateSel = this.value; renderUpcoming(up); renderResults(done); });
-      $('dateAll').addEventListener('click', function () { dateSel = ''; $('dateFilter').value = ''; renderUpcoming(up); renderResults(done); });
-      document.querySelectorAll('.mc [data-day]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          dateSel = shiftDay(dateSel || dayKey(new Date()), Number(b.dataset.day));
-          $('dateFilter').value = dateSel; renderUpcoming(up); renderResults(done);
-        });
-      });
-      renderUpcoming(up);
-      renderResults(done);
-      loadLive();
-    });
-  }
+  // Match Centre is rendered exclusively by match-centre.js. Keep this legacy
+  // loader as a no-op so older refresh/favourites hooks cannot overwrite it.
+  function loadMatches() { return; }
   // Matches grouped under each league's name, in league order; matches with no league go last
   function byLeague(rows) {
     var html = '';
