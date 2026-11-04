@@ -57,15 +57,18 @@
       sierraleonepolicefc: 'sierraleonepolicefemale'
     };
     key = aliases[key] || key;
+    // Match common database naming variations for women's clubs.
     if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('kallon') !== -1 && /(female|women|ladies)/.test(raw)) key = 'kallonfemale';
     if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('police') !== -1) key = 'sierraleonepolicefemale';
+    if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('mogbwemo') !== -1) key = 'mogbwemoqueens';
+    if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('mena') !== -1 && key.indexOf('queen') !== -1) key = 'menaqueens';
     if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('patricia') !== -1) key = 'patriciaumustrikers';
     if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('vem') !== -1 && key.indexOf('buck') !== -1) key = 'vembuck';
     return WOMENS_CLUB_LOGOS[key] || CLUB_LOGO_FALLBACKS[key] || '';
   }
   function isSlfaLogoUrl(url) { return String(url || '').toLowerCase().indexOf('slfa-logo') !== -1; }
   function badge(url, name) {
-    var fallback = clubLogoFallback(name), normalized = String(name || '').toLowerCase().replace(/fc/g, '').replace(/[^a-z0-9]/g, ''), isWomens = !!WOMENS_CLUB_LOGOS[normalized] || normalized.indexOf('kallonfemale') !== -1 || normalized.indexOf('sierraleonepolicefemale') !== -1, primary = isWomens ? (fallback || url || '') : (isSlfaLogoUrl(url) ? (fallback || '') : (url || fallback));
+    var fallback = clubLogoFallback(name), isWomens = !!(fallback && fallback.indexOf('logos/women/') !== -1), primary = isWomens ? fallback : (isSlfaLogoUrl(url) ? (fallback || '') : (url || fallback));
     var initial = esc((name || '?').charAt(0).toUpperCase());
     if (!primary) return '<span class="badge ph">' + initial + '</span>';
     return '<img class="badge" src="' + esc(primary) + '" data-fallback="' + esc(fallback && primary !== fallback ? fallback : '') + '" alt="" onerror="if(this.dataset.fallback){var next=this.dataset.fallback;this.dataset.fallback=\'\';this.src=next;}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="badge ph" hidden>' + initial + '</span>';
