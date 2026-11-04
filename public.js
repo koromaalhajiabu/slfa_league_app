@@ -14,7 +14,7 @@
     bhantalfc: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bhantal%20FC%20Logo.jpeg',
     borangers: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bo%20Rangers.png',
     bullomstars: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bullom%20Stars%20Logo.png',
-    fckallon: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Kallon_FC.jpg',
+    kallon: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Kallon_FC.jpg',
     kamboieagles: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Kambo%20Eagles%20Logo.png',
     mightyblackpool: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Mighty%20Blackpool%20Logo.png',
     oldedwardians: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Old%20Edwardian%20Logo.png',
