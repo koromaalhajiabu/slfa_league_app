@@ -60,3 +60,24 @@
 @media(max-width:380px){.slfa-lp-host{padding:10px!important}.slfa-lp-clubs{grid-template-columns:1fr}.slfa-lp-kpi strong{font-size:21px}}
 @media(prefers-color-scheme:dark){.slfa-lp-league-card,.slfa-lp-panel,.slfa-lp-kpi{background:#0e2032}.slfa-lp-club{border-color:rgba(78,168,255,.2)}.slfa-lp-table th{background:rgba(78,168,255,.12)}}
 @media(prefers-reduced-motion:reduce){.slfa-lp-league-card{transition:none}}
+
+
+/* Public club profiles */
+.slfa-lp-club-link{width:100%;font:inherit;color:var(--ink);text-align:left;cursor:pointer;transition:border-color .18s,transform .18s}
+.slfa-lp-club-link:hover{border-color:var(--accent2);transform:translateY(-1px)}
+.slfa-lp-club-link>span:nth-child(2){display:block;flex:1;min-width:0}
+.slfa-lp-club-arrow{margin-left:auto;color:var(--accent2);font-size:21px}
+.slfa-lp-hero>.slfa-lp-badge{width:64px;height:64px;flex:0 0 64px;padding:7px;border:1px solid rgba(226,202,142,.5);background:rgba(255,255,255,.1)}
+.slfa-lp-profile-intro{display:flex;align-items:center;gap:13px;padding:15px;margin:12px 0;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.slfa-lp-profile-intro>.slfa-lp-badge,.slfa-lp-profile-intro>div>.slfa-lp-badge{width:58px;height:58px;flex:0 0 58px;padding:5px}
+.slfa-lp-profile-intro section{min-width:0}
+.slfa-lp-profile-intro h4{margin:0;font-family:"Fraunces",Georgia,serif;font-size:19px;font-weight:500}
+.slfa-lp-profile-intro p{margin:5px 0 0;color:var(--muted);font-size:10px;line-height:1.5}
+.slfa-lp-record{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.slfa-lp-record>div{display:flex;flex-direction:column;gap:5px;padding:11px 7px;border-radius:11px;background:rgba(0,114,198,.055);text-align:center}
+.slfa-lp-record strong{color:var(--accent2);font-family:"Fraunces",Georgia,serif;font-size:21px;font-variant-numeric:tabular-nums}
+.slfa-lp-record span{color:var(--muted);font-size:9px}
+.slfa-lp-profile-matches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+@media(max-width:700px){.slfa-lp-profile-matches{grid-template-columns:1fr}.slfa-lp-record{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(prefers-color-scheme:dark){.slfa-lp-profile-intro{background:#0e2032}.slfa-lp-record>div{background:rgba(78,168,255,.09)}}
+@media(prefers-reduced-motion:reduce){.slfa-lp-club-link{transition:none}}
