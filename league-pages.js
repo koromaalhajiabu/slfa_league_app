@@ -66,7 +66,7 @@
     vembuck: 'logos/women/vem-buck-fc.jpg'
   };
   function clubLogoFallback(name) {
-    var key = String(name || '').toLowerCase().replace(/\\bfc\\b/g, '').replace(/[^a-z0-9]/g, '');
+    var key = String(name || '').toLowerCase().replace(/fc/g, '').replace(/[^a-z0-9]/g, '');
     if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
     if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
     if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
