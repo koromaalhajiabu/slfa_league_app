@@ -519,3 +519,38 @@ body::before {
     linear-gradient(135deg,rgba(18,135,83,.98),rgba(10,83,57,.98)) !important;
   border-color:rgba(185,255,215,.42) !important;
 }
+
+
+/* ── SLFA live typography v9 ──
+   Continuous, restrained light movement across readable interface text.
+   No bouncing, shifting layout, flashing, or colour-only status cues. */
+@keyframes slfaLiveTextGlow {
+  0%,100% { text-shadow:0 0 1px rgba(255,255,255,.04); filter:brightness(1); }
+  50% { text-shadow:0 0 7px rgba(190,255,215,.22),0 0 11px rgba(155,215,255,.12); filter:brightness(1.09); }
+}
+@keyframes slfaLiveHeadingSweep {
+  0% { background-position:180% 50%; }
+  100% { background-position:-80% 50%; }
+}
+body :where(p,li,label,small,strong,em,span,td,th,a,button,h1,h2,h3,h4,.muted,.sub,.rt,.kicker,.score,.score-big,.pval) {
+  animation:slfaLiveTextGlow 5.8s ease-in-out infinite !important;
+}
+body :where(h1,h2,h3,.brand h1,.portal-head h1,.hero .title,.section-title) {
+  background-image:linear-gradient(100deg,#fff 0%,#fff 36%,#d4ffe2 48%,#c7edff 54%,#fff 66%,#fff 100%) !important;
+  background-size:260% 100% !important;
+  background-position:180% 50%;
+  -webkit-background-clip:text !important;
+  background-clip:text !important;
+  -webkit-text-fill-color:transparent !important;
+  animation:slfaLiveHeadingSweep 9s linear infinite !important;
+  text-shadow:none !important;
+}
+body :where(input,textarea,select)::placeholder { color:#e2edf4 !important; }
+@media (prefers-reduced-motion:reduce) {
+  body :where(p,li,label,small,strong,em,span,td,th,a,button,h1,h2,h3,h4,.muted,.sub,.rt,.kicker,.score,.score-big,.pval) {
+    animation:none !important; filter:none !important; text-shadow:none !important;
+  }
+  body :where(h1,h2,h3,.brand h1,.portal-head h1,.hero .title,.section-title) {
+    background:none !important; -webkit-text-fill-color:currentColor !important;
+  }
+}
