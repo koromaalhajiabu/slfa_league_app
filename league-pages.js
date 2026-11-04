@@ -92,8 +92,8 @@
     });
     var clubCards = teamRows.map(function (c) {
       var facts = [c.city, c.stadium ? 'Home: ' + c.stadium : '', c.founded_year ? 'Est. ' + c.founded_year : ''].filter(Boolean);
-      return '<div class="slfa-lp-club">' + clubBadge(c) + '<div><strong>' + esc(c.club_name) + '</strong>' +
-        (facts.length ? '<small>' + esc(facts.join(' · ')) + '</small>' : '<small>Registered competition club</small>') + '</div></div>';
+      return '<button type="button" class="slfa-lp-club slfa-lp-club-link" data-open-club="' + esc(c.id) + '">' + clubBadge(c) + '<span><strong>' + esc(c.club_name) + '</strong>' +
+        (facts.length ? '<small>' + esc(facts.join(' · ')) + '</small>' : '<small>View club profile</small>') + '</span><span class="slfa-lp-club-arrow" aria-hidden="true">›</span></button>';
     }).join('');
     var tableHtml = table.length ? '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table"><thead><tr><th>#</th><th>Club</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead><tbody>' +
       table.map(function (r) {
@@ -118,6 +118,49 @@
       '<p class="slfa-lp-source">Match results, standings and club information reflect the records currently published in the SLFA League App. Official updates are subject to SLFA publication.</p></section>';
     var back = document.getElementById('slfaLpAll');
     if (back) back.addEventListener('click', renderDirectory);
+    host.querySelectorAll('[data-open-club]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var club = teamRows.find(function (c) { return String(c.id) === String(b.getAttribute('data-open-club')); });
+        if (club) renderClubProfile(club, lg);
+      });
+    });
+  }
+  function clubKey(value) {
+    return String(value || '').toLowerCase().replace(/\\bfc\\b/g, '').replace(/[^a-z0-9]/g, '');
+  }
+  function sameClub(a, b) { return clubKey(a) === clubKey(b); }
+  function renderClubProfile(club, lg) {
+    var id = String(lg.id), name = club.club_name;
+    var clubGames = matches.filter(function (m) {
+      return String(m.league_id) === id && (sameClub(m.home_team, name) || sameClub(m.away_team, name));
+    });
+    var played = clubGames.filter(completed).sort(function (a,b) { return new Date(b.match_date)-new Date(a.match_date); });
+    var next = clubGames.filter(upcoming).sort(function (a,b) { return new Date(a.match_date)-new Date(b.match_date); });
+    var stats = {w:0,d:0,l:0,gf:0,ga:0};
+    played.forEach(function (m) {
+      var home = sameClub(m.home_team, name), gf = Number(home ? m.home_score : m.away_score) || 0;
+      var ga = Number(home ? m.away_score : m.home_score) || 0;
+      stats.gf += gf; stats.ga += ga;
+      if (gf > ga) stats.w++; else if (gf === ga) stats.d++; else stats.l++;
+    });
+    var standing = standings.find(function (r) {
+      return String(r.league_id) === id && sameClub(r.club, name);
+    });
+    var position = standing && standing.pos != null ? standing.pos : '—';
+    var facts = [club.city, club.stadium ? 'Home ground: ' + club.stadium : '', club.founded_year ? 'Established ' + club.founded_year : ''].filter(Boolean);
+    host.innerHTML = '<section class="slfa-league-pages slfa-lp-profile"><div class="slfa-lp-hero"><div><p class="slfa-lp-eyebrow">OFFICIAL COMPETITION CLUB</p><h3>' + esc(name) + '</h3><p>' + esc(lg.name) + '</p></div>' + clubBadge(club) + '</div>' +
+      '<div class="slfa-lp-detail-actions"><button type="button" id="slfaLpClubBack">‹ Back to ' + esc(lg.name) + '</button><span>Public club profile</span></div>' +
+      '<div class="slfa-lp-profile-intro"><div>' + clubBadge(club) + '</div><section><h4>' + esc(name) + '</h4><p>' + esc(facts.join(' · ') || 'Club information published for this competition') + '</p></section></div>' +
+      '<div class="slfa-lp-kpis">' + kpi(position,'League position') + kpi(played.length,'Matches played') + kpi(stats.w + '–' + stats.d + '–' + stats.l,'W · D · L') + kpi(stats.gf + ' : ' + stats.ga,'Goals for · against') + '</div>' +
+      '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>COMPETITION PERFORMANCE</span><h4>Season record</h4></div><small>' + esc(lg.name) + '</small></div>' +
+      '<div class="slfa-lp-record"><div><strong>' + stats.w + '</strong><span>Wins</span></div><div><strong>' + stats.d + '</strong><span>Draws</span></div><div><strong>' + stats.l + '</strong><span>Losses</span></div><div><strong>' + (stats.gf-stats.ga > 0 ? '+' : '') + (stats.gf-stats.ga) + '</strong><span>Goal difference</span></div><div><strong>' + (standing && standing.pts != null ? standing.pts : '—') + '</strong><span>Points</span></div></div></section>' +
+      '<div class="slfa-lp-profile-matches"><section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>RECENT FORM</span><h4>Latest results</h4></div></div>' +
+      (played.length ? played.slice(0,5).map(matchRow).join('') : '<p class="slfa-lp-empty">No completed results published for this club yet.</p>') + '</section>' +
+      '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>COMING UP</span><h4>Upcoming fixtures</h4></div></div>' +
+      (next.length ? next.slice(0,5).map(matchRow).join('') : '<p class="slfa-lp-empty">No upcoming fixtures published for this club.</p>') + '</section></div>' +
+      '<p class="slfa-lp-source">Club statistics are calculated from published match results in this competition. Unpublished information is not displayed.</p></section>';
+    var back = document.getElementById('slfaLpClubBack');
+    if (back) back.addEventListener('click', function () { renderLeague(lg); });
   }
   function render() {
     selectedId = currentId();
