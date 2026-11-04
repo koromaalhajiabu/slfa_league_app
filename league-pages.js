@@ -34,29 +34,43 @@
     return ['SCHEDULED','RESCHEDULED'].includes(String(m.match_status || '').toUpperCase());
   }
   var CLUB_LOGO_FALLBACKS = {
-    baiburehwarriors: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bai%20Burah%20Warrior%20FC%20Logo.jpeg',
+    baiburehwarriors: 'https://images.seeklogo.com/logo-png/63/1/bai-bureh-warriors-fc-logo-png_seeklogo-638343.png',
     bhantalfc: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bhantal%20FC%20Logo.jpeg',
-    borangers: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bo%20Rangers.png',
+    borangers: 'https://images.seeklogo.com/logo-png/63/1/bo-rangers-fc-logo-png_seeklogo-638330.png',
     bullomstars: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bullom%20Stars%20Logo.png',
-    kallon: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Kallon_FC.jpg',
-    kamboieagles: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Kambo%20Eagles%20Logo.png',
+    kallon: 'https://images.seeklogo.com/logo-png/63/1/fc-kallon-logo-png_seeklogo-638335.png',
+    kamboieagles: 'https://images.seeklogo.com/logo-png/63/1/kamboi-eagles-fc-logo-png_seeklogo-638346.png',
     mightyblackpool: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Mighty%20Blackpool%20Logo.png',
-    oldedwardians: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Old%20Edwardian%20Logo.png',
-    ports: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Port%20Authority%20Logo.png',
+    oldedwardians: 'https://images.seeklogo.com/logo-png/63/1/old-edwardians-fc-logo-png_seeklogo-638331.png',
+    ports: 'https://images.seeklogo.com/logo-png/63/1/ports-authority-fc-logo-png_seeklogo-638329.png',
     starsportacademy: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Star%20Sport%20Logo.png',
     waterloofc: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/waterloo%20fc.jpeg',
     wilberforcestrikers: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Wilberforce%20Strikers%20Logo.png',
-    wusumstars: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Wusum%20Stars%20Logo.png',
+    wusumstars: 'https://images.seeklogo.com/logo-png/63/1/wusum-stars-fc-logo-png_seeklogo-638334.png',
     diamondstars: 'https://images.seeklogo.com/logo-png/63/1/diamond-stars-fc-logo-png_seeklogo-638347.png',
-    eastendlions: 'https://pbs.twimg.com/profile_images/1640109457047711746/tdyyWD6m_400x400.jpg',
-    westernunited: 'https://wufcsl.com/wp-content/uploads/2026/08/logo-circle-crop.png'
+    eastendlions: 'https://images.seeklogo.com/logo-png/63/1/east-end-lions-fc-logo-png_seeklogo-638348.png',
+    westernunited: 'https://www.dsg-images.com/sport_entity/200x200/6528.png'
+    // Marampa Mines Women's Premier League crests (Global Sports Archive club artwork)
+    ramkamara: 'https://www.dsg-images.com/clubs/200x200/65784.png',
+    ramkamarafemale: 'https://www.dsg-images.com/clubs/200x200/65784.png',
+    mogbwemoqueens: 'https://www.dsg-images.com/clubs/30x30/62996.png',
+    slpolice: 'https://www.dsg-images.com/clubs/200x200/35023.png',
+    slpolicefemale: 'https://www.dsg-images.com/clubs/200x200/35023.png',
+    sierraleonepolicefemale: 'https://www.dsg-images.com/clubs/200x200/35023.png',
+    kallonfemale: 'https://www.dsg-images.com/clubs/30x30/17010.png',
+    fckallonfemale: 'https://www.dsg-images.com/clubs/30x30/17010.png',
+    menaqueens: 'https://dsg-images.com/clubs/200x200/65802.png',
+    patriciaumu: 'https://www.dsg-images.com/clubs/30x30/65798.png',
+    kahunlaqueens: 'https://dsg-images.com/clubs/200x200/65799.png',
+    koyaqueens: 'https://dsg-images.com/clubs/200x200/65793.png',
+    risingqueens: 'https://www.dsg-images.com/clubs/30x30/65800.png',
+    vembuck: 'https://dsg-images.com/clubs/200x200/65804.png',
   };
   function clubLogoFallback(name) {
     var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
     if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
     if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
     if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
-    if (key === 'kallonfemale' || key === 'fckallonfemale') key = 'kallon';
     return CLUB_LOGO_FALLBACKS[key] || '';
   }
   function clubBadge(c) {
