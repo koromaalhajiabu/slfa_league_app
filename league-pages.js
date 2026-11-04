@@ -142,7 +142,10 @@
           '</td><td>' + (gd > 0 ? '+' : '') + gd + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
       }).join('') + '</tbody></table></div>' : '<p class="slfa-lp-empty">The official standings will appear here when published.</p>';
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-hero"><div><p class="slfa-lp-eyebrow">SLFA COMPETITION PROFILE</p>' +
-      '<h3>' + esc(lg.name) + '</h3><p>Competition overview, participating clubs and published league information.</p></div><span class="slfa-lp-hero-mark">SLFA</span></div>' +
+      '<h3>' + esc(lg.name) + '</h3><p>Competition overview, participating clubs and published league information.</p></div>' +
+      (String(lg.name || '').toLowerCase().indexOf('marampa') !== -1 && String(lg.name || '').toLowerCase().indexOf('women') !== -1
+        ? '<img class="slfa-lp-competition-logo" src="https://static.wixstatic.com/media/f4fd4d_6ca7c93546ee41bfbea014cfd4468fb4~mv2.jpeg" alt="Marampa Mines Women\'s Premier League logo" loading="lazy">'
+        : '<span class="slfa-lp-hero-mark">SLFA</span>') + '</div>' +
       '<div class="slfa-lp-detail-actions"><button type="button" id="slfaLpAll">‹ All competitions</button><span>Public information</span></div>' +
       '<div class="slfa-lp-kpis">' + kpi(teamRows.length,'Participating clubs') + kpi(played.length,'Matches completed') +
       kpi(goals,'Goals recorded') + kpi(next.length,'Upcoming fixtures') + '</div>' +
