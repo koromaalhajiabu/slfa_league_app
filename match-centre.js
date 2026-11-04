@@ -41,10 +41,6 @@
     eastendlions: 'https://images.seeklogo.com/logo-png/63/1/east-end-lions-fc-logo-png_seeklogo-638348.png',
     westernunited: 'https://www.dsg-images.com/sport_entity/200x200/6528.png',
   };
-  function isWomensLeagueClub(name) {
-    var key = String(name || '').toLowerCase().replace(/\\bfc\\b/g, '').replace(/[^a-z0-9]/g, '');
-    return ['ramkamara','ramkamarafemale','mogbwemoqueens','slpolice','slpolicefemale','sierraleonepolicefemale','kallonfemale','fckallonfemale','menaqueens','patriciaumu','kahunlaqueens','koyaqueens','risingqueens','vembuck'].indexOf(key) !== -1;
-  }
   function clubLogoFallback(name) {
     var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
     if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
@@ -54,7 +50,7 @@
   }
   function isSlfaLogoUrl(url) { return String(url || '').toLowerCase().indexOf('slfa-logo') !== -1; }
   function crest(name) {
-    var fallback = clubLogoFallback(name), saved = (isWomensLeagueClub(name) || isSlfaLogoUrl(clubLogos[name])) ? '' : clubLogos[name], logo = saved || fallback;
+    var fallback = clubLogoFallback(name), saved = isSlfaLogoUrl(clubLogos[name]) ? '' : clubLogos[name], logo = saved || fallback;
     var initial = esc((name || '?').charAt(0).toUpperCase());
     return logo ? '<img class="slfa-mc-crest" src="'+esc(logo)+'" data-fallback="'+esc(saved && fallback && saved !== fallback ? fallback : '')+'" alt="" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="slfa-mc-crest slfa-mc-crest-fallback" aria-hidden="true" hidden>'+initial+'</span>' :
       '<span class="slfa-mc-crest slfa-mc-crest-fallback" aria-hidden="true">'+initial+'</span>';
