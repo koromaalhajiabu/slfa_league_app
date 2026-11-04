@@ -53,7 +53,7 @@
     var fallback = clubLogoFallback(name), primary = url || fallback;
     var initial = esc((name || '?').charAt(0).toUpperCase());
     if (!primary) return '<span class="badge ph">' + initial + '</span>';
-    return '<img class="badge" src="' + esc(primary) + '" data-fallback="' + esc(url && fallback && url !== fallback ? fallback : '') + '" alt="" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="badge ph" hidden>' + initial + '</span>';
+    return '<img class="badge" src="' + esc(primary) + '" data-fallback="' + esc(fallback && primary !== fallback ? fallback : '') + '" alt="" onerror="if(this.dataset.fallback){var next=this.dataset.fallback;this.dataset.fallback=\'\';this.src=next;}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="badge ph" hidden>' + initial + '</span>';
   }
   function empty(msg) { return '<p class="muted empty">' + msg + '</p>'; }
 
