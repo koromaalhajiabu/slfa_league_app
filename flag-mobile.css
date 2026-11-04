@@ -298,3 +298,61 @@ body [data-status="live"] {
   background:linear-gradient(115deg,#079bdb 0%,#16b5ff 52%,#087ee0 100%) !important;
   box-shadow:0 7px 22px rgba(0,145,255,.46),inset 0 1px 0 rgba(255,255,255,.34) !important;
 }
+
+
+/* ── SLFA modern kinetic typography v5 ──
+   Smooth editorial motion: flowing light sweep, no bouncing or sideways nudging. */
+@keyframes slfaModernTextSweep {
+  0% { background-position:180% 50%; }
+  100% { background-position:-80% 50%; }
+}
+@keyframes slfaModernLabelGlow {
+  0%,100% { text-shadow:0 0 0 rgba(100,220,255,0); opacity:.94; }
+  50% { text-shadow:0 0 10px rgba(100,220,255,.20); opacity:1; }
+}
+body .brand h1,
+body .portal-head h1,
+body .hero .title,
+body .ps-hero h2,
+body .news-centre-hero h2,
+body h1.display,
+body .section-title {
+  background-image:linear-gradient(100deg,#ffffff 0%,#ffffff 34%,#c8ffdc 46%,#b8e7ff 54%,#ffffff 66%,#ffffff 100%) !important;
+  background-size:260% 100% !important;
+  background-position:180% 50%;
+  -webkit-background-clip:text !important;
+  background-clip:text !important;
+  -webkit-text-fill-color:transparent !important;
+  color:#ffffff !important;
+  text-shadow:none !important;
+  animation:slfaModernTextSweep 7.5s cubic-bezier(.45,0,.35,1) infinite !important;
+  transform:none !important;
+  will-change:background-position;
+}
+body .brand p,
+body .kicker,
+body .portal-head .eyebrow,
+body .news-eyebrow,
+body .ps-eyebrow {
+  animation:slfaModernLabelGlow 5.5s ease-in-out infinite !important;
+  transform:none !important;
+}
+body h2,body h3,
+body .card h2,body .card h3,
+body .portal .card h2,body .portal .card h3 {
+  animation:slfaModernLabelGlow 6s ease-in-out infinite !important;
+  transform:none !important;
+}
+@media (prefers-reduced-motion:reduce) {
+  body .brand h1,body .portal-head h1,body .hero .title,
+  body .ps-hero h2,body .news-centre-hero h2,
+  body h1.display,body .section-title,
+  body .brand p,body .kicker,body .portal-head .eyebrow,
+  body .news-eyebrow,body .ps-eyebrow,
+  body h2,body h3,body .card h2,body .card h3 {
+    animation:none !important;
+    background-position:50% 50% !important;
+    transform:none !important;
+    -webkit-text-fill-color:currentColor !important;
+  }
+}
