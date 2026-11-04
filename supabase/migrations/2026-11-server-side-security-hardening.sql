@@ -129,7 +129,8 @@ declare
     'league_verification_requests',
     'man_of_the_match',
     'role_access_requests',
-    'role_invitations',
+    'club_profile_change_requests',
+    'club_profile_change_audit',
     'staff_departments',
     'staff_registry'
   ];
