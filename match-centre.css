@@ -82,3 +82,12 @@
 .slfa-mc-empty strong{color:var(--ink)}
 .slfa-mc-summary button:focus-visible,.slfa-mc-filter:focus-visible,.slfa-mc-details-btn:focus-visible{outline:2px solid #9bf2bd;outline-offset:3px}
 @media(max-width:420px){.slfa-mc-summary{gap:6px}.slfa-mc-summary>span{padding:6px 8px;font-size:9px}.slfa-mc-summary button{margin-left:0}.slfa-mc-card{padding:12px}}
+
+/* Live match event summary */
+.slfa-mc-live-feed{margin:0 0 11px;padding:10px 11px;border:1px solid rgba(255,107,119,.2);border-radius:12px;background:rgba(2,57,37,.28)}
+.slfa-mc-live-counts{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:7px}
+.slfa-mc-live-counts span{padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.055);color:#d9f8e6;font-size:9px;font-weight:700}
+.slfa-mc-live-events{display:grid;gap:5px;color:#d6e9de;font-size:10px}
+.slfa-mc-live-events span{overflow-wrap:anywhere}
+.slfa-mc-live-events b{display:inline-block;min-width:28px;color:#a8f5ca}
+.slfa-mc-feed-empty{color:var(--muted);font-size:10px}
