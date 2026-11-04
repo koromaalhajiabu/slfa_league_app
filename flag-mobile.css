@@ -452,3 +452,34 @@ body button, body a, body input, body select, body textarea {
     transition:none !important;
   }
 }
+
+
+/* ── SLFA brighter emerald glass background v7 ──
+   Lift the deep-green surfaces slightly while preserving readable contrast. */
+html {
+  background:#0a3022 !important;
+}
+body {
+  background:
+    radial-gradient(900px 540px at 8% -8%,rgba(45,210,135,.30),transparent 62%),
+    radial-gradient(760px 520px at 100% 8%,rgba(31,145,111,.28),transparent 60%),
+    radial-gradient(680px 520px at 55% 110%,rgba(15,137,101,.24),transparent 65%),
+    linear-gradient(145deg,#09291d 0%,#10432f 48%,#0a3022 100%) !important;
+  background-attachment:fixed !important;
+}
+body::before {
+  background:linear-gradient(115deg,transparent 0%,rgba(153,255,204,.045) 48%,transparent 72%) !important;
+}
+.topbar,.portal-head {
+  background:rgba(9,49,34,.86) !important;
+}
+.card,.news-card,.news-controls,.admin-body,.detail,.team,.match,.news,
+.ps-panel,.ps-summary-card,.ps-hero,.news-centre-hero,.portal .card {
+  background:linear-gradient(145deg,rgba(22,105,70,.70),rgba(8,59,41,.82)) !important;
+}
+.hero {
+  background:
+    radial-gradient(100% 130% at 0% 0%,rgba(61,224,151,.38),transparent 60%),
+    radial-gradient(100% 130% at 100% 100%,rgba(31,137,221,.20),transparent 58%),
+    linear-gradient(135deg,rgba(13,112,70,.97),rgba(7,64,45,.98)) !important;
+}
