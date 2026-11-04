@@ -1104,7 +1104,13 @@
       }).catch(function (err) { msg(err.message || 'Could not save the match event.'); });
     });
   }
-  function setMatch(id, fields) { return db.from('matches').update(fields).eq('id', id); }
+  // Every status or minute change stamps status_set_at, so the public clock can count on from it
+  function setMatch(id, fields) {
+    if (fields && (fields.match_status !== undefined || fields.match_minute !== undefined) && fields.status_set_at === undefined) {
+      fields = Object.assign({}, fields, { status_set_at: new Date().toISOString() });
+    }
+    return db.from('matches').update(fields).eq('id', id);
+  }
   // Man of the Match: approved players of both clubs in the match, grouped by club
   function loadMotm(m) {
     var sel = $('rfMotm'); if (!sel) return;

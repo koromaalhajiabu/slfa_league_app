@@ -17,9 +17,16 @@
     if (s === 'SCHEDULED' || s === 'RESCHEDULED') return 'upcoming';
     return 'other';
   }
+  // Live minute: the admin's last set minute plus the time since it was set (status_set_at)
+  function liveMinute(m) {
+    if (m.match_minute == null) return null;
+    if (!m.status_set_at) return m.match_minute;
+    var el = Math.floor((Date.now() - new Date(m.status_set_at).getTime()) / 60000);
+    return m.match_minute + Math.max(0, el);
+  }
   function label(m) {
     var s = status(m);
-    if (['LIVE','1H','2H','ET','PEN','EXTRA_TIME'].indexOf(s) !== -1) return 'LIVE' + (m.match_minute == null ? '' : ' · '+m.match_minute+"'");
+    if (['LIVE','1H','2H','ET','PEN','EXTRA_TIME'].indexOf(s) !== -1) { var mn = liveMinute(m); return 'LIVE' + (mn == null ? '' : ' · '+(mn > 90 ? '90+' : mn)+"'"); }
     if (s === 'HT') return 'HALF TIME';
     return ({HT:'HALF TIME',FT:'FULL TIME',SCHEDULED:'UPCOMING',RESCHEDULED:'RESCHEDULED',POSTPONED:'POSTPONED',CANCELLED:'CANCELLED',ABANDONED:'ABANDONED'})[s] || s.replace(/_/g,' ') || 'STATUS PENDING';
   }
@@ -136,7 +143,7 @@
   }
   function fetchData() {
     var request = Promise.all([
-      db.from('matches').select('id,match_date,venue,match_status,match_minute,league_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(500),
+      db.from('matches').select('id,match_date,venue,match_status,match_minute,status_set_at,league_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(500),
       db.from('leagues').select('id,name').eq('is_active',true).order('sort_order'),
       db.from('league_clubs').select('club_name,logo_url').eq('is_active',true)
     ]).then(function(a){
