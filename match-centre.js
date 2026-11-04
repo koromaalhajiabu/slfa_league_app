@@ -135,7 +135,8 @@
       db.from('leagues').select('id,name').eq('is_active',true).order('sort_order'),
       db.from('league_clubs').select('club_name,logo_url').eq('is_active',true)
     ]).then(function(a){
-      if(a[0].error)return false;
+      var failed = a.find(function (item) { return item && item.error; });
+      if (failed) throw new Error(failed.error.message || 'A league database query failed.');
       matches=a[0].data||[];leagueNames={};clubLogos={};
       (a[1].data||[]).forEach(function(x){leagueNames[String(x.id)]=x.name;});
       (a[2].data||[]).forEach(function(x){clubLogos[x.club_name]=x.logo_url || clubLogoFallback(x.club_name);});
