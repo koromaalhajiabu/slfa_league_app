@@ -36,7 +36,7 @@ begin
   if app_role() <> 'DEVELOPER' then
     raise exception 'Only the Developer can assign roles.';
   end if;
-  if v_email !~ '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$' then
+  if v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then
     raise exception 'Enter a valid email address.';
   end if;
   if v_name = '' then raise exception 'Enter the full name.'; end if;
