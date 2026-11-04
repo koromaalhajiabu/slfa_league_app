@@ -41,7 +41,7 @@
       '<button type="button" class="pd-reset" id="pdReset">Reset</button></div>' +
       '<div class="pd-result-bar"><strong>' + list.length + '</strong><span>players found</span><small>' + (currentLeague ? 'Selected competition' : 'All active competitions') + '</small></div>' +
       (list.length ? '<div class="pd-grid">' + list.map(function(p){
-        return '<article class="pd-card player-profile-trigger" role="button" tabindex="0" data-profile-player="' + esc(p.player_name) + '" data-profile-club="' + esc(p.club_name) + '" data-profile-photo="' + esc(p.photo_url || '') + '" data-profile-position="' + esc(p.position || '') + '" data-profile-jersey="' + esc(p.jersey_number || '') + '">' +
+        return '<article class="pd-card player-profile-trigger" role="button" tabindex="0" data-profile-player="' + esc(p.player_name) + '" data-profile-id="' + esc(p.id) + '" data-profile-club="' + esc(p.club_name) + '" data-profile-photo="' + esc(p.photo_url || '') + '" data-profile-position="' + esc(p.position || '') + '" data-profile-jersey="' + esc(p.jersey_number || '') + '">' +
           portrait(p.photo_url,p.player_name) + '<div class="pd-card-info"><strong>' + esc(p.player_name) + '</strong><span>' + esc(p.club_name) + '</span><small>' + (p.position ? esc(p.position) : 'Position not listed') + '</small></div>' +
           (p.jersey_number ? '<b class="pd-shirt">#' + esc(p.jersey_number) + '</b>' : '') + '<span class="pd-open">VIEW PROFILE ↗</span></article>';
       }).join('') + '</div>' : '<div class="pd-empty"><span>⚽</span><strong>No players match your search</strong><p>Try another name, club or position, or reset the filters.</p></div>');
