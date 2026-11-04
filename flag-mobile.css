@@ -101,3 +101,19 @@ img,video,iframe { max-width:100%; }
 @media (prefers-reduced-motion:reduce) {
   *,*::before,*::after { scroll-behavior:auto !important; }
 }
+
+/* Strong, unmistakable national-colour treatment */
+.topbar,.portal-head { position:relative !important; border-bottom:0 !important; }
+.topbar::after,.portal-head::after {
+  content:"" !important; display:block !important; position:absolute !important;
+  left:0 !important; right:0 !important; bottom:0 !important; height:7px !important;
+  background:linear-gradient(to right,#1eb53a 0 33.333%,#fff 33.333% 66.666%,#0072c6 66.666% 100%) !important;
+  opacity:1 !important; z-index:5 !important;
+}
+.topbar { box-shadow:0 5px 22px rgba(0,0,0,.25), inset 0 4px 0 #1eb53a !important; }
+.portal-head { box-shadow:0 5px 22px rgba(0,0,0,.25), inset 0 4px 0 #1eb53a !important; }
+.tabs button[aria-selected="true"],.tabs button.active {
+  color:#fff !important;
+  background:linear-gradient(110deg,#1eb53a 0%,#087cbd 100%) !important;
+  border:1px solid rgba(255,255,255,.75) !important;
+}
