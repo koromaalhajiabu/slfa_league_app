@@ -448,3 +448,31 @@ a,.news a,.news-watch { color:#82c5ff !important; }
   .league-chip-name { max-width:145px; font-size:12px; }
   .league-chip-logo-marampa { background-size:222px 222px !important; }
 }
+
+
+/* Sierra Leone national identity palette: green, white and blue */
+:root {
+  --slfa-flag-green:#1eb53a;
+  --slfa-flag-white:#ffffff;
+  --slfa-flag-blue:#0072c6;
+  --accent:var(--slfa-flag-green);
+  --accent2:var(--slfa-flag-blue);
+}
+.topbar,.portal-head {
+  background-image:linear-gradient(90deg,var(--slfa-flag-green) 0 33.333%,var(--slfa-flag-white) 33.333% 66.666%,var(--slfa-flag-blue) 66.666% 100%) !important;
+  background-size:100% 3px !important;
+  background-repeat:no-repeat !important;
+  background-position:bottom !important;
+}
+.tabs button[aria-selected="true"],
+.tabs button.active {
+  background:linear-gradient(120deg,var(--slfa-flag-green),var(--slfa-flag-blue)) !important;
+}
+button.primary,.btns button.primary,.install-btn,
+#matchList .slfa-mc-reset,#matchList .slfa-mc-details-btn {
+  background:linear-gradient(120deg,#0068b7,var(--slfa-flag-blue) 55%,#168fe0) !important;
+}
+.card,.news-card,.news-controls,.admin-body,.detail,.team,.match,.news,.ps-panel,
+.ps-summary-card,.ps-hero,.news-centre-hero,.portal .card {
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
