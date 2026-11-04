@@ -49,10 +49,11 @@
     if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
     if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
     if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
-    return isWomensLeagueClub(name) ? '' : (CLUB_LOGO_FALLBACKS[key] || 'slfa-logo.png');
+    return CLUB_LOGO_FALLBACKS[key] || '';
   }
+  function isSlfaLogoUrl(url) { return String(url || '').toLowerCase().indexOf('slfa-logo') !== -1; }
   function crest(name) {
-    var fallback = clubLogoFallback(name), saved = isWomensLeagueClub(name) ? '' : clubLogos[name], logo = saved || fallback;
+    var fallback = clubLogoFallback(name), saved = (isWomensLeagueClub(name) || isSlfaLogoUrl(clubLogos[name])) ? '' : clubLogos[name], logo = saved || fallback;
     var initial = esc((name || '?').charAt(0).toUpperCase());
     return logo ? '<img class="slfa-mc-crest" src="'+esc(logo)+'" data-fallback="'+esc(saved && fallback && saved !== fallback ? fallback : '')+'" alt="" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="slfa-mc-crest slfa-mc-crest-fallback" aria-hidden="true" hidden>'+initial+'</span>' :
       '<span class="slfa-mc-crest slfa-mc-crest-fallback" aria-hidden="true">'+initial+'</span>';
