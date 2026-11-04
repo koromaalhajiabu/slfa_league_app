@@ -18,7 +18,7 @@ where n.nspname='public'
     'club_announcements','disciplinary_actions','suspensions','polls','poll_options',
     'club_profile_change_requests','club_profile_change_audit','finance_transactions',
     'club_registration_applications','league_verification_requests','role_access_requests',
-    'staff_registry','staff_departments','league_board_members','app_settings'
+    'staff_registry','staff_departments','league_board_members','app_settings','referee_offline_submissions'
   ])
 order by c.relname;
 
@@ -69,7 +69,7 @@ where n.nspname='public'
     'app_role','invite_user','set_user_role','set_account_status','delete_user_account',
     'set_application_freeze','set_system_pause','set_user_club','submit_club_profile_change',
     'review_club_profile_change','record_match_result','approve_match_result',
-    'referee_submit_final','reverse_match_event','set_match_motm'
+    'referee_submit_final','referee_submit_final_idempotent','reverse_match_event','set_match_motm'
   ])
 order by p.proname, arguments;
 
