@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0072c6">
+<meta name="theme-color" content="#075c3f">
 <meta name="application-name" content="The SLFA League App">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="The SLFA League App">
@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="news-centre.css">
 <link rel="stylesheet" href="premium-theme.css?v=63">
 <link rel="stylesheet" href="flag-mobile.css?v=14">
+<link rel="stylesheet" href="home-dashboard.css?v=1">
 <style id="slfa-live-text-motion">
 /* Premium SLFA typography: restrained motion, clean contrast and flag-inspired accents */
 @keyframes slfaPremiumTitle {
@@ -127,6 +128,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
       <div class="hero-actions"><button class="share-app" id="alertBtn">Get alerts</button><button class="share-app" id="shareApp">Share</button></div>
       <div class="status" id="alertStatus"></div>
     </div>
+    <section id="homeDashboard" class="slfa-home-dashboard" aria-label="Football at a glance"><div class="slfa-home-empty">Loading the latest football information…</div></section>
     <div class="leagueSwitch" id="leagueSwitch" aria-label="Choose league"></div>
     <nav class="tabs" role="tablist" aria-label="League sections">
       <button role="tab" data-tab="live" aria-selected="false">Live</button>
@@ -343,6 +345,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
 <script src="public.js?v=66"></script>
 <script src="match-centre.js?v=66"></script>
 <script src="league-pages.js?v=66"></script>
+<script src="home-dashboard.js?v=1"></script>
 <script src="player-profile.js"></script>
 </body>
 </html>
