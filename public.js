@@ -27,16 +27,45 @@
     eastendlions: 'https://images.seeklogo.com/logo-png/63/1/east-end-lions-fc-logo-png_seeklogo-638348.png',
     westernunited: 'https://www.dsg-images.com/sport_entity/200x200/6528.png',
   };
+  var WOMENS_CLUB_LOGOS = {
+    bamoiqueens: 'logos/women/bamoi-queens-fc.jpg',
+    kallonfemale: 'logos/women/fc-kallon-female.jpg',
+    jonathanchildcare: 'logos/women/jonathan-child-care-fc.jpg',
+    kahunlaqueens: 'logos/women/kahunla-queens-fc.jpg',
+    koyaqueens: 'logos/women/koya-queens-fc.jpg',
+    menaqueens: 'logos/women/mena-queens.jpg',
+    mogbwemoqueens: 'logos/women/mogbwemo-queens-fc.jpg',
+    patriciaumustrikers: 'logos/women/patricia-umu-strikers.jpg',
+    ramkamara: 'logos/women/ram-kamara-fc.jpg',
+    risingqueens: 'logos/women/rising-queens-fc.jpg',
+    sierraleonepolicefemale: 'logos/women/sierra-leone-police-female-2026.jpg',
+    vembuck: 'logos/women/vem-buck-fc.jpg'
+  };
   function clubLogoFallback(name) {
-    var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
-    if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
-    if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
-    if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
-    return CLUB_LOGO_FALLBACKS[key] || '';
+    var raw = String(name || '').toLowerCase();
+    var key = raw.replace(/fc/g, '').replace(/[^a-z0-9]/g, '');
+    var aliases = {
+      bamoiqueen: 'bamoiqueens', fckallonfemale: 'kallonfemale',
+      kallonwomen: 'kallonfemale', jonathanchildcarefc: 'jonathanchildcare',
+      kahunlaqueensfc: 'kahunlaqueens', koyaqueensfc: 'koyaqueens',
+      menaqueensfc: 'menaqueens', mogbwemoqueensfc: 'mogbwemoqueens',
+      patriciaumu: 'patriciaumustrikers', patriciaumufc: 'patriciaumustrikers',
+      ramkamarafc: 'ramkamara', risingqueensfc: 'risingqueens',
+      vembuckfc: 'vembuck', slpolice: 'sierraleonepolicefemale',
+      slpolicefemale: 'sierraleonepolicefemale',
+      sierraleonepolice: 'sierraleonepolicefemale',
+      sierraleonepolicefc: 'sierraleonepolicefemale'
+    };
+    key = aliases[key] || key;
+    if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('kallon') !== -1 && /(female|women|ladies)/.test(raw)) key = 'kallonfemale';
+    if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('police') !== -1) key = 'sierraleonepolicefemale';
+    if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('patricia') !== -1) key = 'patriciaumustrikers';
+    if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('vem') !== -1 && key.indexOf('buck') !== -1) key = 'vembuck';
+    return WOMENS_CLUB_LOGOS[key] || CLUB_LOGO_FALLBACKS[key] || '';
   }
   function isSlfaLogoUrl(url) { return String(url || '').toLowerCase().indexOf('slfa-logo') !== -1; }
   function badge(url, name) {
-    var fallback = clubLogoFallback(name), primary = isSlfaLogoUrl(url) ? '' : (url || fallback);
+    var fallback = clubLogoFallback(name), primary = isSlfaLogoUrl(url) ? (fallback || '') : (url || fallback);
     var initial = esc((name || '?').charAt(0).toUpperCase());
     if (!primary) return '<span class="badge ph">' + initial + '</span>';
     return '<img class="badge" src="' + esc(primary) + '" data-fallback="' + esc(fallback && primary !== fallback ? fallback : '') + '" alt="" onerror="if(this.dataset.fallback){var next=this.dataset.fallback;this.dataset.fallback=\'\';this.src=next;}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="badge ph" hidden>' + initial + '</span>';
