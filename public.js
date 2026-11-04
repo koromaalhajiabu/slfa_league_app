@@ -394,27 +394,58 @@
     });
   }
 
-  // News and media (published only)
-  var CAT_LABEL = { NEWS: 'News', PRESS_RELEASE: 'Press release', MATCH_REPORT: 'Match report', ANNOUNCEMENT: 'Announcement', FIXTURE: 'Fixture', RESULT: 'Result', PHOTO: 'Photo' };
+  // News & announcements centre. Public viewers receive published posts only.
+  var CAT_LABEL = { NEWS: 'News', PRESS_RELEASE: 'Press release', MATCH_REPORT: 'Match report', ANNOUNCEMENT: 'Announcement', FIXTURE: 'Fixture', RESULT: 'Result', PHOTO: 'Photo story' };
+  var newsRows = [];
   function loadNews() {
     loadPolls();
     var news = db.from('media_posts').select('id, category, title, body, image_url, video_url, published_at, status, league_id')
       .eq('status', 'PUBLISHED');
     if (currentLeague) news = news.or('league_id.is.null,league_id.eq.' + currentLeague);
-    news.order('published_at', { ascending: false }).limit(20)
+    news.order('published_at', { ascending: false }).limit(60)
       .then(function (res) {
-        if (res.error || !(res.data || []).length) { $('newsItems').innerHTML = empty('No news yet.'); return; }
-        $('newsItems').innerHTML = res.data.map(function (p) {
-          return '<article class="news">' +
-            (p.image_url ? '<img src="' + esc(p.image_url) + '" alt="">' : '') +
-            '<div class="meta">' + esc(CAT_LABEL[p.category] || 'News') + ' · ' + esc(fmt(p.published_at)) + '</div>' +
-            '<h3>' + esc(p.title) + '</h3>' +
-            '<p>' + esc(p.body) + '</p>' +
-            (p.video_url ? '<a href="' + esc(p.video_url) + '" target="_blank" rel="noopener">Watch video</a>' : '') +
-            '<button class="share" data-title="' + esc(p.title) + '">Share</button></article>';
-        }).join('');
-        wireShare();
+        if (res.error) { $('newsItems').innerHTML = empty('News is temporarily unavailable. Please try again later.'); return; }
+        newsRows = res.data || [];
+        renderNewsCentre();
+        var search = $('newsSearch'), category = $('newsCategory');
+        if (search && !search.dataset.wired) {
+          search.dataset.wired = '1';
+          search.addEventListener('input', renderNewsCentre);
+        }
+        if (category && !category.dataset.wired) {
+          category.dataset.wired = '1';
+          category.addEventListener('change', renderNewsCentre);
+        }
       });
+  }
+  function renderNewsCentre() {
+    var search = $('newsSearch'), category = $('newsCategory');
+    var term = search ? search.value.trim().toLowerCase() : '';
+    var cat = category ? category.value : '';
+    var rows = newsRows.filter(function (p) {
+      var matchesCategory = !cat || p.category === cat;
+      var haystack = String(p.title || '') + ' ' + String(p.body || '');
+      return matchesCategory && (!term || haystack.toLowerCase().indexOf(term) !== -1);
+    });
+    var count = $('newsCount');
+    if (count) count.textContent = rows.length + (rows.length === 1 ? ' published update' : ' published updates') + (currentLeague ? ' · selected competition' : '');
+    if (!rows.length) {
+      $('newsItems').innerHTML = empty(newsRows.length ? 'No published updates match those filters.' : 'No news or announcements have been published yet.');
+      return;
+    }
+    function card(p, featured) {
+      var categoryName = CAT_LABEL[p.category] || 'News';
+      var image = p.image_url ? '<img loading="lazy" src="' + esc(p.image_url) + '" alt="' + esc(p.title) + '">' : '';
+      var body = p.body ? '<p>' + esc(p.body) + '</p>' : '';
+      var video = p.video_url ? '<a class="news-watch" href="' + esc(p.video_url) + '" target="_blank" rel="noopener noreferrer">Watch related video ↗</a>' : '';
+      return '<article class="news-card' + (featured ? ' news-card-featured' : '') + '">' + image +
+        '<div class="news-card-content"><div class="news-card-meta"><span class="news-category">' + esc(categoryName) + '</span><time>' + esc(fmt(p.published_at)) + '</time></div>' +
+        '<h3>' + esc(p.title) + '</h3>' + body + video +
+        '<button type="button" class="share" data-title="' + esc(p.title) + '">Share update</button></div></article>';
+    }
+    $('newsItems').innerHTML = '<div class="news-featured-wrap">' + card(rows[0], true) + '</div>' +
+      (rows.length > 1 ? '<div class="news-grid">' + rows.slice(1).map(function (p) { return card(p, false); }).join('') + '</div>' : '');
+    wireShare();
   }
 
   // Video highlights and replays: published news posts that carry a video link

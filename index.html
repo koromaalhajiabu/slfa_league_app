@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="league-pages.css">
 <link rel="stylesheet" href="player-stats.css">
 <link rel="stylesheet" href="player-profile.css">
+<link rel="stylesheet" href="news-centre.css">
 </head>
 <body>
 <header class="topbar">
@@ -122,7 +123,26 @@
       <p class="ps-disclaimer">Statistics are displayed from published league records. Rankings may change as verified match information is updated.</p>
     </div>
 
-    <div data-view="news" class="view" id="newsList" hidden><div id="pollList"></div><div id="newsItems">Loading news…</div></div>
+    <div data-view="news" class="view news-centre" id="newsList" hidden>
+      <section class="news-centre-hero">
+        <div><span class="news-eyebrow">THE LATEST FROM SIERRA LEONE FOOTBALL</span><h2>News &amp; Announcements</h2>
+          <p>Official league updates, match reports, press releases and competition announcements.</p></div>
+        <span class="news-hero-mark" aria-hidden="true">SL</span>
+      </section>
+      <div class="news-controls">
+        <label class="news-search-label" for="newsSearch">Search updates</label>
+        <input id="newsSearch" type="search" placeholder="Search headlines and stories…" autocomplete="off">
+        <label class="news-filter-label" for="newsCategory">Category</label>
+        <select id="newsCategory">
+          <option value="">All updates</option><option value="NEWS">News</option>
+          <option value="ANNOUNCEMENT">Announcements</option><option value="PRESS_RELEASE">Press releases</option>
+          <option value="MATCH_REPORT">Match reports</option><option value="PHOTO">Photo stories</option>
+        </select>
+      </div>
+      <div id="pollList"></div>
+      <div id="newsCount" class="news-count" aria-live="polite"></div>
+      <div id="newsItems">Loading news and announcements…</div>
+    </div>
     <div data-view="videos" class="view card" id="videoList" hidden>Loading videos…</div>
     <div data-view="predict" class="view card" id="predictList" hidden>Loading…</div>
 
