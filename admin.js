@@ -710,7 +710,6 @@
       input('ivEmail', 'Email address', 'email') +
       '<label for="ivRole">Role</label><select id="ivRole">' + ROLE_OPTIONS.map(function (o) { return '<option value="' + o[0] + '">' + esc(o[1]) + '</option>'; }).join('') + '</select>' +
       '<label for="ivClub">Club (Club Managers only)</label><select id="ivClub"><option value="">Loading clubs…</option></select>' +
-      input('ivReason', 'Reason (kept in the log)') +
       '<div class="btns"><button class="primary" id="ivSave">Save role</button></div>' +
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>' +
       '<h2 class="rt">Accounts</h2><p class="muted">Assign roles, suspend or restore. Each change needs a reason and is logged.</p>' +
@@ -734,13 +733,12 @@
     loadInvites();
   }
   function saveInvite() {
-    var email = $('ivEmail').value.trim(), role = $('ivRole').value, club = $('ivClub').value || null, reason = $('ivReason').value.trim();
+    var email = $('ivEmail').value.trim(), role = $('ivRole').value, club = $('ivClub').value || null;
     if (!email) { msg('Enter the email address.'); return; }
-    if (reason.length < 5) { msg('Give a reason of at least 5 characters.'); return; }
-    db.rpc('invite_user', { p_email: email, p_role: role, p_club: club, p_reason: reason }).then(function (res) {
+    db.rpc('invite_user', { p_email: email, p_role: role, p_club: club }).then(function (res) {
       if (res.error) { msg(res.error.message); return; }
       msg(res.data || 'Saved.');
-      $('ivEmail').value = ''; $('ivReason').value = '';
+      $('ivEmail').value = '';
       loadInvites(); loadRoleLog(); if (devUser) loadAccountsDev(devUser);
     });
   }
