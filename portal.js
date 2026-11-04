@@ -62,14 +62,16 @@
   }
   gate();
   // Apply a freeze immediately to already-open staff portals, not only at sign-in.
-  db.channel('portal-application-control').on('postgres_changes',{event:'*',schema:'public',table:'application_control'},function(){gate();}).subscribe();
-  // Poll as a fallback if database realtime is unavailable on the current Supabase project.
-  setInterval(function(){
-    if(!navigator.onLine)return;
-    db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(fr){
-      if(fr.error||!fr.data){if(lastFreezeState!==true){lastFreezeState=true;gate();}return;}
-      var frozen=!!fr.data.app_frozen;
-      if(lastFreezeState!==frozen){lastFreezeState=frozen;gate();}
-    });
-  },30000);
+  if(portal!=='DEVELOPER'){
+    db.channel('portal-application-control').on('postgres_changes',{event:'*',schema:'public',table:'application_control'},function(){gate();}).subscribe();
+    // Poll as a fallback if database realtime is unavailable on the current Supabase project.
+    setInterval(function(){
+      if(!navigator.onLine)return;
+      db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(fr){
+        if(fr.error||!fr.data){if(lastFreezeState!==true){lastFreezeState=true;gate();}return;}
+        var frozen=!!fr.data.app_frozen;
+        if(lastFreezeState!==frozen){lastFreezeState=frozen;gate();}
+      });
+    },30000);
+  }
 })();
