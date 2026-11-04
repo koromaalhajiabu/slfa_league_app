@@ -30,7 +30,8 @@
   function clubLogoFallback(name) {
     var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
     if (key === 'portsauthority') key = 'ports';
-    if (key === 'starssa' || key === 'starsport') key = 'starsportacademy';
+    if (key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
+    if (key === 'western' || key === 'westernunitedfc') key = 'westernunited';
     return CLUB_LOGO_FALLBACKS[key] || '';
   }
   function badge(url, name) {
