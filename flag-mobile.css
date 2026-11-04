@@ -356,3 +356,99 @@ body .portal .card h2,body .portal .card h3 {
     -webkit-text-fill-color:currentColor !important;
   }
 }
+
+
+/* ── SLFA accessible colour and readability layer v6 ──
+   High contrast, colour-independent status cues, and clear keyboard focus. */
+:root {
+  --slfa-accessible-text:#ffffff;
+  --slfa-accessible-muted:#e6edf3;
+  --slfa-accessible-blue:#0756a5;
+  --slfa-accessible-green:#075b2a;
+  --slfa-accessible-border:rgba(255,255,255,.72);
+}
+/* Keep national colours in the identity accents, not as low-contrast body text. */
+body, body p, body li, body label, body small, body .sub,
+body .rt, body .kicker, body .news-eyebrow, body .ps-eyebrow,
+body .brand p, body .portal-head .eyebrow {
+  color:var(--slfa-accessible-muted) !important;
+  text-shadow:none !important;
+}
+body h1, body h2, body h3, body h4,
+body .brand h1, body .portal-head h1, body .hero .title,
+body .section-title, body .card h2, body .card h3,
+body .portal .card h2, body .portal .card h3 {
+  color:#ffffff !important;
+  -webkit-text-fill-color:#ffffff !important;
+  background:none !important;
+  text-shadow:none !important;
+  animation:none !important;
+  transform:none !important;
+}
+body .score, body .score-big, body .pval, body .table .pts,
+body .card h2, body .sub, body .rt {
+  color:#ffffff !important;
+  -webkit-text-fill-color:#ffffff !important;
+  text-shadow:none !important;
+}
+/* Solid, high-contrast action colours; do not rely on subtle gradients. */
+body button.primary, body .btns button.primary, body .install-btn,
+body #public .hero-actions .share-app, body #public #alertBtn,
+body #public #shareApp {
+  color:#ffffff !important;
+  background:#0756a5 !important;
+  border:2px solid #ffffff !important;
+  text-shadow:none !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.32) !important;
+}
+body .tabs button[aria-selected="true"],
+body .tabs button.active {
+  color:#ffffff !important;
+  background:#0756a5 !important;
+  border:2px solid #ffffff !important;
+  box-shadow:none !important;
+}
+body button.secondary, body .btns button.secondary {
+  color:#ffffff !important;
+  border:2px solid #d9e9f7 !important;
+  background:#17364f !important;
+}
+/* Inputs and table surfaces stay distinct from their text. */
+body input, body select, body textarea {
+  color:#ffffff !important;
+  background:#102b40 !important;
+  border:2px solid #c9d8e5 !important;
+  caret-color:#ffffff !important;
+}
+body input::placeholder, body textarea::placeholder {
+  color:#d3dde6 !important;
+  opacity:1 !important;
+}
+body table th, body .table th {
+  color:#ffffff !important;
+  background:#17364f !important;
+}
+body table td, body .table td {
+  color:#ffffff !important;
+}
+/* Status must remain understandable in grayscale and for colour-blind users. */
+body .live, body .live-badge, body [data-status="live"],
+body .status, body .badge, body .pill {
+  text-shadow:none !important;
+  animation:none !important;
+  border:1px solid #ffffff !important;
+  font-weight:800 !important;
+}
+body :focus-visible {
+  outline:3px solid #ffdf55 !important;
+  outline-offset:3px !important;
+}
+body button, body a, body input, body select, body textarea {
+  text-decoration-thickness:2px;
+}
+@media (prefers-reduced-motion:reduce) {
+  body *, body *::before, body *::after {
+    animation:none !important;
+    transition:none !important;
+  }
+}
