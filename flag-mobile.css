@@ -602,3 +602,39 @@ body :where(button,a) {
     animation:none !important; text-shadow:none !important;
   }
 }
+
+
+/* ── SLFA visible 3D text motion v11 ──
+   Actual perspective movement, not glow-only animation. */
+@keyframes slfaText3DMove {
+  0%,100% { transform:perspective(700px) translate3d(0,0,0) rotateX(0deg) rotateY(-2deg) scale(1); }
+  25% { transform:perspective(700px) translate3d(0,-2px,7px) rotateX(3deg) rotateY(2deg) scale(1.015); }
+  50% { transform:perspective(700px) translate3d(0,1px,12px) rotateX(-2deg) rotateY(3deg) scale(1.02); }
+  75% { transform:perspective(700px) translate3d(0,2px,5px) rotateX(2deg) rotateY(-3deg) scale(1.01); }
+}
+@keyframes slfaText3DSoft {
+  0%,100% { transform:perspective(650px) translate3d(0,0,0) rotateY(-1deg); }
+  50% { transform:perspective(650px) translate3d(0,-1px,5px) rotateY(1.5deg); }
+}
+body :where(h1,h2,h3,h4,.brand h1,.portal-head h1,.hero .title,.section-title,.score,.score-big,.pval,.table .pts) {
+  display:inline-block !important;
+  transform-style:preserve-3d !important;
+  transform-origin:center center !important;
+  animation:slfaText3DMove 5s ease-in-out infinite !important;
+  will-change:transform;
+}
+body :where(p,li,label,small,strong,em,span,td,th,a,button,.muted,.sub,.kicker,.rt,.news-eyebrow,.ps-eyebrow) {
+  transform-style:preserve-3d !important;
+  animation:slfaText3DSoft 6s ease-in-out infinite !important;
+  will-change:transform;
+}
+body :where(span,strong,em,small,a,label,button) {
+  display:inline-block;
+}
+@media (prefers-reduced-motion:reduce) {
+  body :where(h1,h2,h3,h4,.brand h1,.portal-head h1,.hero .title,.section-title,.score,.score-big,.pval,.table .pts,p,li,label,small,strong,em,span,td,th,a,button,.muted,.sub,.kicker,.rt,.news-eyebrow,.ps-eyebrow) {
+    animation:none !important;
+    transform:none !important;
+    will-change:auto !important;
+  }
+}
