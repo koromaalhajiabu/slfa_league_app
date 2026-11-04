@@ -79,6 +79,7 @@
       '<div class="btns"><button class="primary" id="asSave">Assign</button></div>' +
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
+      '<h2 class="rt">Club profile changes awaiting approval</h2><div id="clubProfileReview" class="muted">Loading…</div>' +
       '<h2 class="rt">Player registrations awaiting approval</h2><div id="squadReview" class="muted">Loading…</div>' +
       '<h2 class="rt">Transfer requests awaiting approval</h2><div id="transferReview" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
@@ -110,6 +111,7 @@
     loadLeagueOptions();
     wireClubs();
     loadReview();
+    loadClubProfileReview();
     loadSquadReview();
     loadTransferReview();
     $('msSave').addEventListener('click', function () {
@@ -296,6 +298,46 @@
       });
     });
   }
+
+  // ---------- CLUB PROFILE CHANGE REVIEW: SUPER ADMIN ----------
+  function loadClubProfileReview() {
+    Promise.all([
+      db.from('club_profile_change_requests').select('id, club_id, submitted_by_name, proposed_profile, submitted_at, status').eq('status', 'SUBMITTED').order('submitted_at', { ascending: true }),
+      db.from('league_clubs').select('id, club_name')
+    ]).then(function (all) {
+      if (all[0].error) { $('clubProfileReview').textContent = all[0].error.message; return; }
+      var rows = all[0].data || [], clubs = {};
+      (all[1].data || []).forEach(function (c) { clubs[String(c.id)] = c.club_name; });
+      $('clubProfileReview').innerHTML = rows.length ? rows.map(function (x) {
+        var p = x.proposed_profile || {};
+        return '<div class="post"><div class="muted">Submitted by ' + esc(x.submitted_by_name || 'Club Manager') + ' · ' + esc(new Date(x.submitted_at).toLocaleString()) + '</div>' +
+          '<strong>' + esc(clubs[String(x.club_id)] || 'Club') + '</strong>' +
+          '<p>Home ground: ' + esc(p.stadium || 'Not provided') + '<br>City: ' + esc(p.city || 'Not provided') +
+          '<br>Year founded: ' + esc(p.founded_year || 'Not provided') + '</p><p>' + esc(p.about || 'No description provided') + '</p>' +
+          '<label for="cprNote' + esc(x.id) + '">Review note (optional)</label><textarea id="cprNote' + esc(x.id) + '" rows="2" placeholder="Reason or guidance for the club"></textarea>' +
+          '<div class="btns"><button class="primary" data-club-profile-approve="' + esc(x.id) + '">Approve & publish</button>' +
+          '<button class="secondary" data-club-profile-return="' + esc(x.id) + '">Return for changes</button></div></div>';
+      }).join('') : 'No club profile changes are waiting for approval.';
+      document.querySelectorAll('[data-club-profile-approve]').forEach(function (b) {
+        b.addEventListener('click', function () { reviewClubProfile(b.dataset.clubProfileApprove, 'APPROVE'); });
+      });
+      document.querySelectorAll('[data-club-profile-return]').forEach(function (b) {
+        b.addEventListener('click', function () { reviewClubProfile(b.dataset.clubProfileReturn, 'RETURN'); });
+      });
+    });
+  }
+  function reviewClubProfile(id, decision) {
+    var note = ($('cprNote' + id) || {}).value || '';
+    if (decision === 'RETURN' && !note.trim()) { msg('Add a short reason before returning the profile.'); return; }
+    var label = decision === 'APPROVE' ? 'Approve and publish this club profile?' : 'Return this profile to the Club Manager?';
+    if (!confirm(label)) return;
+    db.rpc('review_club_profile_change', { p_request_id: Number(id), p_decision: decision, p_note: note.trim() || null }).then(function (r) {
+      if (r.error) { msg(r.error.message); return; }
+      msg(decision === 'APPROVE' ? 'Club profile approved and published.' : 'Profile returned to the Club Manager.');
+      loadClubProfileReview();
+    });
+  }
+
   function loadReview() {
     db.from('media_posts').select('id, title, category, body, created_by_name, submitted_at').eq('status', 'SUBMITTED').order('submitted_at', { ascending: true })
       .then(function (r) {
@@ -337,10 +379,11 @@
       '<label for="spPhoto">Photo (optional)</label><input id="spPhoto" type="file" accept="image/*">' +
       '<div class="btns"><button class="primary" id="spSave">Add player</button></div>' +
       '<h2 class="rt">Your players</h2><div id="squadList" class="muted">Loading…</div>' +
-      '<h2 class="rt">Club profile</h2>' +
+      '<h2 class="rt">Club profile</h2><p class="muted">Submit proposed changes for Super Admin review. The public profile changes only after approval.</p>' +
       input('cpStadium', 'Stadium / home ground') + input('cpCity', 'City or town') + input('cpFounded', 'Year founded', 'number', 'min="1850" max="2100"') +
       '<label for="cpAbout">About the club</label><textarea id="cpAbout" rows="3"></textarea>' +
-      '<div class="btns"><button class="secondary" id="cpSave">Save club profile</button></div>' +
+      '<div class="btns"><button class="secondary" id="cpSave">Submit changes for approval</button></div>' +
+      '<div id="clubProfileRequests" class="muted">Loading profile submission history…</div>' +
       '<h2 class="rt">Club announcements</h2>' +
       input('anTitle', 'Announcement title') +
       '<label for="anBody">Message (optional)</label><textarea id="anBody" rows="3"></textarea>' +
@@ -370,6 +413,7 @@
         $('cpFounded').value = myClub.founded_year || ''; $('cpAbout').value = myClub.about || '';
       }
       loadSquad(p);
+      loadClubProfileRequests();
       loadAnnouncements();
       loadLineupMatches();
     });
@@ -377,11 +421,32 @@
   function saveProfile() {
     if (!myClub) { msg('The club has not loaded yet.'); return; }
     var founded = $('cpFounded').value ? Number($('cpFounded').value) : null;
-    if (founded !== null && (founded < 1850 || founded > 2100)) { msg('Enter a year between 1850 and 2100.'); return; }
-    db.from('league_clubs').update({
-      stadium: $('cpStadium').value.trim() || null, city: $('cpCity').value.trim() || null,
-      founded_year: founded, about: $('cpAbout').value.trim() || null
-    }).eq('id', myClub.id).then(function (r) { msg(r.error ? r.error.message : 'Club profile saved.'); });
+    if (founded !== null && (founded < 1850 || founded > new Date().getFullYear())) { msg('Enter a valid founding year.'); return; }
+    var stadium = $('cpStadium').value.trim(), city = $('cpCity').value.trim(), about = $('cpAbout').value.trim();
+    if (about.length > 2000 || stadium.length > 160 || city.length > 120) { msg('One or more fields are too long.'); return; }
+    db.rpc('submit_club_profile_change', {
+      p_stadium: stadium || null, p_city: city || null, p_founded_year: founded, p_about: about || null
+    }).then(function (r) {
+      if (r.error) { msg(r.error.message); return; }
+      msg('Profile changes submitted. They will appear publicly after Super Admin approval.');
+      loadClubProfileRequests();
+    });
+  }
+  function loadClubProfileRequests() {
+    if (!myClub) return;
+    db.from('club_profile_change_requests')
+      .select('id, proposed_profile, status, submitted_at, reviewed_at, review_note')
+      .eq('club_id', myClub.id).order('submitted_at', { ascending: false }).limit(8)
+      .then(function (r) {
+        if (r.error) { $('clubProfileRequests').textContent = r.error.message; return; }
+        var rows = r.data || [];
+        $('clubProfileRequests').innerHTML = rows.length ? '<p><strong>Submission history</strong></p>' + rows.map(function (x) {
+          var status = x.status === 'SUBMITTED' ? 'Awaiting Super Admin review' : (x.status === 'APPROVED' ? 'Approved and published' : 'Returned for changes');
+          return '<div class="post"><strong>' + esc(status) + '</strong><div class="muted">' + esc(new Date(x.submitted_at).toLocaleString()) + '</div>' +
+            (x.reviewed_at ? '<div class="muted">Reviewed ' + esc(new Date(x.reviewed_at).toLocaleString()) + '</div>' : '') +
+            (x.review_note ? '<p>Review note: ' + esc(x.review_note) + '</p>' : '') + '</div>';
+        }).join('') : '<p>No profile submissions yet.</p>';
+      });
   }
   function postAnnouncement() {
     if (!myClub) { msg('The club has not loaded yet.'); return; }
