@@ -99,7 +99,7 @@
     var list = selected(), clubs = {};
     matches.forEach(function (m) { if (!league() || String(m.league_id || '') === league()) { clubs[m.home_team]=1; clubs[m.away_team]=1; } });
     var options = Object.keys(clubs).sort().map(function (n) { return '<option value="'+esc(n)+'"'+(chosenClub===n?' selected':'')+'>'+esc(n)+'</option>'; }).join('');
-    var filters = [['all','All matches'],['live','Live'],['upcoming','Upcoming'],['results','Results'],['other','Other']].map(function (f) {
+    var filters = [['all','All matches'],['upcoming','Upcoming'],['results','Results'],['other','Other']].map(function (f) {
       return '<button type="button" class="slfa-mc-filter'+(filter===f[0]?' active':'')+'" data-mc-filter="'+f[0]+'" aria-pressed="'+(filter===f[0])+'">'+f[1]+'</button>';
     }).join('');
     host.innerHTML = '<section class="slfa-match-centre-v2" aria-label="Match Centre"><div class="slfa-mc-heading"><div><p class="slfa-mc-eyebrow">THE SLFA LEAGUE APP</p><h3>Match Centre</h3><p>Fixtures, live scores and completed results</p></div><span class="slfa-mc-update">'+(updated?'Updated '+new Date(updated).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'Public match information')+'</span></div>'+
