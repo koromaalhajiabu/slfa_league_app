@@ -1,0 +1,55 @@
+/* Premium public Match Centre */
+.slfa-match-centre-v2{padding:2px 0;color:var(--ink)}
+.slfa-mc-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:18px;border-radius:18px;background:linear-gradient(130deg,#0b2948,#07513d);border:1px solid rgba(215,189,123,.25);box-shadow:0 16px 34px -22px #000}
+.slfa-mc-eyebrow{margin:0 0 5px;color:#dfc88e;font-size:9px;font-weight:700;letter-spacing:.2em}
+.slfa-mc-heading h3{margin:0;color:#fff;font-family:"Fraunces",Georgia,serif;font-size:25px;font-weight:500}
+.slfa-mc-heading p:not(.slfa-mc-eyebrow){margin:5px 0 0;color:#d2dfeb;font-size:12px}
+.slfa-mc-update{color:#dfc88e;font-size:10px;white-space:nowrap}
+.slfa-mc-tools{display:grid;gap:12px;margin-bottom:14px}
+.slfa-mc-filters{display:flex;gap:7px;overflow-x:auto;padding:2px 0 5px;scrollbar-width:none}
+.slfa-mc-filter{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.035);color:var(--muted);padding:8px 13px;font:600 11px Inter,sans-serif}
+.slfa-mc-filter.active{color:#102238;background:linear-gradient(135deg,#e4ca8b,#c5a45d);border-color:#e4ca8b}
+.slfa-mc-selects{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto;align-items:end;gap:9px}
+.slfa-mc-selects label{margin:0;color:var(--muted);font-size:10px}
+.slfa-mc-selects input,.slfa-mc-selects select{display:block;margin-top:5px;min-width:0;height:40px;padding:7px 9px;font-size:12px}
+.slfa-mc-reset{height:40px;padding:0 12px;border:1px solid var(--line);border-radius:11px;background:transparent;color:var(--ink);font-size:11px}
+.slfa-mc-count{margin:5px 1px 10px;color:var(--muted);font-size:10px}
+.slfa-mc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.slfa-mc-card{min-width:0;padding:14px;border-radius:17px;border:1px solid rgba(255,255,255,.09);background:linear-gradient(150deg,rgba(255,255,255,.055),rgba(255,255,255,.018));box-shadow:0 12px 26px -22px #000}
+.slfa-mc-card.is-live{border-color:rgba(220,82,82,.42);background:linear-gradient(145deg,rgba(144,34,43,.16),rgba(255,255,255,.025))}
+.slfa-mc-card-top,.slfa-mc-card-bottom{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.slfa-mc-status{display:inline-flex;align-items:center;gap:6px;color:#d8bd7b;font-size:9px;font-weight:800;letter-spacing:.1em}
+.slfa-mc-status.status-live,.slfa-mc-status.status-ht{color:#ff8c8c}
+.slfa-mc-status.status-ft{color:#7bd49a}
+.slfa-mc-league{overflow:hidden;color:var(--muted);font-size:9px;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+.slfa-mc-live-dot{width:6px;height:6px;border-radius:50%;background:#f36e72;box-shadow:0 0 0 4px rgba(243,110,114,.14);animation:slfaMcPulse 1.5s infinite}
+@keyframes slfaMcPulse{50%{opacity:.35}}
+.slfa-mc-teams{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;margin:17px 0 14px}
+.slfa-mc-team{display:flex;min-width:0;flex-direction:column;align-items:center;gap:7px;text-align:center;font-size:11px;font-weight:600;line-height:1.35}
+.slfa-mc-team span:last-child{overflow-wrap:anywhere}
+.slfa-mc-crest{width:43px;height:43px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,.07);padding:4px}
+.slfa-mc-crest-fallback{display:flex;align-items:center;justify-content:center;color:#e2c989;border:1px solid rgba(215,189,123,.3);font-size:17px;font-weight:700}
+.slfa-mc-score{display:flex;align-items:center;gap:7px;color:#f3e4bf;font-family:"Fraunces",Georgia,serif;font-size:25px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.slfa-mc-score i{color:#b9a36f;font-size:17px;font-style:normal}
+.slfa-mc-vs{padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--muted);font-size:10px;font-weight:700}
+.slfa-mc-card-bottom{padding-top:10px;border-top:1px solid rgba(255,255,255,.07);color:var(--muted);font-size:9px}
+.slfa-mc-card-bottom span:last-child{text-align:right}
+.slfa-mc-motm{margin-top:9px;color:#d8bd7b;font-size:10px}
+.slfa-mc-details-btn{display:flex;justify-content:space-between;width:100%;margin-top:11px;padding:9px 10px;border:1px solid rgba(215,189,123,.2);border-radius:10px;background:rgba(215,189,123,.055);color:#e1c98e;font-size:10px;font-weight:600;text-align:left}
+.slfa-mc-detail{margin-top:10px;padding:11px;border-radius:12px;background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.06)}
+.slfa-mc-detail[hidden]{display:none}
+.slfa-mc-detail h4{margin:5px 0 9px;color:#d8bd7b;font-size:11px}
+.slfa-mc-event{display:grid;grid-template-columns:35px 20px 1fr;gap:8px;align-items:start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px}
+.slfa-mc-minute{color:var(--muted);font-variant-numeric:tabular-nums}
+.slfa-mc-event small{display:block;color:var(--muted);font-size:9px}
+.slfa-mc-lineups{display:grid;gap:9px}
+.slfa-mc-lineups>div{padding:9px;border-radius:9px;background:rgba(255,255,255,.035);font-size:10px}
+.slfa-mc-lineups p{margin:5px 0;color:var(--muted);line-height:1.5}
+.slfa-mc-no-events,.slfa-mc-detail-loading{color:var(--muted);font-size:11px}
+.slfa-mc-empty{padding:34px 12px;text-align:center;border:1px dashed var(--line);border-radius:16px}
+.slfa-mc-empty>span{display:block;font-size:28px}
+.slfa-mc-empty strong{display:block;margin-top:8px;font-family:"Fraunces",Georgia,serif;font-size:17px}
+.slfa-mc-empty p{margin:5px 0 0;color:var(--muted);font-size:11px}
+.slfa-mc-footnote{margin:14px 2px 3px;color:var(--muted);font-size:9px;line-height:1.5}
+@media(max-width:640px){.slfa-mc-grid{grid-template-columns:1fr}.slfa-mc-heading{align-items:flex-start;flex-direction:column;padding:16px}.slfa-mc-heading h3{font-size:23px}.slfa-mc-update{align-self:flex-end;margin-top:-2px}.slfa-mc-selects{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.slfa-mc-reset{grid-column:1/-1;width:100%}.slfa-mc-team{font-size:12px}.slfa-mc-crest{width:48px;height:48px}}
+@media(prefers-color-scheme:light){.slfa-mc-card{background:linear-gradient(150deg,#fff,#f6f8fb);border-color:rgba(20,43,68,.1)}.slfa-mc-card.is-live{background:linear-gradient(145deg,#fff4f3,#fff)}.slfa-mc-score{color:#173d5f}.slfa-mc-card-bottom{border-color:rgba(20,43,68,.1)}.slfa-mc-detail{background:#f6f8fb;border-color:rgba(20,43,68,.08)}.slfa-mc-event{border-color:rgba(20,43,68,.08)}.slfa-mc-lineups>div{background:#edf2f7}.slfa-mc-details-btn{color:#72581f;background:#fbf6e9}.slfa-mc-empty{border-color:rgba(20,43,68,.2)}}
