@@ -1,32 +1,52 @@
-/* Premium public player profile dialog */
+/* Premium emerald player performance profile */
 .player-profile-trigger { cursor:pointer; }
-.player-profile-trigger:focus-visible { outline:3px solid #238b54; outline-offset:3px; border-radius:10px; }
-.player-profile-dialog { width:min(560px,calc(100% - 24px)); max-width:560px; max-height:min(86vh,760px); padding:0; border:0; border-radius:22px; color:#183b29; background:#fff; box-shadow:0 24px 80px rgba(0,0,0,.28); }
-.player-profile-dialog::backdrop { background:rgba(5,18,12,.68); backdrop-filter:blur(4px); }
-.player-profile-shell { position:relative; padding:24px; }
-.player-profile-close { position:absolute; top:12px; right:12px; z-index:2; width:38px; height:38px; border:1px solid #dce9e0; border-radius:50%; background:#f4f8f5; color:#244b34; font-size:25px; line-height:1; cursor:pointer; }
-.pp-heading { display:flex; align-items:center; gap:18px; padding:8px 36px 22px 0; }
-.pp-photo { width:104px; height:104px; flex:0 0 104px; object-fit:cover; border-radius:22px; background:#e9f2ec; border:3px solid #e2efe6; }
-.pp-placeholder { display:grid; place-items:center; color:#16733d; font-size:38px; font-weight:800; }
-.pp-kicker { color:#168144; font-size:9px; font-weight:800; letter-spacing:.15em; }
-.pp-identity h2 { margin:7px 0 4px; color:#173e2a; font-size:clamp(21px,5vw,28px); line-height:1.12; overflow-wrap:anywhere; }
-.pp-identity p { margin:0; color:#607468; font-size:13px; }
-.pp-meta { margin-top:8px; color:#168144; font-size:11px; font-weight:700; }
-.pp-stats { padding:17px; border:1px solid #dfebe2; border-radius:17px; background:linear-gradient(145deg,#f8fcf9,#edf7f0); }
-.pp-stats h3 { margin:0 0 13px; color:#1a4930; font-size:14px; }
-.pp-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
-.pp-metric { min-width:0; padding:13px; border-radius:12px; background:#fff; border:1px solid #e5eee8; }
-.pp-metric span { display:block; color:#6d7d72; font-size:10px; }
-.pp-metric strong { display:block; margin-top:5px; color:#087a3b; font-size:25px; font-variant-numeric:tabular-nums; }
-.pp-note { margin:14px 2px 0; color:#718077; font-size:10px; line-height:1.55; }
-.pp-loading { padding:40px 12px; text-align:center; color:#63786a; }
-@media(max-width:440px) { .player-profile-shell { padding:19px; } .pp-heading { gap:12px; } .pp-photo { width:82px; height:82px; flex-basis:82px; border-radius:18px; } }
-@media(prefers-color-scheme:dark) {
-  .player-profile-dialog { color:#eaf5ed; background:#10271a; }
-  .pp-identity h2,.pp-stats h3 { color:#effaf2; }
-  .pp-identity p,.pp-note { color:#adc0b2; }
-  .pp-stats { background:#173624; border-color:#2b5239; }
-  .pp-metric { background:#10291b; border-color:#2a4d36; }
-  .pp-metric span { color:#adc0b2; }
-  .player-profile-close { color:#eaf5ed; background:#1b3a28; border-color:#315840; }
+.player-profile-trigger:focus-visible { outline:3px solid #48d78a; outline-offset:3px; border-radius:10px; }
+.player-profile-dialog { width:min(600px,calc(100% - 20px)); max-width:600px; max-height:min(90dvh,820px); overflow:auto; padding:0; border:1px solid rgba(112,220,158,.28); border-radius:24px; color:#effff4; background:#092d1d; box-shadow:0 28px 90px rgba(0,0,0,.48); }
+.player-profile-dialog::backdrop { background:rgba(1,13,8,.78); backdrop-filter:blur(7px); }
+.player-profile-shell { position:relative; padding:0 22px 22px; }
+.player-profile-close { position:sticky; float:right; top:12px; margin:12px -8px -48px 0; z-index:5; width:38px; height:38px; border:1px solid rgba(255,255,255,.24); border-radius:50%; background:rgba(4,36,22,.82); color:#fff; font-size:25px; line-height:1; cursor:pointer; }
+.pp-cover { position:relative; overflow:hidden; display:flex; align-items:center; justify-content:space-between; min-height:112px; margin:0 -22px; padding:24px 24px; background:linear-gradient(120deg,#06452c,#087c45 62%,#0b5937); }
+.pp-cover:after { content:""; position:absolute; width:180px; height:180px; right:32px; top:-105px; border:1px solid rgba(255,255,255,.18); transform:rotate(45deg); box-shadow:0 0 0 20px rgba(255,255,255,.035),0 0 0 42px rgba(255,255,255,.025); }
+.pp-cover-label { position:relative; z-index:1; color:#d9ffe7; font-size:10px; font-weight:900; letter-spacing:.16em; }
+.pp-cover-ball { position:relative; z-index:1; display:grid; place-items:center; width:48px; height:48px; border:1px solid rgba(255,255,255,.35); border-radius:15px; color:#fff; font-size:25px; background:rgba(255,255,255,.10); }
+.pp-heading { display:flex; align-items:center; gap:17px; padding:20px 0 22px; }
+.pp-photo { width:104px; height:104px; flex:0 0 104px; object-fit:cover; border-radius:22px; background:#174b30; border:3px solid #5cda91; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+.pp-placeholder { display:grid; place-items:center; color:#baffd1; font-size:38px; font-weight:900; }
+.pp-kicker { color:#75e8a4; font-size:9px; font-weight:900; letter-spacing:.15em; }
+.pp-identity { min-width:0; }
+.pp-identity h2 { margin:6px 0 4px; color:#f4fff7; font-size:clamp(21px,5vw,29px); line-height:1.12; overflow-wrap:anywhere; }
+.pp-identity p { margin:0; color:#c0dbc9; font-size:13px; }
+.pp-meta { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+.pp-meta span { padding:5px 9px; border:1px solid rgba(121,228,160,.25); border-radius:999px; color:#caffda; background:rgba(75,190,117,.12); font-size:9px; font-weight:800; letter-spacing:.05em; }
+.pp-stats { padding:17px; border:1px solid rgba(124,220,159,.23); border-radius:18px; background:linear-gradient(145deg,#103e29,#0b3421); }
+.pp-section-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+.pp-section-head span { display:block; color:#77e5a3; font-size:8px; font-weight:900; letter-spacing:.16em; }
+.pp-section-head h3 { margin:4px 0 0; color:#f1fff5; font-size:16px; }
+.pp-section-head>small { padding:5px 8px; border-radius:999px; color:#baffd0; background:rgba(89,210,132,.13); font-size:8px; font-weight:900; letter-spacing:.08em; }
+.pp-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.pp-metric { display:flex; align-items:center; gap:11px; min-width:0; padding:13px 11px; border:1px solid rgba(157,222,179,.13); border-radius:14px; background:rgba(3,27,16,.52); }
+.pp-metric-icon { display:grid; place-items:center; width:38px; height:38px; flex:0 0 38px; border-radius:12px; color:#d5ffe3; background:rgba(71,191,115,.17); font-size:19px; font-weight:900; }
+.pp-metric>div { min-width:0; }
+.pp-metric small { display:block; color:#c4ddcc; font-size:10px; line-height:1.3; }
+.pp-metric strong { display:block; margin-top:4px; color:#83f3ad; font-size:26px; line-height:1; font-variant-numeric:tabular-nums; }
+.pp-metric em { display:block; margin-top:5px; color:#91b9a0; font-size:8px; font-style:normal; }
+.pp-profile-foot { display:flex; align-items:flex-start; gap:10px; margin:15px 2px 0; }
+.pp-foot-mark { display:grid; place-items:center; width:27px; height:27px; flex:0 0 27px; border:1px solid rgba(133,225,164,.3); border-radius:9px; color:#b8f9ce; font-size:10px; font-weight:900; }
+.pp-profile-foot p,.pp-note { margin:0; color:#a9c8b4; font-size:10px; line-height:1.55; }
+.pp-loading { display:grid; justify-items:center; gap:9px; padding:54px 12px; color:#b7d9c3; text-align:center; }
+.pp-loading-mark { display:grid; place-items:center; width:54px; height:54px; border-radius:17px; background:#155638; font-size:26px; animation:ppPulse 1.5s ease-in-out infinite; }
+.pp-loading strong { color:#f1fff5; font-size:14px; }
+.pp-loading span:last-child { font-size:11px; }
+@keyframes ppPulse { 50% { transform:translateY(-4px) scale(1.04); box-shadow:0 0 22px rgba(82,228,139,.2); } }
+@media(max-width:440px) {
+ .player-profile-shell { padding:0 15px 17px; }
+ .pp-cover { min-height:96px; margin:0 -15px; padding:20px 17px; }
+ .pp-heading { gap:12px; padding:17px 0; }
+ .pp-photo { width:82px; height:82px; flex-basis:82px; border-radius:18px; }
+ .pp-stats { padding:13px; }
+ .pp-metrics { gap:8px; }
+ .pp-metric { gap:8px; padding:10px 8px; }
+ .pp-metric-icon { width:31px; height:31px; flex-basis:31px; font-size:16px; }
+ .pp-metric strong { font-size:23px; }
 }
+@media(prefers-reduced-motion:reduce) { .pp-loading-mark { animation:none; } }
