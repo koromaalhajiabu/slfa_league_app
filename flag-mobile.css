@@ -483,3 +483,39 @@ body::before {
     radial-gradient(100% 130% at 100% 100%,rgba(31,137,221,.20),transparent 58%),
     linear-gradient(135deg,rgba(13,112,70,.97),rgba(7,64,45,.98)) !important;
 }
+
+
+/* ── SLFA luminous glass-green finish v8 ──
+   A visibly brighter emerald atmosphere with translucent green glass surfaces. */
+html {
+  background:#14543a !important;
+}
+body {
+  background:
+    radial-gradient(980px 600px at 10% -5%,rgba(83,255,164,.42),transparent 62%),
+    radial-gradient(820px 560px at 100% 12%,rgba(55,190,137,.36),transparent 60%),
+    radial-gradient(760px 560px at 52% 108%,rgba(27,170,119,.32),transparent 65%),
+    linear-gradient(145deg,#10442f 0%,#176344 48%,#0e4932 100%) !important;
+  background-attachment:fixed !important;
+}
+body::before {
+  background:
+    radial-gradient(ellipse at 28% 22%,rgba(164,255,204,.09),transparent 52%),
+    linear-gradient(115deg,transparent 0%,rgba(170,255,211,.075) 48%,transparent 72%) !important;
+}
+.topbar,.portal-head {
+  background:rgba(15,76,51,.88) !important;
+  border-color:rgba(171,255,207,.34) !important;
+}
+.card,.news-card,.news-controls,.admin-body,.detail,.team,.match,.news,
+.ps-panel,.ps-summary-card,.ps-hero,.news-centre-hero,.portal .card {
+  background:linear-gradient(145deg,rgba(34,132,88,.78),rgba(13,78,54,.86)) !important;
+  border-color:rgba(170,255,205,.30) !important;
+}
+.hero {
+  background:
+    radial-gradient(100% 130% at 0% 0%,rgba(94,255,176,.48),transparent 60%),
+    radial-gradient(100% 130% at 100% 100%,rgba(38,153,228,.24),transparent 58%),
+    linear-gradient(135deg,rgba(18,135,83,.98),rgba(10,83,57,.98)) !important;
+  border-color:rgba(185,255,215,.42) !important;
+}
