@@ -81,3 +81,11 @@
 @media(max-width:700px){.slfa-lp-profile-matches{grid-template-columns:1fr}.slfa-lp-record{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(prefers-color-scheme:dark){.slfa-lp-profile-intro{background:#0e2032}.slfa-lp-record>div{background:rgba(78,168,255,.09)}}
 @media(prefers-reduced-motion:reduce){.slfa-lp-club-link{transition:none}}
+
+/* Club identity in competition match cards and tables */
+.slfa-lp-match-team{display:flex;align-items:center;gap:6px;min-width:0}
+.slfa-lp-match-team:last-child{justify-content:flex-end;text-align:right}
+.slfa-lp-match-team .slfa-lp-badge{width:29px;height:29px;flex:0 0 29px;padding:2px}
+.slfa-lp-table-club{display:inline-flex;align-items:center;gap:8px;min-width:0}
+.slfa-lp-table-club .slfa-lp-badge{width:27px;height:27px;flex:0 0 27px;padding:2px}
+.slfa-lp-table-club>span:last-child{white-space:normal;text-align:left}
