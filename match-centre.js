@@ -131,7 +131,10 @@
       db.from('match_lineups').select('is_starter,league_clubs(club_name),club_squad(player_name,jersey_number)').eq('match_id',String(id))
     ]).then(function(a){
       box.dataset.loaded='1';var ev=a[0].error?[]:(a[0].data||[]),lu=a[1].error?[]:(a[1].data||[]),html='';
-      if(ev.length){html+='<h4>Match timeline</h4><div class="slfa-mc-timeline">'+ev.map(function(e){
+      if(ev.length){
+        var st={};ev.forEach(function(e){var k=e.team_name||'Match',t=String(e.event_type||'').toUpperCase();st[k]=st[k]||{goals:0,yellow:0,red:0,subs:0};if(t==='GOAL')st[k].goals++;else if(t==='YELLOW_CARD')st[k].yellow++;else if(t==='RED_CARD')st[k].red++;else if(t==='SUB')st[k].subs++;});
+        html+='<h4>Match stats</h4><div class="slfa-mc-stats">'+Object.keys(st).map(function(k){var x=st[k];return '<div><strong>'+esc(k)+'</strong><span>⚽ '+x.goals+' goals</span><span>🟨 '+x.yellow+' yellow</span><span>🟥 '+x.red+' red</span><span>↔ '+x.subs+' subs</span></div>';}).join('')+'</div>';
+        html+='<h4>Match timeline</h4><div class="slfa-mc-timeline">'+ev.map(function(e){
         var t=String(e.event_type||'').toUpperCase(),ico=t==='GOAL'?'⚽':t==='YELLOW_CARD'?'🟨':t==='RED_CARD'?'🟥':t==='SUB'?'↔':'•';
         var who=t==='SUB'?(e.player_name||'Player on')+' for '+(e.player_off_name||'player'):(e.player_name||'Match event')+(e.assist_player_name?' · Assist: '+e.assist_player_name:'');
         return '<div class="slfa-mc-event"><span class="slfa-mc-minute">'+esc(e.minute==null?'—':e.minute+"'")+'</span><span>'+ico+'</span><div><strong>'+esc(who)+'</strong><small>'+esc(e.team_name||'')+'</small></div></div>';
