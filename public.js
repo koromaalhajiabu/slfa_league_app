@@ -36,10 +36,11 @@
     if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
     if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
     if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
-    return isWomensLeagueClub(name) ? '' : (CLUB_LOGO_FALLBACKS[key] || 'slfa-logo.png');
+    return CLUB_LOGO_FALLBACKS[key] || '';
   }
+  function isSlfaLogoUrl(url) { return String(url || '').toLowerCase().indexOf('slfa-logo') !== -1; }
   function badge(url, name) {
-    var fallback = clubLogoFallback(name), primary = isWomensLeagueClub(name) ? '' : (url || fallback);
+    var fallback = clubLogoFallback(name), primary = (isWomensLeagueClub(name) || isSlfaLogoUrl(url)) ? '' : (url || fallback);
     var initial = esc((name || '?').charAt(0).toUpperCase());
     if (!primary) return '<span class="badge ph">' + initial + '</span>';
     return '<img class="badge" src="' + esc(primary) + '" data-fallback="' + esc(fallback && primary !== fallback ? fallback : '') + '" alt="" onerror="if(this.dataset.fallback){var next=this.dataset.fallback;this.dataset.fallback=\'\';this.src=next;}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="badge ph" hidden>' + initial + '</span>';
@@ -79,7 +80,7 @@
       return '<img class="league-chip-logo" src="https://pbs.twimg.com/profile_images/1714750858435391488/vjKgPtIj.jpg" alt="Leone Rock Premier League logo" loading="lazy">';
     }
     if (n.indexOf('marampa') !== -1 && n.indexOf('women') !== -1) {
-      return '<img class="league-chip-logo" src="slfa-logo.png" alt="Available SLFA crest for Marampa Mines Women\'s Premier League" loading="lazy">';
+      return '<span class="league-chip-logo league-chip-logo-marampa" role="img" aria-label="Marampa Mines Women\'s Premier League crest"></span>';
     }
     return '';
   }
