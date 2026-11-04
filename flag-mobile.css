@@ -638,3 +638,49 @@ body :where(span,strong,em,small,a,label,button) {
     will-change:auto !important;
   }
 }
+
+
+/* ── SLFA animated white + emerald identity ──
+   Flowing white light and emerald-green glass atmosphere, with readable surfaces. */
+@keyframes slfaWhiteGreenFlow {
+  0% { background-position:0% 0%,100% 0%,50% 100%,0% 50%; }
+  50% { background-position:18% 12%,82% 18%,58% 82%,100% 50%; }
+  100% { background-position:0% 0%,100% 0%,50% 100%,0% 50%; }
+}
+html {
+  background:#e9f7ef !important;
+}
+body {
+  background-image:
+    radial-gradient(ellipse at 12% 8%,rgba(255,255,255,.98) 0%,rgba(255,255,255,.72) 24%,transparent 54%),
+    radial-gradient(ellipse at 92% 18%,rgba(181,245,207,.88) 0%,rgba(89,190,130,.40) 34%,transparent 66%),
+    radial-gradient(ellipse at 48% 100%,rgba(13,116,69,.70) 0%,rgba(31,155,91,.42) 36%,transparent 70%),
+    linear-gradient(125deg,#f8fffa 0%,#d9f3e3 30%,#77c995 65%,#0c7044 100%) !important;
+  background-size:160% 160%,160% 160%,160% 160%,240% 240% !important;
+  background-attachment:fixed !important;
+  animation:slfaWhiteGreenFlow 22s ease-in-out infinite !important;
+}
+body::before {
+  background:linear-gradient(115deg,transparent 0%,rgba(255,255,255,.22) 42%,rgba(255,255,255,.06) 55%,transparent 78%) !important;
+}
+.topbar,.portal-head {
+  background:linear-gradient(110deg,rgba(255,255,255,.88),rgba(224,248,233,.88),rgba(17,105,63,.88)) !important;
+  border-color:rgba(255,255,255,.68) !important;
+}
+.card,.news-card,.news-controls,.admin-body,.detail,.team,.match,.news,
+.ps-panel,.ps-summary-card,.ps-hero,.news-centre-hero,.portal .card {
+  background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(218,246,228,.78),rgba(24,125,75,.58)) !important;
+  border-color:rgba(255,255,255,.72) !important;
+  backdrop-filter:blur(18px) saturate(135%) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(135%) !important;
+}
+.hero {
+  background:
+    radial-gradient(100% 130% at 0% 0%,rgba(255,255,255,.58),transparent 60%),
+    radial-gradient(100% 130% at 100% 100%,rgba(40,174,102,.30),transparent 58%),
+    linear-gradient(135deg,rgba(245,255,248,.94),rgba(24,130,76,.92)) !important;
+  border-color:rgba(255,255,255,.72) !important;
+}
+@media (prefers-reduced-motion:reduce) {
+  body { animation:none !important; }
+}
