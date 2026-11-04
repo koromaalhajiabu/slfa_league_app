@@ -3,7 +3,7 @@
   'use strict';
   var db = window.slfaDb, host = document.getElementById('matchList');
   if (!db || !host) return;
-  var matches = [], leagueNames = {}, clubLogos = {}, filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer;
+  var matches = [], leagueNames = {}, clubLogos = {}, filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer;
 
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function league() { try { return localStorage.getItem('slfa_league') || ''; } catch (e) { return ''; } }
@@ -130,7 +130,7 @@
     }).catch(function(){box.innerHTML='<p class="slfa-mc-no-events">Match details are temporarily unavailable.</p>';});
   }
   function fetchData() {
-    return Promise.all([
+    var request = Promise.all([
       db.from('matches').select('id,match_date,venue,match_status,match_minute,league_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(500),
       db.from('leagues').select('id,name').eq('is_active',true).order('sort_order'),
       db.from('league_clubs').select('club_name,logo_url').eq('is_active',true)
@@ -152,6 +152,14 @@
         updated=new Date();render();return true;
       });
     });
+    return Promise.race([request, new Promise(function (_, reject) {
+      fetchTimer = setTimeout(function () { reject(new Error('The database did not respond within 12 seconds.')); }, 12000);
+    })]).catch(function (err) {
+      host.innerHTML = '<section class="slfa-match-centre-v2"><div class="slfa-mc-empty"><strong>Matches could not load</strong><p>Check your internet connection and try again. The league database did not complete the request.</p><button type="button" id="slfaMcRetry">Retry loading matches</button></div></section>';
+      var retry = document.getElementById('slfaMcRetry');
+      if (retry) retry.addEventListener('click', function () { retry.disabled = true; retry.textContent = 'Retrying…'; fetchData(); });
+      return false;
+    }).then(function (result) { clearTimeout(fetchTimer); return result; });
   }
   function schedule(){clearTimeout(timer);timer=setTimeout(fetchData,500);}
   if(window.MutationObserver){new MutationObserver(function(){if(!host.querySelector('.slfa-match-centre-v2')&&matches.length)render();}).observe(host,{childList:true,subtree:true});}
