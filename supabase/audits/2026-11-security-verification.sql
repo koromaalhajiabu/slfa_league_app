@@ -93,13 +93,17 @@ select table_name, column_name, data_type
 from information_schema.columns
 where table_schema='public' and table_name='match_events' and column_name='client_event_id';
 
--- 7. Storage policies for the Developer profile-photo bucket.
+-- 7. Confirm the profile-photo bucket settings.
+select id, name, public, file_size_limit, allowed_mime_types
+from storage.buckets where id='developer-profiles';
+
+-- 8. Storage policies for the Developer profile-photo bucket.
 select schemaname, tablename, policyname, roles, cmd, qual, with_check
 from pg_policies
 where schemaname='storage' and tablename='objects'
 order by policyname;
 
--- 8. Confirm the application-control read policies are public, but writes are not granted directly.
+-- 9. Confirm the application-control read policies are public, but writes are not granted directly.
 select schemaname, tablename, policyname, roles, cmd, qual, with_check
 from pg_policies
 where schemaname='public' and tablename in ('application_control','system_pause')
