@@ -221,7 +221,7 @@
             var pos=String(p.position||'').replace(/_/g,' ');
             var photo=p.photo_url?'<img class="slfa-lp-player-photo" src="'+esc(p.photo_url)+'" alt="" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false;"><span class="slfa-lp-player-initial" hidden>'+esc((p.player_name||'?').charAt(0).toUpperCase())+'</span>':
               '<span class="slfa-lp-player-initial">'+esc((p.player_name||'?').charAt(0).toUpperCase())+'</span>';
-            return '<button type="button" class="slfa-lp-player-card" data-profile-player="'+esc(p.player_name)+'" data-profile-club="'+esc(name)+'" data-profile-photo="'+esc(p.photo_url||'')+'" data-profile-position="'+esc(pos)+'" data-profile-jersey="'+esc(p.jersey_number||'')+'">'+
+            return '<button type="button" class="slfa-lp-player-card" data-profile-player="'+esc(p.player_name)+'" data-profile-id="'+esc(p.id)+'" data-profile-club="'+esc(name)+'" data-profile-photo="'+esc(p.photo_url||'')+'" data-profile-position="'+esc(pos)+'" data-profile-jersey="'+esc(p.jersey_number||'')+'">'+
               '<span class="slfa-lp-player-portrait">'+photo+'</span><span class="slfa-lp-player-name">'+(p.jersey_number?'#'+esc(p.jersey_number)+' ':'')+esc(p.player_name)+'</span><small>'+esc(pos||'Squad member')+'</small></button>';
           }).join(''):'<p class="slfa-lp-empty">No approved players have been published for this club yet.</p>');
       }
