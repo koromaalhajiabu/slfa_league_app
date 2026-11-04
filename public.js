@@ -324,7 +324,7 @@
       if (all[2].error) { html += empty('The squad is not available right now.'); }
       else {
         html += rows.length ? rows.map(function (x) {
-          return '<div class="row">' + badge(x.photo_url, x.player_name) + '<span class="pname">' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + '<small>' + esc(POS[x.position] || x.position) + (susp[x.id] ? ' · Suspended, ' + susp[x.id] + ' match' + (susp[x.id] === 1 ? '' : 'es') + ' left' : '') + (motmBy[x.id] ? ' · Man of the Match ×' + motmBy[x.id] : '') + '</small></span></div>';
+          return '<div class="row player-profile-trigger" role="button" tabindex="0" data-profile-player="' + esc(x.player_name) + '" data-profile-club="' + esc(name) + '" data-profile-photo="' + esc(x.photo_url || '') + '" data-profile-position="' + esc(POS[x.position] || x.position || '') + '" data-profile-jersey="' + esc(x.jersey_number || '') + '">' + badge(x.photo_url, x.player_name) + '<span class="pname">' + (x.jersey_number ? '#' + esc(x.jersey_number) + ' ' : '') + esc(x.player_name) + '<small>' + esc(POS[x.position] || x.position) + (susp[x.id] ? ' · Suspended, ' + susp[x.id] + ' match' + (susp[x.id] === 1 ? '' : 'es') + ' left' : '') + (motmBy[x.id] ? ' · Man of the Match ×' + motmBy[x.id] : '') + '</small></span></div>';
         }).join('') : empty('No approved players for this season yet.');
       }
       if (records.length) {
@@ -342,7 +342,7 @@
   function playerRows(rows, nameKey, valueKey, metric) {
     if (!rows || !rows.length) return empty('No published ' + metric.toLowerCase() + ' records yet.');
     return rows.map(function (r, i) {
-      return '<article class="ps-row' + (i === 0 ? ' ps-leader' : '') + '">' +
+      return '<article class="ps-row player-profile-trigger' + (i === 0 ? ' ps-leader' : '') + '" role="button" tabindex="0" data-profile-player="' + esc(r[nameKey]) + '" data-profile-club="' + esc(r.club || '') + '" data-profile-photo="' + esc(r.photo_url || '') + '">' +
         '<span class="ps-rank">' + (i === 0 ? '1' : i + 1) + '</span>' +
         badge(r.photo_url, r[nameKey]) +
         '<span class="ps-player"><strong>' + esc(r[nameKey]) + '</strong><small>' + esc(r.club || 'Club not listed') + '</small></span>' +
