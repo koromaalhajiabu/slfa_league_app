@@ -66,13 +66,26 @@
     vembuck: 'logos/women/vem-buck-fc.jpg'
   };
   function clubLogoFallback(name) {
-    var key = String(name || '').toLowerCase().replace(/fc/g, '').replace(/[^a-z0-9]/g, '');
-    if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
-    if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
-    if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
-    if (key === 'patriciaumu' || key === 'patriciaumufc') key = 'patriciaumustrikers';
-    if (key === 'slpolice' || key === 'slpolicefemale' || key === 'sierraleonepolice') key = 'sierraleonepolicefemale';
-    if (key === 'fckallonfemale') key = 'kallonfemale';
+    var raw = String(name || '').toLowerCase();
+    var key = raw.replace(/fc/g, '').replace(/[^a-z0-9]/g, '');
+    var aliases = {
+      bamoiqueen: 'bamoiqueens', bamoiqueensfc: 'bamoiqueens',
+      fckallonfemale: 'kallonfemale', kallonwomen: 'kallonfemale',
+      jonathanchildcarefc: 'jonathanchildcare',
+      kahunlaqueensfc: 'kahunlaqueens', koyaqueensfc: 'koyaqueens',
+      menaqueensfc: 'menaqueens', mogbwemoqueensfc: 'mogbwemoqueens',
+      patriciaumu: 'patriciaumustrikers', patriciaumufc: 'patriciaumustrikers',
+      ramkamarafc: 'ramkamara', risingqueensfc: 'risingqueens',
+      vembuckfc: 'vembuck', slpolice: 'sierraleonepolicefemale',
+      slpolicefemale: 'sierraleonepolicefemale',
+      sierraleonepolice: 'sierraleonepolicefemale',
+      sierraleonepolicefc: 'sierraleonepolicefemale'
+    };
+    key = aliases[key] || key;
+    if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('kallon') !== -1 && /(female|women|ladies)/.test(raw)) key = 'kallonfemale';
+    if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('police') !== -1) key = 'sierraleonepolicefemale';
+    if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('patricia') !== -1) key = 'patriciaumustrikers';
+    if (!WOMENS_CLUB_LOGOS[key] && key.indexOf('vem') !== -1 && key.indexOf('buck') !== -1) key = 'vembuck';
     return WOMENS_CLUB_LOGOS[key] || CLUB_LOGO_FALLBACKS[key] || '';
   }
   function isSlfaLogoUrl(url) { return String(url || '').toLowerCase().indexOf('slfa-logo') !== -1; }
@@ -93,7 +106,7 @@
       (note ? '<small>' + esc(note) + '</small>' : '') + '</div>';
   }
   function matchClub(name) {
-    return clubs.find(function (c) { return c.club_name === name; }) || { club_name: name, logo_url: '' };
+    return clubs.find(function (c) { return sameClub(c.club_name, name); }) || { club_name: name, logo_url: '' };
   }
   function matchTeam(name) {
     var c = matchClub(name);
