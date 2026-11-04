@@ -554,3 +554,51 @@ body :where(input,textarea,select)::placeholder { color:#e2edf4 !important; }
     background:none !important; -webkit-text-fill-color:currentColor !important;
   }
 }
+
+
+/* ── SLFA dimensional kinetic type v10 ──
+   Visible 3D perspective motion with restrained rotation and layered depth. */
+@keyframes slfaDimensionalText {
+  0%,100% {
+    transform:perspective(900px) rotateX(0deg) rotateY(0deg) translate3d(0,0,0);
+    text-shadow:0 1px 0 rgba(0,0,0,.18),0 2px 0 rgba(0,0,0,.12),0 0 8px rgba(165,255,205,.12);
+  }
+  25% {
+    transform:perspective(900px) rotateX(1.2deg) rotateY(-1.4deg) translate3d(0,-1px,2px);
+    text-shadow:1px 2px 0 rgba(0,48,30,.28),2px 3px 0 rgba(0,48,30,.16),0 0 12px rgba(165,255,205,.24);
+  }
+  50% {
+    transform:perspective(900px) rotateX(0deg) rotateY(1.4deg) translate3d(0,0,3px);
+    text-shadow:-1px 2px 0 rgba(0,48,30,.25),-2px 3px 0 rgba(0,48,30,.13),0 0 14px rgba(155,220,255,.22);
+  }
+  75% {
+    transform:perspective(900px) rotateX(-1deg) rotateY(.5deg) translate3d(0,1px,1px);
+    text-shadow:1px 1px 0 rgba(0,48,30,.24),2px 2px 0 rgba(0,48,30,.12),0 0 11px rgba(165,255,205,.20);
+  }
+}
+@keyframes slfaDimensionalBodyText {
+  0%,100% { text-shadow:0 1px 0 rgba(0,0,0,.16),0 0 4px rgba(180,255,215,.08); }
+  50% { text-shadow:1px 1px 0 rgba(0,48,30,.22),2px 2px 0 rgba(0,48,30,.10),0 0 8px rgba(180,255,215,.18); }
+}
+body :where(h1,h2,h3,h4,.brand h1,.portal-head h1,.hero .title,.section-title,.score,.score-big,.pval,.table .pts) {
+  display:inline-block;
+  transform-style:preserve-3d;
+  transform-origin:50% 50%;
+  backface-visibility:visible;
+  animation:slfaDimensionalText 8s ease-in-out infinite !important;
+  will-change:transform,text-shadow;
+}
+body :where(p,li,label,small,strong,em,td,th,.muted,.sub,.kicker,.rt,.news-eyebrow,.ps-eyebrow) {
+  animation:slfaDimensionalBodyText 7s ease-in-out infinite !important;
+}
+body :where(button,a) {
+  transform-style:preserve-3d;
+}
+@media (prefers-reduced-motion:reduce) {
+  body :where(h1,h2,h3,h4,.brand h1,.portal-head h1,.hero .title,.section-title,.score,.score-big,.pval,.table .pts) {
+    animation:none !important; transform:none !important; text-shadow:none !important;
+  }
+  body :where(p,li,label,small,strong,em,td,th,.muted,.sub,.kicker,.rt,.news-eyebrow,.ps-eyebrow) {
+    animation:none !important; text-shadow:none !important;
+  }
+}
