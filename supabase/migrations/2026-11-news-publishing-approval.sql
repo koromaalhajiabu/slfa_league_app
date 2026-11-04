@@ -36,7 +36,7 @@ $function$;
 
 DROP TRIGGER IF EXISTS guard_media_post_publication ON public.media_posts;
 CREATE TRIGGER guard_media_post_publication
-BEFORE INSERT OR UPDATE OF status
+BEFORE INSERT OR UPDATE
 ON public.media_posts
 FOR EACH ROW
 EXECUTE FUNCTION public.guard_media_post_publication();
