@@ -779,3 +779,19 @@ body :where(table,th,td) { color:#f3fff7 !important; }
     transform:none !important;
   }
 }
+
+/* Hero actions and the selected tab: softer, premium outline instead of a heavy white ring */
+body #public .hero-actions .share-app, body #public #alertBtn, body #public #shareApp {
+  background:rgba(255,255,255,.08) !important;
+  border:1px solid rgba(255,255,255,.28) !important;
+  box-shadow:0 6px 16px -10px rgba(0,0,0,.6) !important;
+}
+body #public .hero-actions #alertBtn {
+  background:linear-gradient(135deg,#1eb53a,#0072c6) !important;
+  border-color:transparent !important;
+}
+body .tabs button[aria-selected="true"], body .tabs button.active {
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
