@@ -60,7 +60,7 @@
     if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
     if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
     if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
-    return CLUB_LOGO_FALLBACKS[key] || '';
+    return CLUB_LOGO_FALLBACKS[key] || 'slfa-logo.png';
   }
   function crest(name) {
     var fallback = clubLogoFallback(name), saved = clubLogos[name], logo = saved || fallback;
