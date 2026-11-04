@@ -1,0 +1,119 @@
+/* Unified dark emerald contrast for the public league experience.
+   Keeps logos, pitch photography and alert/status colors intact. */
+#playerDirectory .pd-tools,
+#playerDirectory .pd-empty,
+#playerDirectory .pd-loading,
+#playerDirectory .pd-card,
+#playerDirectory .pd-tools input,
+#playerDirectory .pd-tools select {
+  color:#e9fff1 !important;
+  background:#0b2d20 !important;
+  border-color:rgba(116,224,158,.22) !important;
+}
+#playerDirectory .pd-tools { box-shadow:0 10px 24px rgba(0,0,0,.16); }
+#playerDirectory .pd-tools label>span,
+#playerDirectory .pd-result-bar,
+#playerDirectory .pd-card-info small,
+#playerDirectory .pd-empty p { color:#b8d4c2 !important; }
+#playerDirectory .pd-tools input,
+#playerDirectory .pd-tools select { color:#f1fff5 !important; background:#123b2a !important; }
+#playerDirectory .pd-tools input::placeholder { color:#a7c4b2 !important; opacity:1; }
+#playerDirectory .pd-tools option { color:#f1fff5; background:#123b2a; }
+#playerDirectory .pd-card { background:linear-gradient(145deg,#123b2a,#0b261c) !important; }
+#playerDirectory .pd-card-info strong { color:#f2fff6 !important; }
+#playerDirectory .pd-card-info span { color:#a8e9bd !important; }
+#playerDirectory .pd-shirt,
+#playerDirectory .pd-result-bar strong { color:#8ff0b1 !important; }
+#playerDirectory .pd-photo { background:#174b32 !important; border-color:#397b53 !important; }
+#playerDirectory .pd-initial { color:#b9f5ce !important; }
+#playerDirectory .pd-reset,
+#playerDirectory .pd-empty button { color:#eafff1 !important; background:#17623e !important; border-color:#4a9d6a !important; }
+#playerDirectory .pd-card:hover,
+#playerDirectory .pd-card:focus-visible { border-color:#83e7a8 !important; }
+#playerDirectory .pd-open { color:#a9d8b9 !important; }
+
+/* Match Centre: replace legacy bright white panels with readable emerald surfaces. */
+#matchList,
+#matchList .mc,
+#matchList .mc #playingNow,
+#matchList .mc #upcomingList,
+#matchList .mc #resultsList {
+  color:#e9fff1 !important;
+  background:#0a2b1e !important;
+  border-color:rgba(115,218,153,.2) !important;
+  box-shadow:none !important;
+}
+#matchList .match,
+#matchList .mc .match,
+#matchList .mc #playingNow .match,
+#matchList .mc #upcomingList .match,
+#matchList .mc #resultsList .match {
+  color:#e9fff1 !important;
+  background:linear-gradient(145deg,#123b2a,#0d3022) !important;
+  border-color:rgba(115,218,153,.2) !important;
+}
+#matchList .mc .datebar { background:#123b2a !important; border-color:rgba(115,218,153,.2) !important; }
+#matchList .mc .datebar input[type="date"],
+#matchList .mc select,
+#matchList select,
+#matchList input[type="date"] {
+  color:#f1fff5 !important;
+  background:#17432f !important;
+  border-color:rgba(125,224,160,.3) !important;
+  color-scheme:dark;
+}
+#matchList .mc label,
+#matchList label,
+#matchList .meta,
+#matchList .detail,
+#matchList .mc .empty { color:#b7d2c1 !important; }
+#matchList .teams { color:#f1fff5 !important; }
+#matchList .score,
+#matchList .sub,
+#matchList .meta strong { color:#91efb2 !important; }
+#matchList .vs { color:#a9c8b5 !important; }
+#matchList button { color:#eafff1 !important; background:#175b3b !important; border-color:rgba(130,231,165,.28) !important; }
+#matchList .badge { background:#174b32 !important; }
+
+/* Other public panels: no harsh white cards or low-contrast dark text. */
+#public [data-view="table"].card,
+#public #teamGrid.card,
+#public .ps-panel,
+#public .ps-summary-card,
+#public .news-controls,
+#public .news-card,
+#public #videoList.card,
+#public #predictList.card {
+  color:#e9fff1 !important;
+  background:linear-gradient(145deg,#102f22,#0b261b) !important;
+  border-color:rgba(115,218,153,.2) !important;
+}
+#public .ps-panel-head h3,
+#public .ps-player strong,
+#public .ps-summary-card strong,
+#public .table td,
+#public .table .club,
+#public .news-card h3 { color:#effff4 !important; }
+#public .ps-panel-head p,
+#public .ps-player small,
+#public .ps-summary-card small,
+#public .ps-disclaimer,
+#public .table th,
+#public .news-card p { color:#b6d0bf !important; }
+#public .ps-row { border-color:rgba(133,213,159,.16) !important; }
+#public .ps-rank { color:#dff9e8 !important; background:#234b34 !important; }
+#public .ps-count { color:#dff9e8 !important; background:#1a5637 !important; }
+#public .news-controls input,
+#public .news-controls select {
+  color:#f1fff5 !important;
+  background:#123b2a !important;
+  border-color:rgba(125,224,160,.3) !important;
+}
+#public .news-controls input::placeholder { color:#a7c4b2 !important; opacity:1; }
+#public .news-controls option { color:#f1fff5; background:#123b2a; }
+#public .table th { background:#123b2a !important; }
+#public .offline-banner { background:#473a17 !important; color:#fff0bd !important; border-color:#9c7d2a !important; }
+@media(max-width:520px) {
+  #playerDirectory .pd-tools { padding:11px !important; }
+  #playerDirectory .pd-card { min-height:80px; }
+}
