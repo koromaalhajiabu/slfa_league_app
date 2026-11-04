@@ -38,7 +38,7 @@
     wusumstars: 'https://images.seeklogo.com/logo-png/63/1/wusum-stars-fc-logo-png_seeklogo-638334.png',
     diamondstars: 'https://images.seeklogo.com/logo-png/63/1/diamond-stars-fc-logo-png_seeklogo-638347.png',
     eastendlions: 'https://images.seeklogo.com/logo-png/63/1/east-end-lions-fc-logo-png_seeklogo-638348.png',
-    westernunited: 'https://www.dsg-images.com/sport_entity/200x200/6528.png'
+    westernunited: 'https://www.dsg-images.com/sport_entity/200x200/6528.png',
     // Marampa Mines Women's Premier League crests (Global Sports Archive club artwork)
     ramkamara: 'https://www.dsg-images.com/clubs/200x200/65784.png',
     ramkamarafemale: 'https://www.dsg-images.com/clubs/200x200/65784.png',
