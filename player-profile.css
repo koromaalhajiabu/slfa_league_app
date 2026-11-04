@@ -50,3 +50,15 @@
  .pp-metric strong { font-size:23px; }
 }
 @media(prefers-reduced-motion:reduce) { .pp-loading-mark { animation:none; } }
+
+.pp-career { margin-top:14px; padding:16px; border:1px solid rgba(137,221,165,.16); border-radius:18px; background:rgba(8,45,29,.62); }
+.pp-career-head>span { color:#8be5ad; font-size:9px; font-weight:800; letter-spacing:.14em; }
+.pp-career-head h3 { margin:4px 0 12px; color:#f2fff6; font-size:16px; }
+.pp-career-totals { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-bottom:12px; }
+.pp-career-totals>div { padding:12px; border-radius:12px; background:rgba(42,116,72,.24); }
+.pp-career-totals small { display:block; color:#b8d8c2; font-size:9px; letter-spacing:.08em; }
+.pp-career-totals strong { display:block; margin-top:4px; color:#8df1b1; font-size:25px; font-variant-numeric:tabular-nums; }
+.pp-career-table-wrap { overflow-x:auto; }
+.pp-career-table { width:100%; border-collapse:collapse; color:#e9fff0; font-size:11px; }
+.pp-career-table th,.pp-career-table td { padding:10px 8px; border-bottom:1px solid rgba(164,224,184,.12); text-align:left; }
+.pp-career-table th { color:#a9dabb; font-size:9px; letter-spacing:.08em; }
