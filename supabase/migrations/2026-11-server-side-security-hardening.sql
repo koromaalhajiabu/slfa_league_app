@@ -50,7 +50,8 @@ declare
     'match_events',
     'match_lineups',
     'match_results',
-    'match_referee_assignments'
+    'match_referee_assignments',
+    'referee_offline_submissions'
   ];
 begin
   -- Trusted server-side maintenance is allowed to proceed.
@@ -132,7 +133,8 @@ declare
     'club_profile_change_requests',
     'club_profile_change_audit',
     'staff_departments',
-    'staff_registry'
+    'staff_registry',
+    'referee_offline_submissions'
   ];
 begin
   foreach t in array protected_tables loop
