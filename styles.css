@@ -219,7 +219,7 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
 .touchpad .tp-goal { background:#1eb53a; color:#000; }
 .touchpad .tp-yellow { background:#ffd60a; color:#000; }
 .touchpad .tp-red { background:#ff3b30; color:#fff; }
-.touchpad .tp-sub { background:#0a84ff; color:#fff; }
+.touchpad .tp-sub { background:#0072c6; color:#fff; }
 .touchpad .tp-team { background:#fff; color:#000; }
 .touchpad .tp-input { width:100%; min-height:60px; font-size:20px; border-radius:12px; border:2px solid #fff; background:#000; color:#fff; padding:10px; box-sizing:border-box; margin-top:8px; }
 .touchpad .tp-back { display:block; width:100%; min-height:60px; margin:10px 0; font-size:18px; border-radius:12px; border:2px solid #fff; background:transparent; color:#fff; }
@@ -265,7 +265,7 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg:#06121c; --bg2:#0a1a28; --card:#0e2032; --ink:#f2f7f4; --muted:#a3b8c7;
-    --accent:#2fd151; --accent2:#4ea8ff; --danger:#ff7a6b; --line:rgba(78,168,255,.25);
+    --accent:#2fd151; --accent2:#3d9be0; --danger:#ff7a6b; --line:rgba(78,168,255,.25);
   }
 }
 body { background:var(--bg); color:var(--ink); }
@@ -286,7 +286,7 @@ button.primary { background:var(--flag-blue); color:#ffffff; }
 .league-row td { color:var(--accent2); }
 /* Match Center keeps its dark, high-contrast look, with flag green for scores */
 .mc .score { color:#2fd151; }
-.mc .league-name { color:#4ea8ff; }
+.mc .league-name { color:#3d9be0; }
 .mc .match .meta strong { color:#2fd151; }
 
 /* Offline notice */
@@ -296,7 +296,7 @@ button.primary { background:var(--flag-blue); color:#ffffff; }
 :root {
   --bg:#f3f9f5; --bg2:#ffffff; --card:#ffffff; --ink:#0d2416; --muted:#4f6b58;
   --accent:#0c7a2b; --accent2:#0a5e24; --line:rgba(12,122,43,.16);
-  --glass-blue:#0a84ff; --glass-blue-deep:#0061c9; --glow:rgba(10,132,255,.55);
+  --glass-blue:#0072c6; --glass-blue-deep:#005aa0; --glow:rgba(0,114,198,.55);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -320,7 +320,7 @@ button.primary, button.secondary, button.small, .btnlink, .tabs button, .leagueS
   position:relative; overflow:hidden; isolation:isolate;
   -webkit-backdrop-filter:blur(14px) saturate(170%); backdrop-filter:blur(14px) saturate(170%);
   border:1px solid rgba(255,255,255,.45); color:#0a2a52;
-  background:linear-gradient(135deg, rgba(10,132,255,.22), rgba(255,255,255,.55));
+  background:linear-gradient(135deg, rgba(0,114,198,.22), rgba(255,255,255,.55));
   box-shadow:0 0 14px -4px var(--glow), inset 0 1px 0 rgba(255,255,255,.7);
   transition:transform .15s ease, box-shadow .3s ease, filter .3s ease;
 }
@@ -331,19 +331,19 @@ button.primary::before, button.secondary::before, button.small::before, .btnlink
   transform:skewX(-20deg); animation:glassSheen 4.5s ease-in-out infinite;
 }
 button.primary, .tabs button[aria-selected="true"], .leagueSwitch .chip.on {
-  background:linear-gradient(135deg, rgba(10,132,255,.92), rgba(0,97,201,.85) 55%, rgba(60,170,255,.9));
+  background:linear-gradient(135deg, rgba(0,114,198,.92), rgba(0,90,160,.85) 55%, rgba(0,114,198,.9));
   color:#ffffff; border-color:rgba(255,255,255,.55); text-shadow:0 1px 2px rgba(0,30,70,.35);
-  animation:glowPulse 3.2s ease-in-out infinite;
+  animation:none;
 }
 button.primary:hover, button.secondary:hover, button.small:hover, .tabs button:hover, .leagueSwitch .chip:hover {
   transform:translateY(-1px); filter:brightness(1.06);
 }
 button.primary:disabled, button.secondary:disabled, button.small:disabled { opacity:.55; animation:none; }
 button.danger { color:#b3261e; background:linear-gradient(135deg, rgba(255,255,255,.7), rgba(255,220,216,.5)); border-color:rgba(179,38,30,.45); box-shadow:0 0 12px -4px rgba(179,38,30,.4); }
-.tabs button { color:#0061c9; }
+.tabs button { color:#005aa0; }
 @keyframes glowPulse {
-  0%, 100% { box-shadow:0 0 14px -2px rgba(10,132,255,.45), 0 0 0 0 rgba(10,132,255,0), inset 0 1px 0 rgba(255,255,255,.5); }
-  50% { box-shadow:0 0 26px 2px rgba(10,132,255,.7), 0 0 60px -8px rgba(10,132,255,.45), inset 0 1px 0 rgba(255,255,255,.5); }
+  0%, 100% { box-shadow:0 0 14px -2px rgba(0,114,198,.45), 0 0 0 0 rgba(0,114,198,0), inset 0 1px 0 rgba(255,255,255,.5); }
+  50% { box-shadow:0 0 26px 2px rgba(0,114,198,.7), 0 0 60px -8px rgba(0,114,198,.45), inset 0 1px 0 rgba(255,255,255,.5); }
 }
 @keyframes glassSheen { 0%, 60% { left:-60%; } 100% { left:130%; } }
 @media (prefers-reduced-motion: reduce) {
@@ -359,14 +359,14 @@ button.danger { color:#b3261e; background:linear-gradient(135deg, rgba(255,255,2
   :root:not([data-theme="light"]) .hero { background:radial-gradient(120% 140% at 0% 0%, rgba(61,220,106,.22), transparent 55%), linear-gradient(135deg, #0c2a17, #071a0e); }
   :root:not([data-theme="light"]) button.secondary, :root:not([data-theme="light"]) button.small, :root:not([data-theme="light"]) .btnlink,
   :root:not([data-theme="light"]) .tabs button, :root:not([data-theme="light"]) .leagueSwitch .chip {
-    background:linear-gradient(135deg, rgba(10,132,255,.28), rgba(255,255,255,.08)); color:#f4fbf6; border-color:rgba(160,220,255,.4);
+    background:linear-gradient(135deg, rgba(0,114,198,.28), rgba(255,255,255,.08)); color:#f4fbf6; border-color:rgba(160,220,255,.4);
   }
   :root:not([data-theme="light"]) .tabs button { color:#f4fbf6; }
 }
 :root[data-theme="dark"] .hero { background:radial-gradient(120% 140% at 0% 0%, rgba(61,220,106,.22), transparent 55%), linear-gradient(135deg, #0c2a17, #071a0e); }
 :root[data-theme="dark"] button.secondary, :root[data-theme="dark"] button.small, :root[data-theme="dark"] .btnlink,
 :root[data-theme="dark"] .tabs button, :root[data-theme="dark"] .leagueSwitch .chip {
-  background:linear-gradient(135deg, rgba(10,132,255,.28), rgba(255,255,255,.08)); color:#f4fbf6; border-color:rgba(160,220,255,.4);
+  background:linear-gradient(135deg, rgba(0,114,198,.28), rgba(255,255,255,.08)); color:#f4fbf6; border-color:rgba(160,220,255,.4);
 }
 :root[data-theme="dark"] .tabs button { color:#f4fbf6; }
 
@@ -943,9 +943,9 @@ details.admin > summary {
   min-height: 28px !important;
 }
 /* ===== Favourite clubs ===== */
-.team .fav { margin-left:auto; flex:0 0 auto; width:40px; height:40px; border-radius:50%; border:1px solid rgba(255,255,255,.45); background:linear-gradient(135deg, rgba(10,132,255,.22), rgba(255,255,255,.55)); color:#0a2a52; font-size:18px; line-height:1; cursor:pointer; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); box-shadow:0 0 12px -4px var(--glow); transition:transform .15s ease, box-shadow .3s ease; }
+.team .fav { margin-left:auto; flex:0 0 auto; width:40px; height:40px; border-radius:50%; border:1px solid rgba(255,255,255,.45); background:linear-gradient(135deg, rgba(0,114,198,.22), rgba(255,255,255,.55)); color:#0a2a52; font-size:18px; line-height:1; cursor:pointer; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); box-shadow:0 0 12px -4px var(--glow); transition:transform .15s ease, box-shadow .3s ease; }
 .team .fav:hover { transform:scale(1.08); }
-.team .fav.on { background:linear-gradient(135deg, rgba(10,132,255,.92), rgba(0,97,201,.85)); color:#ffd54a; border-color:rgba(255,255,255,.55); }
+.team .fav.on { background:linear-gradient(135deg, rgba(0,114,198,.92), rgba(0,90,160,.85)); color:#ffd54a; border-color:rgba(255,255,255,.55); }
 .team .fav:focus-visible { outline:3px solid var(--flag-green); outline-offset:2px; }
 .favNote { font-size:13px; min-height:18px; }
 
@@ -957,7 +957,7 @@ details.admin > summary {
 .match:active, .team:active { transform:scale(.985); }
 .pullHint { position:fixed; left:50%; top:-40px; z-index:60; transform:translateX(-50%); padding:8px 16px; border-radius:999px; background:var(--card); border:1px solid var(--line); color:var(--accent); font-size:13px; box-shadow:0 10px 24px -12px rgba(0,40,80,.45); transition:transform .25s ease, opacity .25s ease; opacity:0; pointer-events:none; }
 .pullHint.show { opacity:1; }
-.toast { position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom, 0px) + 22px); z-index:70; transform:translate(-50%, 140%); max-width:min(440px, calc(100vw - 32px)); padding:12px 18px; border-radius:16px; background:linear-gradient(135deg, rgba(10,132,255,.94), rgba(0,97,201,.92)); color:#fff; font-size:14px; font-weight:500; box-shadow:0 18px 40px -14px rgba(0,60,140,.6); transition:transform .4s cubic-bezier(.2,.8,.2,1); }
+.toast { position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom, 0px) + 22px); z-index:70; transform:translate(-50%, 140%); max-width:min(440px, calc(100vw - 32px)); padding:12px 18px; border-radius:16px; background:linear-gradient(135deg, rgba(0,114,198,.94), rgba(0,90,160,.92)); color:#fff; font-size:14px; font-weight:500; box-shadow:0 18px 40px -14px rgba(0,60,140,.6); transition:transform .4s cubic-bezier(.2,.8,.2,1); }
 .toast.show { transform:translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) {
   [data-view]:not([hidden]), .livedot, .dTimeline .ev { animation:none; }
@@ -966,7 +966,7 @@ details.admin > summary {
 
 /* Club crests in the public league standings */
 .table-club{display:inline-flex;align-items:center;gap:8px;min-width:0}
-.table-club-logo{width:28px;height:28px;flex:0 0 28px;object-fit:contain;border-radius:50%;padding:2px;background:rgba(10,132,255,.07)}
+.table-club-logo{width:28px;height:28px;flex:0 0 28px;object-fit:contain;border-radius:50%;padding:2px;background:rgba(0,114,198,.07)}
 .table-club-fallback{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--accent2)}
 
 /* ===== Premium pass 1: calmer surfaces, one clear button style, underline tabs ===== */
@@ -995,7 +995,7 @@ body .hero .share-app { border-radius:999px; padding:9px 16px; font-size:12.5px;
 body .hero .share-app:first-child { background:linear-gradient(135deg,#1eb53a,#0072c6); border-color:transparent; color:#fff; box-shadow:0 8px 22px -10px rgba(0,114,198,.9); }
 
 /* Buttons: primary is solid flag blue, secondary is a quiet outline */
-button.primary { background:linear-gradient(135deg,#0072c6,#1d8fe0); color:#fff; box-shadow:0 8px 20px -12px rgba(0,114,198,.9); }
+button.primary { background:linear-gradient(135deg,#0072c6,#0a86d6); color:#fff; box-shadow:0 8px 20px -12px rgba(0,114,198,.9); }
 button.secondary { background:transparent; border:1px solid rgba(255,255,255,.18); color:var(--ink); }
 
 /* Tabs: underline indicator instead of stacked filled pills */
