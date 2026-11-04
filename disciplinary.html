@@ -15,6 +15,37 @@
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="premium-theme.css">
 <link rel="stylesheet" href="flag-mobile.css?v=1">
+<style id="slfa-live-text-motion">
+/* High-visibility text motion and brightness */
+@keyframes slfaLiveTextMove {
+  0%,100% { transform:translateX(0); }
+  50% { transform:translateX(6px); }
+}
+@keyframes slfaLiveTextGlow {
+  0%,100% { text-shadow:0 0 3px rgba(255,255,255,.12); filter:brightness(1); }
+  50% { text-shadow:0 0 12px rgba(145,255,190,.55),0 0 18px rgba(80,185,255,.28); filter:brightness(1.28); }
+}
+body h1,body h2,body h3,
+body .brand p,body .kicker,body .sub,
+body .portal-head p,body .portal-head .eyebrow,
+body .news-eyebrow,body .ps-eyebrow {
+  animation:slfaLiveTextMove 4s ease-in-out infinite,slfaLiveTextGlow 3s ease-in-out infinite !important;
+  color:#f1fff5 !important;
+}
+body .tabs button,body nav button,body .portal nav a,
+body .score,body .score-big,body .table th {
+  color:#e6f7ff !important;
+  text-shadow:0 0 9px rgba(90,190,255,.32) !important;
+  animation:slfaLiveTextGlow 3s ease-in-out infinite !important;
+}
+@media (prefers-reduced-motion:reduce) {
+  body h1,body h2,body h3,body .brand p,body .kicker,body .sub,
+  body .portal-head p,body .portal-head .eyebrow,body .news-eyebrow,
+  body .ps-eyebrow,body .tabs button,body nav button,body .portal nav a,
+  body .score,body .score-big,body .table th { animation:none !important; }
+}
+</style>
+
 </head>
 <body data-portal="DISCIPLINARY_OFFICER">
 <header class="portal-head">
