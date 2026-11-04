@@ -33,9 +33,31 @@
   function upcoming(m) {
     return ['SCHEDULED','RESCHEDULED'].includes(String(m.match_status || '').toUpperCase());
   }
+  var CLUB_LOGO_FALLBACKS = {
+    baiburehwarriors: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bai%20Burah%20Warrior%20FC%20Logo.jpeg',
+    bhantalfc: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bhantal%20FC%20Logo.jpeg',
+    borangers: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bo%20Rangers.png',
+    bullomstars: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Bullom%20Stars%20Logo.png',
+    fckallon: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Kallon_FC.jpg',
+    kamboieagles: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Kambo%20Eagles%20Logo.png',
+    mightyblackpool: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Mighty%20Blackpool%20Logo.png',
+    oldedwardians: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Old%20Edwardian%20Logo.png',
+    ports: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Port%20Authority%20Logo.png',
+    starsportacademy: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Star%20Sport%20Logo.png',
+    waterloofc: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/waterloo%20fc.jpeg',
+    wilberforcestrikers: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Wilberforce%20Strikers%20Logo.png',
+    wusumstars: 'https://qfgcfgjvwwpzkouaczlb.supabase.co/storage/v1/object/public/team_crests/Wusum%20Stars%20Logo.png'
+  };
+  function clubLogoFallback(name) {
+    var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
+    if (key === 'portsauthority') key = 'ports';
+    if (key === 'starssa' || key === 'starsport') key = 'starsportacademy';
+    return CLUB_LOGO_FALLBACKS[key] || '';
+  }
   function clubBadge(c) {
-    return c.logo_url
-      ? '<img class="slfa-lp-badge" src="' + esc(c.logo_url) + '" alt="" loading="lazy">'
+    var logo = c.logo_url || clubLogoFallback(c.club_name);
+    return logo
+      ? '<img class="slfa-lp-badge" src="' + esc(logo) + '" alt="" loading="lazy">'
       : '<span class="slfa-lp-badge slfa-lp-placeholder">' + esc((c.club_name || '?').charAt(0).toUpperCase()) + '</span>';
   }
   function selectedLeague() {
