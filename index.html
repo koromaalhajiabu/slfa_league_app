@@ -104,11 +104,20 @@
 
     <div data-view="teams" class="view card" id="teamGrid" hidden>Loading teams…</div>
 
-    <div data-view="players" class="view" hidden>
-      <div class="card"><h3 class="sub">Top scorers</h3><div id="scorers">Loading…</div></div>
-      <div class="card"><h3 class="sub">Top assists</h3><div id="assists">Loading…</div></div>
-      <div class="card"><h3 class="sub">Clean sheets</h3><div id="cleanSheets">Loading…</div></div>
-      <div class="card"><h3 class="sub">Man of the Match</h3><div id="motm">Loading…</div></div>
+    <div data-view="players" class="view ps-view" hidden>
+      <section class="ps-hero">
+        <div><span class="ps-eyebrow">SIERRA LEONE FOOTBALL ASSOCIATION</span><h2>Player Statistics Centre</h2>
+          <p>Follow the league leaders across goals, assists, clean sheets and match awards.</p></div>
+        <span class="ps-hero-mark" aria-hidden="true">★</span>
+      </section>
+      <div class="ps-summary" id="playerStatsSummary"><div class="ps-summary-card">Loading leaders…</div></div>
+      <div class="ps-leaderboards">
+        <section class="card ps-panel" id="scorers">Loading goal statistics…</section>
+        <section class="card ps-panel" id="assists">Loading assist statistics…</section>
+        <section class="card ps-panel" id="cleanSheets">Loading goalkeeper statistics…</section>
+        <section class="card ps-panel" id="motm">Loading match awards…</section>
+      </div>
+      <p class="ps-disclaimer">Statistics are displayed from published league records. Rankings may change as verified match information is updated.</p>
     </div>
 
     <div data-view="news" class="view" id="newsList" hidden><div id="pollList"></div><div id="newsItems">Loading news…</div></div>
