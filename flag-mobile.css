@@ -364,7 +364,7 @@ body .portal .card h2,body .portal .card h3 {
   --slfa-accessible-text:#ffffff;
   --slfa-accessible-muted:#e6edf3;
   --slfa-accessible-blue:#0756a5;
-  --slfa-accessible-green:#075b2a;
+  --slfa-accessible-green:#042c42;
   --slfa-accessible-border:rgba(255,255,255,.72);
 }
 /* Keep national colours in the identity accents, not as low-contrast body text. */
@@ -457,45 +457,45 @@ body button, body a, body input, body select, body textarea {
 /* ── SLFA brighter emerald glass background v7 ──
    Lift the deep-green surfaces slightly while preserving readable contrast. */
 html {
-  background:#0a3022 !important;
+  background:#051a3b !important;
 }
 body {
   background:
     radial-gradient(900px 540px at 8% -8%,rgba(45,210,135,.30),transparent 62%),
     radial-gradient(760px 520px at 100% 8%,rgba(31,145,111,.28),transparent 60%),
     radial-gradient(680px 520px at 55% 110%,rgba(15,137,101,.24),transparent 65%),
-    linear-gradient(145deg,#09291d 0%,#10432f 48%,#0a3022 100%) !important;
+    linear-gradient(145deg,#041737 0%,#082246 48%,#051a3b 100%) !important;
   background-attachment:fixed !important;
 }
 body::before {
   background:linear-gradient(115deg,transparent 0%,rgba(153,255,204,.045) 48%,transparent 72%) !important;
 }
 .topbar,.portal-head {
-  background:rgba(9,49,34,.86) !important;
+  background:rgba(4,27,59,.86) !important;
 }
 .card,.news-card,.news-controls,.admin-body,.detail,.team,.match,.news,
 .ps-panel,.ps-summary-card,.ps-hero,.news-centre-hero,.portal .card {
-  background:linear-gradient(145deg,rgba(22,105,70,.70),rgba(8,59,41,.82)) !important;
+  background:linear-gradient(145deg,rgba(11,50,90,.70),rgba(4,31,65,.82)) !important;
 }
 .hero {
   background:
     radial-gradient(100% 130% at 0% 0%,rgba(61,224,151,.38),transparent 60%),
     radial-gradient(100% 130% at 100% 100%,rgba(31,137,221,.20),transparent 58%),
-    linear-gradient(135deg,rgba(13,112,70,.97),rgba(7,64,45,.98)) !important;
+    linear-gradient(135deg,rgba(6,53,90,.97),rgba(4,33,68,.98)) !important;
 }
 
 
 /* ── SLFA luminous glass-green finish v8 ──
    A visibly brighter emerald atmosphere with translucent green glass surfaces. */
 html {
-  background:#14543a !important;
+  background:#0a294f !important;
 }
 body {
   background:
     radial-gradient(980px 600px at 10% -5%,rgba(83,255,164,.42),transparent 62%),
     radial-gradient(820px 560px at 100% 12%,rgba(55,190,137,.36),transparent 60%),
     radial-gradient(760px 560px at 52% 108%,rgba(27,170,119,.32),transparent 65%),
-    linear-gradient(145deg,#10442f 0%,#176344 48%,#0e4932 100%) !important;
+    linear-gradient(145deg,#082346 0%,#0c3058 48%,#072548 100%) !important;
   background-attachment:fixed !important;
 }
 body::before {
@@ -504,19 +504,19 @@ body::before {
     linear-gradient(115deg,transparent 0%,rgba(170,255,211,.075) 48%,transparent 72%) !important;
 }
 .topbar,.portal-head {
-  background:rgba(15,76,51,.88) !important;
+  background:rgba(8,38,73,.88) !important;
   border-color:rgba(171,255,207,.34) !important;
 }
 .card,.news-card,.news-controls,.admin-body,.detail,.team,.match,.news,
 .ps-panel,.ps-summary-card,.ps-hero,.news-centre-hero,.portal .card {
-  background:linear-gradient(145deg,rgba(34,132,88,.78),rgba(13,78,54,.86)) !important;
+  background:linear-gradient(145deg,rgba(34,132,88,.78),rgba(6,39,76,.86)) !important;
   border-color:rgba(170,255,205,.30) !important;
 }
 .hero {
   background:
     radial-gradient(100% 130% at 0% 0%,rgba(94,255,176,.48),transparent 60%),
     radial-gradient(100% 130% at 100% 100%,rgba(38,153,228,.24),transparent 58%),
-    linear-gradient(135deg,rgba(18,135,83,.98),rgba(10,83,57,.98)) !important;
+    linear-gradient(135deg,rgba(18,135,83,.98),rgba(5,41,78,.98)) !important;
   border-color:rgba(185,255,215,.42) !important;
 }
 
@@ -565,20 +565,20 @@ body :where(input,textarea,select)::placeholder { color:#e2edf4 !important; }
   }
   25% {
     transform:perspective(900px) rotateX(1.2deg) rotateY(-1.4deg) translate3d(0,-1px,2px);
-    text-shadow:1px 2px 0 rgba(0,48,30,.28),2px 3px 0 rgba(0,48,30,.16),0 0 12px rgba(165,255,205,.24);
+    text-shadow:1px 2px 0 rgba(0,26,56,.28),2px 3px 0 rgba(0,26,56,.16),0 0 12px rgba(165,255,205,.24);
   }
   50% {
     transform:perspective(900px) rotateX(0deg) rotateY(1.4deg) translate3d(0,0,3px);
-    text-shadow:-1px 2px 0 rgba(0,48,30,.25),-2px 3px 0 rgba(0,48,30,.13),0 0 14px rgba(155,220,255,.22);
+    text-shadow:-1px 2px 0 rgba(0,26,56,.25),-2px 3px 0 rgba(0,26,56,.13),0 0 14px rgba(155,220,255,.22);
   }
   75% {
     transform:perspective(900px) rotateX(-1deg) rotateY(.5deg) translate3d(0,1px,1px);
-    text-shadow:1px 1px 0 rgba(0,48,30,.24),2px 2px 0 rgba(0,48,30,.12),0 0 11px rgba(165,255,205,.20);
+    text-shadow:1px 1px 0 rgba(0,26,56,.24),2px 2px 0 rgba(0,26,56,.12),0 0 11px rgba(165,255,205,.20);
   }
 }
 @keyframes slfaDimensionalBodyText {
   0%,100% { text-shadow:0 1px 0 rgba(0,0,0,.16),0 0 4px rgba(180,255,215,.08); }
-  50% { text-shadow:1px 1px 0 rgba(0,48,30,.22),2px 2px 0 rgba(0,48,30,.10),0 0 8px rgba(180,255,215,.18); }
+  50% { text-shadow:1px 1px 0 rgba(0,26,56,.22),2px 2px 0 rgba(0,26,56,.10),0 0 8px rgba(180,255,215,.18); }
 }
 body :where(h1,h2,h3,h4,.brand h1,.portal-head h1,.hero .title,.section-title,.score,.score-big,.pval,.table .pts) {
   display:inline-block;
@@ -654,8 +654,8 @@ body {
   background-image:
     radial-gradient(ellipse at 12% 8%,rgba(255,255,255,.98) 0%,rgba(255,255,255,.72) 24%,transparent 54%),
     radial-gradient(ellipse at 92% 18%,rgba(181,245,207,.88) 0%,rgba(89,190,130,.40) 34%,transparent 66%),
-    radial-gradient(ellipse at 48% 100%,rgba(13,116,69,.70) 0%,rgba(31,155,91,.42) 36%,transparent 70%),
-    linear-gradient(125deg,#f8fffa 0%,#d9f3e3 30%,#77c995 65%,#0c7044 100%) !important;
+    radial-gradient(ellipse at 48% 100%,rgba(6,55,89,.70) 0%,rgba(31,155,91,.42) 36%,transparent 70%),
+    linear-gradient(125deg,#f8fffa 0%,#d9f3e3 30%,#77c995 65%,#063558 100%) !important;
   background-size:160% 160%,160% 160%,160% 160%,240% 240% !important;
   background-attachment:fixed !important;
   animation:slfaWhiteGreenFlow 22s ease-in-out infinite !important;
@@ -664,7 +664,7 @@ body::before {
   background:linear-gradient(115deg,transparent 0%,rgba(255,255,255,.22) 42%,rgba(255,255,255,.06) 55%,transparent 78%) !important;
 }
 .topbar,.portal-head {
-  background:linear-gradient(110deg,rgba(255,255,255,.88),rgba(224,248,233,.88),rgba(17,105,63,.88)) !important;
+  background:linear-gradient(110deg,rgba(255,255,255,.88),rgba(224,248,233,.88),rgba(8,50,84,.88)) !important;
   border-color:rgba(255,255,255,.68) !important;
 }
 .card,.news-card,.news-controls,.admin-body,.detail,.team,.match,.news,
@@ -694,14 +694,14 @@ body::before {
   50% { background-position:100% 20%,0% 80%,100% 50%; }
 }
 html {
-  background:#063b28 !important;
+  background:#031f40 !important;
 }
 body {
   color:#f4fff8 !important;
   background:
     radial-gradient(ellipse at 12% 0%,rgba(34,166,104,.40),transparent 48%),
-    radial-gradient(ellipse at 92% 100%,rgba(8,105,66,.55),transparent 52%),
-    linear-gradient(135deg,#052d20 0%,#075536 48%,#063b28 100%) !important;
+    radial-gradient(ellipse at 92% 100%,rgba(4,50,86,.55),transparent 52%),
+    linear-gradient(135deg,#021939 0%,#042a4c 48%,#031f40 100%) !important;
   background-size:180% 180%,180% 180%,220% 220% !important;
   background-attachment:fixed !important;
   animation:slfaEmeraldAtmosphere 28s ease-in-out infinite !important;
@@ -711,22 +711,22 @@ body::before {
 }
 .topbar,.portal-head {
   color:#f7fff9 !important;
-  background:linear-gradient(135deg,rgba(5,65,42,.97),rgba(8,91,57,.96)) !important;
+  background:linear-gradient(135deg,rgba(2,33,66,.97),rgba(4,44,78,.96)) !important;
   border-color:rgba(130,255,185,.24) !important;
 }
 .card,.news-card,.news-controls,.admin-body,.detail,.team,.match,.news,
 .ps-panel,.ps-summary-card,.ps-hero,.news-centre-hero,.portal .card {
   color:#f4fff8 !important;
-  background:linear-gradient(145deg,rgba(17,112,69,.94),rgba(7,70,46,.96)) !important;
-  background:linear-gradient(145deg,rgba(17,112,69,.94),rgba(7,70,46,.96)) !important;
+  background:linear-gradient(145deg,rgba(8,53,89,.94),rgba(4,35,69,.96)) !important;
+  background:linear-gradient(145deg,rgba(8,53,89,.94),rgba(4,35,69,.96)) !important;
   border:1px solid rgba(133,255,190,.24) !important;
-  box-shadow:0 12px 34px rgba(0,18,10,.22),inset 0 1px 0 rgba(225,255,238,.07) !important;
+  box-shadow:0 12px 34px rgba(0,14,38,.22),inset 0 1px 0 rgba(225,255,238,.07) !important;
   backdrop-filter:blur(16px) saturate(125%) !important;
   -webkit-backdrop-filter:blur(16px) saturate(125%) !important;
 }
 .hero {
   color:#fff !important;
-  background:linear-gradient(135deg,#117849 0%,#075333 100%) !important;
+  background:linear-gradient(135deg,#08385c 0%,#042949 100%) !important;
   border:1px solid rgba(148,255,196,.30) !important;
 }
 body :where(h1,h2,h3,h4,.brand h1,.portal-head h1,.hero .title,.section-title) {
@@ -751,7 +751,7 @@ body .muted, body .sub, body small, body .rt {
 body :where(input,textarea,select) {
   color:#ffffff !important;
   caret-color:#ffffff !important;
-  background:rgba(2,48,31,.82) !important;
+  background:rgba(1,26,56,.82) !important;
   border:1px solid rgba(157,255,199,.48) !important;
   box-shadow:inset 0 1px 4px rgba(0,0,0,.16) !important;
 }
@@ -766,7 +766,7 @@ body :where(input,textarea,select):focus {
 }
 body :where(button,.btn) {
   color:#ffffff !important;
-  background:linear-gradient(135deg,#15965b,#087044) !important;
+  background:linear-gradient(135deg,#15965b,#043558) !important;
   border:1px solid rgba(177,255,211,.42) !important;
   text-shadow:none !important;
 }
@@ -793,5 +793,14 @@ body #public .hero-actions #alertBtn {
 body .tabs button[aria-selected="true"], body .tabs button.active {
   background:transparent !important;
   border:0 !important;
+  box-shadow:none !important;
+}
+
+/* Match details buttons: quiet navy ghost in every scheme (no green, no blue gradient) */
+html body .slfa-mc-details-btn,
+html body #matchList .slfa-mc-details-btn {
+  background:rgba(0,114,198,.14) !important;
+  border:1px solid rgba(140,190,255,.3) !important;
+  color:#e6f1ff !important;
   box-shadow:none !important;
 }
