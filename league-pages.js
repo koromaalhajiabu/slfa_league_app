@@ -192,10 +192,12 @@
     var facts = [club.city, club.stadium ? 'Home ground: ' + club.stadium : '', club.founded_year ? 'Established ' + club.founded_year : ''].filter(Boolean);
     host.innerHTML = '<section class="slfa-league-pages slfa-lp-profile"><div class="slfa-lp-hero"><div><p class="slfa-lp-eyebrow">OFFICIAL COMPETITION CLUB</p><h3>' + esc(name) + '</h3><p>' + esc(lg.name) + '</p></div>' + clubBadge(club) + '</div>' +
       '<div class="slfa-lp-detail-actions"><button type="button" id="slfaLpClubBack">‹ Back to ' + esc(lg.name) + '</button><span>Public club profile</span></div>' +
-      '<div class="slfa-lp-profile-intro"><div>' + clubBadge(club) + '</div><section><h4>' + esc(name) + '</h4><p>' + esc(facts.join(' · ') || 'Club information published for this competition') + '</p></section></div>' +
+      '<div class="slfa-lp-profile-intro"><div>' + clubBadge(club) + '</div><section><h4>' + esc(name) + '</h4><p>' + esc(facts.join(' · ') || 'Club information published for this competition') + '</p>' + (club.about ? '<p class="slfa-lp-club-about">' + esc(club.about) + '</p>' : '') + '</section></div>' +
       '<div class="slfa-lp-kpis">' + kpi(position,'League position') + kpi(played.length,'Matches played') + kpi(stats.w + '–' + stats.d + '–' + stats.l,'W · D · L') + kpi(stats.gf + ' : ' + stats.ga,'Goals for · against') + '</div>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>COMPETITION PERFORMANCE</span><h4>Season record</h4></div><small>' + esc(lg.name) + '</small></div>' +
       '<div class="slfa-lp-record"><div><strong>' + stats.w + '</strong><span>Wins</span></div><div><strong>' + stats.d + '</strong><span>Draws</span></div><div><strong>' + stats.l + '</strong><span>Losses</span></div><div><strong>' + (stats.gf-stats.ga > 0 ? '+' : '') + (stats.gf-stats.ga) + '</strong><span>Goal difference</span></div><div><strong>' + (standing && standing.pts != null ? standing.pts : '—') + '</strong><span>Points</span></div></div></section>' +
+      '<section class="slfa-lp-panel slfa-lp-squad-panel"><div class="slfa-lp-section-head"><div><span>FIRST TEAM</span><h4>Club squad</h4></div><small id="slfaLpSquadCount">Loading players…</small></div><div id="slfaLpSquad" class="slfa-lp-squad-grid"><p class="slfa-lp-empty">Loading approved player profiles…</p></div></section>' +
+      '<section class="slfa-lp-panel slfa-lp-announcements-panel"><div class="slfa-lp-section-head"><div><span>CLUB UPDATES</span><h4>Latest announcements</h4></div></div><div id="slfaLpAnnouncements"><p class="slfa-lp-empty">Loading club updates…</p></div></section>' +
       '<div class="slfa-lp-profile-matches"><section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>RECENT FORM</span><h4>Latest results</h4></div></div>' +
       (played.length ? played.slice(0,5).map(matchRow).join('') : '<p class="slfa-lp-empty">No completed results published for this club yet.</p>') + '</section>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>COMING UP</span><h4>Upcoming fixtures</h4></div></div>' +
@@ -203,6 +205,36 @@
       '<p class="slfa-lp-source">Club statistics are calculated from published match results in this competition. Unpublished information is not displayed.</p></section>';
     var back = document.getElementById('slfaLpClubBack');
     if (back) back.addEventListener('click', function () { renderLeague(lg); });
+    var squadHost = document.getElementById('slfaLpSquad');
+    var squadCount = document.getElementById('slfaLpSquadCount');
+    var announcementsHost = document.getElementById('slfaLpAnnouncements');
+    Promise.all([
+      db.from('club_squad').select('id,player_name,position,photo_url,jersey_number').eq('club_id',String(club.id)).order('jersey_number',{ascending:true,nullsFirst:false}).order('player_name'),
+      db.from('club_announcements').select('title,body,created_at').eq('club_id',String(club.id)).order('created_at',{ascending:false}).limit(5)
+    ]).then(function(results){
+      if(!document.getElementById('slfaLpSquad'))return;
+      var players=results[0].error?[]:(results[0].data||[]);
+      if(squadCount)squadCount.textContent=results[0].error?'Unavailable':players.length+' players';
+      if(squadHost){
+        squadHost.innerHTML=results[0].error?'<p class="slfa-lp-empty">The squad is temporarily unavailable.</p>':
+          (players.length?players.map(function(p){
+            var pos=String(p.position||'').replace(/_/g,' ');
+            var photo=p.photo_url?'<img class="slfa-lp-player-photo" src="'+esc(p.photo_url)+'" alt="" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false;"><span class="slfa-lp-player-initial" hidden>'+esc((p.player_name||'?').charAt(0).toUpperCase())+'</span>':
+              '<span class="slfa-lp-player-initial">'+esc((p.player_name||'?').charAt(0).toUpperCase())+'</span>';
+            return '<button type="button" class="slfa-lp-player-card" data-profile-player="'+esc(p.player_name)+'" data-profile-club="'+esc(name)+'" data-profile-photo="'+esc(p.photo_url||'')+'" data-profile-position="'+esc(pos)+'" data-profile-jersey="'+esc(p.jersey_number||'')+'">'+
+              '<span class="slfa-lp-player-portrait">'+photo+'</span><span class="slfa-lp-player-name">'+(p.jersey_number?'#'+esc(p.jersey_number)+' ':'')+esc(p.player_name)+'</span><small>'+esc(pos||'Squad member')+'</small></button>';
+          }).join(''):'<p class="slfa-lp-empty">No approved players have been published for this club yet.</p>');
+      }
+      var announcements=results[1].error?[]:(results[1].data||[]);
+      if(announcementsHost)announcementsHost.innerHTML=results[1].error?'<p class="slfa-lp-empty">Club updates are temporarily unavailable.</p>':
+        (announcements.length?announcements.map(function(a){
+          var when=a.created_at?new Date(a.created_at).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}):'';
+          return '<article class="slfa-lp-announcement"><strong>'+esc(a.title)+'</strong>'+(when?'<time>'+esc(when)+'</time>':'')+(a.body?'<p>'+esc(a.body)+'</p>':'')+'</article>';
+        }).join(''):'<p class="slfa-lp-empty">No public club announcements yet.</p>');
+    }).catch(function(){
+      if(squadHost)squadHost.innerHTML='<p class="slfa-lp-empty">Club information is temporarily unavailable.</p>';
+      if(announcementsHost)announcementsHost.innerHTML='<p class="slfa-lp-empty">Club updates are temporarily unavailable.</p>';
+    });
   }
   function render() {
     selectedId = currentId();
@@ -229,7 +261,7 @@
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-loading">Loading public competition information…</div></section>';
     Promise.all([
       db.from('leagues').select('id,name').eq('is_active',true).order('sort_order'),
-      db.from('league_clubs').select('id,league_id,club_name,logo_url,stadium,city,founded_year').eq('is_active',true).order('club_name'),
+      db.from('league_clubs').select('id,league_id,club_name,logo_url,stadium,city,founded_year,about').eq('is_active',true).order('club_name'),
       db.from('matches').select('id,league_id,match_date,venue,match_status,home_team,away_team,home_score,away_score').order('match_date',{ascending:false}).limit(1000),
       db.from('league_standings').select('league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos',{ascending:true})
     ]).then(function (r) {
