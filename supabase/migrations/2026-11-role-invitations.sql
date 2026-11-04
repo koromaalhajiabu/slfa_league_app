@@ -13,13 +13,12 @@ create policy "developer manages invitations" on public.role_invitations
   for all to authenticated
   using (app_role() = 'DEVELOPER') with check (app_role() = 'DEVELOPER');
 
-create or replace function public.invite_user(p_email text, p_role text, p_club uuid, p_reason text)
+create or replace function public.invite_user(p_email text, p_role text, p_club uuid)
 returns text language plpgsql security definer set search_path = public as $$
 declare v_email text := lower(btrim(coalesce(p_email, ''))); v_id uuid; v_club uuid;
 begin
   if app_role() <> 'DEVELOPER' then raise exception 'Only the Technical Director can assign roles.'; end if;
   if v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then raise exception 'Enter a valid email address.'; end if;
-  if p_reason is null or length(btrim(p_reason)) < 5 then raise exception 'Give a reason of at least 5 characters. It is kept in the log.'; end if;
   if p_role not in ('SUPER_ADMIN','FINANCE_OFFICER','CLUB_ADMIN','REFEREE','STAFF','PLAYER','MEDIA_OFFICER','VIEWER') then
     raise exception 'That role cannot be assigned here.';
   end if;
@@ -30,7 +29,7 @@ begin
   select id into v_id from public.user_profiles where lower(email) = v_email;
   if v_id is not null then
     if v_id = auth.uid() then raise exception 'You cannot change your own role.'; end if;
-    perform public.set_user_role(v_id, p_role, p_reason);
+    perform public.set_user_role(v_id, p_role, 'Role assigned by Developer');
     update public.user_profiles set club_id = v_club where id = v_id;
     return 'Role saved. The account already exists, so the role applies now.';
   end if;
@@ -41,8 +40,9 @@ begin
     invited_by = excluded.invited_by, invited_at = now();
   return 'Saved. The role applies when this person creates their account.';
 end $$;
-revoke all on function public.invite_user(text, text, uuid, text) from public, anon;
-grant execute on function public.invite_user(text, text, uuid, text) to authenticated;
+drop function if exists public.invite_user(text, text, uuid, text);
+revoke all on function public.invite_user(text, text, uuid) from public, anon;
+grant execute on function public.invite_user(text, text, uuid) to authenticated;
 
 create or replace function public.handle_new_user() returns trigger language plpgsql security definer set search_path = public as $$
 declare inv public.role_invitations%rowtype; prev text;
