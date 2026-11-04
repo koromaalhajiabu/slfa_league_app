@@ -948,6 +948,7 @@
   // ---------- REFEREE ----------
   var refEvents = [];
   function referee(p) {
+    syncPendingRefereeEvents();
     box().innerHTML =
       '<h2 class="rt">My matches</h2>' +
       '<label for="rfMatch">Match</label><select id="rfMatch"><option value="">Loading your matches…</option></select>' +
