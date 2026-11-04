@@ -89,3 +89,7 @@
 .slfa-lp-table-club{display:inline-flex;align-items:center;gap:8px;min-width:0}
 .slfa-lp-table-club .slfa-lp-badge{width:27px;height:27px;flex:0 0 27px;padding:2px}
 .slfa-lp-table-club>span:last-child{white-space:normal;text-align:left}
+
+/* Competition crest in the public competition profile */
+.slfa-lp-competition-logo{display:block;flex:0 0 68px;width:68px;height:68px;object-fit:contain;border-radius:50%;padding:4px;background:#fff;border:1px solid rgba(226,202,142,.65);box-shadow:0 5px 18px rgba(0,0,0,.24)}
+@media(max-width:380px){.slfa-lp-competition-logo{flex-basis:56px;width:56px;height:56px}}
