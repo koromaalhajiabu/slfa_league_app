@@ -1,0 +1,46 @@
+/* Premium public Player Statistics Centre */
+.ps-view { display:grid; gap:16px; }
+.ps-hero { position:relative; overflow:hidden; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px; border-radius:18px; background:linear-gradient(135deg,#073d2b,#0b7540 58%,#0872b9); color:#fff; box-shadow:0 14px 30px rgba(4,70,42,.18); }
+.ps-hero::after { content:""; position:absolute; width:190px; height:190px; right:-60px; top:-80px; border:1px solid rgba(255,255,255,.2); border-radius:50%; box-shadow:0 0 0 22px rgba(255,255,255,.045),0 0 0 45px rgba(255,255,255,.035); }
+.ps-hero h2 { margin:7px 0 6px; color:#fff; font-size:clamp(22px,5vw,30px); line-height:1.1; }
+.ps-hero p { margin:0; max-width:560px; color:rgba(255,255,255,.82); font-size:13px; line-height:1.5; }
+.ps-eyebrow { display:block; font-size:9px; font-weight:800; letter-spacing:.16em; color:#b9f4ce; }
+.ps-hero-mark { position:relative; z-index:1; display:grid; place-items:center; width:58px; height:58px; flex:0 0 58px; border:1px solid rgba(255,255,255,.35); border-radius:18px; color:#ffe08a; font-size:30px; background:rgba(255,255,255,.1); }
+.ps-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; }
+.ps-summary-card { min-width:0; padding:13px; border:1px solid #dce9e1; border-radius:14px; background:linear-gradient(150deg,#fff,#f3faf5); box-shadow:0 5px 16px rgba(13,70,39,.055); }
+.ps-summary-card>span { display:block; color:#168144; font-size:9px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+.ps-summary-card strong { display:block; margin:8px 0 4px; color:#163b29; font-size:clamp(13px,2.2vw,17px); line-height:1.25; overflow-wrap:anywhere; }
+.ps-summary-card small { display:block; color:#64776b; font-size:10px; line-height:1.4; overflow-wrap:anywhere; }
+.ps-leaderboards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.ps-panel { min-width:0; padding:16px; overflow:hidden; }
+.ps-panel::before { display:none; }
+.ps-panel-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px; }
+.ps-panel-head h3 { margin:4px 0 3px; color:#153c29; font-size:18px; }
+.ps-panel-head p { margin:0; color:#718176; font-size:11px; }
+.ps-panel-head .ps-eyebrow { color:#168144; font-size:8px; }
+.ps-count { flex:0 0 auto; padding:5px 8px; border-radius:999px; background:#eaf6ee; color:#14743b; font-size:9px; font-weight:700; }
+.ps-row { display:flex; align-items:center; gap:10px; min-width:0; padding:9px 0; border-top:1px solid #edf1ee; }
+.ps-row .badge { width:34px; height:34px; flex:0 0 34px; border-radius:50%; object-fit:cover; background:#e7f0e9; }
+.ps-rank { display:grid; place-items:center; width:23px; height:23px; flex:0 0 23px; border-radius:8px; background:#f0f4f1; color:#607267; font-size:10px; font-weight:800; }
+.ps-leader .ps-rank { background:#fff1c8; color:#946500; }
+.ps-player { display:block; min-width:0; flex:1; }
+.ps-player strong { display:block; color:#193d2b; font-size:12px; line-height:1.35; overflow-wrap:anywhere; }
+.ps-player small { display:block; margin-top:2px; color:#78877e; font-size:10px; overflow-wrap:anywhere; }
+.ps-value { flex:0 0 auto; text-align:right; }
+.ps-value strong { display:block; color:#087a3b; font-size:17px; font-variant-numeric:tabular-nums; }
+.ps-value small { display:block; color:#839087; font-size:8px; font-weight:700; letter-spacing:.06em; }
+.ps-disclaimer { margin:0; color:#77857b; font-size:10px; line-height:1.5; text-align:center; }
+@media(max-width:650px) {
+  .ps-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .ps-leaderboards { grid-template-columns:1fr; }
+  .ps-hero { padding:18px; }
+  .ps-panel { padding:13px; }
+}
+@media(prefers-color-scheme:dark) {
+  .ps-summary-card { background:#10291b; border-color:#244c33; }
+  .ps-summary-card strong,.ps-panel-head h3,.ps-player strong { color:#effaf2; }
+  .ps-summary-card small,.ps-panel-head p,.ps-player small,.ps-disclaimer { color:#adc0b2; }
+  .ps-panel { background:#0e2618; }
+  .ps-row { border-color:#244532; }
+  .ps-rank { background:#203b2b; color:#d2e4d7; }
+}
