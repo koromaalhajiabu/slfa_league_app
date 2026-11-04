@@ -26,22 +26,11 @@
     diamondstars: 'https://images.seeklogo.com/logo-png/63/1/diamond-stars-fc-logo-png_seeklogo-638347.png',
     eastendlions: 'https://images.seeklogo.com/logo-png/63/1/east-end-lions-fc-logo-png_seeklogo-638348.png',
     westernunited: 'https://www.dsg-images.com/sport_entity/200x200/6528.png',
-    // Marampa Mines Women's Premier League crests (Global Sports Archive club artwork)
-    ramkamara: 'https://www.dsg-images.com/clubs/200x200/65784.png',
-    ramkamarafemale: 'https://www.dsg-images.com/clubs/200x200/65784.png',
-    mogbwemoqueens: 'https://www.dsg-images.com/clubs/30x30/62996.png',
-    slpolice: 'https://www.dsg-images.com/clubs/200x200/35023.png',
-    slpolicefemale: 'https://www.dsg-images.com/clubs/200x200/35023.png',
-    sierraleonepolicefemale: 'https://www.dsg-images.com/clubs/200x200/35023.png',
-    kallonfemale: 'https://www.dsg-images.com/clubs/30x30/17010.png',
-    fckallonfemale: 'https://www.dsg-images.com/clubs/30x30/17010.png',
-    menaqueens: 'https://dsg-images.com/clubs/200x200/65802.png',
-    patriciaumu: 'https://www.dsg-images.com/clubs/30x30/65798.png',
-    kahunlaqueens: 'https://dsg-images.com/clubs/200x200/65799.png',
-    koyaqueens: 'https://dsg-images.com/clubs/200x200/65793.png',
-    risingqueens: 'https://www.dsg-images.com/clubs/30x30/65800.png',
-    vembuck: 'https://dsg-images.com/clubs/200x200/65804.png',
   };
+  function isWomensLeagueClub(name) {
+    var key = String(name || '').toLowerCase().replace(/\\bfc\\b/g, '').replace(/[^a-z0-9]/g, '');
+    return ['ramkamara','ramkamarafemale','mogbwemoqueens','slpolice','slpolicefemale','sierraleonepolicefemale','kallonfemale','fckallonfemale','menaqueens','patriciaumu','kahunlaqueens','koyaqueens','risingqueens','vembuck'].indexOf(key) !== -1;
+  }
   function clubLogoFallback(name) {
     var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
     if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
@@ -50,7 +39,7 @@
     return CLUB_LOGO_FALLBACKS[key] || 'slfa-logo.png';
   }
   function badge(url, name) {
-    var fallback = clubLogoFallback(name), primary = url || fallback;
+    var fallback = clubLogoFallback(name), primary = isWomensLeagueClub(name) ? '' : (url || fallback);
     var initial = esc((name || '?').charAt(0).toUpperCase());
     if (!primary) return '<span class="badge ph">' + initial + '</span>';
     return '<img class="badge" src="' + esc(primary) + '" data-fallback="' + esc(fallback && primary !== fallback ? fallback : '') + '" alt="" onerror="if(this.dataset.fallback){var next=this.dataset.fallback;this.dataset.fallback=\'\';this.src=next;}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="badge ph" hidden>' + initial + '</span>';
