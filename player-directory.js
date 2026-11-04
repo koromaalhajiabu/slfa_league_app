@@ -59,8 +59,13 @@
         var allClubs = res.data || [];
         clubs = currentLeague ? allClubs.filter(function(c){return String(c.league_id || '') === currentLeague;}) : allClubs;
         if (!clubs.length) { players=[]; render(); return null; }
-        return db.from('club_squad').select('id, player_name, position, photo_url, jersey_number, club_id')
-          .in('club_id', clubs.map(function(c){return c.id;})).order('player_name');
+        return db.from('seasons').select('id').eq('is_current', true).maybeSingle().then(function(seasonRes) {
+          var squadQuery = db.from('club_squad').select('id, player_name, position, photo_url, jersey_number, club_id, season_id')
+            .in('club_id', clubs.map(function(c){return c.id;}))
+            .eq('registration_status', 'Approved').eq('status', 'Active');
+          if (seasonRes.data && seasonRes.data.id) squadQuery = squadQuery.eq('season_id', seasonRes.data.id);
+          return squadQuery.order('player_name');
+        });
       }).then(function (res) {
         if (!res) return;
         if (res.error) throw res.error;
