@@ -339,13 +339,16 @@
   }
 
   function loadReview() {
-    db.from('media_posts').select('id, title, category, body, created_by_name, submitted_at').eq('status', 'SUBMITTED').order('submitted_at', { ascending: true })
+    db.from('media_posts').select('id, title, category, body, image_url, video_url, created_by_name, submitted_at').eq('status', 'SUBMITTED').order('submitted_at', { ascending: true })
       .then(function (r) {
         var rows = r.data || [];
         $('reviewList').innerHTML = rows.length ? rows.map(function (p) {
-          return '<div class="post"><div class="muted">' + esc(p.category) + ' · by ' + esc(p.created_by_name || 'Media Officer') + '</div>' +
-            '<strong>' + esc(p.title) + '</strong><p>' + esc(p.body) + '</p>' +
-            '<div class="btns"><button class="primary" data-pub="' + esc(p.id) + '">Publish</button><button class="secondary" data-ret="' + esc(p.id) + '">Return</button></div></div>';
+          return '<article class="post"><div class="muted">' + esc(CAT_LABEL[p.category] || p.category) + ' · submitted by ' + esc(p.created_by_name || 'Media Officer') + '</div>' +
+            (p.image_url ? '<img class="review-news-image" src="' + esc(p.image_url) + '" alt="">' : '') +
+            '<strong>' + esc(p.title) + '</strong><p>' + esc(p.body || '') + '</p>' +
+            (p.video_url ? '<p><a href="' + esc(p.video_url) + '" target="_blank" rel="noopener noreferrer">Review attached video ↗</a></p>' : '') +
+            '<div class="muted">Submitted ' + esc(p.submitted_at ? new Date(p.submitted_at).toLocaleString() : 'date unavailable') + '</div>' +
+            '<div class="btns"><button class="primary" data-pub="' + esc(p.id) + '">Approve &amp; publish</button><button class="secondary" data-ret="' + esc(p.id) + '">Return to author</button></div></article>';
         }).join('') : 'Nothing waiting for approval.';
         document.querySelectorAll('[data-pub]').forEach(function (b) { b.addEventListener('click', function () { decide(b.dataset.pub, 'PUBLISHED'); }); });
         document.querySelectorAll('[data-ret]').forEach(function (b) { b.addEventListener('click', function () { decide(b.dataset.ret, 'RETURNED'); }); });
@@ -1224,7 +1227,8 @@
       input('npTitle', 'Title') +
       '<label for="npBody">Story</label><textarea id="npBody" rows="5"></textarea>' +
       input('npImage', 'Photo link (optional)', 'url') + input('npVideo', 'Video link (optional)', 'url') +
-      '<div class="btns"><button class="secondary" id="npDraft">Save draft</button><button class="secondary" id="npSubmit">Submit for approval</button><button class="primary" id="npPublish">Publish now</button></div>' +
+      '<p class="muted">All posts are reviewed by a Super Admin before they appear in the public News Centre. Save a draft or submit it for approval.</p>' +
+      '<div class="btns"><button class="secondary" id="npDraft">Save draft</button><button class="primary" id="npSubmit">Submit for approval</button></div>' +
       '<h2 class="rt">My posts</h2><div id="myPosts" class="muted">Loading…</div>' +
       '<h2 class="rt">Fan poll</h2>' +
       input('pqQ', 'Question') + input('pqO1', 'Option 1') + input('pqO2', 'Option 2') + input('pqO3', 'Option 3 (optional)') + input('pqO4', 'Option 4 (optional)') +
@@ -1252,7 +1256,6 @@
     }
     $('npDraft').addEventListener('click', function () { save('DRAFT'); });
     $('npSubmit').addEventListener('click', function () { save('SUBMITTED'); });
-    $('npPublish').addEventListener('click', function () { save('PUBLISHED'); });
     $('npMatch').addEventListener('change', function () {
       var opt = this.options[this.selectedIndex];
       if (opt && opt.value) $('npCat').value = 'MATCH_REPORT';
@@ -1313,18 +1316,12 @@
       $('myPosts').innerHTML = rows.length ? rows.map(function (x) {
         var open = x.status !== 'PUBLISHED';
         return '<div class="post"><strong>' + esc(x.title) + '</strong><div class="muted">' + esc(CAT_LABEL[x.category] || x.category) + ' · ' + esc(x.status) + '</div>' +
-          (open ? '<div class="btns"><button class="small" data-sub="' + esc(x.id) + '">Submit for approval</button><button class="small" data-pub="' + esc(x.id) + '">Publish now</button></div>' : '') + '</div>';
+          (open ? '<div class="btns"><button class="small" data-sub="' + esc(x.id) + '">Submit for approval</button></div>' : '') + '</div>';
       }).join('') : 'No posts yet.';
       document.querySelectorAll('[data-sub]').forEach(function (b) {
         b.addEventListener('click', function () {
           db.from('media_posts').update({ status: 'SUBMITTED', submitted_at: new Date().toISOString() }).eq('id', b.dataset.sub)
             .then(function (res) { msg(res.error ? res.error.message : 'Sent for approval.'); loadMine(); });
-        });
-      });
-      document.querySelectorAll('[data-pub]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          db.from('media_posts').update({ status: 'PUBLISHED', published_at: new Date().toISOString() }).eq('id', b.dataset.pub)
-            .then(function (res) { msg(res.error ? res.error.message : 'Published.'); loadMine(); });
         });
       });
     });
