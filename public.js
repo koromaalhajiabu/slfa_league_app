@@ -705,9 +705,14 @@
   var appFreezeBanner = null;
   function refreshAll() {
     db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(fr){
-      var frozen=!!(fr.data&&fr.data.app_frozen), area=$('public');
+      var cached=null;
+      if(!fr.error&&fr.data){cached=!!fr.data.app_frozen;try{localStorage.setItem('slfa_app_frozen_v1',String(cached));}catch(e){}}
+      else if(!navigator.onLine){try{cached=localStorage.getItem('slfa_app_frozen_v1')==='true';}catch(e){}}
+      // Fail closed while online if the maintenance flag cannot be verified.
+      var frozen=fr.error||!fr.data ? (navigator.onLine||cached!==false) : cached;
+      var area=$('public');
       if(frozen){
-        if(!appFreezeBanner){appFreezeBanner=document.createElement('section');appFreezeBanner.id='appFreezeBanner';appFreezeBanner.className='card';appFreezeBanner.style.cssText='max-width:760px;margin:12vh auto;padding:40px 24px;text-align:center;border-top:5px solid #16834a';appFreezeBanner.innerHTML='<h2>Application temporarily unavailable</h2><p>The SLFA League App is undergoing maintenance. Please check again later.</p>';if(area&&area.parentNode)area.parentNode.insertBefore(appFreezeBanner,area);}
+        if(!appFreezeBanner){appFreezeBanner=document.createElement('section');appFreezeBanner.id='appFreezeBanner';appFreezeBanner.className='card';appFreezeBanner.style.cssText='max-width:760px;margin:12vh auto;padding:40px 24px;text-align:center;border-top:5px solid #16834a';appFreezeBanner.innerHTML='<h2>Application temporarily unavailable</h2><p>The SLFA League App is undergoing maintenance or its security status cannot be verified. Please connect and try again later.</p>';if(area&&area.parentNode)area.parentNode.insertBefore(appFreezeBanner,area);}
         if(area)area.hidden=true;return;
       }
       if(appFreezeBanner){appFreezeBanner.remove();appFreezeBanner=null;}if(area)area.hidden=false;
