@@ -93,3 +93,29 @@
 /* Competition crest in the public competition profile */
 .slfa-lp-competition-logo{display:block;flex:0 0 68px;width:68px;height:68px;object-fit:contain;border-radius:50%;padding:4px;background:#fff;border:1px solid rgba(226,202,142,.65);box-shadow:0 5px 18px rgba(0,0,0,.24)}
 @media(max-width:380px){.slfa-lp-competition-logo{flex-basis:56px;width:56px;height:56px}}
+
+
+/* v2.2 — premium club identity and squad presentation */
+.slfa-lp-profile .slfa-lp-hero{background:linear-gradient(128deg,#043d2c 0%,#08764b 52%,#03432f 100%);border-color:rgba(112,240,174,.28);box-shadow:0 18px 42px -24px rgba(0,0,0,.72),inset 0 1px 0 rgba(255,255,255,.12)}
+.slfa-lp-profile .slfa-lp-eyebrow{color:#aaf4c8}
+.slfa-lp-profile .slfa-lp-hero p:not(.slfa-lp-eyebrow){color:#e1ffed}
+.slfa-lp-profile .slfa-lp-hero>.slfa-lp-badge{border-color:rgba(158,255,196,.45);background:rgba(255,255,255,.12);box-shadow:0 7px 22px rgba(0,0,0,.24)}
+.slfa-lp-profile-intro{border-color:rgba(90,220,150,.2);background:linear-gradient(135deg,rgba(5,105,65,.16),rgba(255,255,255,.025))}
+.slfa-lp-club-about{margin:8px 0 0!important;color:var(--ink)!important;font-size:11px!important;line-height:1.6!important}
+.slfa-lp-squad-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.slfa-lp-player-card{display:flex;min-width:0;flex-direction:column;align-items:center;gap:6px;padding:11px 7px;border:1px solid rgba(100,225,160,.16);border-radius:14px;background:linear-gradient(155deg,rgba(7,112,69,.16),rgba(255,255,255,.025));color:var(--ink);font:inherit;text-align:center;cursor:pointer;transition:transform .18s,border-color .18s}
+.slfa-lp-player-card:hover{transform:translateY(-2px);border-color:rgba(110,240,170,.5)}
+.slfa-lp-player-portrait{display:flex;align-items:center;justify-content:center;width:64px;height:64px;overflow:hidden;border:1px solid rgba(112,235,170,.28);border-radius:50%;background:rgba(5,86,54,.24)}
+.slfa-lp-player-photo{width:100%;height:100%;object-fit:cover}
+.slfa-lp-player-initial{display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#aaf4c8;font-family:"Fraunces",Georgia,serif;font-size:25px;font-weight:700}
+.slfa-lp-player-name{width:100%;overflow-wrap:anywhere;color:var(--ink);font-size:10px;font-weight:750;line-height:1.35}
+.slfa-lp-player-card small{color:var(--muted);font-size:9px;text-transform:capitalize}
+.slfa-lp-announcement{position:relative;padding:11px 0;border-bottom:1px solid var(--line)}
+.slfa-lp-announcement:last-child{border-bottom:0}
+.slfa-lp-announcement strong{display:block;color:var(--ink);font-size:12px}
+.slfa-lp-announcement time{display:block;margin-top:4px;color:#8fe9b5;font-size:9px}
+.slfa-lp-announcement p{margin:6px 0 0;color:var(--muted);font-size:10px;line-height:1.55;white-space:pre-line}
+.slfa-lp-squad-panel,.slfa-lp-announcements-panel{border-color:rgba(100,225,160,.17)}
+@media(max-width:700px){.slfa-lp-squad-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:390px){.slfa-lp-squad-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.slfa-lp-player-portrait{width:58px;height:58px}}
+@media(prefers-reduced-motion:reduce){.slfa-lp-player-card{transition:none}}
