@@ -30,8 +30,7 @@ alter table public.match_events
   add column if not exists client_event_id uuid;
 
 create unique index if not exists match_events_client_event_id_unique
-  on public.match_events (client_event_id)
-  where client_event_id is not null;
+  on public.match_events (client_event_id);
 
 -- Enforce freeze/pause on the database itself, not only by hiding browser pages.
 create or replace function public.enforce_slfa_application_controls()
