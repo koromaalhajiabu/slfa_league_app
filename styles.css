@@ -968,3 +968,57 @@ details.admin > summary {
 .table-club{display:inline-flex;align-items:center;gap:8px;min-width:0}
 .table-club-logo{width:28px;height:28px;flex:0 0 28px;object-fit:contain;border-radius:50%;padding:2px;background:rgba(10,132,255,.07)}
 .table-club-fallback{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--accent2)}
+
+/* ===== Premium pass 1: calmer surfaces, one clear button style, underline tabs ===== */
+body {
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(1px 1px at 78% 9%, rgba(255,255,255,.45), transparent 60%),
+    radial-gradient(1.5px 1.5px at 64% 42%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(900px 520px at 85% -10%, rgba(0,114,198,.22), transparent 60%),
+    radial-gradient(800px 480px at -10% 0%, rgba(30,181,58,.20), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+body .topbar { background:rgba(4,18,12,.72); border-bottom:1px solid rgba(255,255,255,.06); padding:10px 16px; }
+.topbar h1 { font-family:'Fraunces', Georgia, serif; letter-spacing:.02em; font-size:17px; }
+.crest { width:40px; height:40px; border-radius:10px; box-shadow:0 0 0 1px rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.35); }
+
+/* Hero: one headline, one primary action, one quiet action */
+.hero { border-radius:22px; padding:22px 20px; border:1px solid rgba(255,255,255,.08);
+  background: radial-gradient(120% 140% at 0% 0%, rgba(30,181,58,.22), transparent 55%),
+              radial-gradient(90% 120% at 100% 100%, rgba(0,114,198,.30), transparent 60%),
+              linear-gradient(160deg, #0a2a1a 0%, #072033 100%); }
+.hero .title { font-family:'Fraunces', Georgia, serif; font-size:30px; font-weight:500; }
+.hero-actions { gap:8px; }
+body .hero .share-app { border-radius:999px; padding:9px 16px; font-size:12.5px; letter-spacing:.03em; background:transparent; color:var(--ink); border:1px solid rgba(255,255,255,.22) !important; box-shadow:none !important; }
+body .hero .share-app:first-child { background:linear-gradient(135deg,#1eb53a,#0072c6); border-color:transparent; color:#fff; box-shadow:0 8px 22px -10px rgba(0,114,198,.9); }
+
+/* Buttons: primary is solid flag blue, secondary is a quiet outline */
+button.primary { background:linear-gradient(135deg,#0072c6,#1d8fe0); color:#fff; box-shadow:0 8px 20px -12px rgba(0,114,198,.9); }
+button.secondary { background:transparent; border:1px solid rgba(255,255,255,.18); color:var(--ink); }
+
+/* Tabs: underline indicator instead of stacked filled pills */
+body .tabs { gap:4px; border-bottom:1px solid rgba(255,255,255,.08); padding-bottom:0; }
+body .tabs button { background:transparent; border:0 !important; border-radius:0 !important; background:transparent !important; padding:12px 14px; color:var(--muted); box-shadow:none !important; position:relative; }
+body .tabs button[aria-selected="true"] { background:transparent !important; color:var(--ink) !important; border-color:transparent !important; box-shadow:none !important; font-weight:600; }
+body .tabs button[aria-selected="true"]::after { content:""; position:absolute; left:12px; right:12px; bottom:-1px; height:2px; border-radius:2px; background:linear-gradient(90deg,#1eb53a,#ffffff 50%,#0072c6); }
+
+/* Match Centre: filters carry their counts; no separate stat row */
+.slfa-mc-filter { border-radius:999px; padding:8px 14px; display:inline-flex; align-items:center; gap:8px; }
+.slfa-mc-count-pill { font-size:11px; padding:1px 7px; border-radius:999px; background:rgba(255,255,255,.12); color:inherit; }
+.slfa-mc-filter.active .slfa-mc-count-pill { background:rgba(255,255,255,.22); }
+.slfa-mc-summary { justify-content:flex-end; }
+.slfa-mc-summary button { background:transparent; border:1px solid rgba(255,255,255,.18); border-radius:999px; padding:6px 12px; font-size:12px; color:var(--ink); }
+.slfa-mc-details-btn { background:transparent; border:1px solid rgba(255,255,255,.16); box-shadow:none; color:var(--ink); }
+
+/* Cards: hairline borders and softer glass */
+.card, .slfa-mc-grid > article, .slfa-match-centre-v2 article {
+  border-radius:18px; border:1px solid rgba(255,255,255,.08);
+  background: linear-gradient(160deg, rgba(14,46,30,.72), rgba(7,28,44,.72));
+  box-shadow: 0 18px 40px -24px rgba(0,0,0,.6);
+}
+
+/* Selected tab and hero actions: underline for tabs, outline for the quiet action */
+body .tabs button[aria-selected="true"] { background:transparent !important; animation:none !important; border-color:transparent !important; text-shadow:none !important; color:var(--ink) !important; }
+body .hero .share-app:not(:first-child) { background:transparent !important; color:var(--ink) !important; border:1px solid rgba(255,255,255,.28) !important; }

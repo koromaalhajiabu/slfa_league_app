@@ -95,12 +95,13 @@
     var list = selected(), clubs = {};
     matches.forEach(function (m) { if (!league() || String(m.league_id || '') === league()) { clubs[m.home_team]=1; clubs[m.away_team]=1; } });
     var options = Object.keys(clubs).sort().map(function (n) { return '<option value="'+esc(n)+'"'+(chosenClub===n?' selected':'')+'>'+esc(n)+'</option>'; }).join('');
-    var filters = [['all','All matches'],['upcoming','Upcoming'],['results','Results'],['other','Other']].map(function (f) {
-      return '<button type="button" class="slfa-mc-filter'+(filter===f[0]?' active':'')+'" data-mc-filter="'+f[0]+'" aria-pressed="'+(filter===f[0])+'">'+f[1]+'</button>';
+    var filters = [['all','All'],['upcoming','Upcoming'],['results','Results'],['other','Other']].map(function (f) {
+      var n = f[0]==='all' ? matches.length : matches.filter(function(m){return group(m)===f[0];}).length;
+      return '<button type="button" class="slfa-mc-filter'+(filter===f[0]?' active':'')+'" data-mc-filter="'+f[0]+'" aria-pressed="'+(filter===f[0])+'">'+f[1]+' <span class="slfa-mc-count-pill">'+n+'</span></button>';
     }).join('');
     host.innerHTML = '<section class="slfa-match-centre-v2" aria-label="Match Centre"><div class="slfa-mc-heading"><div><p class="slfa-mc-eyebrow">THE SLFA LEAGUE APP</p><h3>Match Centre</h3><p>Fixtures, live scores and completed results</p></div><span class="slfa-mc-update">'+(updated?'Updated '+new Date(updated).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'Public match information')+'</span></div>'+
       '<div class="slfa-mc-tools"><div class="slfa-mc-filters" role="group" aria-label="Match filters">'+filters+'</div><div class="slfa-mc-selects"><label>Date<input type="date" id="mcDate" value="'+esc(chosenDate)+'"></label><label>Club<select id="mcClub"><option value="">All clubs</option>'+options+'</select></label><button type="button" class="slfa-mc-reset" id="mcReset">Reset</button></div></div>'+
-      '<div class="slfa-mc-summary" aria-live="polite"><span><b>'+matches.length+'</b> Total</span><span class="live"><b>'+matches.filter(function(m){return group(m)==='live';}).length+'</b> Live</span><span><b>'+matches.filter(function(m){return group(m)==='upcoming';}).length+'</b> Upcoming</span><span><b>'+matches.filter(function(m){return group(m)==='results';}).length+'</b> Results</span><button type="button" id="mcRefresh" aria-label="Refresh match information">↻ Refresh</button></div>'+
+      '<div class="slfa-mc-summary" aria-live="polite"><button type="button" id="mcRefresh" aria-label="Refresh match information">↻ Refresh</button></div>'+
       '<p class="slfa-mc-count">'+list.length+' match'+(list.length===1?'':'es')+' shown</p>'+
       (list.length?'<div class="slfa-mc-grid">'+list.map(card).join('')+'</div>':'<div class="slfa-mc-empty"><span>⚽</span><strong>No matches found</strong><p>Try another date, club or match filter.</p></div>')+
       '<p class="slfa-mc-footnote">Scores and match details reflect information currently published in the app.</p></section>';
