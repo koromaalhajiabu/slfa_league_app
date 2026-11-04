@@ -97,7 +97,18 @@
       matches=a[0].data||[];leagueNames={};clubLogos={};
       (a[1].data||[]).forEach(function(x){leagueNames[String(x.id)]=x.name;});
       (a[2].data||[]).forEach(function(x){clubLogos[x.club_name]=x.logo_url;});
-      updated=new Date();render();return true;
+      var live=matches.filter(function(m){var s=status(m);return s==='LIVE'||s==='HT';});
+      var goalQuery=live.length?db.from('match_events').select('match_id,team_name').in('match_id',live.map(function(m){return String(m.id);})).eq('event_type','GOAL'):Promise.resolve({data:[]});
+      return goalQuery.then(function(g){
+        if(!g.error&&live.length){
+          live.forEach(function(m){
+            var id=String(m.id);
+            m.home_score=(g.data||[]).filter(function(x){return String(x.match_id)===id&&x.team_name===m.home_team;}).length;
+            m.away_score=(g.data||[]).filter(function(x){return String(x.match_id)===id&&x.team_name===m.away_team;}).length;
+          });
+        }
+        updated=new Date();render();return true;
+      });
     });
   }
   function schedule(){clearTimeout(timer);timer=setTimeout(fetchData,500);}
