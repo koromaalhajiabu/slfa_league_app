@@ -12,14 +12,15 @@
   function status(m) { return String(m.match_status || '').toUpperCase(); }
   function group(m) {
     var s = status(m);
-    if (s === 'LIVE' || s === 'HT') return 'live';
+    if (['LIVE','HT','1H','2H','ET','PEN','EXTRA_TIME'].indexOf(s) !== -1) return 'live';
     if (s === 'FT' || (m.home_score != null && m.away_score != null && s !== 'SCHEDULED' && s !== 'RESCHEDULED')) return 'results';
     if (s === 'SCHEDULED' || s === 'RESCHEDULED') return 'upcoming';
     return 'other';
   }
   function label(m) {
     var s = status(m);
-    if (s === 'LIVE') return 'LIVE' + (m.match_minute == null ? '' : ' · '+m.match_minute+"'");
+    if (['LIVE','1H','2H','ET','PEN','EXTRA_TIME'].indexOf(s) !== -1) return 'LIVE' + (m.match_minute == null ? '' : ' · '+m.match_minute+"'");
+    if (s === 'HT') return 'HALF TIME';
     return ({HT:'HALF TIME',FT:'FULL TIME',SCHEDULED:'UPCOMING',RESCHEDULED:'RESCHEDULED',POSTPONED:'POSTPONED',CANCELLED:'CANCELLED',ABANDONED:'ABANDONED'})[s] || s.replace(/_/g,' ') || 'STATUS PENDING';
   }
   var CLUB_LOGO_FALLBACKS = {
@@ -88,6 +89,7 @@
     }).join('');
     host.innerHTML = '<section class="slfa-match-centre-v2" aria-label="Match Centre"><div class="slfa-mc-heading"><div><p class="slfa-mc-eyebrow">THE SLFA LEAGUE APP</p><h3>Match Centre</h3><p>Fixtures, live scores and completed results</p></div><span class="slfa-mc-update">'+(updated?'Updated '+new Date(updated).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'Public match information')+'</span></div>'+
       '<div class="slfa-mc-tools"><div class="slfa-mc-filters" role="group" aria-label="Match filters">'+filters+'</div><div class="slfa-mc-selects"><label>Date<input type="date" id="mcDate" value="'+esc(chosenDate)+'"></label><label>Club<select id="mcClub"><option value="">All clubs</option>'+options+'</select></label><button type="button" class="slfa-mc-reset" id="mcReset">Reset</button></div></div>'+
+      '<div class="slfa-mc-summary" aria-live="polite"><span><b>'+matches.length+'</b> Total</span><span class="live"><b>'+matches.filter(function(m){return group(m)==='live';}).length+'</b> Live</span><span><b>'+matches.filter(function(m){return group(m)==='upcoming';}).length+'</b> Upcoming</span><span><b>'+matches.filter(function(m){return group(m)==='results';}).length+'</b> Results</span><button type="button" id="mcRefresh" aria-label="Refresh match information">↻ Refresh</button></div>'+
       '<p class="slfa-mc-count">'+list.length+' match'+(list.length===1?'':'es')+' shown</p>'+
       (list.length?'<div class="slfa-mc-grid">'+list.map(card).join('')+'</div>':'<div class="slfa-mc-empty"><span>⚽</span><strong>No matches found</strong><p>Try another date, club or match filter.</p></div>')+
       '<p class="slfa-mc-footnote">Scores and match details reflect information currently published in the app.</p></section>';
@@ -96,6 +98,7 @@
     if(d)d.addEventListener('change',function(){chosenDate=this.value;render();});
     if(c)c.addEventListener('change',function(){chosenClub=this.value;render();});
     if(r)r.addEventListener('click',function(){chosenDate='';chosenClub='';filter='all';render();});
+    var refresh=document.getElementById('mcRefresh');if(refresh)refresh.addEventListener('click',function(){refresh.disabled=true;refresh.textContent='Refreshing…';fetchData().then(function(){var b=document.getElementById('mcRefresh');if(b){b.disabled=false;b.textContent='↻ Refresh';}});});
     host.querySelectorAll('[data-mc-details]').forEach(function(b){b.addEventListener('click',function(){details(b.dataset.mcDetails,b);});});
   }
   function details(id,button) {
@@ -130,14 +133,14 @@
       matches=a[0].data||[];leagueNames={};clubLogos={};
       (a[1].data||[]).forEach(function(x){leagueNames[String(x.id)]=x.name;});
       (a[2].data||[]).forEach(function(x){clubLogos[x.club_name]=x.logo_url || clubLogoFallback(x.club_name);});
-      var live=matches.filter(function(m){var s=status(m);return s==='LIVE'||s==='HT';});
+      var live=matches.filter(function(m){return group(m)==='live';});
       var goalQuery=live.length?db.from('match_events').select('match_id,team_name').in('match_id',live.map(function(m){return String(m.id);})).eq('event_type','GOAL'):Promise.resolve({data:[]});
       return goalQuery.then(function(g){
         if(!g.error&&live.length){
           live.forEach(function(m){
             var id=String(m.id);
-            m.home_score=(g.data||[]).filter(function(x){return String(x.match_id)===id&&x.team_name===m.home_team;}).length;
-            m.away_score=(g.data||[]).filter(function(x){return String(x.match_id)===id&&x.team_name===m.away_team;}).length;
+            if(m.home_score==null)m.home_score=(g.data||[]).filter(function(x){return String(x.match_id)===id&&x.team_name===m.home_team;}).length;
+            if(m.away_score==null)m.away_score=(g.data||[]).filter(function(x){return String(x.match_id)===id&&x.team_name===m.away_team;}).length;
           });
         }
         updated=new Date();render();return true;
@@ -157,5 +160,7 @@
   var switcher=document.getElementById('leagueSwitch');
   if(switcher)switcher.addEventListener('click',function(){window.setTimeout(render,50);});
   if(db.channel)db.channel('public-match-centre').on('postgres_changes',{event:'*',schema:'public',table:'matches'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'match_events'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},schedule).subscribe();
-  window.addEventListener('online',schedule);fetchData();
+  window.addEventListener('online',schedule);
+  window.setInterval(fetchData,60000);
+  fetchData();
 })();
