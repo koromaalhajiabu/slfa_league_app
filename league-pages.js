@@ -53,16 +53,18 @@
   };
   function clubLogoFallback(name) {
     var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
-    if (key === 'portsauthority') key = 'ports';
-    if (key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
-    if (key === 'western' || key === 'westernunitedfc') key = 'westernunited';
+    if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
+    if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
+    if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
+    if (key === 'kallonfemale' || key === 'fckallonfemale') key = 'kallon';
     return CLUB_LOGO_FALLBACKS[key] || '';
   }
   function clubBadge(c) {
-    var logo = c.logo_url || clubLogoFallback(c.club_name);
+    var fallback = clubLogoFallback(c.club_name), logo = c.logo_url || fallback;
+    var initial = esc((c.club_name || '?').charAt(0).toUpperCase());
     return logo
-      ? '<img class="slfa-lp-badge" src="' + esc(logo) + '" alt="" loading="lazy">'
-      : '<span class="slfa-lp-badge slfa-lp-placeholder">' + esc((c.club_name || '?').charAt(0).toUpperCase()) + '</span>';
+      ? '<img class="slfa-lp-badge" src="' + esc(logo) + '" data-fallback="' + esc(c.logo_url && fallback && c.logo_url !== fallback ? fallback : '') + '" alt="" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="slfa-lp-badge slfa-lp-placeholder" hidden>' + initial + '</span>'
+      : '<span class="slfa-lp-badge slfa-lp-placeholder">' + initial + '</span>';
   }
   function selectedLeague() {
     var id = currentId();
