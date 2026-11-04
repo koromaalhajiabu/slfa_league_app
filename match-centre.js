@@ -42,15 +42,17 @@
   };
   function clubLogoFallback(name) {
     var key = String(name || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
-    if (key === 'portsauthority') key = 'ports';
-    if (key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
-    if (key === 'western' || key === 'westernunitedfc') key = 'westernunited';
+    if (key === 'portsauthority' || key === 'portsauthorityfc') key = 'ports';
+    if (key === 'starsa' || key === 'starssa' || key === 'starsport' || key === 'starsportacademyfc') key = 'starsportacademy';
+    if (key === 'western' || key === 'westernunitedfc' || key === 'fcwesternunited') key = 'westernunited';
+    if (key === 'kallonfemale' || key === 'fckallonfemale') key = 'kallon';
     return CLUB_LOGO_FALLBACKS[key] || '';
   }
   function crest(name) {
-    var logo = clubLogos[name] || clubLogoFallback(name);
-    return logo ? '<img class="slfa-mc-crest" src="'+esc(logo)+'" alt="" loading="lazy">' :
-      '<span class="slfa-mc-crest slfa-mc-crest-fallback" aria-hidden="true">'+esc((name || '?').charAt(0).toUpperCase())+'</span>';
+    var fallback = clubLogoFallback(name), saved = clubLogos[name], logo = saved || fallback;
+    var initial = esc((name || '?').charAt(0).toUpperCase());
+    return logo ? '<img class="slfa-mc-crest" src="'+esc(logo)+'" data-fallback="'+esc(saved && fallback && saved !== fallback ? fallback : '')+'" alt="" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="slfa-mc-crest slfa-mc-crest-fallback" aria-hidden="true" hidden>'+initial+'</span>' :
+      '<span class="slfa-mc-crest slfa-mc-crest-fallback" aria-hidden="true">'+initial+'</span>';
   }
   function selected() {
     return matches.filter(function (m) {
