@@ -1,0 +1,33 @@
+/* Compact, well-placed buttons for phones. Loaded last so it overrides earlier sizes. */
+
+/* Tabs: one scrollable row, smaller buttons */
+html body .tabs{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
+html body .tabs::-webkit-scrollbar{display:none}
+html body .tabs button{flex:0 0 auto;min-height:0;height:34px;padding:6px 12px;font-size:13px;line-height:1;border-radius:999px;white-space:nowrap}
+
+/* Hero actions: Get alerts and Share */
+html body .hero-actions{display:flex;gap:8px;flex-wrap:wrap}
+html body .share-app{height:34px;min-height:0;padding:6px 14px;font-size:13px;line-height:1;border-radius:999px}
+
+/* League chip */
+html body .leagueSwitch .chip{height:32px;min-height:0;padding:4px 10px;font-size:13px}
+
+/* Match filters and refresh */
+html body .slfa-mc-filter{height:30px;min-height:0;padding:5px 11px;font-size:12px;line-height:1;border-radius:999px}
+html body #mcRefresh{height:30px;min-height:0;padding:5px 11px;font-size:12px;line-height:1}
+html body .slfa-mc-reset{width:auto;height:30px;min-height:0;padding:5px 12px;font-size:12px;margin-left:auto}
+
+/* Match and club buttons */
+html body .slfa-mc-share,
+html body .slfa-mc-details-btn,
+html body .slfa-club-share{height:30px;min-height:0;padding:5px 12px;font-size:12px;line-height:1;border-radius:999px}
+html body .slfa-mc-comment-send{height:34px;min-height:0;padding:6px 16px;font-size:13px}
+
+/* Install and admin sign-in */
+html body .install-btn{height:32px;min-height:0;padding:5px 12px;font-size:13px}
+html body #adminDropdown button {font-size:13px !important;height:36px !important;min-height:0 !important;padding:6px 14px !important}
+
+/* Language menu in the top bar: small, label kept for screen readers only */
+html body .lang-picker{font-size:12px;margin:0;gap:4px}
+html body .lang-picker-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+html body .lang-picker select{height:30px;min-height:0;font-size:12px;line-height:1;padding:0 26px 0 10px}
