@@ -31,3 +31,18 @@ html body #adminDropdown button {font-size:13px !important;height:36px !importan
 html body .lang-picker{font-size:12px;margin:0;gap:4px}
 html body .lang-picker-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 html body .lang-picker select{height:30px;min-height:0;font-size:12px;line-height:1;padding:0 26px 0 10px}
+
+/* Home stat tiles: clubs, completed matches, upcoming fixtures. Smaller. */
+html body .slfa-home-stats{gap:6px}
+html body .slfa-home-stat{padding:7px 9px;border-radius:12px}
+html body .slfa-home-stat strong{font-size:16px;line-height:1.1}
+html body .slfa-home-stat span{margin-top:2px;font-size:8px;line-height:1.2;letter-spacing:.04em}
+
+/* Change my clubs (alerts box) */
+html body .alert-clubs-box button{height:30px;min-height:0;padding:5px 12px;font-size:12px;line-height:1;border-radius:999px}
+
+/* League buttons: a bit larger, with hover and a clear selected state */
+html body .leagueSwitch .chip{min-height:50px;padding:6px 16px 6px 8px !important;font-size:14px;border-radius:999px;transition:background .15s ease,border-color .15s ease,transform .15s ease}
+html body .leagueSwitch .chip:hover{background:rgba(0,114,198,.22) !important;border-color:#5ab0ff !important;color:#ffffff !important;transform:translateY(-1px)}
+html body .leagueSwitch .chip.on{background:#0072c6 !important;border-color:#8fd0ff !important;color:#ffffff !important;box-shadow:0 0 0 2px rgba(143,208,255,.35),0 6px 16px rgba(0,114,198,.35) !important;animation:none}
+html body .leagueSwitch .chip.on::after{content:"✓";margin-left:4px;font-weight:800;font-size:14px;line-height:1}
