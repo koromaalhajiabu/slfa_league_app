@@ -185,3 +185,7 @@ html[data-theme="light"] body #adminDropdown .forgot-line a, html[data-theme="li
 
 /* Keyboard focus on text fields in light mode */
 html[data-theme="light"] body input:focus-visible, html[data-theme="light"] body select:focus-visible, html[data-theme="light"] body textarea:focus-visible { outline-color: #0b4f8a !important; }
+
+/* Match-day board in light mode */
+html[data-theme="light"] body #matchDay.matchday{background:#ffffff;border-color:#c8d6e5}
+html[data-theme="light"] body #matchDay .md-title{color:#0b2545}
