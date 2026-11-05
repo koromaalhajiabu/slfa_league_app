@@ -195,6 +195,7 @@
       '<div class="btns"><button class="primary" id="asSave">Assign</button></div>' +
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
+      '<h2 class="rt">Fan comments awaiting approval</h2><div id="pendingComments" class="muted">Loading…</div>' +
       '<h2 class="rt">Club profile changes awaiting approval</h2><div id="clubProfileReview" class="muted">Loading…</div>' +
       '<h2 class="rt">Player registrations awaiting approval</h2><div id="squadReview" class="muted">Loading…</div>' +
       '<h2 class="rt">Transfer requests awaiting approval</h2><div id="transferReview" class="muted">Loading…</div>' +
@@ -257,6 +258,7 @@
     wireLive();
     loadAssignOptions();
     loadPendingResults();
+    loadPendingComments();
     $('asSave').addEventListener('click', function () {
       var m = $('asMatch').value, r = $('asRef').value;
       if (!m || !r) { msg('Choose a match and a referee.'); return; }
@@ -296,6 +298,35 @@
             if (!confirm('Reject this score? The referee will need to send it again.')) return;
             db.from('match_results').delete().eq('id', Number(b.dataset.reject)).then(function (res) {
               msg(res.error ? res.error.message : 'Rejected.'); loadPendingResults(); });
+          });
+        });
+      });
+  }
+
+  // Fan comments wait here until approved. Approved comments appear on the match details.
+  function loadPendingComments() {
+    var box = $('pendingComments'); if (!box) return;
+    db.from('match_comments').select('id, fan_name, body, created_at, matches(home_team, away_team)').eq('status', 'PENDING').order('created_at', { ascending: true }).limit(100)
+      .then(function (r) {
+        if (r.error) { box.textContent = 'Comments could not be loaded.'; return; }
+        var rows = r.data || [];
+        box.innerHTML = rows.length ? rows.map(function (x) {
+          var m = x.matches || {};
+          return '<div class="post"><strong>' + esc(x.fan_name) + '</strong> on ' + esc(m.home_team || '') + ' v ' + esc(m.away_team || '') +
+            '<p>' + esc(x.body) + '</p>' +
+            '<div class="btns"><button class="primary" data-comment-approve="' + x.id + '">Approve</button><button class="secondary" data-comment-reject="' + x.id + '">Reject</button></div></div>';
+        }).join('') : 'No comments waiting.';
+        box.querySelectorAll('[data-comment-approve]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            db.from('match_comments').update({ status: 'APPROVED', reviewed_at: new Date().toISOString() }).eq('id', Number(b.dataset.commentApprove)).then(function (res) {
+              msg(res.error ? res.error.message : 'Comment approved.'); loadPendingComments(); });
+          });
+        });
+        box.querySelectorAll('[data-comment-reject]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            if (!confirm('Reject this comment? It will not be shown.')) return;
+            db.from('match_comments').update({ status: 'REJECTED', reviewed_at: new Date().toISOString() }).eq('id', Number(b.dataset.commentReject)).then(function (res) {
+              msg(res.error ? res.error.message : 'Comment rejected.'); loadPendingComments(); });
           });
         });
       });
@@ -1427,6 +1458,7 @@
   var adminTimer = null;
   function refreshAdmin() {
     if ($('pendingResults')) loadPendingResults();
+    if ($('pendingComments')) loadPendingComments();
     if ($('reviewList')) loadReview();
     if ($('squadReview')) loadSquadReview();
     if ($('transferReview')) loadTransferReview();

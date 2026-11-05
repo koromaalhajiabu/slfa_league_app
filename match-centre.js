@@ -150,8 +150,43 @@
       }).join('')+'</div>';}
       if(lu.length){var by={};lu.forEach(function(x){var n=x.league_clubs&&x.league_clubs.club_name||'Team',p=x.club_squad||{},v=(p.jersey_number?'#'+p.jersey_number+' ':'')+(p.player_name||'Player');by[n]=by[n]||{xi:[],bench:[]};(x.is_starter?by[n].xi:by[n].bench).push(v);});
         html+='<h4>Published line-ups</h4><div class="slfa-mc-lineups">'+Object.keys(by).map(function(n){return '<div><strong role="button" tabindex="0" data-open-club-name="'+esc(n)+'">'+esc(n)+'</strong><p><b>Starting:</b> '+esc(by[n].xi.join(', ')||'Not published')+'</p><p><b>Bench:</b> '+esc(by[n].bench.join(', ')||'Not published')+'</p></div>';}).join('')+'</div>';}
-      box.innerHTML=html||'<p class="slfa-mc-no-events">No additional match details have been published.</p>';
+      box.innerHTML=(html||'<p class="slfa-mc-no-events">No additional match details have been published.</p>')+'<div class="slfa-mc-comments"></div>';
+      loadComments(id,box.querySelector('.slfa-mc-comments'));
     }).catch(function(){box.innerHTML='<p class="slfa-mc-no-events">Match details are temporarily unavailable.</p>';});
+  }
+  function voterKey(){try{var k=localStorage.getItem('slfa_voter_key');if(!k){k=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);localStorage.setItem('slfa_voter_key',k);}return k;}catch(e){return null;}}
+  function fanName(){try{return localStorage.getItem('slfa_fan_name')||'';}catch(e){return '';}}
+  // Fan comments: only approved comments are shown. New ones wait for moderator approval.
+  function loadComments(matchId,box){
+    if(!box)return;
+    db.from('match_comments').select('id,fan_name,body,created_at').eq('match_id',String(matchId)).eq('status','APPROVED').order('created_at',{ascending:false}).limit(30)
+    .then(function(res){
+      var rows=res.error?null:(res.data||[]);
+      var list=rows===null?'<p class="slfa-mc-no-events">Comments are temporarily unavailable.</p>':
+        rows.length?rows.map(function(c){return '<div class="slfa-mc-comment"><strong>'+esc(c.fan_name)+'</strong><small>'+esc(dateText(c.created_at))+'</small><p>'+esc(c.body)+'</p></div>';}).join(''):
+        '<p class="slfa-mc-no-events">No comments yet.</p>';
+      box.innerHTML='<h4>Fan comments</h4>'+
+        '<form class="slfa-mc-comment-form" novalidate><label>Your name<input name="fan" maxlength="30" value="'+esc(fanName())+'" autocomplete="nickname"></label>'+
+        '<label>Comment<textarea name="body" maxlength="280" rows="2" placeholder="Say something about this match"></textarea></label>'+
+        '<button type="submit" class="slfa-mc-comment-send">Send for approval</button><p class="status" role="status"></p></form>'+
+        '<p class="slfa-mc-comment-note">Comments appear here after an admin approves them.</p>'+list;
+      var form=box.querySelector('form'),msg=form.querySelector('.status');
+      form.addEventListener('submit',function(e){
+        e.preventDefault();
+        var name=form.fan.value.trim(),body=form.body.value.trim();
+        if(name.length<2){msg.textContent='Enter your name (at least 2 letters).';return;}
+        if(!body){msg.textContent='Write a comment first.';return;}
+        var key=voterKey();if(!key){msg.textContent='Comments need your browser to store a small code. Turn off private browsing and try again.';return;}
+        var btn=form.querySelector('button');btn.disabled=true;msg.textContent='Sending…';
+        db.rpc('submit_match_comment',{p_match_id:Number(matchId),p_fan_name:name,p_body:body,p_voter_key:key}).then(function(r){
+          btn.disabled=false;
+          if(r.error){msg.textContent=r.error.message;return;}
+          try{localStorage.setItem('slfa_fan_name',name);}catch(x){}
+          form.body.value='';
+          msg.textContent='Thank you. Your comment will appear once it is approved.';
+        });
+      });
+    });
   }
   function fetchData() {
     var request = Promise.all([
