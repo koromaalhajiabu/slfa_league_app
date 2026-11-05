@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="styles.css?v=7">
 <link rel="stylesheet" href="match-centre.css?v=4">
 <link rel="stylesheet" href="my-club.css?v=1">
-<link rel="stylesheet" href="buttons-compact.css?v=5">
+<link rel="stylesheet" href="buttons-compact.css?v=6">
 <link rel="stylesheet" href="league-pages.css?v=2">
 <link rel="stylesheet" href="player-stats.css">
 <link rel="stylesheet" href="player-directory.css?v=2">
@@ -105,6 +105,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
         <div id="createBox" class="hidden">
           <label for="fullName">Full name</label>
           <input id="fullName" type="text" autocomplete="name">
+          <label class="terms-row"><input id="acceptTerms" type="checkbox"> <span>I have read the <a href="privacy.html" target="_blank" rel="noopener">privacy notice and terms</a> and I agree to them.</span></label>
           <div class="btns">
             <button class="primary" id="createBtn">Create my account</button>
           </div>
@@ -303,12 +304,14 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
     var email = $('email').value.trim();
     var password = $('password').value;
     if (!email || password.length < 8) { $('authStatus').textContent = 'Enter an email and a password of at least 8 characters above.'; return; }
+    if (!$('acceptTerms').checked) { $('authStatus').textContent = 'Please tick the box to agree to the privacy notice and terms before creating your account.'; return; }
     $('authStatus').textContent = 'Creating account…';
-    db.auth.signUp({ email: email, password: password, options: { data: { full_name: $('fullName').value.trim() } } })
+    db.auth.signUp({ email: email, password: password, options: { data: { full_name: $('fullName').value.trim(), terms_version: 'draft-2026-11' } } })
       .then(function (res) {
         if (res.error) { $('authStatus').textContent = res.error.message; return; }
         $('authStatus').textContent = 'Account created. Check your email to confirm it, then sign in.';
         $('password').value = '';
+        $('acceptTerms').checked = false;
       });
   });
 
