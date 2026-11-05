@@ -1,5 +1,5 @@
 -- One-hour kick-off reminders, sent through the existing league alert queue.
--- Runs every five minutes once scheduled; a match is reminded once (kickoff_reminder_sent_at).
+-- Runs every five minutes; a match is reminded once (kickoff_reminder_sent_at).
 -- Subscribers receive it only if they follow one of the two clubs (see send-league-alerts).
 
 alter table public.matches add column if not exists kickoff_reminder_sent_at timestamptz;
@@ -34,8 +34,7 @@ end $$;
 
 revoke execute on function public.queue_kickoff_reminders() from anon, authenticated;
 
--- The schedule is NOT created by this file. Reminders go to every subscriber who has not chosen clubs,
--- so the schedule is switched on only after SLFA decides who should receive them. To switch on:
---   select cron.schedule('kickoff-reminders', '*/5 * * * *', $$select public.queue_kickoff_reminders()$$);
+-- Schedule: switched on by SLFA on 2026-11-05 for all subscribers (pg_cron job "kickoff-reminders", every five minutes).
+-- Subscribers who have not chosen clubs also receive these reminders.
 -- To switch off:
 --   select cron.unschedule('kickoff-reminders');
