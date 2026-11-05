@@ -347,7 +347,25 @@
       if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   };
+  // Fixture to calendar (.ics), two hours long
+  function icsFor(title, startIso, venue) {
+    var start = new Date(startIso), end = new Date(start.getTime() + 2 * 3600 * 1000);
+    var f = function (d) { return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); };
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SLFA League App//EN', 'BEGIN:VEVENT',
+      'UID:' + f(start) + '-' + title.replace(/\W/g, '') + '@slfa-league-app', 'DTSTAMP:' + f(new Date()),
+      'DTSTART:' + f(start), 'DTEND:' + f(end), 'SUMMARY:' + title, 'LOCATION:' + (venue || ''),
+      'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  }
   document.addEventListener('click', function (e) {
+    var cal = e.target.closest && e.target.closest('.slfa-ics');
+    if (cal) {
+      var blob = new Blob([icsFor(cal.getAttribute('data-ics-title'), cal.getAttribute('data-ics-start'), cal.getAttribute('data-ics-venue'))], { type: 'text/calendar' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'slfa-fixture.ics';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+      return;
+    }
     var share = e.target.closest && e.target.closest('[data-share-club]');
     if (share) {
       var club = share.getAttribute('data-share-club');
@@ -377,8 +395,8 @@
       db.from('suspensions').select('player_id, matches_total, matches_served').eq('status', 'ACTIVE'),
       db.from('disciplinary_actions').select('player_id, action_type, amount, currency, reason, decided_at').eq('published', true).order('decided_at', { ascending: false }).limit(200),
       db.from('motm_awards').select('player_id, awards').limit(500),
-      db.from('matches').select('id, match_date, home_team, away_team, home_score, away_score, match_status').eq('home_team', name).order('match_date', { ascending: false }).limit(30),
-      db.from('matches').select('id, match_date, home_team, away_team, home_score, away_score, match_status').eq('away_team', name).order('match_date', { ascending: false }).limit(30),
+      db.from('matches').select('id, match_date, venue, home_team, away_team, home_score, away_score, match_status').eq('home_team', name).order('match_date', { ascending: false }).limit(30),
+      db.from('matches').select('id, match_date, venue, home_team, away_team, home_score, away_score, match_status').eq('away_team', name).order('match_date', { ascending: false }).limit(30),
       db.from('league_standings').select('pos, club').eq('club', name).limit(1)
     ]).then(function (all) {
       var profile = all[0].data || {};
@@ -398,8 +416,18 @@
       };
       var pos = (all[8].data || [])[0];
       if (pos) html += '<p class="slfa-club-position"><strong>League position: ' + esc(pos.pos) + '</strong></p>';
+      // Form: last five results, oldest first, most recent last
+      var formRuns = played.slice(0, 5).map(function (m) {
+        var home = m.home_team === name, mine = home ? m.home_score : m.away_score, theirs = home ? m.away_score : m.home_score;
+        return mine > theirs ? 'W' : mine === theirs ? 'D' : 'L';
+      }).reverse();
+      if (formRuns.length) html += '<p class="slfa-form" aria-label="Form: ' + esc(formRuns.join(' ')) + '">' + formRuns.map(function (r) {
+        return '<span class="slfa-form-' + r + '">' + r + '</span>'; }).join('') + '</p>';
       if (played.length) html += '<h4 class="league-name">Results</h4>' + played.slice(0, 5).map(fxRow).join('');
-      if (due.length) html += '<h4 class="league-name">Fixtures</h4>' + due.slice(0, 3).map(fxRow).join('');
+      if (due.length) html += '<h4 class="league-name">Fixtures</h4>' + due.slice(0, 3).map(function (m) {
+        var t = m.home_team + ' v ' + m.away_team;
+        return fxRow(m) + '<button type="button" class="slfa-ics" data-ics-start="' + esc(new Date(m.match_date).toISOString()) + '" data-ics-title="' + esc(t) + '" data-ics-venue="' + esc(m.venue || '') + '">Add to calendar</button>';
+      }).join('');
       var ann = all[1].data || [];
       if (ann.length) {
         html += '<h4 class="league-name">Announcements</h4>' + ann.map(function (a) {

@@ -1047,3 +1047,11 @@ html body .slfa-club-share { margin:6px 0 10px; padding:8px 12px; border-radius:
 .alert-clubs-list { display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; max-height:280px; overflow:auto; }
 .alert-clubs label { font-size:13px; display:flex; gap:6px; align-items:center; }
 @media (max-width:360px) { .alert-clubs-list { grid-template-columns:1fr; } }
+
+/* Form line and calendar button on club pages */
+.slfa-form { display:flex; gap:6px; margin:6px 0 10px; }
+.slfa-form span { width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; }
+.slfa-form-W { background:#1eb53a; }
+.slfa-form-D { background:#8a96a8; }
+.slfa-form-L { background:#e0474c; }
+.slfa-ics { margin:4px 0 10px; padding:6px 10px; border-radius:10px; border:1px solid rgba(140,190,255,.3); background:rgba(0,114,198,.14); color:#e6f1ff; font-size:12px; font-weight:600; cursor:pointer; }
