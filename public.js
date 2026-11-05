@@ -709,11 +709,53 @@
           var j = sub.toJSON();
           return db.from('push_subscriptions').insert([{ user_id: null, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth }]).then(function (res) {
             if (res.error && res.error.code !== '23505') throw res.error;
-            setAlertStatus('Alerts are on for this device.');
+            setAlertStatus('Alerts are on for this device. Choose the clubs you follow below.');
+            showClubPicker(j.endpoint);
           });
         }).catch(function () { setAlertStatus('Could not turn on alerts. Please try again.'); });
       });
     });
+  }
+
+  // Club picker: a phone gets goal, card, kick-off and full-time alerts only for the clubs it follows
+  function showClubPicker(endpoint) {
+    var box = $('alertClubs');
+    if (!box) return;
+    box.hidden = false;
+    box.innerHTML = '<p class="muted">Loading clubs…</p>';
+    db.from('league_clubs').select('club_name').eq('is_active', true).order('club_name').then(function (r) {
+      var names = (r.data || []).map(function (c) { return c.club_name; });
+      box.innerHTML = '<fieldset class="alert-clubs"><legend>Clubs you follow</legend>' +
+        '<label class="alert-clubs-all"><input type="checkbox" id="acAll" checked> All clubs</label>' +
+        '<div class="alert-clubs-list">' + names.map(function (n) {
+          return '<label><input type="checkbox" class="acClub" value="' + esc(n) + '" disabled> ' + esc(n) + '</label>';
+        }).join('') + '</div>' +
+        '<button type="button" class="primary" id="acSave">Save my clubs</button></fieldset>';
+      var all = box.querySelector('#acAll');
+      all.addEventListener('change', function () {
+        box.querySelectorAll('.acClub').forEach(function (c) { c.disabled = all.checked; if (all.checked) c.checked = false; });
+      });
+      box.querySelector('#acSave').addEventListener('click', function () {
+        var picked = Array.prototype.slice.call(box.querySelectorAll('.acClub:checked')).map(function (c) { return c.value; });
+        if (!all.checked && !picked.length) { setAlertStatus('Pick at least one club, or choose All clubs.'); return; }
+        db.rpc('set_push_clubs', { p_endpoint: endpoint, p_clubs: all.checked ? null : picked }).then(function (res) {
+          setAlertStatus(res.error ? 'Could not save your clubs. Please try again.' : 'Your clubs are saved for this device.');
+        });
+      });
+    });
+  }
+  // Let a fan who already turned on alerts change their clubs later
+  if (alertBtn && 'serviceWorker' in navigator && 'PushManager' in window) {
+    navigator.serviceWorker.ready.then(function (reg) {
+      return reg.pushManager.getSubscription();
+    }).then(function (sub) {
+      if (!sub) return;
+      var change = document.createElement('button');
+      change.type = 'button'; change.className = 'secondary'; change.textContent = 'Change my clubs';
+      change.addEventListener('click', function () { showClubPicker(sub.endpoint); });
+      var status = $('alertStatus');
+      if (status && status.parentNode) status.parentNode.insertBefore(change, status);
+    }).catch(function () {});
   }
 
   function setLive(html) {
