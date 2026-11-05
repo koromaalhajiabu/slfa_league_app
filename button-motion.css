@@ -1,0 +1,48 @@
+/* Button motion: a lift and shine on hover and a press on tap, layered over the app's existing soft float.
+   The lift and press use translate and scale so they do not fight the float animation. Motion is turned off for people who ask their phone to reduce it. */
+
+@keyframes slfa-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes slfa-sheen { 0% { transform: translateX(-120%) skewX(-18deg); } 100% { transform: translateX(260%) skewX(-18deg); } }
+
+/* Shared: smooth transitions, a shine that sweeps across on hover */
+html body .share-app, html body button.primary, html body button.secondary,
+html body .tabs button, html body .leagueSwitch .chip, html body .slfa-mc-filter,
+html body .slfa-mc-share, html body .slfa-mc-details-btn, html body .slfa-club-share,
+html body .my-club-open, html body .theme-toggle, html body .slfa-mc-comment-send,
+html body .fav, html body .install-btn {
+  position: relative; overflow: hidden;
+  transition: translate .22s cubic-bezier(.2,.8,.2,1), scale .18s ease, box-shadow .22s ease, background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+html body .share-app::after, html body button.primary::after, html body button.secondary::after,
+html body .tabs button::after, html body .leagueSwitch .chip::after, html body .slfa-mc-filter::after,
+html body .slfa-mc-share::after, html body .slfa-mc-details-btn::after, html body .slfa-club-share::after,
+html body .my-club-open::after, html body .theme-toggle::after, html body .slfa-mc-comment-send::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 42%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.38), transparent);
+  transform: translateX(-120%) skewX(-18deg); pointer-events: none; opacity: 0;
+}
+html body .share-app:hover::after, html body button.primary:hover::after, html body button.secondary:hover::after,
+html body .tabs button:hover::after, html body .leagueSwitch .chip:hover::after, html body .slfa-mc-filter:hover::after,
+html body .slfa-mc-share:hover::after, html body .slfa-mc-details-btn:hover::after, html body .slfa-club-share:hover::after,
+html body .my-club-open:hover::after, html body .theme-toggle:hover::after, html body .slfa-mc-comment-send:hover::after {
+  opacity: 1; animation: slfa-sheen .8s ease;
+}
+
+/* Hover lift and press */
+html body .share-app:hover, html body button.primary:hover, html body button.secondary:hover,
+html body .tabs button:hover, html body .leagueSwitch .chip:hover, html body .slfa-mc-filter:hover,
+html body .slfa-mc-share:hover, html body .slfa-mc-details-btn:hover, html body .slfa-club-share:hover,
+html body .my-club-open:hover, html body .theme-toggle:hover, html body .slfa-mc-comment-send:hover {
+  translate: 0 -2px; box-shadow: 0 10px 22px -10px rgba(0,114,198,.55);
+}
+html body .share-app:active, html body button.primary:active, html body button.secondary:active,
+html body .tabs button:active, html body .leagueSwitch .chip:active, html body .slfa-mc-filter:active,
+html body .slfa-mc-share:active, html body .slfa-mc-details-btn:active, html body .slfa-club-share:active,
+html body .my-club-open:active, html body .theme-toggle:active, html body .slfa-mc-comment-send:active {
+  scale: .97; transition-duration: .08s;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  html body *, html body *::before, html body *::after { animation: none !important; transition: none !important; }
+}

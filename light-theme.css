@@ -1,0 +1,163 @@
+/* Light theme. Applies only when the page has data-theme="light" (set by the Light/Dark button). */
+html[data-theme="light"] body{background:#f4f8fd !important;color:#0b1a30 !important;background-image:none !important}
+html[data-theme="light"] body::before,html[data-theme="light"] body::after{display:none !important}
+
+/* Surfaces: cards, panels, heroes and the top bar become white or pale blue */
+html[data-theme="light"] body .topbar,
+html[data-theme="light"] body .hero,
+html[data-theme="light"] body .card,
+html[data-theme="light"] body .view,
+html[data-theme="light"] body .slfa-home-stat,
+html[data-theme="light"] body .slfa-home-feature,
+html[data-theme="light"] body .my-club-card,
+html[data-theme="light"] body .team,
+html[data-theme="light"] body .post,
+html[data-theme="light"] body .match,
+html[data-theme="light"] body .slfa-mc-card,
+html[data-theme="light"] body .slfa-mc-detail,
+html[data-theme="light"] body .slfa-mc-report-box,
+html[data-theme="light"] body .slfa-lp-panel,
+html[data-theme="light"] body .slfa-lp-kpi,
+html[data-theme="light"] body .slfa-lp-hero,
+html[data-theme="light"] body .admin-body,
+html[data-theme="light"] body .row,
+html[data-theme="light"] body .slfa-mc-comment,
+html[data-theme="light"] body details.admin > summary,
+html[data-theme="light"] body .slfa-home-dashboard,
+html[data-theme="light"] body .slfa-home-empty{background:#ffffff !important;background-image:none !important;color:#0b1a30 !important;border-color:rgba(10,40,80,.14) !important;box-shadow:0 6px 18px rgba(10,40,80,.07) !important}
+html[data-theme="light"] body .slfa-home-feature,
+html[data-theme="light"] body .slfa-home-feature-foot{background:linear-gradient(145deg,#eaf3ff,#ffffff) !important}
+html[data-theme="light"] body .slfa-home-stat strong,
+html[data-theme="light"] body .slfa-home-stat span,
+html[data-theme="light"] body .slfa-lp-hero h3,
+html[data-theme="light"] body .my-club-card h3{color:#0b1a30 !important}
+html[data-theme="light"] body .my-club-eyebrow,
+html[data-theme="light"] body .slfa-home-topline,
+html[data-theme="light"] body .slfa-home-topline small{color:#0a5fa8 !important}
+
+/* Text */
+html[data-theme="light"] body main,
+html[data-theme="light"] body main :not(button):not(.primary):not(.secondary):not(.chip):not(.chip *):not(.slfa-form-W):not(.slfa-form-D):not(.slfa-form-L):not(.slfa-mc-share):not(.slfa-mc-details-btn):not(.my-club-open){color:#0b1a30}
+html[data-theme="light"] body .muted,
+html[data-theme="light"] body .slfa-mc-detail-loading,
+html[data-theme="light"] body .slfa-mc-no-events,
+html[data-theme="light"] body small{color:#4a5f7a !important}
+html[data-theme="light"] body .topbar h1,
+html[data-theme="light"] body .topbar p{color:#0b1a30 !important}
+
+/* Buttons and chips keep the blue accent with white text on selection; idle buttons become pale */
+html[data-theme="light"] body .tabs button,
+html[data-theme="light"] body .slfa-mc-filter,
+html[data-theme="light"] body .slfa-mc-reset,
+html[data-theme="light"] body .leagueSwitch .chip,
+html[data-theme="light"] body .share-app,
+html[data-theme="light"] body .slfa-mc-share,
+html[data-theme="light"] body .slfa-mc-details-btn,
+html[data-theme="light"] body .slfa-club-share,
+html[data-theme="light"] body .my-club-open,
+html[data-theme="light"] body .fav,
+html[data-theme="light"] body button.secondary{background:#eef5ff !important;color:#0a3f73 !important;border:1px solid rgba(10,95,168,.22) !important;background-image:none !important;box-shadow:none !important}
+html[data-theme="light"] body .tabs button[aria-selected="true"],
+html[data-theme="light"] body .slfa-mc-filter.active,
+html[data-theme="light"] body .leagueSwitch .chip.on,
+html[data-theme="light"] body button.primary,
+html[data-theme="light"] body .share-app.primary{background:#0a5fa8 !important;color:#ffffff !important;border-color:#0a5fa8 !important;background-image:none !important}
+html[data-theme="light"] body .slfa-mc-comment-send,
+html[data-theme="light"] body .slfa-mc-comment-send[disabled]{background:#0a5fa8 !important;color:#ffffff !important}
+html[data-theme="light"] body input,
+html[data-theme="light"] body select,
+html[data-theme="light"] body textarea{background:#ffffff !important;color:#0b1a30 !important;border-color:rgba(10,40,80,.25) !important}
+
+/* Tables */
+html[data-theme="light"] body table,
+html[data-theme="light"] body th,
+html[data-theme="light"] body td{background:transparent !important;color:#0b1a30 !important;border-color:rgba(10,40,80,.12) !important}
+html[data-theme="light"] body thead th{color:#4a5f7a !important}
+
+/* Theme button in the top bar */
+.theme-toggle{height:30px;min-height:0;padding:4px 12px;border-radius:999px;border:1px solid rgba(140,190,255,.4);background:rgba(0,114,198,.12);color:inherit;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+html[data-theme="light"] body .theme-toggle{background:#eef5ff;color:#0a3f73;border-color:rgba(10,95,168,.3)}
+
+/* Stronger overrides for the hero, match cards and gradient titles */
+html[data-theme="light"] body .title,
+html[data-theme="light"] body .hero h2,
+html[data-theme="light"] body .hero .title{background:none !important;-webkit-text-fill-color:#0b1a30 !important;color:#0b1a30 !important}
+html[data-theme="light"] body .kicker{color:#0a5fa8 !important}
+html[data-theme="light"] body #matchList .slfa-mc-card,
+html[data-theme="light"] body #matchList .slfa-mc-card.is-live{background:#ffffff !important;border-color:rgba(10,40,80,.14) !important;color:#0b1a30 !important;box-shadow:0 6px 18px rgba(10,40,80,.07) !important}
+html[data-theme="light"] body .slfa-mc-card .muted,
+html[data-theme="light"] body .slfa-mc-card small{color:#4a5f7a !important}
+html[data-theme="light"] body .share-app{color:#0a3f73 !important;background:#eef5ff !important}
+html[data-theme="light"] body .share-app:hover{background:#dbeaff !important}
+html[data-theme="light"] body .sub{color:#0b1a30 !important}
+
+/* Match Centre header, Share button text and home labels */
+html[data-theme="light"] body #matchList .slfa-match-centre-v2,
+html[data-theme="light"] body #matchList .slfa-mc-heading{background:#ffffff !important;background-image:none !important;color:#0b1a30 !important;border-color:rgba(10,40,80,.14) !important}
+html[data-theme="light"] body #matchList .slfa-mc-heading h3,
+html[data-theme="light"] body #matchList .slfa-mc-heading p{color:#0b1a30 !important;background:none !important;-webkit-text-fill-color:#0b1a30 !important}
+html[data-theme="light"] body .slfa-mc-eyebrow{color:#0a5fa8 !important}
+html[data-theme="light"] body .share-app *,
+html[data-theme="light"] body .share-app{text-shadow:none !important}
+html[data-theme="light"] body .slfa-home-topline span{color:#0a5fa8 !important}
+html[data-theme="light"] body .slfa-home-topline small{color:#4a5f7a !important}
+
+/* ID-level overrides where the dark theme uses IDs */
+html[data-theme="light"] body #shareApp,
+html[data-theme="light"] body #alertBtn.share-app{color:#0a3f73 !important;background:#eef5ff !important}
+html[data-theme="light"] body #alertBtn.share-app{color:#ffffff !important;background:#0a5fa8 !important}
+html[data-theme="light"] body #matchList .slfa-mc-card{background:#ffffff !important;color:#0b1a30 !important}
+html[data-theme="light"] body #shareApp,
+html[data-theme="light"] body #shareApp span{-webkit-text-fill-color:#0a3f73 !important;background-clip:border-box !important}
+html[data-theme="light"] body #alertBtn.share-app{-webkit-text-fill-color:#ffffff !important}
+
+/* Match list panel, its filters and the footer link */
+html[data-theme="light"] body #matchList{background:#ffffff !important;background-image:none !important;border-color:rgba(10,40,80,.14) !important;box-shadow:0 6px 18px rgba(10,40,80,.07) !important}
+html[data-theme="light"] body #matchList *:not(button):not(.slfa-mc-status):not([class*="is-live"]){color:#0b1a30 !important;-webkit-text-fill-color:#0b1a30 !important}
+html[data-theme="light"] body #matchList .muted,
+html[data-theme="light"] body #matchList small{color:#4a5f7a !important;-webkit-text-fill-color:#4a5f7a !important}
+html[data-theme="light"] body #matchList select,
+html[data-theme="light"] body #matchList input{background:#ffffff !important;color:#0b1a30 !important;border:1px solid rgba(10,40,80,.25) !important}
+html[data-theme="light"] body #mcRefresh{background:#0a5fa8 !important;color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;border-color:#0a5fa8 !important}
+html[data-theme="light"] body .app-legal a{color:#0a5fa8 !important}
+html[data-theme="light"] body #matchList .slfa-mc-filter{background:#eef5ff !important;color:#0a3f73 !important;-webkit-text-fill-color:#0a3f73 !important;border:1px solid rgba(10,95,168,.22) !important}
+html[data-theme="light"] body #matchList .slfa-mc-filter.active{background:#0a5fa8 !important;color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;border-color:#0a5fa8 !important}
+html[data-theme="light"] body #matchList .slfa-mc-filter .slfa-mc-count,
+html[data-theme="light"] body #matchList .slfa-mc-filter span{color:inherit !important;-webkit-text-fill-color:inherit !important}
+
+/* Contrast fixes: rules scoped under #public and #adminDropdown beat the dark theme's ID rules */
+html[data-theme="light"] body #public #shareApp,
+html[data-theme="light"] body #public #alertBtn.share-app,
+html[data-theme="light"] body #public .hero-actions .share-app{color:#0a3f73 !important;background:#eef5ff !important;border:1px solid rgba(10,95,168,.3) !important;-webkit-text-fill-color:#0a3f73 !important}
+html[data-theme="light"] body #public #alertBtn.share-app{color:#ffffff !important;background:#0a5fa8 !important;border-color:#0a5fa8 !important;-webkit-text-fill-color:#ffffff !important}
+html[data-theme="light"] body #public :is(p,span,label,h1,h2,h3,h4,h5,strong,li,small,td,th,div,a,em,b,i,summary):not(button *):not(.slfa-mc-status):not([class*="slfa-form-"]):not(.slfa-mc-count-pill):not(.league-chip-name){color:#0b1a30 !important;-webkit-text-fill-color:#0b1a30 !important}
+html[data-theme="light"] body #public .muted,
+html[data-theme="light"] body #public small,
+html[data-theme="light"] body #public .slfa-lp-eyebrow,
+html[data-theme="light"] body #public .slfa-lp-source,
+html[data-theme="light"] body #public .ps-disclaimer{color:#4a5f7a !important;-webkit-text-fill-color:#4a5f7a !important}
+html[data-theme="light"] body #public .slfa-lp-eyebrow,
+html[data-theme="light"] body #public .ps-eyebrow,
+html[data-theme="light"] body #public .news-eyebrow{color:#0a5fa8 !important;-webkit-text-fill-color:#0a5fa8 !important}
+html[data-theme="light"] body #public .slfa-mc-filter.active .slfa-mc-count-pill,
+html[data-theme="light"] body #public .tabs button[aria-selected="true"] *{color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;background:rgba(255,255,255,.22) !important}
+html[data-theme="light"] body #public .tabs button[aria-selected="true"]{color:#ffffff !important;-webkit-text-fill-color:#ffffff !important}
+html[data-theme="light"] body .slfa-mc-count-pill{background:rgba(10,95,168,.12) !important;color:#0a3f73 !important;-webkit-text-fill-color:#0a3f73 !important}
+html[data-theme="light"] body #adminDropdown label,
+html[data-theme="light"] body #adminDropdown p,
+html[data-theme="light"] body #adminDropdown .admin-intro,
+html[data-theme="light"] body .admin-body label,
+html[data-theme="light"] body .admin-body p{color:#0b1a30 !important;-webkit-text-fill-color:#0b1a30 !important}
+html[data-theme="light"] body .lang-picker-label{color:#0b1a30 !important;-webkit-text-fill-color:#0b1a30 !important}
+
+/* Player statistics and table panels: pale surfaces so dark text reads */
+html[data-theme="light"] body #public [class*="ps-"]:not(button):not([class*="ps-hero"]){background-color:#ffffff !important;background-image:none !important;border-color:rgba(10,40,80,.14) !important}
+html[data-theme="light"] body #public table thead th{background:#eef5ff !important;color:#0b1a30 !important}
+html[data-theme="light"] body #public table td,
+html[data-theme="light"] body #public table tbody tr{background:transparent !important}
+html[data-theme="light"] body #public [class*="pd-"]:not(button){background-color:#ffffff !important;background-image:none !important;border-color:rgba(10,40,80,.14) !important}
+html[data-theme="light"] body #public [class*="ps-hero"],
+html[data-theme="light"] body #public .ps-banner,
+html[data-theme="light"] body #public [class*="-hero"]:not(.slfa-mc-heading):not(.slfa-lp-hero-mark){background:linear-gradient(145deg,#eaf3ff,#ffffff) !important;background-image:linear-gradient(145deg,#eaf3ff,#ffffff) !important;border-color:rgba(10,95,168,.22) !important;box-shadow:0 6px 18px rgba(10,40,80,.07) !important}
+html[data-theme="light"] body #public [class*="-hero"] .ps-eyebrow,
+html[data-theme="light"] body #public [class*="-hero"] span{background:transparent !important;color:#0a5fa8 !important;-webkit-text-fill-color:#0a5fa8 !important}
