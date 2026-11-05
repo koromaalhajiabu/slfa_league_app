@@ -94,7 +94,7 @@
     var logo = (isSlfaLogoUrl(c.logo_url) ? '' : (c.logo_url || '')) || fallback;
     var initial = esc((c.club_name || '?').charAt(0).toUpperCase());
     return logo
-      ? '<img class="slfa-lp-badge" src="' + esc(logo) + '" data-fallback="' + esc(c.logo_url && fallback && c.logo_url !== fallback ? fallback : '') + '" alt="" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\\'\\';}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="slfa-lp-badge slfa-lp-placeholder" hidden>' + initial + '</span>'
+      ? '<img class="slfa-lp-badge" src="' + esc(logo) + '" data-fallback="' + esc(c.logo_url && fallback && c.logo_url !== fallback ? fallback : '') + '" alt="" loading="lazy" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback=\'\';}else{this.hidden=true;this.nextElementSibling.hidden=false;}"><span class="slfa-lp-badge slfa-lp-placeholder" hidden>' + initial + '</span>'
       : '<span class="slfa-lp-badge slfa-lp-placeholder">' + initial + '</span>';
   }
   function selectedLeague() {
@@ -190,7 +190,10 @@
     host.querySelectorAll('[data-open-club]').forEach(function (b) {
       b.addEventListener('click', function () {
         var club = teamRows.find(function (c) { return String(c.id) === String(b.getAttribute('data-open-club')); });
-        if (club) renderClubProfile(club, lg);
+        if (!club) return;
+        // One club page everywhere: open it on the Teams tab, fall back to the local view if unavailable
+        if (window.slfaOpenClub) window.slfaOpenClub(club.club_name);
+        else renderClubProfile(club, lg);
       });
     });
   }
