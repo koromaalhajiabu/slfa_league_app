@@ -126,7 +126,9 @@
       'No matches today. Next up': 'Aucun match aujourd’hui. Prochains matchs',
       'Not started': 'Pas encore commencé',
       'Live now': 'En direct',
-      'Venue to be confirmed': 'Lieu à confirmer'
+      'Venue to be confirmed': 'Lieu à confirmer',
+      'players found': 'joueurs trouvés',
+      'Selected competition': 'Compétition sélectionnée'
     },
     kri: {
       'The SLFA League App': 'Di SLFA League App',
@@ -251,7 +253,9 @@
       'No matches today. Next up': 'Nɔ get mach tide. Di nɛks wan dɛn',
       'Not started': 'Nɔ bin start',
       'Live now': 'Di mach de go nɔw',
-      'Venue to be confirmed': 'Di ples nɔ dɛn tɔk yet'
+      'Venue to be confirmed': 'Di ples nɔ dɛn tɔk yet',
+      'players found': 'pleya dɛn we dɛn fɛn',
+      'Selected competition': 'Di kɔmpitishɔn we yu pik'
     },
     ar: {
       'The SLFA League App': 'تطبيق دوري SLFA',
@@ -376,7 +380,9 @@
       'No matches today. Next up': 'لا توجد مباريات اليوم. القادمة',
       'Not started': 'لم تبدأ بعد',
       'Live now': 'مباشر الآن',
-      'Venue to be confirmed': 'الملعب لم يُحدد بعد'
+      'Venue to be confirmed': 'الملعب لم يُحدد بعد',
+      'players found': 'لاعبًا',
+      'Selected competition': 'المسابقة المختارة'
     }
   };
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
