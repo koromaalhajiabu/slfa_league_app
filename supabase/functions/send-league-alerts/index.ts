@@ -65,16 +65,19 @@ Deno.serve(async (req: Request) => {
   const vapid = keys[0];
   if (!vapid) return new Response('Push keys are not set', { status: 500 });
 
-  const qRes = await fetch(`${supabaseUrl}/rest/v1/league_alerts?sent_at=is.null&attempts=lt.5&select=id,title,body,url,attempts&order=created_at.asc&limit=10`, { headers: h });
+  const qRes = await fetch(`${supabaseUrl}/rest/v1/league_alerts?sent_at=is.null&attempts=lt.5&select=id,title,body,url,attempts,club_names&order=created_at.asc&limit=10`, { headers: h });
   if (!qRes.ok) return new Response('Could not read the alerts queue', { status: 500 });
-  const alerts: Array<{ id: number; title: string; body: string; url: string; attempts: number }> = await qRes.json();
+  const alerts: Array<{ id: number; title: string; body: string; url: string; attempts: number; club_names: string[] | null }> = await qRes.json();
 
   let pushed = 0;
   for (const a of alerts) {
-    const sRes = await fetch(`${supabaseUrl}/rest/v1/push_subscriptions?select=endpoint,p256dh,auth&limit=5000`, { headers: h });
-    const subs: Array<{ endpoint: string; p256dh: string; auth: string }> = sRes.ok ? await sRes.json() : [];
+    const sRes = await fetch(`${supabaseUrl}/rest/v1/push_subscriptions?select=endpoint,p256dh,auth,club_names&limit=5000`, { headers: h });
+    const subs: Array<{ endpoint: string; p256dh: string; auth: string; club_names: string[] | null }> = sRes.ok ? await sRes.json() : [];
     let lastError: string | null = null;
     for (const sub of subs) {
+      // Club alerts go only to phones that follow one of the clubs named in the alert.
+      // Null on either side means all clubs.
+      if (a.club_names && sub.club_names && !sub.club_names.some((c) => a.club_names!.includes(c))) continue;
       try {
         const body = await encryptForSubscriber(JSON.stringify({ title: a.title, body: a.body, url: a.url }), sub.p256dh, sub.auth);
         const authz = await vapidAuthorization(sub.endpoint, vapid.public_key, vapid.private_key, 'mailto:koromaalhajiabu0@gmail.com');
