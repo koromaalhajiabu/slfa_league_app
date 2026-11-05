@@ -21,6 +21,20 @@
     });
   });
   $('pPass').addEventListener('keydown',function(e){if(e.key==='Enter')$('pSignIn').click();});
+  (function(){
+    var a=document.createElement('p');a.className='forgot-line';a.style.cssText='margin:8px 0 0;text-align:center;font-size:.92rem';
+    a.innerHTML='<a href="#" id="pForgot">Forgot password?</a>';
+    $('pPass').parentNode.insertBefore(a,$('pSignIn').parentNode);
+    $('pForgot').addEventListener('click',function(e){
+      e.preventDefault();
+      var email=$('pEmail').value.trim();
+      if(!email){$('pStatus').textContent='Type your email above first, then tap Forgot password again.';return;}
+      $('pStatus').textContent='Sending reset link…';
+      db.auth.resetPasswordForEmail(email,{redirectTo:new URL('reset-password.html',location.href).href}).then(function(){
+        $('pStatus').textContent='If that email has an account, a reset link is on its way. Check your inbox and spam folder.';
+      });
+    });
+  })();
   $('pSignOut').addEventListener('click',function(){db.auth.signOut().then(function(){location.href='index.html';});});
   function gate(){
     db.auth.getUser().then(function(u){
