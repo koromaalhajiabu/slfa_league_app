@@ -31,7 +31,7 @@ declare
     'league_verification_audit','league_verification_requests','leagues','man_of_the_match','match_audit_log',
     'match_comments','match_disputes','match_events','match_lineups','match_predictions','match_referee_assignments',
     'match_result_changes','match_results','match_team_sheets','matches','media_posts','motm_awards','my_favorite_clubs',
-    'player_medical_records','player_registration_history','player_reports','player_suspension_flags',
+    'player_registration_history','player_reports','player_suspension_flags',
     'player_transfer_requests','poll_options','poll_votes','polls','public_squad_photos','referee_offline_submissions',
     'role_access_requests','role_change_log','role_invitations','seasons','squad_transfers','suspension_rules',
     'suspensions','system_pause','system_pause_log','top_assists','top_scorers','user_favorite_clubs','user_profiles'

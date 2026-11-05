@@ -102,9 +102,59 @@
       'Refresh': 'Frɛsh',
       'Loading…': 'De lod…',
       'Loading matches…': 'De lod di mach dɛn…'
+    },
+    ar: {
+      'The SLFA League App': 'تطبيق دوري SLFA',
+      'Sierra Leone Football Association': 'اتحاد كرة القدم في سيراليون',
+      'League Centre': 'مركز الدوري',
+      'Get alerts': 'تلقي التنبيهات',
+      'Share': 'مشاركة',
+      'Matches': 'المباريات',
+      'Leagues': 'الدوريات',
+      'Language': 'اللغة',
+      'Light mode': 'الوضع الفاتح',
+      'Dark mode': 'الوضع الداكن',
+      'Table': 'جدول الترتيب',
+      'Teams': 'الفرق',
+      'Players': 'اللاعبون',
+      'News': 'الأخبار',
+      'Videos': 'الفيديوهات',
+      'Predict': 'التوقعات',
+      'Live': 'مباشر',
+      'Upcoming': 'القادمة',
+      'Full time': 'نهاية المباراة',
+      'Standings': 'الترتيب',
+      'Results': 'النتائج',
+      'Fixtures': 'المباريات القادمة',
+      'Squad': 'التشكيلة',
+      'Announcements': 'الإعلانات',
+      'Share club ↗': 'مشاركة النادي ↗',
+      'Share ↗': 'مشاركة ↗',
+      'Add to calendar': 'إضافة إلى التقويم',
+      'Match details': 'تفاصيل المباراة',
+      'Match stats': 'إحصاءات المباراة',
+      'Match timeline': 'سير المباراة',
+      'Published line-ups': 'التشكيلات المنشورة',
+      'Fan comments': 'تعليقات الجماهير',
+      'Send for approval': 'إرسال للموافقة',
+      'Predict the score': 'توقّع النتيجة',
+      'Save prediction': 'حفظ توقعي',
+      'Change prediction': 'تغيير توقعي',
+      'Leaderboard': 'ترتيب التوقعات',
+      'Right result scores 1 point. Exact score scores 3 points.': 'النتيجة الصحيحة تمنح نقطة واحدة. النتيجة الدقيقة تمنح 3 نقاط.',
+      'Your name (shown on the leaderboard)': 'اسمك (يظهر في الترتيب)',
+      'Search updates': 'بحث',
+      'Category': 'الفئة',
+      'Sign in': 'تسجيل الدخول',
+      'Sign out': 'تسجيل الخروج',
+      'Create account': 'إنشاء حساب',
+      'Install app': 'تثبيت التطبيق',
+      'Refresh': 'تحديث',
+      'Loading…': 'جارٍ التحميل…',
+      'Loading matches…': 'جارٍ تحميل المباريات…'
     }
   };
-  var LABELS = { en: 'English', kri: 'Krio', fr: 'Français' };
+  var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
     try { var v = localStorage.getItem('slfa_lang'); return DICT[v] || v === 'en' ? v : 'en'; } catch (e) { return 'en'; }
@@ -152,7 +202,9 @@
     });
   }
 
-  if (current !== 'en') document.documentElement.lang = current === 'kri' ? 'en' : 'fr';
+  // Arabic reads right to left; the page layout follows the direction.
+  if (current === 'ar') { document.documentElement.setAttribute('lang', 'ar'); document.documentElement.setAttribute('dir', 'rtl'); }
+  else if (current !== 'en') document.documentElement.lang = current === 'kri' ? 'en' : 'fr';
 
   var pending = false;
   function run() {
