@@ -150,13 +150,51 @@
       }).join('')+'</div>';}
       if(lu.length){var by={};lu.forEach(function(x){var n=x.league_clubs&&x.league_clubs.club_name||'Team',p=x.club_squad||{},v=(p.jersey_number?'#'+p.jersey_number+' ':'')+(p.player_name||'Player');by[n]=by[n]||{xi:[],bench:[]};(x.is_starter?by[n].xi:by[n].bench).push(v);});
         html+='<h4>Published line-ups</h4><div class="slfa-mc-lineups">'+Object.keys(by).map(function(n){return '<div><strong role="button" tabindex="0" data-open-club-name="'+esc(n)+'">'+esc(n)+'</strong><p><b>Starting:</b> '+esc(by[n].xi.join(', ')||'Not published')+'</p><p><b>Bench:</b> '+esc(by[n].bench.join(', ')||'Not published')+'</p></div>';}).join('')+'</div>';}
-      box.innerHTML=(html||'<p class="slfa-mc-no-events">No additional match details have been published.</p>')+'<div class="slfa-mc-comments"></div><div class="slfa-mc-report"></div>';
+      box.innerHTML=(html||'<p class="slfa-mc-no-events">No additional match details have been published.</p>')+'<div class="slfa-mc-motm"></div><div class="slfa-mc-comments"></div><div class="slfa-mc-report"></div>';
+      renderMotm(id,box.querySelector('.slfa-mc-motm'));
       loadComments(id,box.querySelector('.slfa-mc-comments'));
       renderReport(id,box.querySelector('.slfa-mc-report'));
     }).catch(function(){box.innerHTML='<p class="slfa-mc-no-events">Match details are temporarily unavailable.</p>';});
   }
   function voterKey(){try{var k=localStorage.getItem('slfa_voter_key');if(!k){k=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);localStorage.setItem('slfa_voter_key',k);}return k;}catch(e){return null;}}
   function fanName(){try{return localStorage.getItem('slfa_fan_name')||'';}catch(e){return '';}}
+  // Player of the match: fans vote after full time, picking from the published line-up. Shows the top three.
+  function renderMotm(matchId,box){
+    if(!box)return;
+    var m=matches.find(function(x){return String(x.id)===String(matchId);});
+    if(!m||status(m)!=='FT'){box.innerHTML='';return;}
+    box.innerHTML='<h4>Player of the match: fan vote</h4><p class="slfa-mc-detail-loading">Loading players…</p>';
+    Promise.all([
+      db.from('match_lineups').select('player_id,club_squad(player_name,jersey_number)').eq('match_id',String(matchId)),
+      db.rpc('motm_tally',{p_match_id:Number(matchId)})
+    ]).then(function(r){
+      var lu=r[0].error?[]:(r[0].data||[]),tally=r[1].error?[]:(r[1].data||[]);
+      var saved={};try{saved=JSON.parse(localStorage.getItem('slfa_motm')||'{}');}catch(e){}
+      var mine=saved[matchId];
+      var seen={};
+      var opts=lu.filter(function(x){if(seen[x.player_id]||!x.club_squad)return false;seen[x.player_id]=1;return true;}).map(function(x){
+        var p=x.club_squad;return '<option value="'+esc(x.player_id)+'"'+(String(mine)===String(x.player_id)?' selected':'')+'>'+esc((p.jersey_number?'#'+p.jersey_number+' ':'')+(p.player_name||'Player'))+'</option>';}).join('');
+      if(!opts){box.innerHTML='';return;}
+      var top=tally.length?tally.slice(0,3).map(function(t){return '<li><strong>'+esc(t.player_name)+'</strong> · '+esc(t.votes)+(Number(t.votes)===1?' vote':' votes')+'</li>';}).join(''):'<li class="muted">No votes yet.</li>';
+      box.innerHTML='<h4>Player of the match: fan vote</h4>'+
+        '<form class="slfa-mc-comment-form" novalidate><label>Your pick<select name="pick"><option value="">Choose a player</option>'+opts+'</select></label>'+
+        '<button type="submit" class="slfa-mc-comment-send">'+(mine?'Change vote':'Vote')+'</button><p class="status" role="status"></p></form>'+
+        '<ol class="slfa-motm-tally">'+top+'</ol>';
+      var form=box.querySelector('form'),msg=form.querySelector('.status');
+      form.addEventListener('submit',function(e){
+        e.preventDefault();
+        var pick=form.pick.value;if(!pick){msg.textContent='Choose a player first.';return;}
+        var key=voterKey();if(!key){msg.textContent='Voting needs your browser to store a small code. Turn off private browsing and try again.';return;}
+        var btn=form.querySelector('button');btn.disabled=true;msg.textContent='Saving…';
+        db.rpc('submit_motm_vote',{p_match_id:Number(matchId),p_player_id:Number(pick),p_voter_key:key}).then(function(res){
+          btn.disabled=false;
+          if(res.error){msg.textContent=res.error.message;return;}
+          try{var s2=JSON.parse(localStorage.getItem('slfa_motm')||'{}');s2[matchId]=Number(pick);localStorage.setItem('slfa_motm',JSON.stringify(s2));}catch(x){}
+          renderMotm(matchId,box);
+        });
+      });
+    });
+  }
   // Report a wrong score, a wrong player or another problem. Reports go to SLFA staff.
   function renderReport(matchId,box){
     if(!box)return;
