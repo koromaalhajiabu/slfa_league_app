@@ -196,6 +196,7 @@
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<h2 class="rt">Fan comments awaiting approval</h2><div id="pendingComments" class="muted">Loading…</div>' +
+      '<div id="usagePanel"><h2 class="rt">App usage, last 30 days</h2><div id="usageCounts" class="muted">Loading…</div></div>' +
       '<h2 class="rt">Problems reported by fans</h2><div id="fanReports" class="muted">Loading…</div>' +
       '<h2 class="rt">Club profile changes awaiting approval</h2><div id="clubProfileReview" class="muted">Loading…</div>' +
       '<h2 class="rt">Player registrations awaiting approval</h2><div id="squadReview" class="muted">Loading…</div>' +
@@ -330,6 +331,20 @@
   }
 
   // Fan comments wait here until approved. Approved comments appear on the match details.
+  // Usage counts from the privacy-light event log (Super Admins and Developers only)
+  var usageLabels = { app_open: 'App opened', tab_matches: 'Matches tab', tab_table: 'Table tab', tab_teams: 'Teams tab', tab_players: 'Players tab', tab_news: 'News tab', tab_videos: 'Videos tab', tab_predict: 'Predict tab', language_en: 'English chosen', language_fr: 'French chosen', language_kri: 'Krio chosen', theme_light: 'Light mode on', theme_dark: 'Dark mode on', favourite_club: 'Favourite club changed', match_details: 'Match details opened', prediction: 'Predictions sent', fan_comment: 'Fan comments sent', fan_report: 'Problem reports sent' };
+  function loadUsage() {
+    var box = $('usageCounts'); if (!box) return;
+    db.rpc('analytics_summary', { p_days: 30 }).then(function (r) {
+      if (r.error) { var p = $('usagePanel'); if (p) p.remove(); return; }
+      var totals = {};
+      (r.data || []).forEach(function (x) { totals[x.event_name] = (totals[x.event_name] || 0) + Number(x.total); });
+      var keys = Object.keys(totals).sort(function (a, b) { return totals[b] - totals[a]; });
+      box.innerHTML = keys.length
+        ? '<table class="table"><tbody>' + keys.map(function (k) { return '<tr><td>' + esc(usageLabels[k] || k) + '</td><td><strong>' + esc(totals[k]) + '</strong></td></tr>'; }).join('') + '</tbody></table>'
+        : 'No usage recorded yet.';
+    });
+  }
   function loadPendingComments() {
     var box = $('pendingComments'); if (!box) return;
     db.from('match_comments').select('id, fan_name, body, created_at, matches(home_team, away_team)').eq('status', 'PENDING').order('created_at', { ascending: true }).limit(100)
@@ -1485,6 +1500,7 @@
   function refreshAdmin() {
     if ($('pendingResults')) loadPendingResults();
     if ($('pendingComments')) loadPendingComments();
+    if ($('usageCounts')) loadUsage();
     if ($('fanReports')) loadFanReports();
     if ($('reviewList')) loadReview();
     if ($('squadReview')) loadSquadReview();

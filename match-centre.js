@@ -132,6 +132,7 @@
   function details(id,button) {
     var box=document.getElementById('mc-detail-'+id); if(!box)return;
     if(!box.hidden){box.hidden=true;button.setAttribute('aria-expanded','false');button.innerHTML='Match details <span>＋</span>';return;}
+    if (window.slfaTrack) window.slfaTrack('match_details');
     box.hidden=false;button.setAttribute('aria-expanded','true');button.innerHTML='Hide details <span>−</span>';
     if(box.dataset.loaded)return;
     box.innerHTML='<p class="slfa-mc-detail-loading">Loading published match details…</p>';
@@ -171,6 +172,7 @@
       if(message.length<5){msg.textContent='Describe the problem in at least 5 characters.';return;}
       var key=voterKey();if(!key){msg.textContent='Reports need your browser to store a small code. Turn off private browsing and try again.';return;}
       var btn=form.querySelector('button');btn.disabled=true;msg.textContent='Sending…';
+      if (window.slfaTrack) window.slfaTrack('fan_report');
       db.rpc('submit_fan_report',{p_match_id:Number(matchId),p_type:form.type.value,p_message:message,p_voter_key:key}).then(function(r){
         btn.disabled=false;
         if(r.error){msg.textContent=r.error.message;return;}
@@ -201,6 +203,7 @@
         if(!body){msg.textContent='Write a comment first.';return;}
         var key=voterKey();if(!key){msg.textContent='Comments need your browser to store a small code. Turn off private browsing and try again.';return;}
         var btn=form.querySelector('button');btn.disabled=true;msg.textContent='Sending…';
+        if (window.slfaTrack) window.slfaTrack('fan_comment');
         db.rpc('submit_match_comment',{p_match_id:Number(matchId),p_fan_name:name,p_body:body,p_voter_key:key}).then(function(r){
           btn.disabled=false;
           if(r.error){msg.textContent=r.error.message;return;}
