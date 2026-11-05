@@ -12,6 +12,8 @@
       'Matches': 'Matchs',
       'Leagues': 'Ligues',
       'Language': 'Langue',
+      'Light mode': 'Mode clair',
+      'Dark mode': 'Mode sombre',
       'Table': 'Classement',
       'Teams': 'Équipes',
       'Players': 'Joueurs',
@@ -60,6 +62,8 @@
       'Matches': 'Mach dɛn',
       'Leagues': 'Ligɛ dɛn',
       'Language': 'Lanwej',
+      'Light mode': 'Layt mod',
+      'Dark mode': 'Dak mod',
       'Table': 'Tebul',
       'Teams': 'Tim dɛn',
       'Players': 'Pleya dɛn',
@@ -163,7 +167,26 @@
     setTimeout(function () { pending = false; run(); }, 50);
   });
 
-  function start() { setupPicker(); run(); }
+  // Light or dark: remembered on this device. Dark is the default.
+  function setupTheme() {
+    var btn = document.getElementById('themeToggle'); if (!btn) return;
+    function isLight() { return document.documentElement.getAttribute('data-theme') === 'light'; }
+    function paint() {
+      var light = isLight();
+      btn.textContent = light ? (table ? table['Dark mode'] : 'Dark mode') : (table ? table['Light mode'] : 'Light mode');
+      btn.setAttribute('aria-pressed', light ? 'true' : 'false');
+    }
+    btn.addEventListener('click', function () {
+      var next = isLight() ? 'dark' : 'light';
+      if (next === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      else document.documentElement.removeAttribute('data-theme');
+      try { localStorage.setItem('slfa_theme', next); } catch (e) {}
+      paint();
+    });
+    paint();
+  }
+
+  function start() { setupPicker(); setupTheme(); run(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 })();
