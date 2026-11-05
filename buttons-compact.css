@@ -71,3 +71,9 @@ html body .top-controls details.admin{margin:0}
 /* Public list of current suspensions (Players tab) */
 .ps-susp{margin:16px 0;padding:16px 16px 6px;border:1px solid rgba(120,170,230,.22);border-radius:16px;background:rgba(7,15,31,.35)}
 .ps-susp .ps-susp-title{font-family:inherit;font-size:1.1rem;margin:0 0 10px}
+
+/* Clearer keyboard focus on text fields (accessibility) */
+html body input:focus-visible, html body select:focus-visible, html body textarea:focus-visible { outline: 3px solid #ffdf55 !important; outline-offset: 2px; }
+
+/* Text links get a 24px-plus touch area without changing how they look */
+.forgot-line a, .app-legal a { display: inline-block; padding: 4px 2px; min-height: 24px; box-sizing: border-box; line-height: 16px; }

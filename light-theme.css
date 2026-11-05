@@ -179,3 +179,9 @@ html[data-theme="light"] body #matchList .slfa-mc-report-box .slfa-mc-comment-se
 /* Public list of current suspensions */
 html[data-theme="light"] body #suspensionsPublic.ps-susp{background:#ffffff;border-color:#c8d6e5}
 html[data-theme="light"] body #suspensionsPublic .ps-susp-title{color:#0b2545}
+
+/* Forgot password link on the sign-in panels (white in light mode) */
+html[data-theme="light"] body #adminDropdown .forgot-line a, html[data-theme="light"] body #signedOut .forgot-line a { color: #0b4f8a !important; }
+
+/* Keyboard focus on text fields in light mode */
+html[data-theme="light"] body input:focus-visible, html[data-theme="light"] body select:focus-visible, html[data-theme="light"] body textarea:focus-visible { outline-color: #0b4f8a !important; }
