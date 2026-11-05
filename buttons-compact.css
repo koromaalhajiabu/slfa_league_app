@@ -77,3 +77,11 @@ html body input:focus-visible, html body select:focus-visible, html body textare
 
 /* Text links get a 24px-plus touch area without changing how they look */
 .forgot-line a, .app-legal a { display: inline-block; padding: 4px 2px; min-height: 24px; box-sizing: border-box; line-height: 16px; }
+
+/* Match-day board */
+.matchday{margin:12px 0 16px;padding:14px 14px 6px;border:1px solid rgba(120,170,230,.22);border-radius:16px;background:rgba(7,15,31,.35)}
+.matchday .md-title{font-family:inherit;font-size:1.05rem;margin:0 0 8px}
+.md-row{display:grid;grid-template-columns:1fr;gap:2px;padding:10px 0;border-top:1px solid rgba(120,170,230,.16)}
+.md-row:first-of-type{border-top:0}
+.md-when,.md-venue{font-size:.86rem;opacity:.85}
+.md-status{font-weight:700;font-size:.9rem}

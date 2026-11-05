@@ -8,6 +8,44 @@
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+  // Match-day board: today's fixtures (kick-off, venue, status), or the next few when none are on today.
+  // Times use Sierra Leone time (Africa/Freetown, UTC+0).
+  function dayStart(offsetDays) {
+    var d = new Date(); d.setUTCHours(0, 0, 0, 0); d.setUTCDate(d.getUTCDate() + offsetDays); return d.toISOString();
+  }
+  function matchDayLabel(m) {
+    var st = String(m.match_status || '').toUpperCase();
+    if (st === 'FT') return 'Full time' + (m.home_score != null ? ' ' + m.home_score + '–' + m.away_score : '');
+    if (['LIVE', 'HT', '1H', '2H', 'ET', 'PEN', 'EXTRA_TIME'].indexOf(st) !== -1) return 'Live now';
+    if (st === 'POSTPONED' || st === 'CANCELLED' || st === 'ABANDONED') return st.charAt(0) + st.slice(1).toLowerCase();
+    return 'Not started';
+  }
+  function matchDayRow(m) {
+    var when = new Date(m.match_date).toLocaleString('en-GB', { timeZone: 'Africa/Freetown', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return '<div class="md-row"><span class="md-when">' + esc(when) + '</span>' +
+      '<strong class="md-teams">' + esc(m.home_team) + ' v ' + esc(m.away_team) + '</strong>' +
+      '<span class="md-venue">' + esc(m.venue || 'Venue to be confirmed') + '</span>' +
+      '<span class="md-status">' + esc(matchDayLabel(m)) + '</span></div>';
+  }
+  function loadMatchDay() {
+    var box = $('matchDay'); if (!box) return;
+    var cols = 'id, match_date, venue, home_team, away_team, home_score, away_score, match_status';
+    db.from('matches').select(cols).gte('match_date', dayStart(0)).lt('match_date', dayStart(1)).order('match_date', { ascending: true }).limit(30).then(function (r) {
+      if (r.error) { box.hidden = true; return; }
+      var today = r.data || [];
+      if (today.length) {
+        box.hidden = false;
+        box.innerHTML = '<h2 class="md-title">Today’s matches</h2>' + today.map(matchDayRow).join('');
+        return;
+      }
+      db.from('matches').select(cols).gte('match_date', dayStart(1)).order('match_date', { ascending: true }).limit(3).then(function (n) {
+        var next = (n.data || []);
+        if (!next.length) { box.hidden = true; return; }
+        box.hidden = false;
+        box.innerHTML = '<h2 class="md-title">No matches today. Next up</h2>' + next.map(matchDayRow).join('');
+      });
+    });
+  }
   function fmt(d) { try { return new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return d || ''; } }
   var CLUB_LOGO_FALLBACKS = {
     baiburehwarriors: 'https://images.seeklogo.com/logo-png/63/1/bai-bureh-warriors-fc-logo-png_seeklogo-638343.png',
@@ -939,7 +977,7 @@
         if(area)area.hidden=true;return;
       }
       if(appFreezeBanner){appFreezeBanner.remove();appFreezeBanner=null;}if(area)area.hidden=false;
-      loadLeagueData().then(function(){loadMatches();loadLive();loadTable();loadTeams();loadPlayers();loadNews();loadVideos();loadPredict();loadPauseBanner();});
+      loadLeagueData().then(function(){loadMatches();loadLive();loadMatchDay();loadTable();loadTeams();loadPlayers();loadNews();loadVideos();loadPredict();loadPauseBanner();});
     });
   }
 
@@ -962,6 +1000,7 @@
     });
     ch.subscribe();
     setInterval(refreshAll, 120000);
+    setInterval(loadMatchDay, 120000);
   }
 
   // Premium interaction: pull to refresh, light tactile feedback, and goal and card alerts for favourite clubs
