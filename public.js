@@ -348,6 +348,16 @@
     });
   };
   document.addEventListener('click', function (e) {
+    var share = e.target.closest && e.target.closest('[data-share-club]');
+    if (share) {
+      var club = share.getAttribute('data-share-club');
+      var pos = document.querySelector('#squadPanel .slfa-club-position');
+      var text = club + (pos ? ' · ' + pos.textContent : '') + ' · SLFA League App';
+      var url = location.href.split('#')[0];
+      if (navigator.share) { navigator.share({ title: 'SLFA League App', text: text, url: url }).catch(function () {}); }
+      else { window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + url), '_blank', 'noopener'); }
+      return;
+    }
     var el = e.target.closest && e.target.closest('[data-open-club-name]');
     if (el && window.slfaOpenClub) { e.preventDefault(); window.slfaOpenClub(el.getAttribute('data-open-club-name')); }
   });
@@ -373,7 +383,8 @@
     ]).then(function (all) {
       var profile = all[0].data || {};
       var facts = [profile.stadium ? 'Ground: ' + profile.stadium : '', profile.city || '', profile.founded_year ? 'Founded ' + profile.founded_year : ''].filter(Boolean);
-      var html = '<h3 class="sub">' + esc(name) + '</h3>';
+      var html = '<h3 class="sub">' + esc(name) + '</h3>' +
+        '<button type="button" class="slfa-club-share" data-share-club="' + esc(name) + '" aria-label="Share ' + esc(name) + '">Share club ↗</button>';
       if (facts.length) html += '<p class="muted">' + facts.map(function (f) { return esc(f); }).join(' · ') + '</p>';
       if (profile.about) html += '<p>' + esc(profile.about) + '</p>';
       // Table position and this club's results and fixtures
@@ -386,7 +397,7 @@
         return '<div class="row"><span class="muted">' + esc(fmt(m.match_date)) + '</span><strong>' + esc(m.home_team) + ' ' + esc(sc) + ' ' + esc(m.away_team) + '</strong></div>';
       };
       var pos = (all[8].data || [])[0];
-      if (pos) html += '<p><strong>League position: ' + esc(pos.pos) + '</strong></p>';
+      if (pos) html += '<p class="slfa-club-position"><strong>League position: ' + esc(pos.pos) + '</strong></p>';
       if (played.length) html += '<h4 class="league-name">Results</h4>' + played.slice(0, 5).map(fxRow).join('');
       if (due.length) html += '<h4 class="league-name">Fixtures</h4>' + due.slice(0, 3).map(fxRow).join('');
       var ann = all[1].data || [];
