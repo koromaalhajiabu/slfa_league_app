@@ -334,13 +334,29 @@
       db.from('club_squad').select('id, player_name, position, photo_url, jersey_number').eq('club_id', id).order('jersey_number', { ascending: true, nullsFirst: false }).order('player_name'),
       db.from('suspensions').select('player_id, matches_total, matches_served').eq('status', 'ACTIVE'),
       db.from('disciplinary_actions').select('player_id, action_type, amount, currency, reason, decided_at').eq('published', true).order('decided_at', { ascending: false }).limit(200),
-      db.from('motm_awards').select('player_id, awards').limit(500)
+      db.from('motm_awards').select('player_id, awards').limit(500),
+      db.from('matches').select('id, match_date, home_team, away_team, home_score, away_score, match_status').eq('home_team', name).order('match_date', { ascending: false }).limit(30),
+      db.from('matches').select('id, match_date, home_team, away_team, home_score, away_score, match_status').eq('away_team', name).order('match_date', { ascending: false }).limit(30),
+      db.from('league_standings').select('pos, club').eq('club', name).limit(1)
     ]).then(function (all) {
       var profile = all[0].data || {};
       var facts = [profile.stadium ? 'Ground: ' + profile.stadium : '', profile.city || '', profile.founded_year ? 'Founded ' + profile.founded_year : ''].filter(Boolean);
       var html = '<h3 class="sub">' + esc(name) + '</h3>';
       if (facts.length) html += '<p class="muted">' + facts.map(function (f) { return esc(f); }).join(' · ') + '</p>';
       if (profile.about) html += '<p>' + esc(profile.about) + '</p>';
+      // Table position and this club's results and fixtures
+      var inactive = { SCHEDULED: 1, RESCHEDULED: 1, POSTPONED: 1, CANCELLED: 1, ABANDONED: 1 };
+      var fixtures = (all[6].data || []).concat(all[7].data || []).sort(function (a, b) { return new Date(b.match_date) - new Date(a.match_date); });
+      var played = fixtures.filter(function (m) { return !inactive[m.match_status] && m.home_score != null && m.away_score != null; });
+      var due = fixtures.filter(function (m) { return inactive[m.match_status] || m.home_score == null; }).sort(function (a, b) { return new Date(a.match_date) - new Date(b.match_date); });
+      var fxRow = function (m) {
+        var sc = (m.home_score != null && m.away_score != null) ? m.home_score + ' – ' + m.away_score : 'v';
+        return '<div class="row"><span class="muted">' + esc(fmt(m.match_date)) + '</span><strong>' + esc(m.home_team) + ' ' + esc(sc) + ' ' + esc(m.away_team) + '</strong></div>';
+      };
+      var pos = (all[8].data || [])[0];
+      if (pos) html += '<p><strong>League position: ' + esc(pos.pos) + '</strong></p>';
+      if (played.length) html += '<h4 class="league-name">Results</h4>' + played.slice(0, 5).map(fxRow).join('');
+      if (due.length) html += '<h4 class="league-name">Fixtures</h4>' + due.slice(0, 3).map(fxRow).join('');
       var ann = all[1].data || [];
       if (ann.length) {
         html += '<h4 class="league-name">Announcements</h4>' + ann.map(function (a) {
