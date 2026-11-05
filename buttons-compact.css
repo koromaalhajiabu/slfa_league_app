@@ -46,3 +46,6 @@ html body .leagueSwitch .chip{min-height:50px;padding:6px 16px 6px 8px !importan
 html body .leagueSwitch .chip:hover{background:rgba(0,114,198,.22) !important;border-color:#5ab0ff !important;color:#ffffff !important;transform:translateY(-1px)}
 html body .leagueSwitch .chip.on{background:#0072c6 !important;border-color:#8fd0ff !important;color:#ffffff !important;box-shadow:0 0 0 2px rgba(143,208,255,.35),0 6px 16px rgba(0,114,198,.35) !important;animation:none}
 html body .leagueSwitch .chip.on::after{content:"✓";margin-left:4px;font-weight:800;font-size:14px;line-height:1}
+
+/* League crests: show the whole crest inside the circle */
+html body .league-chip-logo-marampa{background-size:contain !important;background-position:center !important;background-repeat:no-repeat !important}
