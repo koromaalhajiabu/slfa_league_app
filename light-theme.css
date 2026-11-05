@@ -175,3 +175,7 @@ html[data-theme="light"] body #matchList .slfa-mc-detail{background:#ffffff !imp
 html[data-theme="light"] body #matchList .slfa-mc-detail h4{color:#0b1a30 !important;-webkit-text-fill-color:#0b1a30 !important}
 html[data-theme="light"] body #matchList .slfa-mc-comment-send,
 html[data-theme="light"] body #matchList .slfa-mc-report-box .slfa-mc-comment-send{background:#0a5fa8 !important;background-image:none !important;color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;border:0 !important}
+
+/* Public list of current suspensions */
+html[data-theme="light"] body #suspensionsPublic.ps-susp{background:#ffffff;border-color:#c8d6e5}
+html[data-theme="light"] body #suspensionsPublic .ps-susp-title{color:#0b2545}
