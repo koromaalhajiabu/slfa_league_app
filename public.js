@@ -76,10 +76,16 @@
   function empty(msg) { return '<p class="muted empty">' + msg + '</p>'; }
 
   // Tabs
+  // Privacy-light usage counts: an event name only, no identifiers. Failures are ignored.
+  window.slfaTrack = function (ev) {
+    try { db.rpc('log_app_event', { p_event: ev }).then(function () {}, function () {}); } catch (e) {}
+  };
+  try { if (!sessionStorage.getItem('slfa_seen')) { sessionStorage.setItem('slfa_seen', '1'); window.slfaTrack('app_open'); } } catch (e) {}
   document.querySelectorAll('[data-tab]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b === btn)); });
       document.querySelectorAll('[data-view]').forEach(function (v) { v.hidden = v.dataset.view !== btn.dataset.tab; });
+      window.slfaTrack('tab_' + btn.dataset.tab);
     });
   });
 
@@ -327,6 +333,7 @@
         return;
       }
       var on = !!myFavIds[clubId];
+      window.slfaTrack('favourite_club');
       var q = on
         ? db.from('user_favorite_clubs').delete().eq('user_id', u.data.user.id).eq('club_id', clubId)
         : db.from('user_favorite_clubs').insert({ user_id: u.data.user.id, club_id: clubId });
@@ -723,6 +730,7 @@
     if (h === '' || a === '') { msgEl.textContent = 'Enter a score for both teams.'; return; }
     var key = voterKey();
     if (!key) { msgEl.textContent = 'Predictions need your browser to store a small code. Turn off private browsing and try again.'; return; }
+    window.slfaTrack('prediction');
     db.rpc('submit_prediction', { p_match_id: Number(matchId), p_fan_name: name, p_home: Number(h), p_away: Number(a), p_voter_key: key }).then(function (res) {
       if (res.error) { msgEl.textContent = res.error.message; return; }
       try {

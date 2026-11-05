@@ -147,6 +147,7 @@
     }).join('');
     sel.addEventListener('change', function () {
       try { localStorage.setItem('slfa_lang', sel.value); } catch (e) {}
+      if (window.slfaTrack) window.slfaTrack('language_' + sel.value);
       location.reload();
     });
   }
@@ -181,6 +182,7 @@
       if (next === 'light') document.documentElement.setAttribute('data-theme', 'light');
       else document.documentElement.removeAttribute('data-theme');
       try { localStorage.setItem('slfa_theme', next); } catch (e) {}
+      if (window.slfaTrack) window.slfaTrack('theme_' + next);
       paint();
     });
     paint();
