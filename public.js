@@ -105,7 +105,7 @@
   function leagueLogo(l) {
     var n = String(l.name || '').toLowerCase();
     if (n.indexOf('leone rock') !== -1) {
-      return '<img class="league-chip-logo" src="https://pbs.twimg.com/profile_images/1714750858435391488/vjKgPtIj.jpg" alt="Leone Rock Premier League logo" loading="lazy">';
+      return '<img class="league-chip-logo" src="league-logos/leone-rock-premier-league.jpg" alt="Leone Rock Premier League logo" loading="lazy">';
     }
     if (n.indexOf('marampa') !== -1 && n.indexOf('women') !== -1) {
       return '<span class="league-chip-logo league-chip-logo-marampa" role="img" aria-label="Marampa Mines Women\'s Premier League crest"></span>';
