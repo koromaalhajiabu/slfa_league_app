@@ -252,7 +252,7 @@
         var items = rows.filter(function (r) { return (r.league_id || null) === (lg.id || null); });
         if (!items.length) return;
         html += '<tr class="league-row"><td colspan="9">' + esc(lg.name) + '</td></tr>' + items.map(function (r) {
-          return '<tr><td>' + esc(r.pos) + '</td><td class="club"><span class="table-club">' + (logos[r.club] ? '<img class="table-club-logo" src="' + esc(logos[r.club]) + '" alt="" loading="lazy">' : '<span class="table-club-logo table-club-fallback">' + esc((r.club || '?').charAt(0).toUpperCase()) + '</span>') + '<span>' + esc(r.club) + '</span></span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
+          return '<tr><td>' + esc(r.pos) + '</td><td class="club"><span class="table-club" role="button" tabindex="0" data-open-club-name="' + esc(r.club) + '">' + (logos[r.club] ? '<img class="table-club-logo" src="' + esc(logos[r.club]) + '" alt="" loading="lazy">' : '<span class="table-club-logo table-club-fallback">' + esc((r.club || '?').charAt(0).toUpperCase()) + '</span>') + '<span>' + esc(r.club) + '</span></span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
         }).join('');
       });
       $('tableBody').innerHTML = html;
@@ -323,9 +323,41 @@
   // Squad for one club: approved, active players for the current season
   var selectedClub = null;
   var POS = { GK: 'Goalkeeper', DF: 'Defender', MF: 'Midfielder', FW: 'Forward' };
+  function ensureSquadPanel() {
+    var panel = $('squadPanel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'squadPanel';
+      panel.className = 'card';
+      panel.setAttribute('data-view', 'teams');
+      var grid = $('teamGrid');
+      if (grid && grid.parentNode) grid.parentNode.insertBefore(panel, grid.nextSibling);
+    }
+    return panel;
+  }
+  // Opens a club page from a club name anywhere in the app (standings, match cards, lineups)
+  window.slfaOpenClub = function (name) {
+    if (!name) return;
+    var tab = document.querySelector('[data-tab="teams"]');
+    if (tab) tab.click();
+    db.from('league_clubs').select('id, club_name').eq('club_name', name).maybeSingle().then(function (r) {
+      if (!r.data) return;
+      loadSquadPublic(r.data.id, r.data.club_name);
+      var panel = $('squadPanel');
+      if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest && e.target.closest('[data-open-club-name]');
+    if (el && window.slfaOpenClub) { e.preventDefault(); window.slfaOpenClub(el.getAttribute('data-open-club-name')); }
+  });
+  document.addEventListener('keydown', function (e) {
+    var el = e.target.closest && e.target.closest('[data-open-club-name]');
+    if (el && e.key === 'Enter' && window.slfaOpenClub) window.slfaOpenClub(el.getAttribute('data-open-club-name'));
+  });
   function loadSquadPublic(id, name) {
     selectedClub = { id: id, name: name };
-    var panel = $('squadPanel');
+    var panel = ensureSquadPanel();
     if (!panel) return;
     panel.innerHTML = '<h3 class="sub">' + esc(name) + '</h3><p class="muted">Loading…</p>';
     Promise.all([
