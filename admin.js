@@ -157,8 +157,51 @@
   };
 
   // ---------- SUPER ADMIN ----------
+  // Downloads (Super Admin only). The database checks the role and writes the export log;
+  // the page only turns the returned rows into a file.
+  function csvCell(v) {
+    if (v === null || v === undefined) return '';
+    var t = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return /[",\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+  }
+  function saveFile(name, text, type) {
+    var blob = new Blob([text], { type: type });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  var exportNames = { matches: 'slfa-matches-and-results', standings: 'slfa-league-table', suspensions: 'slfa-suspensions', full_backup: 'slfa-full-backup' };
+  function runExport(kind) {
+    var out = $('exportMsg'); if (out) out.textContent = 'Preparing the download…';
+    db.rpc('export_data', { p_name: kind }).then(function (res) {
+      if (res.error) { if (out) out.textContent = res.error.message; return; }
+      var stamp = new Date().toISOString().slice(0, 10);
+      if (kind === 'full_backup') {
+        saveFile(exportNames[kind] + '-' + stamp + '.json', JSON.stringify(res.data, null, 2), 'application/json');
+      } else {
+        var rows = res.data || [];
+        var cols = rows.length ? Object.keys(rows[0]) : [];
+        var text = [cols.join(',')].concat(rows.map(function (r) { return cols.map(function (c) { return csvCell(r[c]); }).join(','); })).join('\r\n');
+        saveFile(exportNames[kind] + '-' + stamp + '.csv', '\ufeff' + text, 'text/csv;charset=utf-8');
+      }
+      if (out) out.textContent = 'Download ready.';
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-export]');
+    if (b) runExport(b.getAttribute('data-export'));
+  });
+
   function superAdmin(p) {
     box().innerHTML =
+      '<h2 class="rt">Downloads</h2>' +
+      '<p class="muted">Super Admin only. Each download is recorded in the export log.</p>' +
+      '<div class="btns"><button class="secondary" data-export="matches">Matches and results (CSV)</button>' +
+      '<button class="secondary" data-export="standings">League table (CSV)</button>' +
+      '<button class="secondary" data-export="suspensions">Suspensions (CSV)</button>' +
+      '<button class="primary" data-export="full_backup">Full backup (JSON)</button></div>' +
+      '<div id="exportMsg" class="muted" role="status"></div>' +
       '<h2 class="rt">Clubs</h2>' +
       '<label for="clName">Club name</label><input id="clName" type="text">' +
       '<label for="clLeague">League</label><select id="clLeague"><option value="">Loading leagues…</option></select>' +
