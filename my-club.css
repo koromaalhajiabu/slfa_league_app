@@ -1,0 +1,10 @@
+/* My club card at the top of Matches */
+.my-club-card{border:1px solid rgba(140,190,255,.28);border-radius:16px;padding:14px 16px;margin:0 0 12px;background:linear-gradient(145deg,rgba(0,114,198,.22),rgba(17,36,65,.85))}
+.my-club-card[hidden]{display:none}
+.my-club-eyebrow{margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.14em;color:#9fd1ff}
+.my-club-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.my-club-card h3{margin:0;font-size:18px}
+.my-club-pos{font-size:12px;font-weight:700;color:#d6e9ff;background:rgba(255,255,255,.1);border-radius:999px;padding:4px 10px}
+.my-club-line{margin:10px 0 0;font-size:14px}
+.my-club-open{margin-top:12px;height:32px;min-height:0;padding:5px 14px;border-radius:999px;border:1px solid rgba(140,190,255,.4);background:rgba(0,114,198,.16);color:#e6f1ff;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.my-club-open:hover{background:rgba(0,114,198,.35);border-color:#8fd0ff}

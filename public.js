@@ -288,10 +288,17 @@
       });
   }
 
-  // Favourite clubs: saved to the fan's account; signed-out fans are asked to sign in
+  // Favourite clubs: saved to the fan's account when signed in, otherwise on this device
+  function localFavs() { try { return JSON.parse(localStorage.getItem('slfa_fav_clubs') || '[]'); } catch (e) { return []; } }
+  function saveLocalFavs(list) { try { localStorage.setItem('slfa_fav_clubs', JSON.stringify(list)); } catch (e) {} }
   function loadFavs() {
     return db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) { myFavIds = {}; myFavNames = {}; myFavList = []; return; }
+      if (!u.data || !u.data.user) {
+        var list = localFavs();
+        myFavIds = {}; myFavNames = {}; myFavList = list.slice();
+        list.forEach(function (f) { myFavIds[f.id] = true; myFavNames[f.name] = true; });
+        return;
+      }
       return db.from('user_favorite_clubs').select('club_id, league_clubs(club_name)').eq('user_id', u.data.user.id).then(function (r) {
         myFavIds = {}; myFavNames = {}; myFavList = [];
         (r.data || []).forEach(function (f) {
@@ -300,13 +307,25 @@
           myFavIds[f.club_id] = true; myFavNames[name] = true; myFavList.push({ id: f.club_id, name: name });
         });
       });
-    }).then(function () { loadTeams(); });
+    }).then(function () { loadTeams(); renderMyClub(); });
   }
   function refreshFavs() { loadFavs().then(function () { loadMatches(); }); }
   function toggleFav(clubId, clubs) {
     var status = function (t) { var el = document.getElementById('favStatus'); if (el) el.textContent = t; };
     db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) { status('Sign in under Admin (top right) to save favourite clubs.'); return; }
+      if (!u.data || !u.data.user) {
+        var on0 = !!myFavIds[clubId];
+        var list = localFavs();
+        if (on0) { list = list.filter(function (f) { return String(f.id) !== String(clubId); }); }
+        else {
+          var club = (clubs || []).find(function (c) { return String(c.id) === String(clubId); });
+          if (club) list.push({ id: club.id, name: club.club_name });
+        }
+        saveLocalFavs(list);
+        status(on0 ? 'Removed from your clubs.' : 'Saved on this device.');
+        refreshFavs();
+        return;
+      }
       var on = !!myFavIds[clubId];
       var q = on
         ? db.from('user_favorite_clubs').delete().eq('user_id', u.data.user.id).eq('club_id', clubId)
@@ -319,6 +338,54 @@
     });
   }
   db.auth.onAuthStateChange(function () { refreshFavs(); });
+
+  // My club: the fan's first favourite club, shown at the top of Matches
+  function ensureMyClubCard() {
+    var el = document.getElementById('myClubCard');
+    if (!el) {
+      var list = document.getElementById('matchList'); if (!list) return null;
+      el = document.createElement('section'); el.id = 'myClubCard'; el.className = 'my-club-card'; el.hidden = true;
+      list.parentNode.insertBefore(el, list);
+    }
+    return el;
+  }
+  function renderMyClub() {
+    var box = ensureMyClubCard(); if (!box) return;
+    var club = myFavList[0];
+    if (!club) { box.hidden = true; box.innerHTML = ''; return; }
+    var name = club.name;
+    box.hidden = false;
+    box.innerHTML = '<p class="my-club-eyebrow">MY CLUB</p><h3>' + esc(name) + '</h3><p class="muted">Loading…</p>';
+    Promise.all([
+      db.from('matches').select('id, match_date, home_team, away_team, home_score, away_score, match_status').eq('home_team', name).order('match_date', { ascending: false }).limit(30),
+      db.from('matches').select('id, match_date, home_team, away_team, home_score, away_score, match_status').eq('away_team', name).order('match_date', { ascending: false }).limit(30),
+      db.from('league_standings').select('pos').eq('club', name).limit(1)
+    ]).then(function (all) {
+      var inactive = { SCHEDULED: 1, RESCHEDULED: 1, POSTPONED: 1, CANCELLED: 1, ABANDONED: 1 };
+      var all2 = (all[0].data || []).concat(all[1].data || []);
+      var played = all2.filter(function (m) { return !inactive[m.match_status] && m.home_score != null && m.away_score != null; })
+        .sort(function (a, b) { return new Date(b.match_date) - new Date(a.match_date); });
+      var upcoming = all2.filter(function (m) { return inactive[m.match_status] && new Date(m.match_date) >= new Date(); })
+        .sort(function (a, b) { return new Date(a.match_date) - new Date(b.match_date); });
+      var pos = (all[2].data || [])[0];
+      var form = played.slice(0, 5).map(function (m) {
+        var home = m.home_team === name, mine = home ? m.home_score : m.away_score, theirs = home ? m.away_score : m.home_score;
+        return mine > theirs ? 'W' : mine === theirs ? 'D' : 'L';
+      }).reverse();
+      var last = played[0], next = upcoming[0];
+      var html = '<p class="my-club-eyebrow">MY CLUB</p><div class="my-club-head"><h3>' + esc(name) + '</h3>' +
+        (pos ? '<span class="my-club-pos">Position ' + esc(pos.pos) + '</span>' : '') + '</div>';
+      if (form.length) html += '<p class="slfa-form" aria-label="Form: ' + esc(form.join(' ')) + '">' + form.map(function (r) { return '<span class="slfa-form-' + r + '">' + r + '</span>'; }).join('') + '</p>';
+      html += next
+        ? '<p class="my-club-line"><span class="muted">Next</span> <strong>' + esc(next.home_team) + ' v ' + esc(next.away_team) + '</strong><br><small class="muted">' + esc(fmt(next.match_date)) + '</small></p>'
+        : '<p class="my-club-line muted">No upcoming fixture yet.</p>';
+      if (last) html += '<p class="my-club-line"><span class="muted">Last</span> <strong>' + esc(last.home_team) + ' ' + esc(last.home_score) + ' – ' + esc(last.away_score) + ' ' + esc(last.away_team) + '</strong></p>';
+      html += '<button type="button" class="my-club-open">Open club page</button>';
+      box.innerHTML = html;
+      var btn = box.querySelector('.my-club-open');
+      if (btn) btn.addEventListener('click', function () { if (window.slfaOpenClub) window.slfaOpenClub(name); });
+    }).catch(function () { box.innerHTML = '<p class="my-club-eyebrow">MY CLUB</p><p class="muted">Your club information is temporarily unavailable.</p>'; });
+  }
 
   // Squad for one club: approved, active players for the current season
   var selectedClub = null;
