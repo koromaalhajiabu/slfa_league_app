@@ -804,3 +804,12 @@ html body #matchList .slfa-mc-details-btn {
   color:#e6f1ff !important;
   box-shadow:none !important;
 }
+
+/* Share buttons on match cards: navy ghost, same as Match details */
+html body .slfa-mc-share,
+html body #matchList .slfa-mc-share {
+  background:rgba(0,114,198,.14) !important;
+  border:1px solid rgba(140,190,255,.3) !important;
+  color:#e6f1ff !important;
+  box-shadow:none !important;
+}

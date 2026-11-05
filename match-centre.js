@@ -96,7 +96,7 @@
       '<div class="slfa-mc-card-bottom"><span>'+esc(dateText(m.match_date))+'</span><span>'+esc(m.venue || 'Venue TBC')+'</span></div>'+
       (m.motm_name?'<p class="slfa-mc-motm">★ Man of the Match: '+esc(m.motm_name)+(m.motm_jersey_number?' · #'+esc(m.motm_jersey_number):'')+'</p>':'')+
       (g==='live'?livePreview(m):'')+
-      '<button class="slfa-mc-details-btn" type="button" data-mc-details="'+esc(m.id)+'" aria-expanded="false">Match details <span>＋</span></button><div class="slfa-mc-detail" id="mc-detail-'+esc(m.id)+'" hidden></div></article>';
+      '<button class="slfa-mc-share" type="button" data-share="'+esc(m.id)+'" aria-label="Share this match">Share ↗</button>'+'<button class="slfa-mc-details-btn" type="button" data-mc-details="'+esc(m.id)+'" aria-expanded="false">Match details <span>＋</span></button><div class="slfa-mc-detail" id="mc-detail-'+esc(m.id)+'" hidden></div></article>';
   }
   function render() {
     var list = selected(), clubs = {};
@@ -119,6 +119,15 @@
     if(r)r.addEventListener('click',function(){chosenDate='';chosenClub='';filter='all';render();});
     var refresh=document.getElementById('mcRefresh');if(refresh)refresh.addEventListener('click',function(){refresh.disabled=true;refresh.textContent='Refreshing…';fetchData().then(function(){var b=document.getElementById('mcRefresh');if(b){b.disabled=false;b.textContent='↻ Refresh';}});});
     host.querySelectorAll('[data-mc-details]').forEach(function(b){b.addEventListener('click',function(){details(b.dataset.mcDetails,b);});});
+    host.querySelectorAll('[data-share]').forEach(function(b){b.addEventListener('click',function(){
+      var m=matches.find(function(x){return String(x.id)===String(b.dataset.share);}); if(!m)return;
+      var hasScore=m.home_score!=null&&m.away_score!=null;
+      var status=group(m)==='live'?'Live':group(m)==='results'?'Full time':'Upcoming';
+      var text=status+': '+m.home_team+' '+(hasScore?m.home_score+' – '+m.away_score:'v')+' '+m.away_team+' · SLFA League App';
+      var url=location.href.split('#')[0];
+      if(navigator.share){navigator.share({title:'SLFA League App',text:text,url:url}).catch(function(){});}
+      else{window.open('https://wa.me/?text='+encodeURIComponent(text+' '+url),'_blank','noopener');}
+    });});
   }
   function details(id,button) {
     var box=document.getElementById('mc-detail-'+id); if(!box)return;
