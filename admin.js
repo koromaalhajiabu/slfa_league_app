@@ -11,6 +11,13 @@
     return b;
   }
   function msg(text) { var m = $('roleMsg'); if (m) m.textContent = text; }
+  // A reason is required for every result change or reversal; it is stored in the result log
+  function askReason(question) {
+    var r = prompt(question);
+    if (r === null) return null;
+    if (r.trim().length < 5) { msg('Give a reason of at least 5 characters.'); return null; }
+    return r.trim();
+  }
   var CAT_LABEL = { NEWS: 'News', PRESS_RELEASE: 'Press release', MATCH_REPORT: 'Match report', ANNOUNCEMENT: 'Announcement', FIXTURE: 'Fixture', RESULT: 'Result', PHOTO: 'Photo' };
   var luMatches = {}, LINEUP_LEAD_MS = 20 * 60 * 1000;
   function lineupOpen(m) { return Date.now() < new Date(m.match_date).getTime() - LINEUP_LEAD_MS; }
@@ -166,7 +173,7 @@
       '<h2 class="rt">Enter a result</h2>' +
       '<label for="resMatch">Match</label><select id="resMatch"><option value="">Loading matches…</option></select>' +
       '<div class="scores"><input id="resHome" type="number" min="0" placeholder="Home"><span>–</span><input id="resAway" type="number" min="0" placeholder="Away"></div>' +
-      '<div class="btns"><button class="primary" id="resSave">Record result</button></div>' +
+      '<div class="btns"><button class="primary" id="resSave">Record result</button><button class="secondary" id="resChange">Change confirmed result</button><button class="secondary" id="resReverse">Reverse result</button></div>' +
       '<h2 class="rt">Match status</h2>' +
       '<label for="msMatch">Match</label><select id="msMatch"><option value="">Loading matches…</option></select>' +
       '<label for="msStatus">Status</label><select id="msStatus"><option value="SCHEDULED">Scheduled</option><option value="POSTPONED">Postponed</option><option value="RESCHEDULED">Rescheduled</option><option value="CANCELLED">Cancelled</option></select>' +
@@ -206,6 +213,22 @@
     });
 
     loadMatchesForResult();
+    $('resChange').addEventListener('click', function () {
+      var id = $('resMatch').value, h = parseInt($('resHome').value, 10), a = parseInt($('resAway').value, 10);
+      if (!id || isNaN(h) || isNaN(a)) { msg('Choose a match and enter both scores.'); return; }
+      var reason = askReason('Reason for changing this result (required, logged):'); if (!reason) return;
+      db.rpc('change_match_result', { p_match_id: Number(id), p_home: h, p_away: a, p_reason: reason }).then(function (r) {
+        msg(r.error ? r.error.message : 'Result changed and logged.'); loadMatchesForResult();
+      });
+    });
+    $('resReverse').addEventListener('click', function () {
+      var id = $('resMatch').value; if (!id) { msg('Choose a match.'); return; }
+      var reason = askReason('Reason for reversing this result (required, logged):'); if (!reason) return;
+      if (!confirm('Reverse this result? The match goes back to half time and the referee can submit again.')) return;
+      db.rpc('reverse_match_result', { p_match_id: Number(id), p_reason: reason }).then(function (r) {
+        msg(r.error ? r.error.message : 'Result reversed and logged.'); loadMatchesForResult();
+      });
+    });
     $('resSave').addEventListener('click', function () {
       var id = $('resMatch').value, h = parseInt($('resHome').value, 10), a = parseInt($('resAway').value, 10);
       if (!id || isNaN(h) || isNaN(a)) { msg('Choose a match and enter both scores.'); return; }
@@ -999,6 +1022,7 @@
       '<label for="rfMatch">Match</label><select id="rfMatch"><option value="">Loading your matches…</option></select>' +
       '<div class="scores"><span id="rfScore" class="score-big">0 – 0</span></div>' +
       '<div class="btns"><button class="secondary" id="rfStart">Start match</button><button class="primary" id="rfEnd">End and save final score</button></div>' +
+      '<div class="btns"><button class="secondary" id="rfChange">Change final score</button><button class="secondary" id="rfReverse">Reverse final score</button></div>' +
       '<h2 class="rt">Events so far</h2><div id="rfEvents" class="muted">No events yet.</div>' +
       '<h2 class="rt">Man of the Match</h2><label for="rfMotm">Player</label><select id="rfMotm"><option value="">Choose a match first…</option></select>' +
       '<div class="btns"><button class="secondary" id="rfMotmSave">Save Man of the Match</button></div>' +
@@ -1033,6 +1057,23 @@
       setMatch(id, { match_status: 'LIVE', match_minute: 0 }).then(function (r) {
         msg(r.error ? r.error.message : 'Match is live.'); loadRefMatch(id); });
     });
+    $('rfChange').addEventListener('click', function () {
+      var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
+      var h = parseInt(prompt('Home goals'), 10), a = parseInt(prompt('Away goals'), 10);
+      if (isNaN(h) || isNaN(a)) { msg('Enter both scores as numbers.'); return; }
+      var reason = askReason('Reason for changing the score (required, logged):'); if (!reason) return;
+      db.rpc('change_match_result', { p_match_id: Number(id), p_home: h, p_away: a, p_reason: reason }).then(function (r) {
+        msg(r.error ? r.error.message : 'Score changed and logged.'); loadRefMatch(id);
+      });
+    });
+    $('rfReverse').addEventListener('click', function () {
+      var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
+      var reason = askReason('Reason for reversing the final score (required, logged):'); if (!reason) return;
+      if (!confirm('Reverse the final score? The match goes back to half time so you can submit again.')) return;
+      db.rpc('reverse_match_result', { p_match_id: Number(id), p_reason: reason }).then(function (r) {
+        msg(r.error ? r.error.message : 'Final score reversed and logged.'); loadRefMatch(id);
+      });
+    });
     $('rfEnd').addEventListener('click', function () {
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
       var cached = currentRefMatch && String(currentRefMatch.id) === String(id) ? currentRefMatch : null;
@@ -1055,7 +1096,7 @@
           return queueAndSyncRefereeResult(submission).then(function (res) {
             if (res.error && !res.queued) { msg(res.error.message); return; }
             var text = res.queued ? 'Final score saved on this phone. It will sync automatically when internet returns.' :
-              'Final score submitted. It is now awaiting Super Admin approval.';
+              'Final score confirmed and published.';
             finish.then(function (e) { msg(e || text); });
             if (!res.queued) loadRefMatch(id);
           });
