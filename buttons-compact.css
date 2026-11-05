@@ -49,3 +49,12 @@ html body .leagueSwitch .chip.on::after{content:"✓";margin-left:4px;font-weigh
 
 /* League crests: show the whole crest inside the circle */
 html body .league-chip-logo-marampa{background-size:contain !important;background-position:center !important;background-repeat:no-repeat !important}
+
+/* Top bar: the brand on its own row; language, Light/Dark and Admin on one row beneath it, right-aligned */
+html body .topbar{flex-wrap:wrap;align-items:center;row-gap:8px}
+html body .topbar .brand{flex:1 1 100%;min-width:0}
+html body .top-controls{flex:1 1 100%;display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:8px;margin:0}
+html body .top-controls .lang-picker{margin:0}
+html body .top-controls .lang-picker select{width:auto;max-width:132px}
+html body .top-controls .theme-toggle{margin:0;white-space:nowrap}
+html body .top-controls details.admin{margin:0}
