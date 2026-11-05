@@ -58,3 +58,7 @@ html body .top-controls .lang-picker{margin:0}
 html body .top-controls .lang-picker select{width:auto;max-width:132px}
 html body .top-controls .theme-toggle{margin:0;white-space:nowrap}
 html body .top-controls details.admin{margin:0}
+
+/* Forgot password link on sign-in panels */
+.forgot-line{margin:8px 0 0;text-align:center;font-size:.92rem}
+.forgot-line a{color:inherit;text-decoration:underline}
