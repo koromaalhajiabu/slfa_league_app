@@ -150,12 +150,35 @@
       }).join('')+'</div>';}
       if(lu.length){var by={};lu.forEach(function(x){var n=x.league_clubs&&x.league_clubs.club_name||'Team',p=x.club_squad||{},v=(p.jersey_number?'#'+p.jersey_number+' ':'')+(p.player_name||'Player');by[n]=by[n]||{xi:[],bench:[]};(x.is_starter?by[n].xi:by[n].bench).push(v);});
         html+='<h4>Published line-ups</h4><div class="slfa-mc-lineups">'+Object.keys(by).map(function(n){return '<div><strong role="button" tabindex="0" data-open-club-name="'+esc(n)+'">'+esc(n)+'</strong><p><b>Starting:</b> '+esc(by[n].xi.join(', ')||'Not published')+'</p><p><b>Bench:</b> '+esc(by[n].bench.join(', ')||'Not published')+'</p></div>';}).join('')+'</div>';}
-      box.innerHTML=(html||'<p class="slfa-mc-no-events">No additional match details have been published.</p>')+'<div class="slfa-mc-comments"></div>';
+      box.innerHTML=(html||'<p class="slfa-mc-no-events">No additional match details have been published.</p>')+'<div class="slfa-mc-comments"></div><div class="slfa-mc-report"></div>';
       loadComments(id,box.querySelector('.slfa-mc-comments'));
+      renderReport(id,box.querySelector('.slfa-mc-report'));
     }).catch(function(){box.innerHTML='<p class="slfa-mc-no-events">Match details are temporarily unavailable.</p>';});
   }
   function voterKey(){try{var k=localStorage.getItem('slfa_voter_key');if(!k){k=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);localStorage.setItem('slfa_voter_key',k);}return k;}catch(e){return null;}}
   function fanName(){try{return localStorage.getItem('slfa_fan_name')||'';}catch(e){return '';}}
+  // Report a wrong score, a wrong player or another problem. Reports go to SLFA staff.
+  function renderReport(matchId,box){
+    if(!box)return;
+    box.innerHTML='<details class="slfa-mc-report-box"><summary>Report a problem</summary>'+
+      '<form class="slfa-mc-comment-form" novalidate><label>What is wrong?<select name="type"><option value="WRONG_SCORE">Wrong score</option><option value="WRONG_PLAYER">Wrong or missing player</option><option value="OTHER">Something else</option></select></label>'+
+      '<label>Tell us more<textarea name="message" maxlength="500" rows="3" placeholder="What should we check?"></textarea></label>'+
+      '<button type="submit" class="slfa-mc-comment-send">Send report</button><p class="status" role="status"></p></form></details>';
+    var form=box.querySelector('form'),msg=form.querySelector('.status');
+    form.addEventListener('submit',function(e){
+      e.preventDefault();
+      var message=form.message.value.trim();
+      if(message.length<5){msg.textContent='Describe the problem in at least 5 characters.';return;}
+      var key=voterKey();if(!key){msg.textContent='Reports need your browser to store a small code. Turn off private browsing and try again.';return;}
+      var btn=form.querySelector('button');btn.disabled=true;msg.textContent='Sending…';
+      db.rpc('submit_fan_report',{p_match_id:Number(matchId),p_type:form.type.value,p_message:message,p_voter_key:key}).then(function(r){
+        btn.disabled=false;
+        if(r.error){msg.textContent=r.error.message;return;}
+        form.message.value='';
+        msg.textContent='Thank you. SLFA staff will look at this.';
+      });
+    });
+  }
   // Fan comments: only approved comments are shown. New ones wait for moderator approval.
   function loadComments(matchId,box){
     if(!box)return;

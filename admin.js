@@ -196,6 +196,7 @@
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<h2 class="rt">Fan comments awaiting approval</h2><div id="pendingComments" class="muted">Loading…</div>' +
+      '<h2 class="rt">Problems reported by fans</h2><div id="fanReports" class="muted">Loading…</div>' +
       '<h2 class="rt">Club profile changes awaiting approval</h2><div id="clubProfileReview" class="muted">Loading…</div>' +
       '<h2 class="rt">Player registrations awaiting approval</h2><div id="squadReview" class="muted">Loading…</div>' +
       '<h2 class="rt">Transfer requests awaiting approval</h2><div id="transferReview" class="muted">Loading…</div>' +
@@ -259,6 +260,7 @@
     loadAssignOptions();
     loadPendingResults();
     loadPendingComments();
+    loadFanReports();
     $('asSave').addEventListener('click', function () {
       var m = $('asMatch').value, r = $('asRef').value;
       if (!m || !r) { msg('Choose a match and a referee.'); return; }
@@ -298,6 +300,30 @@
             if (!confirm('Reject this score? The referee will need to send it again.')) return;
             db.from('match_results').delete().eq('id', Number(b.dataset.reject)).then(function (res) {
               msg(res.error ? res.error.message : 'Rejected.'); loadPendingResults(); });
+          });
+        });
+      });
+  }
+
+  // Problems fans report from match details. Staff mark each one resolved once it is checked.
+  function loadFanReports() {
+    var box = $('fanReports'); if (!box) return;
+    var labels = { WRONG_SCORE: 'Wrong score', WRONG_PLAYER: 'Wrong or missing player', OTHER: 'Something else' };
+    db.from('fan_reports').select('id, report_type, message, created_at, matches(home_team, away_team)').eq('status', 'OPEN').order('created_at', { ascending: true }).limit(100)
+      .then(function (r) {
+        if (r.error) { box.textContent = 'Reports could not be loaded.'; return; }
+        var rows = r.data || [];
+        box.innerHTML = rows.length ? rows.map(function (x) {
+          var m = x.matches || {};
+          return '<div class="post"><strong>' + esc(labels[x.report_type] || x.report_type) + '</strong>' +
+            (m.home_team ? ' · ' + esc(m.home_team) + ' v ' + esc(m.away_team) : '') +
+            '<p>' + esc(x.message) + '</p>' +
+            '<div class="btns"><button class="primary" data-report-resolve="' + x.id + '">Mark resolved</button></div></div>';
+        }).join('') : 'No open reports.';
+        box.querySelectorAll('[data-report-resolve]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            db.from('fan_reports').update({ status: 'RESOLVED', resolved_at: new Date().toISOString() }).eq('id', Number(b.dataset.reportResolve)).then(function (res) {
+              msg(res.error ? res.error.message : 'Report marked resolved.'); loadFanReports(); });
           });
         });
       });
@@ -1459,6 +1485,7 @@
   function refreshAdmin() {
     if ($('pendingResults')) loadPendingResults();
     if ($('pendingComments')) loadPendingComments();
+    if ($('fanReports')) loadFanReports();
     if ($('reviewList')) loadReview();
     if ($('squadReview')) loadSquadReview();
     if ($('transferReview')) loadTransferReview();
