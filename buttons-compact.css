@@ -67,3 +67,7 @@ html body .top-controls details.admin{margin:0}
 .terms-row{display:flex;gap:8px;align-items:flex-start;margin:12px 0 4px;font-size:.92rem;line-height:1.4}
 .terms-row input{width:auto;margin-top:3px;flex:0 0 auto}
 .terms-row a{color:inherit;text-decoration:underline}
+
+/* Public list of current suspensions (Players tab) */
+.ps-susp{margin:16px 0;padding:16px 16px 6px;border:1px solid rgba(120,170,230,.22);border-radius:16px;background:rgba(7,15,31,.35)}
+.ps-susp .ps-susp-title{font-family:inherit;font-size:1.1rem;margin:0 0 10px}

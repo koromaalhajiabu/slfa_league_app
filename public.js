@@ -537,7 +537,33 @@
         '<span class="ps-value"><strong>' + esc(r[valueKey]) + '</strong><small>' + esc(metric) + '</small></span></article>';
     }).join('');
   }
+  // Public list of players currently serving a suspension (status ACTIVE), league-wide.
+  function loadSuspensions() {
+    var box = $('suspensionsPublic');
+    if (!box) return;
+    db.from('suspensions').select('id, player_id, reason, matches_total, matches_served').eq('status', 'ACTIVE').order('id', { ascending: false }).limit(200).then(function (res) {
+      if (res.error) { box.innerHTML = '<h3 class="ps-susp-title">Current suspensions</h3>' + empty('Suspensions are not available right now.'); return; }
+      var active = (res.data || []).filter(function (s) { return Number(s.matches_total) > Number(s.matches_served); });
+      var head = '<h3 class="ps-susp-title">Current suspensions</h3>';
+      if (!active.length) { box.innerHTML = head + empty('No players are suspended right now.'); return; }
+      var ids = active.map(function (s) { return s.player_id; });
+      db.from('club_squad').select('id, player_name, league_clubs(club_name)').in('id', ids).then(function (sq) {
+        var byId = {};
+        (sq.data || []).forEach(function (x) { byId[x.id] = x; });
+        box.innerHTML = head + active.map(function (s) {
+          var p = byId[s.player_id] || {};
+          var left = Number(s.matches_total) - Number(s.matches_served);
+          var club = p.league_clubs ? p.league_clubs.club_name : '';
+          return '<div class="post"><strong>' + esc(p.player_name || 'Player') + '</strong>' +
+            (club ? ' · ' + esc(club) : '') +
+            '<div class="muted">' + esc(left) + ' match' + (left === 1 ? '' : 'es') + ' left</div>' +
+            (s.reason ? '<p>' + esc(s.reason) + '</p>' : '') + '</div>';
+        }).join('');
+      });
+    });
+  }
   function loadPlayers() {
+    loadSuspensions();
     var jobs = [
       db.from('top_scorers').select('player, club, goals, photo_url').order('goals', { ascending: false }).limit(500),
       db.from('top_assists').select('player, club, assists, photo_url').order('assists', { ascending: false }).limit(500),
