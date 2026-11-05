@@ -161,3 +161,17 @@ html[data-theme="light"] body #public .ps-banner,
 html[data-theme="light"] body #public [class*="-hero"]:not(.slfa-mc-heading):not(.slfa-lp-hero-mark){background:linear-gradient(145deg,#eaf3ff,#ffffff) !important;background-image:linear-gradient(145deg,#eaf3ff,#ffffff) !important;border-color:rgba(10,95,168,.22) !important;box-shadow:0 6px 18px rgba(10,40,80,.07) !important}
 html[data-theme="light"] body #public [class*="-hero"] .ps-eyebrow,
 html[data-theme="light"] body #public [class*="-hero"] span{background:transparent !important;color:#0a5fa8 !important;-webkit-text-fill-color:#0a5fa8 !important}
+
+/* Club page: league names on idle league buttons, and the draw form badge */
+html[data-theme="light"] body .leagueSwitch .chip:not(.on) .league-chip-name{color:#0a3f73 !important;-webkit-text-fill-color:#0a3f73 !important}
+html[data-theme="light"] body .slfa-form-D{background:#4f5f77 !important;color:#ffffff !important;-webkit-text-fill-color:#ffffff !important}
+html[data-theme="light"] body .slfa-ics{background:#0a5fa8 !important;background-image:none !important;color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;border:0 !important;box-shadow:0 4px 12px rgba(10,95,168,.25) !important}
+
+/* Match cards: status labels, share and details buttons, and the details panel */
+html[data-theme="light"] body #matchList .slfa-mc-status:not(.status-live){background:#e8f1fb !important;color:#0a3f73 !important;-webkit-text-fill-color:#0a3f73 !important;border-color:rgba(10,95,168,.25) !important}
+html[data-theme="light"] body #matchList .slfa-mc-share,
+html[data-theme="light"] body #matchList .slfa-mc-details-btn{background:#eef5ff !important;color:#0a3f73 !important;-webkit-text-fill-color:#0a3f73 !important;border:1px solid rgba(10,95,168,.25) !important}
+html[data-theme="light"] body #matchList .slfa-mc-detail{background:#ffffff !important;background-image:none !important;color:#0b1a30 !important}
+html[data-theme="light"] body #matchList .slfa-mc-detail h4{color:#0b1a30 !important;-webkit-text-fill-color:#0b1a30 !important}
+html[data-theme="light"] body #matchList .slfa-mc-comment-send,
+html[data-theme="light"] body #matchList .slfa-mc-report-box .slfa-mc-comment-send{background:#0a5fa8 !important;background-image:none !important;color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;border:0 !important}
