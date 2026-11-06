@@ -151,11 +151,65 @@
       }).join('')+'</div>';}
       if(lu.length){var by={};lu.forEach(function(x){var n=x.league_clubs&&x.league_clubs.club_name||'Team',p=x.club_squad||{},v=(p.jersey_number?'#'+p.jersey_number+' ':'')+(p.player_name||'Player');by[n]=by[n]||{xi:[],bench:[]};(x.is_starter?by[n].xi:by[n].bench).push(v);});
         html+='<h4>Published line-ups</h4><div class="slfa-mc-lineups">'+Object.keys(by).map(function(n){return '<div><strong role="button" tabindex="0" data-open-club-name="'+esc(n)+'">'+esc(n)+'</strong><p><b>Starting:</b> '+esc(by[n].xi.join(', ')||'Not published')+'</p><p><b>Bench:</b> '+esc(by[n].bench.join(', ')||'Not published')+'</p></div>';}).join('')+'</div>';}
+      if(lu.length||ev.length) html+='<div class="slfa-mc-print-row"><button type="button" class="secondary" data-print-match="'+esc(String(id))+'">Print match sheet</button></div>';
       box.innerHTML=(html||'<p class="slfa-mc-no-events">No additional match details have been published.</p>')+'<div class="slfa-mc-comments"></div><div class="slfa-mc-report"></div>';
       loadComments(id,box.querySelector('.slfa-mc-comments'));
       renderReport(id,box.querySelector('.slfa-mc-report'));
     }).catch(function(){box.innerHTML='<p class="slfa-mc-no-events">Match details are temporarily unavailable.</p>';});
   }
+  // Printable match sheet: built from the same published data as the match page, printed from a hidden frame (A4).
+  function printMatchSheet(id) {
+    Promise.all([
+      db.from('matches').select('match_date,venue,home_team,away_team,home_score,away_score,match_status').eq('id', String(id)).maybeSingle(),
+      db.from('match_lineups').select('is_starter,league_clubs(club_name),club_squad(player_name,jersey_number)').eq('match_id', String(id)),
+      db.from('match_events').select('event_type,team_name,player_name,player_off_name,assist_player_name,minute').eq('match_id', String(id)).order('minute', { ascending: true })
+    ]).then(function (a) {
+      var m = (a[0].data) || {}, lu = a[1].data || [], ev = a[2].data || [];
+      var when = m.match_date ? new Date(m.match_date).toLocaleString('en-GB', { timeZone: 'Africa/Freetown', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+      var score = (m.home_score != null && m.away_score != null) ? m.home_score + ' – ' + m.away_score : 'v';
+      var by = {};
+      lu.forEach(function (x) {
+        var n = (x.league_clubs && x.league_clubs.club_name) || 'Team', pl = x.club_squad || {};
+        var v = (pl.jersey_number ? '#' + pl.jersey_number + ' ' : '') + (pl.player_name || 'Player');
+        by[n] = by[n] || { xi: [], bench: [] }; (x.is_starter ? by[n].xi : by[n].bench).push(v);
+      });
+      var lineHtml = Object.keys(by).map(function (n) {
+        return '<div class="team"><h3>' + esc(n) + '</h3><p><b>Starting:</b></p><ol>' + by[n].xi.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol><p><b>Bench:</b></p><ul>' + by[n].bench.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+      }).join('') || '<p>No line-ups published.</p>';
+      var evHtml = ev.length ? '<table><thead><tr><th>Min</th><th>Event</th><th>Player</th><th>Team</th></tr></thead><tbody>' + ev.map(function (e) {
+        var t = String(e.event_type || '').toUpperCase();
+        var what = t === 'GOAL' ? 'Goal' : t === 'YELLOW_CARD' ? 'Yellow card' : t === 'RED_CARD' ? 'Red card' : t === 'SUB' ? 'Substitution' : 'Event';
+        var who = t === 'SUB' ? (e.player_name || '') + ' for ' + (e.player_off_name || '') : (e.player_name || '') + (e.assist_player_name ? ' (assist: ' + e.assist_player_name + ')' : '');
+        return '<tr><td>' + esc(e.minute == null ? '—' : e.minute) + '</td><td>' + what + '</td><td>' + esc(who) + '</td><td>' + esc(e.team_name || '') + '</td></tr>';
+      }).join('') + '</tbody></table>' : '<p>No match events published.</p>';
+      var doc = '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Match sheet</title><style>' +
+        '@page{size:A4;margin:14mm}body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:11pt}' +
+        'header{border-bottom:3px solid #0b2545;padding-bottom:8px;margin-bottom:12px}h1{font-size:18pt;margin:0 0 4px;color:#0b2545}' +
+        '.score{font-size:22pt;font-weight:bold;text-align:center;margin:10px 0}.meta{color:#444}' +
+        'h2{font-size:12.5pt;color:#0b2545;margin:16px 0 6px;border-bottom:1px solid #c8d6e5;padding-bottom:3px}' +
+        '.teams{display:flex;gap:18px}.team{flex:1}.team h3{font-size:11.5pt;margin:0 0 4px}.team ol,.team ul{margin:2px 0 8px 18px;padding:0}' +
+        'table{width:100%;border-collapse:collapse}th,td{border:1px solid #c8d6e5;padding:4px 6px;text-align:left;font-size:10pt}th{background:#eef4fb}' +
+        'footer{margin-top:18px;font-size:8.5pt;color:#666;border-top:1px solid #c8d6e5;padding-top:6px}</style></head><body>' +
+        '<header><h1>' + esc((m.home_team || 'Home') + ' v ' + (m.away_team || 'Away')) + '</h1><div class="meta">' + esc(when) + (m.venue ? ' · ' + esc(m.venue) : '') + '</div></header>' +
+        '<div class="score">' + esc(score) + '</div>' +
+        '<h2>Line-ups</h2><div class="teams">' + lineHtml + '</div>' +
+        '<h2>Match events</h2>' + evHtml +
+        '<footer>Printed from the SLFA League App on ' + esc(new Date().toLocaleDateString('en-GB', { timeZone: 'Africa/Freetown' })) + '. Shows published information only.</footer></body></html>';
+      var frame = document.createElement('iframe');
+      frame.setAttribute('aria-hidden', 'true');
+      frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+      document.body.appendChild(frame);
+      frame.onload = function () {
+        try { frame.contentWindow.focus(); frame.contentWindow.print(); } catch (e) {}
+        setTimeout(function () { frame.remove(); }, 2000);
+      };
+      frame.srcdoc = doc;
+    }).catch(function () {});
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-print-match]');
+    if (b) printMatchSheet(b.getAttribute('data-print-match'));
+  });
   function voterKey(){try{var k=localStorage.getItem('slfa_voter_key');if(!k){k=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);localStorage.setItem('slfa_voter_key',k);}return k;}catch(e){return null;}}
   function fanName(){try{return localStorage.getItem('slfa_fan_name')||'';}catch(e){return '';}}
   // Report a wrong score, a wrong player or another problem. Reports go to SLFA staff.
