@@ -3,7 +3,13 @@
   'use strict';
   var db = window.slfaDb, host = document.getElementById('matchList');
   if (!db || !host) return;
-  var matches = [], leagueNames = {}, clubLogos = {}, liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer;
+  var allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer;
+  // Season: the picker stores the chosen season; the default is the current season.
+  function selectedSeason() { var stored = ''; try { stored = localStorage.getItem('slfa_season') || ''; } catch (e) {} var cur = seasons.filter(function (x) { return x.is_current; })[0] || null; return seasons.filter(function (x) { return String(x.id) === stored; })[0] || cur; }
+  // Matches saved without a season count toward the season their date falls in.
+  function seasonOf(m) { if (m.season_id != null) return String(m.season_id); var d = String(m.match_date || '').slice(0, 10); var hit = seasons.filter(function (x) { return d >= String(x.start_date) && d <= String(x.end_date); })[0]; return hit ? String(hit.id) : ''; }
+  function applySeason() { var sel = selectedSeason(); matches = sel ? allMatches.filter(function (m) { return seasonOf(m) === String(sel.id); }) : allMatches; }
+  document.addEventListener('slfa:season-change', function () { applySeason(); render(); });
 
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function league() { try { return localStorage.getItem('slfa_league') || ''; } catch (e) { return ''; } }
@@ -270,13 +276,14 @@
   }
   function fetchData() {
     var request = Promise.all([
-      db.from('matches').select('id,match_date,venue,match_status,match_minute,status_set_at,league_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(500),
+      db.from('matches').select('id,match_date,venue,match_status,match_minute,status_set_at,league_id,season_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(500),
       db.from('leagues').select('id,name').eq('is_active',true).order('sort_order'),
-      db.from('league_clubs').select('club_name,logo_url').eq('is_active',true)
+      db.from('league_clubs').select('club_name,logo_url').eq('is_active',true),
+      db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date',{ascending:false})
     ]).then(function(a){
-      var failed = a.find(function (item) { return item && item.error; });
+      var failed = a.slice(0, 3).find(function (item) { return item && item.error; });
       if (failed) throw new Error(failed.error.message || 'A league database query failed.');
-      matches=a[0].data||[];leagueNames={};clubLogos={};
+      allMatches=a[0].data||[];seasons=a[3].error?[]:(a[3].data||[]);applySeason();leagueNames={};clubLogos={};
       (a[1].data||[]).forEach(function(x){leagueNames[String(x.id)]=x.name;});
       (a[2].data||[]).forEach(function(x){clubLogos[x.club_name]=x.logo_url || clubLogoFallback(x.club_name);});
       var live=matches.filter(function(m){return group(m)==='live';});
