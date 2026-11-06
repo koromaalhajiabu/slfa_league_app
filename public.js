@@ -584,6 +584,23 @@
       if (formRuns.length) html += '<p class="slfa-form" aria-label="Form: ' + esc(formRuns.join(' ')) + '">' + formRuns.map(function (r) {
         return '<span class="slfa-form-' + r + '">' + r + '</span>'; }).join('') + '</p>';
       if (played.length) html += '<h4 class="league-name">Results</h4>' + played.slice(0, 5).map(fxRow).join('');
+      // Head-to-head: this club's record against each opponent it has played (all meetings on record)
+      var h2h = {};
+      played.forEach(function (m) {
+        var home = m.home_team === name, opp = home ? m.away_team : m.home_team;
+        var mine = home ? m.home_score : m.away_score, theirs = home ? m.away_score : m.home_score;
+        var r = h2h[opp] || (h2h[opp] = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 });
+        r.p += 1; r.gf += mine; r.ga += theirs;
+        if (mine > theirs) r.w += 1; else if (mine === theirs) r.d += 1; else r.l += 1;
+      });
+      var oppNames = Object.keys(h2h).sort(function (a, b) { return h2h[b].p - h2h[a].p || a.localeCompare(b); });
+      if (oppNames.length) {
+        html += '<h4 class="league-name">Head-to-head</h4><div class="scroll"><table class="table h2h"><thead><tr><th>Opponent</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th></tr></thead><tbody>' +
+          oppNames.map(function (o) {
+            var r = h2h[o];
+            return '<tr><td>' + esc(o) + '</td><td>' + r.p + '</td><td>' + r.w + '</td><td>' + r.d + '</td><td>' + r.l + '</td><td>' + r.gf + '</td><td>' + r.ga + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+      }
       if (due.length) html += '<h4 class="league-name">Fixtures</h4>' + due.slice(0, 3).map(function (m) {
         var t = m.home_team + ' v ' + m.away_team;
         return fxRow(m) + '<button type="button" class="slfa-ics" data-ics-start="' + esc(new Date(m.match_date).toISOString()) + '" data-ics-title="' + esc(t) + '" data-ics-venue="' + esc(m.venue || '') + '">Add to calendar</button>';
