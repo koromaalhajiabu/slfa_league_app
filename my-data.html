@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>try{var t=localStorage.getItem('slfa_theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<title>My fan data · SLFA League App</title>
+<style>
+  :root { --bg:#070f1f; --card:#112441; --ink:#f2f7ff; --muted:#9fb6d3; --line:rgba(120,170,230,.22); --accent:#5ab0ff; --danger:#ff8a8a; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#f4f8fd; --card:#ffffff; --ink:#0b1a30; --muted:#4a5f7a; --line:rgba(10,40,80,.14); --accent:#0a5fa8; --danger:#b42323; } }
+  :root[data-theme="light"] { --bg:#f4f8fd; --card:#ffffff; --ink:#0b1a30; --muted:#4a5f7a; --line:rgba(10,40,80,.14); --accent:#0a5fa8; --danger:#b42323; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 48px; }
+  a { color:var(--accent); }
+  h1 { font-size:1.6rem; margin:8px 0 4px; }
+  h2 { font-size:1.1rem; margin:24px 0 8px; }
+  .muted { color:var(--muted); font-size:.92rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin:12px 0; }
+  .counts { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin:8px 0 0; }
+  .count { border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .count strong { display:block; font-size:1.4rem; }
+  button { font:inherit; min-height:44px; padding:8px 16px; border-radius:10px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; margin:4px 4px 4px 0; }
+  button.secondary { background:transparent; color:var(--accent); }
+  button.danger { background:transparent; color:var(--danger); border-color:var(--danger); }
+  button:disabled { opacity:.5; cursor:default; }
+  button:focus-visible, a:focus-visible, input:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  label.opt { display:flex; align-items:center; gap:10px; min-height:44px; }
+  label.opt input { width:20px; height:20px; }
+  .status { min-height:1.5em; font-weight:600; }
+  .status.error { color:var(--danger); }
+  [data-placeholder] { background:rgba(255,190,60,.18); border-radius:4px; padding:0 3px; }
+  details summary { cursor:pointer; min-height:44px; display:flex; align-items:center; }
+</style>
+</head>
+<body>
+<main>
+  <a href="privacy.html">← Privacy notice</a>
+  <h1>My fan data</h1>
+  <p class="muted">This page shows the match comments, problem reports, predictions and poll votes sent from this browser. Your browser keeps a small code to link them to you. Nobody else can see this page's contents unless they use this device. Clearing the app's site data removes the code, and the records then cannot be found again from this device.</p>
+
+  <div class="card" id="summary">
+    <p id="loading" class="muted">Looking for your records…</p>
+    <div id="none" hidden><p>No fan data is linked to this browser.</p></div>
+    <div class="counts" id="counts" hidden>
+      <div class="count"><strong id="cReports">0</strong>Problem reports</div>
+      <div class="count"><strong id="cComments">0</strong>Comments</div>
+      <div class="count"><strong id="cPredictions">0</strong>Predictions</div>
+      <div class="count"><strong id="cVotes">0</strong>Poll votes</div>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </div>
+
+  <h2>Download a copy</h2>
+  <div class="card">
+    <p class="muted">Saves your records as a file you can keep. The file does not include your browser code.</p>
+    <button type="button" class="secondary" id="download" disabled>Download my data (JSON)</button>
+  </div>
+
+  <h2>Delete my data</h2>
+  <div class="card">
+    <p class="muted">Deleting is permanent. Deleting problem reports also removes them from the league's review list. Comments and predictions that are already published will disappear from the app.</p>
+    <label class="opt"><input type="checkbox" value="reports" class="kind"> Problem reports</label>
+    <label class="opt"><input type="checkbox" value="comments" class="kind"> Comments</label>
+    <label class="opt"><input type="checkbox" value="predictions" class="kind"> Predictions</label>
+    <label class="opt"><input type="checkbox" value="poll_votes" class="kind"> Poll votes</label>
+    <button type="button" class="danger" id="deleteSelected" disabled>Delete selected</button>
+    <button type="button" class="danger" id="deleteAll" disabled>Delete everything</button>
+  </div>
+
+  <details class="card">
+    <summary>Ask for a copy or removal from SLFA instead</summary>
+    <p class="muted">If you no longer have this device, or you need help, contact SLFA: <span data-placeholder>[SLFA contact email or form]</span>.</p>
+  </details>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  var cfg = window.SLFA_CONFIG || {};
+  var db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, { auth: { persistSession: false } });
+  var $ = function (id) { return document.getElementById(id); };
+  var kinds = { reports: 'cReports', comments: 'cComments', predictions: 'cPredictions', poll_votes: 'cVotes' };
+  var data = null;
+
+  function key() { try { return localStorage.getItem('slfa_voter_key') || ''; } catch (e) { return ''; } }
+  function setStatus(text, isError) { var s = $('status'); s.textContent = text; s.className = 'status' + (isError ? ' error' : ''); }
+  function setBusy(busy) { ['download', 'deleteSelected', 'deleteAll'].forEach(function (id) { $(id).disabled = busy || !data; }); }
+
+  function total(d) { return Object.keys(kinds).reduce(function (n, k) { return n + ((d[k] || []).length); }, 0); }
+
+  function render() {
+    $('loading').hidden = true;
+    if (!data || total(data) === 0) { $('none').hidden = false; $('counts').hidden = true; setBusy(false); return; }
+    $('none').hidden = true; $('counts').hidden = false;
+    Object.keys(kinds).forEach(function (k) { $(kinds[k]).textContent = (data[k] || []).length; });
+    setBusy(false);
+  }
+
+  function load() {
+    var k = key();
+    if (!k) { $('loading').hidden = true; $('none').hidden = false; return; }
+    db.rpc('fan_my_data', { p_voter_key: k }).then(function (res) {
+      if (res.error) { $('loading').hidden = true; setStatus('Your data could not be loaded right now. Try again later.', true); return; }
+      data = res.data || {};
+      render();
+    });
+  }
+
+  function download() {
+    var out = { exported_at: new Date().toISOString(), reports: data.reports || [], comments: data.comments || [], predictions: data.predictions || [], poll_votes: data.poll_votes || [] };
+    var blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'slfa-my-fan-data.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    setStatus('Your copy has been saved to this device.');
+  }
+
+  function remove(kindList) {
+    var k = key();
+    if (!k || !kindList.length) return;
+    var words = kindList.length === 4 ? 'all of your fan data' : kindList.join(', ');
+    if (!window.confirm('Delete ' + words + '? This cannot be undone.')) return;
+    setBusy(true); setStatus('Deleting…');
+    db.rpc('fan_delete_my_data', { p_voter_key: k, p_kinds: kindList }).then(function (res) {
+      if (res.error) { setBusy(false); setStatus('Nothing was deleted. Try again later.', true); return; }
+      setStatus('Deleted.');
+      document.querySelectorAll('.kind').forEach(function (c) { c.checked = false; });
+      load();
+    });
+  }
+
+  $('download').addEventListener('click', download);
+  $('deleteSelected').addEventListener('click', function () {
+    var picked = Array.prototype.map.call(document.querySelectorAll('.kind:checked'), function (c) { return c.value; });
+    if (!picked.length) { setStatus('Choose what to delete first.', true); return; }
+    remove(picked);
+  });
+  $('deleteAll').addEventListener('click', function () { remove(Object.keys(kinds)); });
+
+  load();
+})();
+</script>
+</body>
+</html>
