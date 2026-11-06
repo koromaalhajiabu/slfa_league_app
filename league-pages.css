@@ -119,3 +119,7 @@
 @media(max-width:700px){.slfa-lp-squad-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:390px){.slfa-lp-squad-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.slfa-lp-player-portrait{width:58px;height:58px}}
 @media(prefers-reduced-motion:reduce){.slfa-lp-player-card{transition:none}}
+
+.season-switch{display:flex;align-items:center;gap:10px;margin:8px 0 4px;flex-wrap:wrap}
+.season-switch label{font-weight:600}
+.season-switch select{min-height:44px;min-width:180px;padding:6px 10px;border-radius:10px;font:inherit}

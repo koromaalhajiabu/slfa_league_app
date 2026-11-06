@@ -211,12 +211,20 @@
       input('clLogo', 'Logo link (optional)', 'url') +
       '<div class="btns"><button class="primary" id="clAdd">Add club</button></div>' +
       '<div id="clubAdminList" class="muted">Loading clubs…</div>' +
+      '<h2 class="rt">Seasons</h2>' +
+      '<p class="muted">Past seasons stay visible to fans with their final table. The current season drives the live table and the default view.</p>' +
+      '<div id="seasonList" class="muted">Loading seasons…</div>' +
+      input('seasonName', 'Season name, for example 2025/26') +
+      input('seasonStart', 'Start date', 'date') + input('seasonEnd', 'End date', 'date') +
+      '<div class="btns"><button class="primary" id="seasonAdd">Add season</button></div>' +
       '<h2 class="rt">Add a fixture</h2>' +
       '<label for="fxLeague">League</label><select id="fxLeague"><option value="">Loading leagues…</option></select>' +
+      '<label for="fxSeason">Season</label><select id="fxSeason"><option value="">Loading seasons…</option></select>' +
       input('fxHome', 'Home team') + input('fxAway', 'Away team') +
       input('fxDate', 'Date and time', 'datetime-local') + input('fxVenue', 'Venue') +
       '<div class="btns"><button class="primary" id="fxSave">Add fixture</button></div>' +
       '<h2 class="rt">Enter a result</h2>' +
+      '<label for="resSeason">Season of the match</label><select id="resSeason"><option value="">Loading seasons…</option></select>' +
       '<label for="resMatch">Match</label><select id="resMatch"><option value="">Loading matches…</option></select>' +
       '<div class="scores"><input id="resHome" type="number" min="0" placeholder="Home"><span>–</span><input id="resAway" type="number" min="0" placeholder="Away"></div>' +
       '<div class="btns"><button class="primary" id="resSave">Record result</button><button class="secondary" id="resChange">Change confirmed result</button><button class="secondary" id="resReverse">Reverse result</button></div>' +
@@ -254,7 +262,8 @@
       var h = $('fxHome').value.trim(), a = $('fxAway').value.trim(), d = $('fxDate').value, v = $('fxVenue').value.trim();
       if (!h || !a || !d) { msg('Enter both teams and the date.'); return; }
       if (!$('fxLeague').value) { msg('Choose the league.'); return; }
-      db.from('seasons').select('id').order('id', { ascending: false }).limit(1).maybeSingle().then(function (s) {
+      if (!$('fxSeason').value) { msg('Choose the season.'); return; }
+      db.from('seasons').select('id').eq('id', Number($('fxSeason').value)).maybeSingle().then(function (s) {
         return db.from('matches').insert([{ home_team: h, away_team: a, match_date: new Date(d).toISOString(), venue: v || null, season_id: s.data ? s.data.id : null, league_id: Number($('fxLeague').value), home_score: null, away_score: null, match_status: 'SCHEDULED' }]);
       }).then(function (r) {
         if (r.error) { msg(r.error.message); return; }
@@ -310,6 +319,16 @@
     loadPendingComments();
     loadFanReports();
     loadPrivacyRequests();
+    loadSeasonAdmin();
+    if ($('resSeason')) $('resSeason').addEventListener('change', loadMatchesForResult);
+    if ($('seasonAdd')) $('seasonAdd').addEventListener('click', function () {
+      db.rpc('create_season', { p_name: $('seasonName').value.trim(), p_start: $('seasonStart').value, p_end: $('seasonEnd').value }).then(function (res) {
+        if (res.error) { msg(res.error.message); return; }
+        msg('Season added. Make it current when it starts.');
+        $('seasonName').value = ''; $('seasonStart').value = ''; $('seasonEnd').value = '';
+        loadSeasonAdmin();
+      });
+    });
     $('asSave').addEventListener('click', function () {
       var m = $('asMatch').value, r = $('asRef').value;
       if (!m || !r) { msg('Choose a match and a referee.'); return; }
@@ -527,10 +546,50 @@
     });
   }
 
+  // Season helpers for the Super Admin forms. Matches saved without a season count toward the season their date falls in.
+  var seasonCache = [];
+  function seasonOfMatch(m) {
+    if (m.season_id != null) return String(m.season_id);
+    var d = String(m.match_date || '').slice(0, 10);
+    var hit = seasonCache.filter(function (x) { return d >= String(x.start_date) && d <= String(x.end_date); })[0];
+    return hit ? String(hit.id) : '';
+  }
+  function loadSeasonAdmin() {
+    db.from('seasons').select('id, name, start_date, end_date, is_current').order('start_date', { ascending: false }).then(function (r) {
+      if (r.error) { if ($('seasonList')) $('seasonList').textContent = 'Seasons could not be loaded.'; return; }
+      seasonCache = r.data || [];
+      var current = seasonCache.filter(function (x) { return x.is_current; })[0] || null;
+      var opts = seasonCache.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.name) + (x.is_current ? ' (current)' : '') + '</option>'; }).join('');
+      ['fxSeason', 'resSeason'].forEach(function (id) {
+        var el = $(id); if (!el) return;
+        el.innerHTML = (id === 'resSeason' ? '<option value="">All seasons</option>' : '<option value="">Choose a season…</option>') + opts;
+        if (current) el.value = String(current.id);
+      });
+      var list = $('seasonList');
+      if (list) {
+        list.innerHTML = seasonCache.length ? seasonCache.map(function (x) {
+          return '<div class="post"><strong>' + esc(x.name) + '</strong>' + (x.is_current ? ' · <span>Current season</span>' : '') +
+            '<div class="muted">' + esc(x.start_date) + ' to ' + esc(x.end_date) + '</div>' +
+            (x.is_current ? '' : '<div class="btns"><button class="secondary" data-season-current="' + esc(x.id) + '">Make current</button></div>') + '</div>';
+        }).join('') : 'No seasons yet.';
+        list.querySelectorAll('[data-season-current]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            if (!window.confirm('Make this the current season? The live table will be recalculated from it.')) return;
+            db.rpc('set_current_season', { p_season_id: Number(b.dataset.seasonCurrent) }).then(function (res) {
+              msg(res.error ? res.error.message : 'Current season changed. The live table has been recalculated.');
+              loadSeasonAdmin(); loadMatchesForResult();
+            });
+          });
+        });
+      }
+      loadMatchesForResult();
+    });
+  }
   function loadMatchesForResult() {
-    db.from('matches').select('id, match_date, home_team, away_team, home_score').order('match_date', { ascending: false }).limit(60)
+    db.from('matches').select('id, match_date, season_id, home_team, away_team, home_score').order('match_date', { ascending: false }).limit(500)
       .then(function (r) {
-        var rows = r.data || [];
+        var chosen = $('resSeason') ? $('resSeason').value : '';
+        var rows = (r.data || []).filter(function (m) { return !chosen || seasonOfMatch(m) === chosen; }).slice(0, 120);
         $('resMatch').innerHTML = '<option value="">Choose a match…</option>' + rows.map(function (m) {
           return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + (m.home_score != null ? ' (' + m.home_score + ' – ' + m.away_score + ')' : '') + '</option>';
         }).join('');

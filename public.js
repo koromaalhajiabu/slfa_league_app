@@ -134,6 +134,32 @@
   var myFavIds = {}, myFavNames = {}, myFavList = [];
   // The league chosen in the switcher above the tabs, remembered on this device
   var currentLeague = '', leagueList = [], clubLeague = {};
+  // Seasons: the current season is live. Past seasons are read-only and show their final table.
+  var seasonList = [], seasonSel = '';
+  try { seasonSel = localStorage.getItem('slfa_season') || ''; } catch (e) {}
+  function currentSeason() { return seasonList.filter(function (x) { return x.is_current; })[0] || null; }
+  function selectedSeason() { return seasonList.filter(function (x) { return String(x.id) === String(seasonSel); })[0] || currentSeason(); }
+  function loadSeasonData() {
+    return db.from('seasons').select('id, name, start_date, end_date, is_current').order('start_date', { ascending: false }).then(function (r) {
+      seasonList = r.error ? [] : (r.data || []);
+      renderSeasonPick();
+    });
+  }
+  function renderSeasonPick() {
+    var box = $('seasonPick'); if (!box) return;
+    if (!seasonList.length) { box.innerHTML = '<option value="">Season not set</option>'; return; }
+    var sel = selectedSeason();
+    box.innerHTML = seasonList.map(function (x) {
+      return '<option value="' + esc(x.id) + '"' + (sel && String(x.id) === String(sel.id) ? ' selected' : '') + '>' + esc(x.name) + (x.is_current ? ' (current)' : '') + '</option>';
+    }).join('');
+  }
+  function setSeason(id) {
+    seasonSel = String(id || '');
+    try { localStorage.setItem('slfa_season', seasonSel); } catch (e) {}
+    renderSeasonPick();
+    document.dispatchEvent(new CustomEvent('slfa:season-change', { detail: { seasonId: seasonSel } }));
+    refreshAll();
+  }
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch (e) {}
   function loadLeagueData() {
     return Promise.all([
@@ -281,26 +307,48 @@
 
   // League table: one standings table per league
   function loadTable() {
+    var sel = selectedSeason();
+    if (sel && !sel.is_current) return loadPastTable(sel);
     Promise.all([
       db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
       db.from('league_standings').select('league_id, pos, club, mp, w, d, l, gf, ga, pts').order('pos', { ascending: true }),
       db.from('league_clubs').select('club_name, logo_url').eq('is_active', true)
     ]).then(function (all) {
       if (all[1].error) { $('tableBody').innerHTML = '<tr><td colspan="9">The table is not available right now.</td></tr>'; return; }
-      var leagues = all[0].data || [], rows = all[1].data || [], logos = {};
-      (all[2].data || []).forEach(function (c) { logos[c.club_name] = c.logo_url || clubLogoFallback(c.club_name); });
-      if (!rows.length) { $('tableBody').innerHTML = '<tr><td colspan="9">The table will appear after the first results.</td></tr>'; return; }
-      var html = '';
-      leagues.concat([{ id: null, name: 'Other' }]).forEach(function (lg) {
-        if (currentLeague && String(lg.id) !== currentLeague) return;
-        var items = rows.filter(function (r) { return (r.league_id || null) === (lg.id || null); });
-        if (!items.length) return;
-        html += '<tr class="league-row"><td colspan="9">' + esc(lg.name) + '</td></tr>' + items.map(function (r) {
-          return '<tr><td>' + esc(r.pos) + '</td><td class="club"><span class="table-club" role="button" tabindex="0" data-open-club-name="' + esc(r.club) + '">' + (logos[r.club] ? '<img class="table-club-logo" src="' + esc(logos[r.club]) + '" alt="" loading="lazy">' : '<span class="table-club-logo table-club-fallback">' + esc((r.club || '?').charAt(0).toUpperCase()) + '</span>') + '<span>' + esc(r.club) + '</span></span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
-        }).join('');
-      });
-      $('tableBody').innerHTML = html;
+      var emptyText = 'The table will appear after the first results.';
+      renderTable(all[0].data || [], all[1].data || [], all[2].data || [], emptyText);
     });
+  }
+  // A finished season's table, worked out from its matches on the server. Read-only.
+  function loadPastTable(sel) {
+    db.from('leagues').select('id, name').eq('is_active', true).order('sort_order').then(function (lg) {
+      var leagues = lg.data || [];
+      return Promise.all(leagues.map(function (l) {
+        return db.rpc('season_table', { p_season_id: Number(sel.id), p_league_id: Number(l.id) });
+      })).then(function (results) {
+        var rows = [], failed = results.some(function (r) { return r.error; });
+        results.forEach(function (r) { (r.data || []).forEach(function (x) { rows.push(x); }); });
+        if (failed) { $('tableBody').innerHTML = '<tr><td colspan="9">This season\'s table is not available right now.</td></tr>'; return; }
+        return db.from('league_clubs').select('club_name, logo_url').eq('is_active', true).then(function (c) {
+          renderTable(leagues, rows, c.data || [], 'No results were recorded for ' + esc(sel.name) + '.');
+        });
+      });
+    });
+  }
+  function renderTable(leagues, rows, clubs, emptyText) {
+    var logos = {};
+    clubs.forEach(function (c) { logos[c.club_name] = c.logo_url || clubLogoFallback(c.club_name); });
+    if (!rows.length) { $('tableBody').innerHTML = '<tr><td colspan="9">' + emptyText + '</td></tr>'; return; }
+    var html = '';
+    leagues.concat([{ id: null, name: 'Other' }]).forEach(function (lg) {
+      if (currentLeague && String(lg.id) !== currentLeague) return;
+      var items = rows.filter(function (r) { return (r.league_id || null) === (lg.id || null); });
+      if (!items.length) return;
+      html += '<tr class="league-row"><td colspan="9">' + esc(lg.name) + '</td></tr>' + items.map(function (r) {
+        return '<tr><td>' + esc(r.pos) + '</td><td class="club"><span class="table-club" role="button" tabindex="0" data-open-club-name="' + esc(r.club) + '">' + (logos[r.club] ? '<img class="table-club-logo" src="' + esc(logos[r.club]) + '" alt="" loading="lazy">' : '<span class="table-club-logo table-club-fallback">' + esc((r.club || '?').charAt(0).toUpperCase()) + '</span>') + '<span>' + esc(r.club) + '</span></span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
+      }).join('');
+    });
+    $('tableBody').innerHTML = html;
   }
 
   // Teams
@@ -977,7 +1025,7 @@
         if(area)area.hidden=true;return;
       }
       if(appFreezeBanner){appFreezeBanner.remove();appFreezeBanner=null;}if(area)area.hidden=false;
-      loadLeagueData().then(function(){loadMatches();loadLive();loadMatchDay();loadTable();loadTeams();loadPlayers();loadNews();loadVideos();loadPredict();loadPauseBanner();});
+      Promise.all([loadLeagueData(), loadSeasonData()]).then(function(){loadMatches();loadLive();loadMatchDay();loadTable();loadTeams();loadPlayers();loadNews();loadVideos();loadPredict();loadPauseBanner();});
     });
   }
 
@@ -1052,6 +1100,7 @@
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'match_events' }, function (p) { if (p && p.new) favAlert(p.new); })
     .subscribe();
 
+  if ($('seasonPick')) $('seasonPick').addEventListener('change', function () { setSeason(this.value); });
   refreshAll();
   subscribeLive();
   loadFavs();
