@@ -918,12 +918,6 @@ details.admin > summary {
   min-height: 30px !important;
 }
 
-.admin-body button,
-.admin-body .btns button {
-  padding: 6px 8px !important;
-  min-height: 29px !important;
-  font-size: 10px !important;
-}
 
 .admin-body h2,
 .admin-body h3 {
