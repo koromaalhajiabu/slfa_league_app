@@ -1,0 +1,172 @@
+/* Button system. One definition for the app's buttons. Loaded last.
+   Variants: primary (main action), secondary (default), danger (destructive), ghost (text-only), small (compact).
+   A button with no variant class inside .btns is treated as secondary.
+   Tabs, league chips and calendar links keep their own navigation styling. */
+
+:root {
+  --btn-h: 44px;
+  --btn-h-sm: 36px;
+  --btn-radius: 12px;
+  --btn-radius-sm: 10px;
+  --btn-brand: #0072c6;
+  --btn-brand-hover: #005aa0;
+  --btn-brand-ink: #ffffff;
+  --btn-danger: #b3261e;
+  --btn-danger-tint: rgba(179, 38, 30, .08);
+  --btn-line: rgba(127, 160, 140, .40);
+  --btn-tint: rgba(0, 114, 198, .10);
+  --btn-focus: #3d9be0;
+}
+:root:not([data-theme="light"]) {
+  --btn-danger: #ff7b83;
+  --btn-danger-tint: rgba(255, 123, 131, .10);
+  --btn-line: rgba(120, 170, 230, .38);
+  --btn-tint: rgba(90, 176, 255, .12);
+  --btn-focus: #8fd0ff;
+}
+:root[data-theme="dark"] {
+  --btn-danger: #ff7b83;
+  --btn-danger-tint: rgba(255, 123, 131, .10);
+  --btn-line: rgba(120, 170, 230, .38);
+  --btn-tint: rgba(90, 176, 255, .12);
+  --btn-focus: #8fd0ff;
+}
+
+/* Shared shape and states */
+html body button.primary,
+html body button.secondary,
+html body button.danger,
+html body button.ghost,
+html body button.small,
+html body .btns > button:not(.primary):not(.danger):not(.ghost):not(.small) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--btn-h) !important;
+  padding: 0 18px !important;
+  border-radius: var(--btn-radius) !important;
+  font: inherit !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: .01em;
+  text-decoration: none;
+  white-space: normal;
+  cursor: pointer;
+  transform: none !important;
+  animation: none !important;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease !important;
+}
+html body button.primary:active,
+html body button.secondary:active,
+html body button.danger:active,
+html body button.ghost:active,
+html body button.small:active,
+html body .btns > button:not(.primary):not(.danger):not(.ghost):not(.small):active {
+  transform: scale(.985) !important;
+}
+html body button:focus-visible {
+  outline: 3px solid var(--btn-focus) !important;
+  outline-offset: 2px !important;
+}
+html body button:disabled,
+html body button[aria-disabled="true"] {
+  opacity: .5 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Primary: the one main action in a group */
+html body button.primary {
+  background: var(--btn-brand) !important;
+  background-image: none !important;
+  color: var(--btn-brand-ink) !important;
+  border: 1px solid var(--btn-brand) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .18), 0 6px 16px -10px rgba(0, 114, 198, .7) !important;
+}
+html body button.primary:hover:not(:disabled) {
+  background: var(--btn-brand-hover) !important;
+  border-color: var(--btn-brand-hover) !important;
+}
+
+/* Secondary: outlined, the default for everything else */
+html body button.secondary,
+html body .btns > button:not(.primary):not(.danger):not(.ghost):not(.small) {
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--btn-line) !important;
+  box-shadow: none !important;
+}
+html body button.secondary:hover:not(:disabled),
+html body .btns > button:not(.primary):not(.danger):not(.ghost):not(.small):hover:not(:disabled) {
+  background: var(--btn-tint) !important;
+  border-color: var(--btn-brand) !important;
+}
+
+/* Danger: destructive actions, outlined so they are not mistaken for the main action */
+html body button.danger {
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--btn-danger) !important;
+  border: 1px solid var(--btn-danger) !important;
+  box-shadow: none !important;
+}
+html body button.danger:hover:not(:disabled) {
+  background: var(--btn-danger-tint) !important;
+}
+
+/* Ghost: text-only, for low-emphasis actions */
+html body button.ghost {
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--btn-brand) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  padding: 0 10px !important;
+}
+html body button.ghost:hover:not(:disabled) {
+  text-decoration: underline;
+  background: var(--btn-tint) !important;
+}
+
+/* Small: compact, for tight rows such as admin lists */
+html body button.small {
+  min-height: var(--btn-h-sm) !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+  border-radius: var(--btn-radius-sm) !important;
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--btn-line) !important;
+  box-shadow: none !important;
+}
+
+/* Groups of buttons */
+html body .btns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+html body .btns > button {
+  flex: 0 1 auto !important;
+  width: auto !important;
+}
+html body button.block {
+  width: 100% !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body button.primary,
+  html body button.secondary,
+  html body button.danger,
+  html body button.ghost,
+  html body button.small {
+    transition: none !important;
+  }
+}
