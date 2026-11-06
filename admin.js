@@ -148,12 +148,15 @@
   // Called by portal.js on the matching portal page only
   window.slfaRenderRole = function (p) {
     var role = String(p.system_role).toUpperCase();
-    if (role === 'SUPER_ADMIN') return superAdmin(p);
-    if (role === 'MEDIA_OFFICER') return mediaOfficer(p);
-    if (role === 'DISCIPLINARY_OFFICER') return disciplinary(p);
-    if (role === 'REFEREE') return referee(p);
-    if (role === 'DEVELOPER') return developer(p);
-    if (role === 'CLUB_ADMIN') return clubManager(p);
+    var out;
+    if (role === 'SUPER_ADMIN') out = superAdmin(p);
+    else if (role === 'MEDIA_OFFICER') out = mediaOfficer(p);
+    else if (role === 'DISCIPLINARY_OFFICER') out = disciplinary(p);
+    else if (role === 'REFEREE') out = referee(p);
+    else if (role === 'DEVELOPER') out = developer(p);
+    else if (role === 'CLUB_ADMIN') out = clubManager(p);
+    accountPrivacy();
+    return out;
   };
 
   // ---------- SUPER ADMIN ----------
@@ -239,6 +242,7 @@
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<h2 class="rt">Fan comments awaiting approval</h2><div id="pendingComments" class="muted">Loading…</div>' +
+      '<h2 class="rt">Privacy requests from staff</h2><div id="privacyRequests" class="muted">Loading…</div>' +
       '<div id="usagePanel"><h2 class="rt">App usage, last 30 days</h2><div id="usageCounts" class="muted">Loading…</div></div>' +
       '<h2 class="rt">Problems reported by fans</h2><div id="fanReports" class="muted">Loading…</div>' +
       '<h2 class="rt">Club profile changes awaiting approval</h2><div id="clubProfileReview" class="muted">Loading…</div>' +
@@ -305,6 +309,7 @@
     loadPendingResults();
     loadPendingComments();
     loadFanReports();
+    loadPrivacyRequests();
     $('asSave').addEventListener('click', function () {
       var m = $('asMatch').value, r = $('asRef').value;
       if (!m || !r) { msg('Choose a match and a referee.'); return; }
@@ -350,6 +355,63 @@
   }
 
   // Problems fans report from match details. Staff mark each one resolved once it is checked.
+  // Staff privacy requests. A Super Admin marks each one done after reviewing it. Nothing is deleted automatically.
+  function loadPrivacyRequests() {
+    var box = $('privacyRequests'); if (!box) return;
+    db.from('privacy_requests').select('id, request_type, note, created_at, user_profiles(full_name, email, system_role)').eq('status', 'OPEN').order('created_at', { ascending: true }).limit(100)
+      .then(function (r) {
+        if (r.error) { box.textContent = 'Requests could not be loaded.'; return; }
+        var rows = r.data || [];
+        box.innerHTML = rows.length ? rows.map(function (x) {
+          var u = x.user_profiles || {};
+          return '<div class="post"><strong>Account deletion</strong> · ' + esc(u.full_name || 'Staff member') + ' (' + esc(u.system_role || '') + ')' +
+            '<p>' + esc(u.email || '') + '</p>' + (x.note ? '<p>' + esc(x.note) + '</p>' : '') +
+            '<div class="btns"><button class="primary" data-privacy-done="' + x.id + '">Mark done</button></div></div>';
+        }).join('') : 'No open requests.';
+        box.querySelectorAll('[data-privacy-done]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            db.from('privacy_requests').update({ status: 'DONE', resolved_at: new Date().toISOString() }).eq('id', Number(b.dataset.privacyDone)).then(function (res) {
+              msg(res.error ? res.error.message : 'Request marked done. Remove the account in the Supabase dashboard if it should be deleted.'); loadPrivacyRequests(); });
+          });
+        });
+      });
+  }
+
+  // Every signed-in staff member can download their own account data and ask for deletion.
+  function accountPrivacy() {
+    var b = $('roleTools'); if (!b || $('accountPrivacy')) return;
+    var sec = document.createElement('div');
+    sec.id = 'accountPrivacy';
+    sec.innerHTML = '<h2 class="rt">My account data</h2>' +
+      '<p class="muted">Download a copy of the account details the app holds for you, or ask a Super Admin to delete your account.</p>' +
+      '<div class="btns"><button class="secondary" id="apDownload">Download my account data (JSON)</button></div>' +
+      '<label for="apNote">Reason for deletion (optional)</label><textarea id="apNote" rows="2" maxlength="500"></textarea>' +
+      '<div class="btns"><button class="secondary" id="apDelete">Ask for my account to be deleted</button></div>' +
+      '<div id="apStatus" class="muted" role="status"></div>';
+    b.appendChild(sec);
+    function say(t) { $('apStatus').textContent = t; }
+    $('apDownload').addEventListener('click', function () {
+      say('Preparing your copy…');
+      db.rpc('staff_my_data').then(function (r) {
+        if (r.error) { say('Your data could not be prepared right now.'); return; }
+        var out = Object.assign({ exported_at: new Date().toISOString() }, r.data || {});
+        var blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'slfa-my-account-data.json';
+        document.body.appendChild(a); a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        say('Your copy has been saved to this device.');
+      });
+    });
+    $('apDelete').addEventListener('click', function () {
+      if (!window.confirm('Ask a Super Admin to delete your account? You will keep access until it is done.')) return;
+      say('Sending your request…');
+      db.rpc('staff_request_deletion', { p_note: $('apNote').value.trim() }).then(function (r) {
+        say(r.error ? r.error.message : 'Request sent. A Super Admin will review it.');
+        if (!r.error) $('apNote').value = '';
+      });
+    });
+  }
+
   function loadFanReports() {
     var box = $('fanReports'); if (!box) return;
     var labels = { WRONG_SCORE: 'Wrong score', WRONG_PLAYER: 'Wrong or missing player', OTHER: 'Something else' };
