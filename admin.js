@@ -251,6 +251,11 @@
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<h2 class="rt">Fan comments awaiting approval</h2><div id="pendingComments" class="muted">Loading…</div>' +
       '<h2 class="rt">Privacy requests from staff</h2><div id="privacyRequests" class="muted">Loading…</div>' +
+      '<h2 class="rt">Audit log</h2>' +
+      '<p class="muted">Recent changes across the app, newest first. Read only.</p>' +
+      '<label for="auDays">Show</label><select id="auDays"><option value="30">Last 30 days</option><option value="90" selected>Last 90 days</option><option value="365">Last year</option></select>' +
+      '<label for="auArea">Area</label><select id="auArea"><option value="">All areas</option></select>' +
+      '<div id="auditList" class="muted" aria-live="polite">Loading…</div>' +
       '<div id="usagePanel"><h2 class="rt">App usage, last 30 days</h2><div id="usageCounts" class="muted">Loading…</div></div>' +
       '<h2 class="rt">Problems reported by fans</h2><div id="fanReports" class="muted">Loading…</div>' +
       '<h2 class="rt">Club profile changes awaiting approval</h2><div id="clubProfileReview" class="muted">Loading…</div>' +
@@ -320,6 +325,7 @@
     loadFanReports();
     loadPrivacyRequests();
     loadSeasonAdmin();
+    loadAuditLog();
     if ($('resSeason')) $('resSeason').addEventListener('change', loadMatchesForResult);
     if ($('seasonAdd')) $('seasonAdd').addEventListener('click', function () {
       db.rpc('create_season', { p_name: $('seasonName').value.trim(), p_start: $('seasonStart').value, p_end: $('seasonEnd').value }).then(function (res) {
@@ -374,6 +380,41 @@
   }
 
   // Problems fans report from match details. Staff mark each one resolved once it is checked.
+  // Audit log (Super Admin only). The database reads the existing audit tables; this page only shows them.
+  var auditRows = [];
+  function loadAuditLog() {
+    wireAudit();
+    var list = $('auditList'); if (!list) return;
+    list.textContent = 'Loading…';
+    db.rpc('admin_audit_feed', { p_days: Number($('auDays').value) || 90, p_limit: 200 }).then(function (r) {
+      if (r.error) { list.textContent = 'The audit log could not be loaded.'; return; }
+      auditRows = r.data || [];
+      var area = $('auArea'), keep = area.value, areas = {};
+      auditRows.forEach(function (x) { areas[x.area] = true; });
+      area.innerHTML = '<option value="">All areas</option>' + Object.keys(areas).sort().map(function (a) { return '<option value="' + esc(a) + '">' + esc(a) + '</option>'; }).join('');
+      if (keep && areas[keep]) area.value = keep;
+      renderAudit();
+    });
+  }
+  function renderAudit() {
+    var list = $('auditList'); if (!list) return;
+    var chosen = $('auArea').value;
+    var rows = auditRows.filter(function (x) { return !chosen || x.area === chosen; });
+    list.innerHTML = rows.length ? rows.map(function (x) {
+      var when = new Date(x.at).toLocaleString('en-GB', { timeZone: 'Africa/Freetown', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return '<div class="post"><strong>' + esc(x.area) + '</strong> · ' + esc(x.action) + '<div class="muted">' + esc(when) + ' · ' + esc(x.actor) + '</div>' +
+        (x.summary ? '<p>' + esc(x.summary) + '</p>' : '') + (x.reason ? '<p class="muted">Reason: ' + esc(x.reason) + '</p>' : '') + '</div>';
+    }).join('') : 'No changes in this period.';
+  }
+  var auditWired = false;
+  function wireAudit() {
+    if (auditWired) return; auditWired = true;
+    document.addEventListener('change', function (e) {
+      if (e.target && e.target.id === 'auDays') loadAuditLog();
+      if (e.target && e.target.id === 'auArea') renderAudit();
+    });
+  }
+
   // Staff privacy requests. A Super Admin marks each one done after reviewing it. Nothing is deleted automatically.
   function loadPrivacyRequests() {
     var box = $('privacyRequests'); if (!box) return;
