@@ -223,6 +223,11 @@
       input('fxHome', 'Home team') + input('fxAway', 'Away team') +
       input('fxDate', 'Date and time', 'datetime-local') + input('fxVenue', 'Venue') +
       '<div class="btns"><button class="primary" id="fxSave">Add fixture</button></div>' +
+      '<h2 class="rt">Import fixtures and results</h2>' +
+      '<p class="muted">Add many matches at once from a CSV file, for example a past season. <button type="button" class="secondary" id="impTemplate">Download the template</button> Season, league and club names must match the app exactly.</p>' +
+      '<label for="impFile">CSV file</label><input type="file" id="impFile" accept=".csv,text/csv">' +
+      '<div class="btns"><button class="secondary" id="impCheck">Check file</button><button class="primary" id="impGo" disabled>Import matches</button></div>' +
+      '<div id="impPreview" class="muted" aria-live="polite"></div>' +
       '<h2 class="rt">Enter a result</h2>' +
       '<label for="resSeason">Season of the match</label><select id="resSeason"><option value="">Loading seasons…</option></select>' +
       '<label for="resMatch">Match</label><select id="resMatch"><option value="">Loading matches…</option></select>' +
@@ -326,6 +331,7 @@
     loadPrivacyRequests();
     loadSeasonAdmin();
     loadAuditLog();
+    wireImport();
     if ($('resSeason')) $('resSeason').addEventListener('change', loadMatchesForResult);
     if ($('seasonAdd')) $('seasonAdd').addEventListener('click', function () {
       db.rpc('create_season', { p_name: $('seasonName').value.trim(), p_start: $('seasonStart').value, p_end: $('seasonEnd').value }).then(function (res) {
@@ -380,6 +386,130 @@
   }
 
   // Problems fans report from match details. Staff mark each one resolved once it is checked.
+  // Bulk import of matches from a CSV file. Checks every row first; only valid rows are imported.
+  var impRows = [];
+  var IMP_HEADERS = ['season', 'league', 'date', 'time', 'home_team', 'away_team', 'home_score', 'away_score', 'status', 'venue'];
+  function parseCsv(text) {
+    var rows = [], row = [], cell = '', q = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (q) {
+        if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+        else if (c === '"') q = false;
+        else cell += c;
+      } else if (c === '"') q = true;
+      else if (c === ',') { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+      else cell += c;
+    }
+    if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+    return rows.filter(function (r) { return r.some(function (x) { return String(x).trim() !== ''; }); });
+  }
+  function impTemplate() {
+    var sample = ['2025/26', 'Leone Rock Premier League', '2026-01-10', '15:00', 'Bo Rangers', 'Mighty Blackpool', '2', '1', 'FT', 'National Stadium'];
+    var csv = IMP_HEADERS.join(',') + '\n' + sample.map(function (x) { return /[",]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(',') + '\n';
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'slfa-matches-template.csv';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function impCheck() {
+    var f = $('impFile').files && $('impFile').files[0];
+    var box = $('impPreview');
+    impRows = []; $('impGo').disabled = true;
+    if (!f) { box.textContent = 'Choose a CSV file first.'; return; }
+    box.textContent = 'Checking…';
+    var reader = new FileReader();
+    reader.onload = function () {
+      var table = parseCsv(String(reader.result || ''));
+      if (table.length < 2) { box.textContent = 'The file needs a header row and at least one match.'; return; }
+      var head = table[0].map(function (h) { return h.trim().toLowerCase(); });
+      var missing = ['season', 'league', 'date', 'home_team', 'away_team'].filter(function (h) { return head.indexOf(h) < 0; });
+      if (missing.length) { box.textContent = 'Missing column: ' + missing.join(', ') + '.'; return; }
+      Promise.all([
+        db.from('seasons').select('id, name').then(function (r) { return r.data || []; }),
+        db.from('leagues').select('id, name').then(function (r) { return r.data || []; }),
+        db.from('league_clubs').select('club_name').then(function (r) { return r.data || []; }),
+        db.from('matches').select('season_id, league_id, home_team, away_team, match_date').limit(5000).then(function (r) { return r.data || []; })
+      ]).then(function (res) {
+        var seasons = {}, leagues = {}, clubs = {}, existing = {};
+        res[0].forEach(function (x) { seasons[x.name.trim().toLowerCase()] = x.id; });
+        res[1].forEach(function (x) { leagues[x.name.trim().toLowerCase()] = x.id; });
+        res[2].forEach(function (x) { clubs[x.club_name.trim().toLowerCase()] = x.club_name; });
+        res[3].forEach(function (m) { existing[[m.season_id, m.league_id, String(m.home_team).trim().toLowerCase(), String(m.away_team).trim().toLowerCase(), String(m.match_date).slice(0, 10)].join('|')] = true; });
+        var ok = [], problems = [], skipped = 0, seen = {};
+        table.slice(1).forEach(function (cells, idx) {
+          var line = idx + 2, g = {};
+          head.forEach(function (h, i) { g[h] = (cells[i] || '').trim(); });
+          var bad = [];
+          var seasonId = seasons[(g.season || '').toLowerCase()], leagueId = leagues[(g.league || '').toLowerCase()];
+          if (!seasonId) bad.push('season "' + g.season + '" is not in the app');
+          if (!leagueId) bad.push('league "' + g.league + '" is not in the app');
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(g.date || '')) bad.push('date must look like 2026-01-10');
+          var time = g.time || '15:00';
+          if (!/^\d{2}:\d{2}$/.test(time)) bad.push('time must look like 15:00');
+          var home = clubs[(g.home_team || '').toLowerCase()], away = clubs[(g.away_team || '').toLowerCase()];
+          if (!home) bad.push('home club "' + g.home_team + '" is not in the club list');
+          if (!away) bad.push('away club "' + g.away_team + '" is not in the club list');
+          if (home && away && home === away) bad.push('home and away clubs are the same');
+          var hs = g.home_score === '' ? null : Number(g.home_score), as = g.away_score === '' ? null : Number(g.away_score);
+          if ((hs !== null && (!Number.isInteger(hs) || hs < 0)) || (as !== null && (!Number.isInteger(as) || as < 0))) bad.push('scores must be whole numbers');
+          var status = (g.status || '').toUpperCase() || (hs !== null && as !== null ? 'FT' : 'SCHEDULED');
+          if (status !== 'FT' && status !== 'SCHEDULED') bad.push('status must be FT or SCHEDULED');
+          if (status === 'FT' && (hs === null || as === null)) bad.push('a finished match needs both scores');
+          if (status === 'SCHEDULED' && (hs !== null || as !== null)) bad.push('a scheduled match cannot have scores');
+          if (bad.length) { problems.push('Row ' + line + ': ' + bad.join('; ')); return; }
+          var key = [seasonId, leagueId, home.toLowerCase(), away.toLowerCase(), g.date].join('|');
+          if (existing[key] || seen[key]) { skipped += 1; return; }
+          seen[key] = true;
+          ok.push({ home_team: home, away_team: away, match_date: g.date + 'T' + time + ':00Z', venue: g.venue || null,
+            season_id: seasonId, league_id: leagueId, home_score: status === 'FT' ? hs : null, away_score: status === 'FT' ? as : null, match_status: status });
+        });
+        impRows = ok;
+        var html = '<p><strong>' + ok.length + ' ready to import</strong>' + (skipped ? ', ' + skipped + ' already in the app and skipped' : '') + (problems.length ? ', ' + problems.length + ' with problems that need fixing first' : '') + '.</p>';
+        if (problems.length) html += '<ul>' + problems.slice(0, 30).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' + (problems.length > 30 ? '<p>…and ' + (problems.length - 30) + ' more.</p>' : '');
+        box.innerHTML = html;
+        $('impGo').disabled = ok.length === 0 || problems.length > 0;
+      });
+    };
+    reader.readAsText(f);
+  }
+  function impGo() {
+    if (!impRows.length) return;
+    var go = $('impGo'), total = impRows.length, done = 0, failed = 0, i = 0;
+    go.disabled = true;
+    function next() {
+      if (i >= total) {
+        $('impPreview').textContent = 'Imported ' + done + ' of ' + total + ' matches' + (failed ? '. ' + failed + ' could not be saved.' : '.');
+        msg('Import finished. Check the results in the admin list.');
+        loadMatchesForResult();
+        return;
+      }
+      var chunk = impRows.slice(i, i + 50); i += 50;
+      db.from('matches').insert(chunk).then(function (r) {
+        if (r.error) failed += chunk.length; else done += chunk.length;
+        $('impPreview').textContent = 'Importing… ' + Math.min(i, total) + ' of ' + total;
+        next();
+      });
+    }
+    next();
+  }
+  var impWired = false;
+  // Document-level handlers, attached once, so they keep working when the panel is redrawn.
+  function wireImport() {
+    if (impWired) return; impWired = true;
+    document.addEventListener('click', function (e) {
+      var t = e.target && e.target.closest ? e.target.closest('#impTemplate, #impCheck, #impGo') : null;
+      if (!t) return;
+      if (t.id === 'impTemplate') { e.preventDefault(); impTemplate(); }
+      else if (t.id === 'impCheck') impCheck();
+      else if (t.id === 'impGo') impGo();
+    });
+    document.addEventListener('change', function (e) {
+      if (e.target && e.target.id === 'impFile') { impRows = []; if ($('impGo')) $('impGo').disabled = true; if ($('impPreview')) $('impPreview').textContent = ''; }
+    });
+  }
+
   // Audit log (Super Admin only). The database reads the existing audit tables; this page only shows them.
   var auditRows = [];
   function loadAuditLog() {
