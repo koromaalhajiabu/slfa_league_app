@@ -32,6 +32,7 @@
 <link rel="stylesheet" href="light-theme.css?v=8">
 <link rel="stylesheet" href="button-motion.css?v=1">
 <link rel="stylesheet" href="button-system.css?v=1">
+<style>details.admin.staff-only:not(.staff-open){display:none !important}</style>
 <style id="slfa-live-text-motion">
 /* Premium SLFA typography: restrained motion, clean contrast and flag-inspired accents */
 @keyframes slfaPremiumTitle {
@@ -88,7 +89,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
   <div class="top-controls">
   <label class="lang-picker"><span class="lang-picker-label">Language</span><select id="langSelect"></select></label>
   <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false">Light mode</button>
-<details class="admin" id="adminDropdown">
+<details class="admin staff-only" id="adminDropdown">
     <summary>Admin</summary>
     <div class="admin-body">
 
@@ -367,6 +368,10 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
   db.auth.onAuthStateChange(function (event) {
     if (event === 'SIGNED_OUT') showSignedOut();
   });
+  // Staff entry is hidden from the public. Staff open the app with #staff at the end of the address.
+  function staffRoute() { $('adminDropdown').classList.toggle('staff-open', location.hash === '#staff'); }
+  staffRoute();
+  window.addEventListener('hashchange', staffRoute);
   loadPublic();
   showAdmin();
 })();
