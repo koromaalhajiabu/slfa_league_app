@@ -241,16 +241,11 @@
       '<h2 class="rt">Live match</h2>' +
       '<label for="lvMatch">Match</label><select id="lvMatch"><option value="">Loading matches…</option></select>' +
       '<p class="muted">The referee starts, pauses, times and ends the match.</p>' +
-      '<div id="lvPanel" class="hidden">' +
-        '<label for="lvTeam">Team</label><select id="lvTeam"></select>' +
-        input('lvPlayer', 'Player') + input('lvAssist', 'Assist (optional)') + input('lvOff', 'Player off (substitutions only)') +
-        '<label for="lvType">Event</label><select id="lvType"><option value="GOAL">Goal</option><option value="YELLOW_CARD">Yellow card</option><option value="RED_CARD">Red card</option><option value="SUB">Substitution</option></select>' +
-        input('lvMinute', 'Minute', 'number', 'min="0" max="130"') +
-        '<div class="btns"><button class="primary" id="lvAdd">Record event</button></div>' +
-      '</div>' +
+      '<div id="lvPanel" class="hidden"><p class="muted">Goals and cards are recorded by the assigned referees and the match commissioner.</p></div>' +
       '<h2 class="rt">Assign a referee</h2>' +
       '<label for="asMatch">Match</label><select id="asMatch"><option value="">Loading…</option></select>' +
       '<label for="asRef">Referee</label><select id="asRef"><option value="">Loading referees…</option></select>' +
+      '<label for="asRole">Role at the match</label><select id="asRole"><option value="MAIN">Main referee</option><option value="ASSISTANT">Assistant referee</option><option value="MATCH_COMMISSIONER">Match commissioner</option></select>' +
       '<div class="btns"><button class="primary" id="asSave">Assign</button></div>' +
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
@@ -342,11 +337,11 @@
       });
     });
     $('asSave').addEventListener('click', function () {
-      var m = $('asMatch').value, r = $('asRef').value;
+      var m = $('asMatch').value, r = $('asRef').value, role = $('asRole').value;
       if (!m || !r) { msg('Choose a match and a referee.'); return; }
       db.auth.getUser().then(function (u) {
-        return db.from('match_referee_assignments').insert([{ match_id: Number(m), referee_user_id: r, assigned_by: u.data.user.id, official_role: 'MAIN', assignment_status: 'ACTIVE' }]);
-      }).then(function (res) { msg(res.error ? res.error.message : 'Referee assigned.'); });
+        return db.from('match_referee_assignments').insert([{ match_id: Number(m), referee_user_id: r, assigned_by: u.data.user.id, official_role: role, assignment_status: 'ACTIVE' }]);
+      }).then(function (res) { msg(res.error ? res.error.message : 'Official assigned.'); });
     });
   }
 
@@ -673,23 +668,6 @@
   function wireLive() {
     loadLiveOptions();
     $('lvMatch').addEventListener('change', function () { liveMatch = null; loadLiveMatch(this.value); });
-    $('lvAdd').addEventListener('click', function () {
-      if (!liveMatch) { msg('Choose a live match.'); return; }
-      var type = $('lvType').value, player = $('lvPlayer').value.trim(), minute = parseInt($('lvMinute').value, 10);
-      if (!player || isNaN(minute)) { msg('Enter the player and the minute.'); return; }
-      if (type === 'SUB' && !$('lvOff').value.trim()) { msg('Enter the player coming off.'); return; }
-      db.auth.getUser().then(function (u) {
-        return db.from('match_events').insert([{
-          match_id: String($('lvMatch').value), event_type: type, team_name: $('lvTeam').value, player_name: player,
-          assist_player_name: $('lvAssist').value.trim() || null, player_off_name: $('lvOff').value.trim() || null,
-          minute: minute, recorded_by: u.data.user.id, recorded_at: new Date().toISOString(), published_at: new Date().toISOString()
-        }]);
-      }).then(function (r) {
-        if (r.error) { msg(r.error.message); return; }
-        msg('Recorded.'); ['lvPlayer','lvAssist','lvOff','lvMinute'].forEach(function (x) { $(x).value = ''; });
-        loadLiveMatch($('lvMatch').value);
-      });
-    });
   }
   var liveEvents = [];
   function goalsFor(team) { return liveEvents.filter(function (e) { return e.event_type === 'GOAL' && e.team_name === team; }).length; }
@@ -710,7 +688,6 @@
     db.from('matches').select('id, home_team, away_team, match_status').eq('id', id).maybeSingle().then(function (r) {
       liveMatch = r.data;
       if (!liveMatch) return;
-      $('lvTeam').innerHTML = '<option>' + esc(liveMatch.home_team) + '</option><option>' + esc(liveMatch.away_team) + '</option>';
       $('lvPanel').classList.toggle('hidden', liveMatch.match_status !== 'LIVE' && liveMatch.match_status !== 'HT');
       db.from('match_events').select('event_type, team_name, player_name, minute').eq('match_id', String(id)).order('minute', { ascending: true })
         .then(function (e) { liveEvents = e.data || []; });
@@ -1446,7 +1423,7 @@
       '<div class="status" id="roleMsg"></div>';
 
     db.auth.getUser().then(function (u) {
-      return db.from('match_referee_assignments').select('match_id').eq('referee_user_id', u.data.user.id).eq('assignment_status', 'ACTIVE').eq('official_role', 'MAIN');
+      return db.from('match_referee_assignments').select('match_id').eq('referee_user_id', u.data.user.id).eq('assignment_status', 'ACTIVE');
     }).then(function (a) {
       var ids = (a.data || []).map(function (x) { return x.match_id; });
       if (!ids.length) { $('rfMatch').innerHTML = '<option value="">No matches assigned to you yet</option>'; return; }
