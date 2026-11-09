@@ -2,7 +2,7 @@
 -- Staff who have left the league (their latest status change before this season
 -- was not Active) have their personal details removed and their old privacy
 -- requests deleted. The account row stays so the audit history still reads correctly.
--- Audit log entries are not changed by this job.
+-- Anonymised accounts are banned from signing in. Audit log entries are not changed by this job.
 create or replace function public.purge_records_from_past_season()
 returns jsonb
 language plpgsql
@@ -45,6 +45,17 @@ begin
    where up.id in (select id from left_staff)
      and up.email not like 'former-staff-%';
   get diagnostics c_staff = row_count;
+
+  -- Anonymised accounts cannot sign in: the login is banned and the profile is suspended.
+  update auth.users au
+     set banned_until = 'infinity'::timestamptz
+   where au.id in (select up.id from public.user_profiles up where up.email like 'former-staff-%')
+     and (au.banned_until is null or au.banned_until < 'infinity'::timestamptz);
+
+  update public.user_profiles up
+     set status = 'Suspended'
+   where up.email like 'former-staff-%'
+     and up.status is distinct from 'Suspended';
 
   delete from public.privacy_requests pr
    where pr.created_at < v_start
