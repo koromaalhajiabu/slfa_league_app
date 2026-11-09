@@ -1398,6 +1398,13 @@
 
   // ---------- REFEREE ----------
   var refEvents = [], currentRefMatch = null;
+  var rfRoles = {};
+  // Only the main referee starts, pauses, ends or changes the score. Other assigned officials record events.
+  function applyRefRole(id) {
+    var main = rfRoles[String(id)] === 'MAIN';
+    ['rfStart', 'rfEnd', 'rfChange', 'rfReverse'].forEach(function (x) { var el = $(x); if (el) el.style.display = main ? '' : 'none'; });
+    return main;
+  }
   function referee(p) {
     syncPendingRefereeEvents();
     syncPendingRefereeResults();
@@ -1423,8 +1430,10 @@
       '<div class="status" id="roleMsg"></div>';
 
     db.auth.getUser().then(function (u) {
-      return db.from('match_referee_assignments').select('match_id').eq('referee_user_id', u.data.user.id).eq('assignment_status', 'ACTIVE');
+      return db.from('match_referee_assignments').select('match_id, official_role').eq('referee_user_id', u.data.user.id).eq('assignment_status', 'ACTIVE');
     }).then(function (a) {
+      rfRoles = {};
+      (a.data || []).forEach(function (x) { rfRoles[String(x.match_id)] = x.official_role; });
       var ids = (a.data || []).map(function (x) { return x.match_id; });
       if (!ids.length) { $('rfMatch').innerHTML = '<option value="">No matches assigned to you yet</option>'; return; }
       return db.from('matches').select('id, home_team, away_team, match_status, match_date').in('id', ids).order('match_date', { ascending: true })
@@ -1567,7 +1576,7 @@
       currentRefMatch = m;
       loadMotm(m);
       $('rfTeam').innerHTML = '<option>' + esc(m.home_team) + '</option><option>' + esc(m.away_team) + '</option>';
-      $('rfPanel').classList.toggle('hidden', m.match_status !== 'LIVE' && m.match_status !== 'HT');
+      $('rfPanel').classList.toggle('hidden', (m.match_status !== 'LIVE' && m.match_status !== 'HT') || !applyRefRole(id));
       db.from('match_events').select('id, event_type, team_name, player_name, player_off_name, minute').eq('match_id', String(id)).order('minute', { ascending: true }).then(function (e) {
         refEvents = e.data || [];
         $('rfScore').textContent = goalsFor(m.home_team) + ' – ' + goalsFor(m.away_team);
