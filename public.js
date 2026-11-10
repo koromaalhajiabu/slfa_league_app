@@ -368,7 +368,8 @@
         }
         var head = '<div class="favNote" style="grid-column:1/-1"><span id="favStatus" class="muted"></span></div>';
         var yours = mine.length ? '<h3 class="sub" style="grid-column:1/-1">Your clubs</h3>' + mine.map(card).join('') + '<h3 class="sub" style="grid-column:1/-1">All clubs</h3>' : '';
-        $('teamGrid').innerHTML = head + yours + others.map(card).join('');
+        var title = '<div class="teams-title" style="grid-column:1/-1"><h3 class="sub" style="margin:0">Participating clubs</h3><span class="muted">' + clubs.length + '</span></div>';
+        $('teamGrid').innerHTML = head + title + yours + others.map(card).join('');
         document.querySelectorAll('[data-club]').forEach(function (el) {
           el.addEventListener('click', function () { loadSquadPublic(el.dataset.club, el.dataset.name); });
           el.addEventListener('keydown', function (e) { if (e.key === 'Enter') loadSquadPublic(el.dataset.club, el.dataset.name); });
