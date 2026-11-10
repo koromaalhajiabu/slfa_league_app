@@ -156,11 +156,6 @@
     var table = standings.filter(function (r) { return String(r.league_id) === id; }).sort(function (a,b) {
       return Number(a.pos)-Number(b.pos);
     });
-    var clubCards = teamRows.map(function (c) {
-      var facts = [c.city, c.stadium ? 'Home: ' + c.stadium : '', c.founded_year ? 'Est. ' + c.founded_year : ''].filter(Boolean);
-      return '<button type="button" class="slfa-lp-club slfa-lp-club-link" data-open-club="' + esc(c.id) + '">' + clubBadge(c) + '<span><strong>' + esc(c.club_name) + '</strong>' +
-        (facts.length ? '<small>' + esc(facts.join(' · ')) + '</small>' : '<small>View club profile</small>') + '</span><span class="slfa-lp-club-arrow" aria-hidden="true">›</span></button>';
-    }).join('');
     var tableHtml = table.length ? '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table"><thead><tr><th>#</th><th>Club</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead><tbody>' +
       table.map(function (r) {
         var gd = Number(r.gf || 0) - Number(r.ga || 0);
@@ -169,7 +164,7 @@
           '</td><td>' + (gd > 0 ? '+' : '') + gd + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
       }).join('') + '</tbody></table></div>' : '<p class="slfa-lp-empty">The official standings will appear here when published.</p>';
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-hero"><div><p class="slfa-lp-eyebrow">SLFA COMPETITION PROFILE</p>' +
-      '<h3>' + esc(lg.name) + '</h3><p>Competition overview, participating clubs and published league information.</p></div>' +
+      '<h3>' + esc(lg.name) + '</h3><p>Competition overview and published league information. Participating clubs are listed under Teams.</p></div>' +
       (String(lg.name || '').toLowerCase().indexOf('marampa') !== -1 && String(lg.name || '').toLowerCase().indexOf('women') !== -1
         ? '<img class="slfa-lp-competition-logo" src="league-logos/marampa-mines-womens-premier-league.jpg" alt="Marampa Mines Women\'s Premier League logo" loading="lazy">'
         : String(lg.name || '').toLowerCase().indexOf('leone rock') !== -1
@@ -180,24 +175,13 @@
       kpi(goals,'Goals recorded') + kpi(next.length,'Upcoming fixtures') + '</div>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>LEAGUE TABLE</span><h4>Current standings</h4></div><small>' + (table.length ? table.length + ' clubs' : 'Awaiting publication') + '</small></div>' +
       tableHtml + '<p class="slfa-lp-note">Goal difference is calculated from goals for minus goals against.</p></section>' +
-      '<div class="slfa-lp-two-col"><section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>THE COMPETITION</span><h4>Participating clubs</h4></div><small>' + teamRows.length + '</small></div>' +
-      (clubCards ? '<div class="slfa-lp-clubs">' + clubCards + '</div>' : '<p class="slfa-lp-empty">Club information has not been published yet.</p>') + '</section>' +
       '<div class="slfa-lp-match-panels"><section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>MATCH CENTRE</span><h4>Latest results</h4></div></div>' +
       (recent.length ? recent.slice(0,3).map(matchRow).join('') : '<p class="slfa-lp-empty">No completed results published yet.</p>') + '</section>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>UP NEXT</span><h4>Upcoming fixtures</h4></div></div>' +
-      (next.length ? next.slice(0,3).map(matchRow).join('') : '<p class="slfa-lp-empty">No upcoming fixtures published yet.</p>') + '</section></div></div>' +
+      (next.length ? next.slice(0,3).map(matchRow).join('') : '<p class="slfa-lp-empty">No upcoming fixtures published yet.</p>') + '</section></div>' +
       '<p class="slfa-lp-source">Match results, standings and club information reflect the records currently published in the SLFA League App. Official updates are subject to SLFA publication.</p></section>';
     var back = document.getElementById('slfaLpAll');
     if (back) back.addEventListener('click', renderDirectory);
-    host.querySelectorAll('[data-open-club]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var club = teamRows.find(function (c) { return String(c.id) === String(b.getAttribute('data-open-club')); });
-        if (!club) return;
-        // One club page everywhere: open it on the Teams tab, fall back to the local view if unavailable
-        if (window.slfaOpenClub) window.slfaOpenClub(club.club_name);
-        else renderClubProfile(club, lg);
-      });
-    });
   }
   function clubKey(value) {
     return String(value || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
