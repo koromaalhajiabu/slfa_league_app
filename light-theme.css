@@ -1,4 +1,6 @@
 /* Light theme. Applies only when the page has data-theme="light" (set by the Light/Dark button). */
+/* The shared text colour token is dark in light mode, so every element that reads --ink (including the secondary buttons) stays readable */
+html[data-theme="light"]{--ink:#0b1a30}
 html[data-theme="light"] body{background:#f4f8fd !important;color:#0b1a30 !important;background-image:none !important}
 html[data-theme="light"] body::before,html[data-theme="light"] body::after{display:none !important}
 
@@ -195,6 +197,18 @@ html[data-theme="light"] body #adminDropdown .forgot-line a, html[data-theme="li
 
 /* Keyboard focus on text fields in light mode */
 html[data-theme="light"] body input:focus-visible, html[data-theme="light"] body select:focus-visible, html[data-theme="light"] body textarea:focus-visible { outline-color: #0b4f8a !important; }
+
+/* "Application temporarily unavailable" notice (shown when the app is frozen or cannot be verified): dark text on white */
+html[data-theme="light"] body #appFreezeBanner{background:#ffffff !important;border-color:rgba(10,40,80,.14) !important}
+html[data-theme="light"] body #appFreezeBanner h2,
+html[data-theme="light"] body #appFreezeBanner p{color:#0b1a30 !important;-webkit-text-fill-color:#0b1a30 !important}
+
+/* Gradient-filled headings (app name, portal titles, hero titles) are white-gradient text by default and vanish on light surfaces: use solid dark text */
+html[data-theme="light"] body .brand h1,
+html[data-theme="light"] body .portal-head h1,
+html[data-theme="light"] body .hero .title,
+html[data-theme="light"] body .ps-hero h2,
+html[data-theme="light"] body .news-centre-hero h2{background:none !important;-webkit-background-clip:border-box !important;background-clip:border-box !important;-webkit-text-fill-color:#0b1a30 !important;color:#0b1a30 !important;text-shadow:none !important;animation:none !important}
 
 /* Match-day board in light mode */
 html[data-theme="light"] body #matchDay.matchday{background:#ffffff;border-color:#c8d6e5}
