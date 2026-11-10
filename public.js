@@ -273,7 +273,7 @@
         box.dataset.loaded = '1';
         if (res.error) { box.textContent = 'Details are not available right now.'; return; }
         var ev = res.data || [];
-        box.innerHTML = ev.length ? ev.map(eventLine).join('') : '<p class="muted">No match events yet.</p>';
+        box.innerHTML = ev.length ? teamTotals(ev) + ev.map(eventLine).join('') : '<p class="muted">No match events yet.</p>';
         loadLineups(String(card.dataset.match), box);
       });
   }
@@ -294,6 +294,23 @@
           return '<div class="ev"><span class="etxt"><strong>' + esc(c) + '</strong><small>Starting XI: ' + esc(byClub[c].xi.join(', ') || '—') + '</small><small>Bench: ' + esc(byClub[c].bench.join(', ') || '—') + '</small></span></div>';
         }).join('') + '</div>');
       });
+  }
+  // Per-team totals for a match: goals, yellow cards, red cards and substitutions
+  function teamTotals(ev) {
+    var st = {};
+    ev.forEach(function (e) {
+      var k = e.team_name || 'Match', t = String(e.event_type || '').toUpperCase();
+      st[k] = st[k] || { goals: 0, yellow: 0, red: 0, subs: 0 };
+      if (t === 'GOAL') st[k].goals++;
+      else if (t === 'YELLOW_CARD') st[k].yellow++;
+      else if (t === 'RED_CARD') st[k].red++;
+      else if (t === 'SUB') st[k].subs++;
+    });
+    return '<h4 class="league-name">Match stats</h4>' + Object.keys(st).map(function (k) {
+      var x = st[k];
+      return '<div class="ev"><span class="etxt"><strong>' + esc(k) + '</strong><small>⚽ ' + x.goals + ' goals · 🟨 ' + x.yellow +
+        ' yellow · 🟥 ' + x.red + ' red · 🔁 ' + x.subs + ' subs</small></span></div>';
+    }).join('');
   }
   var ICON = { goal:'⚽', yellow_card:'🟨', red_card:'🟥', sub:'🔁' };
   function eventLine(e) {
