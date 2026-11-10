@@ -210,6 +210,40 @@ html[data-theme="light"] body .hero .title,
 html[data-theme="light"] body .ps-hero h2,
 html[data-theme="light"] body .news-centre-hero h2{background:none !important;-webkit-background-clip:border-box !important;background-clip:border-box !important;-webkit-text-fill-color:#0b1a30 !important;color:#0b1a30 !important;text-shadow:none !important;animation:none !important}
 
+/* Public tab panels and cards (Matches, Teams, Players, News, Videos, Predict). Older dark gradients use !important, so these
+   light-mode rules are scoped to html[data-theme="light"] and only change how the page looks in light mode. */
+html[data-theme="light"] body #public .view,
+html[data-theme="light"] body #public .card,
+html[data-theme="light"] body #public .news-card,
+html[data-theme="light"] body #public .news-controls,
+html[data-theme="light"] body #public .news,
+html[data-theme="light"] body #public article,
+html[data-theme="light"] body #public .match,
+html[data-theme="light"] body #public .ps-panel,
+html[data-theme="light"] body #public .pd-tools,
+html[data-theme="light"] body #public .pd-card,
+html[data-theme="light"] body #public .team,
+html[data-theme="light"] body #matchList{background:#ffffff !important;background-image:none !important;border-color:rgba(10,40,80,.14) !important;color:#0b1a30 !important;box-shadow:0 6px 18px rgba(10,40,80,.07) !important}
+html[data-theme="light"] body #public #teamGrid,
+html[data-theme="light"] body #public #videoList,
+html[data-theme="light"] body #public #predictList,
+html[data-theme="light"] body #public #newsList,
+html[data-theme="light"] body #public #liveList,
+html[data-theme="light"] body #public #scorers,
+html[data-theme="light"] body #public #assists,
+html[data-theme="light"] body #public #cleanSheets,
+html[data-theme="light"] body #public #motm{background:#ffffff !important;background-image:none !important;border-color:rgba(10,40,80,.14) !important;color:#0b1a30 !important}
+html[data-theme="light"] body #public .news-card-featured{background:linear-gradient(145deg,#eaf3ff,#ffffff) !important;background-image:linear-gradient(145deg,#eaf3ff,#ffffff) !important}
+html[data-theme="light"] body #public input,
+html[data-theme="light"] body #public select,
+html[data-theme="light"] body #public textarea,
+html[data-theme="light"] body #playerDirectory input,
+html[data-theme="light"] body #playerDirectory select{background:#ffffff !important;color:#0b1a30 !important;border:1px solid rgba(10,40,80,.25) !important}
+html[data-theme="light"] body #public button.share,
+html[data-theme="light"] body #mcReset,
+html[data-theme="light"] body #playerDirectory .pd-reset,
+html[data-theme="light"] body #playerDirectory .pd-empty button{background:#eef5ff !important;background-image:none !important;color:#0a3f73 !important;-webkit-text-fill-color:#0a3f73 !important;border:1px solid rgba(10,95,168,.22) !important}
+
 /* Match-day board in light mode */
 html[data-theme="light"] body #matchDay.matchday{background:#ffffff;border-color:#c8d6e5}
 html[data-theme="light"] body #matchDay .md-title{color:#0b2545}
