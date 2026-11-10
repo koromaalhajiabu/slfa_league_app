@@ -155,6 +155,16 @@ html[data-theme="light"] body #public [class*="ps-"]:not(button):not([class*="ps
 html[data-theme="light"] body #public table thead th{background:#eef5ff !important;color:#0b1a30 !important}
 html[data-theme="light"] body #public table td,
 html[data-theme="light"] body #public table tbody tr{background:transparent !important}
+/* League table panels: white surface with dark text in light mode, including the league profile tables */
+html[data-theme="light"] body #public [data-view="table"].card,
+html[data-theme="light"] body .slfa-lp-panel,
+html[data-theme="light"] body .slfa-lp-kpi,
+html[data-theme="light"] body .slfa-lp-league-card{background:#ffffff !important;background-image:none !important;border-color:rgba(10,40,80,.14) !important;color:#0b1a30 !important}
+html[data-theme="light"] body #public .table td,
+html[data-theme="light"] body #public .table .club,
+html[data-theme="light"] body .slfa-lp-table td{color:#0b1a30 !important}
+html[data-theme="light"] body #public .table th,
+html[data-theme="light"] body .slfa-lp-table th{background:#eef5ff !important;color:#4a5f7a !important}
 html[data-theme="light"] body #public [class*="pd-"]:not(button){background-color:#ffffff !important;background-image:none !important;border-color:rgba(10,40,80,.14) !important}
 html[data-theme="light"] body #public [class*="ps-hero"],
 html[data-theme="light"] body #public .ps-banner,
