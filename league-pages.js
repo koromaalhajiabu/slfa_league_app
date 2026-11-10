@@ -153,16 +153,6 @@
     var next = games.filter(upcoming).sort(function (a,b) { return new Date(a.match_date)-new Date(b.match_date); });
     var recent = played.sort(function (a,b) { return new Date(b.match_date)-new Date(a.match_date); });
     var goals = played.reduce(function (n,m) { return n + (Number(m.home_score)||0) + (Number(m.away_score)||0); }, 0);
-    var table = standings.filter(function (r) { return String(r.league_id) === id; }).sort(function (a,b) {
-      return Number(a.pos)-Number(b.pos);
-    });
-    var tableHtml = table.length ? '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table"><thead><tr><th>#</th><th>Club</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead><tbody>' +
-      table.map(function (r) {
-        var gd = Number(r.gf || 0) - Number(r.ga || 0);
-        return '<tr><td>' + esc(r.pos) + '</td><td class="club"><span class="slfa-lp-table-club">' + clubBadge(matchClub(r.club)) + '<span>' + esc(r.club) + '</span></span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) +
-          '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) +
-          '</td><td>' + (gd > 0 ? '+' : '') + gd + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
-      }).join('') + '</tbody></table></div>' : '<p class="slfa-lp-empty">The official standings will appear here when published.</p>';
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-hero"><div><p class="slfa-lp-eyebrow">SLFA COMPETITION PROFILE</p>' +
       '<h3>' + esc(lg.name) + '</h3><p>Competition overview and published league information. Participating clubs are listed under Teams.</p></div>' +
       (String(lg.name || '').toLowerCase().indexOf('marampa') !== -1 && String(lg.name || '').toLowerCase().indexOf('women') !== -1
@@ -173,8 +163,6 @@
       '<div class="slfa-lp-detail-actions"><button type="button" id="slfaLpAll">‹ All competitions</button><span>Public information</span></div>' +
       '<div class="slfa-lp-kpis">' + kpi(teamRows.length,'Participating clubs') + kpi(played.length,'Matches completed') +
       kpi(goals,'Goals recorded') + kpi(next.length,'Upcoming fixtures') + '</div>' +
-      '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>LEAGUE TABLE</span><h4>Current standings</h4></div><small>' + (table.length ? table.length + ' clubs' : 'Awaiting publication') + '</small></div>' +
-      tableHtml + '<p class="slfa-lp-note">Goal difference is calculated from goals for minus goals against.</p></section>' +
       '<div class="slfa-lp-match-panels"><section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>MATCH CENTRE</span><h4>Latest results</h4></div></div>' +
       (recent.length ? recent.slice(0,3).map(matchRow).join('') : '<p class="slfa-lp-empty">No completed results published yet.</p>') + '</section>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>UP NEXT</span><h4>Upcoming fixtures</h4></div></div>' +
