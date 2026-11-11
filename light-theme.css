@@ -247,3 +247,23 @@ html[data-theme="light"] body #playerDirectory .pd-empty button{background:#eef5
 /* Match-day board in light mode */
 html[data-theme="light"] body #matchDay.matchday{background:#ffffff;border-color:#c8d6e5}
 html[data-theme="light"] body #matchDay .md-title{color:#0b2545}
+
+
+/* Public footer: readable contrast in the manually selected light theme */
+html[data-theme="light"] body .app-legal {
+  border-top-color: rgba(16, 55, 34, .16) !important;
+  color: #24392d !important;
+}
+html[data-theme="light"] body .app-legal .app-copyright {
+  color: #526458 !important;
+  -webkit-text-fill-color: #526458 !important;
+}
+html[data-theme="light"] body .app-legal .app-credit,
+html[data-theme="light"] body .app-legal .app-credit strong {
+  color: #142c1d !important;
+  -webkit-text-fill-color: #142c1d !important;
+}
+html[data-theme="light"] body .app-legal a {
+  color: #075fa8 !important;
+  -webkit-text-fill-color: #075fa8 !important;
+}
