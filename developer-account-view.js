@@ -63,6 +63,5 @@
     addButtons();
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-  var root = document.getElementById('roleTools');
-  if (root) new MutationObserver(start).observe(root, { childList: true, subtree: true });
+  new MutationObserver(start).observe(document.body, { childList: true, subtree: true });
 })();
