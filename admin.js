@@ -305,6 +305,7 @@
 
     loadLeagueOptions();
     wireCompetitionAdmin();
+    wireCupAdmin();
     wireClubs();
     loadReview();
     loadClubProfileReview();
@@ -822,6 +823,70 @@
     load();
   }
 
+  function wireCupAdmin() {
+    var edit=$('cupTieEdit'); if(!edit||!$('cupTieSave')) return;
+    var ties=[], matches=[];
+    function status(t){$('cupTieMsg').textContent=t;}
+    function reset(){edit.value='';$('cupRound').value='';$('cupTieNumber').value='1';$('cupNextTie').value='';$('cupNextSlot').value='HOME';$('cupTieSave').textContent='Save cup tie';}
+    function loadTies(){
+      db.from('cup_ties').select('id,competition_id,season_id,match_id,round_name,tie_number,next_tie_id,next_slot,winner_team,advanced_at,matches(home_team,away_team,match_status,home_score,away_score)').order('competition_id').order('round_name').order('tie_number').then(function(r){
+        if(r.error){status('Cup bracket is not ready yet. Run the knockout cup SQL migration first.');return;}
+        ties=r.data||[];
+        edit.innerHTML='<option value="">Create a new tie</option>'+ties.map(function(t){var m=t.matches||{};return '<option value="'+esc(t.id)+'">'+esc(t.round_name)+' · Tie '+esc(t.tie_number)+' · '+esc(m.home_team||'TBC')+' v '+esc(m.away_team||'TBC')+'</option>';}).join('');
+        $('cupNextTie').innerHTML='<option value="">No next tie / Final</option>'+ties.map(function(t){return '<option value="'+esc(t.id)+'">'+esc(t.round_name)+' · Tie '+esc(t.tie_number)+'</option>';}).join('');
+        $('cupTieList').innerHTML=ties.length?ties.map(function(t){
+          var m=t.matches||{},done=m.home_score!=null&&m.away_score!=null;
+          var options='<option value="">Choose winner…</option>'+[m.home_team,m.away_team].filter(Boolean).map(function(n){return '<option value="'+esc(n)+'" '+(t.winner_team===n?'selected':'')+'>'+esc(n)+'</option>';}).join('');
+          return '<div class="post"><strong>'+esc(t.round_name)+' · Tie '+esc(t.tie_number)+'</strong><div class="muted">'+esc(m.home_team||'TBC')+' '+(done?esc(m.home_score)+'–'+esc(m.away_score):'v')+' '+esc(m.away_team||'TBC')+' · '+esc(m.match_status||'Scheduled')+'</div>'+
+            (t.winner_team?'<p>Winner: '+esc(t.winner_team)+(t.advanced_at?' · advanced':'')+'</p>':'')+
+            '<label>Official winner</label><select data-cup-winner="'+esc(t.id)+'">'+options+'</select><div class="btns"><button type="button" class="small" data-cup-advance="'+esc(t.id)+'">Confirm winner and advance</button></div></div>';
+        }).join(''):'No cup ties have been configured yet.';
+        $('cupTieList').querySelectorAll('[data-cup-advance]').forEach(function(b){b.addEventListener('click',function(){
+          var id=b.getAttribute('data-cup-advance'),sel=$('cupTieList').querySelector('[data-cup-winner="'+id+'"]'),winner=sel&&sel.value;
+          if(!winner){status('Choose the officially confirmed winner first.');return;}
+          if(!confirm('Advance '+winner+' to the next round? This updates the linked next-round fixture.'))return;
+          b.disabled=true;db.rpc('admin_advance_cup_tie',{p_tie_id:Number(id),p_winner_team:winner}).then(function(x){b.disabled=false;if(x.error){status(x.error.message);return;}status('Winner confirmed and advanced.');loadTies();});
+        });});
+      });
+    }
+    function loadCupMatches(){
+      var comp=$('cupCompetition').value,season=$('cupSeason').value;
+      $('cupMatch').innerHTML='<option value="">Loading fixtures…</option>';
+      if(!comp){$('cupMatch').innerHTML='<option value="">Choose a cup first…</option>';return;}
+      db.from('matches').select('id,home_team,away_team,match_date,season_id').eq('league_id',Number(comp)).order('match_date').limit(500).then(function(r){
+        matches=r.data||[];
+        if(season)matches=matches.filter(function(m){return String(m.season_id||'')===String(season);});
+        $('cupMatch').innerHTML='<option value="">Choose a fixture…</option>'+matches.map(function(m){return '<option value="'+esc(m.id)+'">'+esc(m.home_team)+' v '+esc(m.away_team)+' · '+esc(new Date(m.match_date).toLocaleDateString())+'</option>';}).join('');
+      });
+    }
+    db.from('leagues').select('id,name').eq('is_active',true).eq('competition_type','CUP').order('sort_order').then(function(r){
+      $('cupCompetition').innerHTML='<option value="">Choose cup…</option>'+(r.data||[]).map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>';}).join('');
+    });
+    db.from('seasons').select('id,name,is_current').order('start_date',{ascending:false}).then(function(r){
+      $('cupSeason').innerHTML='<option value="">All seasons / no season</option>'+(r.data||[]).map(function(x){return '<option value="'+esc(x.id)+'" '+(x.is_current?'selected':'')+'>'+esc(x.name)+'</option>';}).join('');
+    });
+    $('cupCompetition').addEventListener('change',loadCupMatches);
+    $('cupSeason').addEventListener('change',loadCupMatches);
+    edit.addEventListener('change',function(){
+      var t=ties.find(function(x){return String(x.id)===String(edit.value);});if(!t){reset();return;}
+      $('cupCompetition').value=String(t.competition_id);$('cupSeason').value=t.season_id?String(t.season_id):'';
+      loadCupMatches();window.setTimeout(function(){$('cupMatch').value=String(t.match_id);},250);
+      $('cupRound').value=t.round_name;$('cupTieNumber').value=t.tie_number;
+      $('cupNextTie').value=t.next_tie_id?String(t.next_tie_id):'';$('cupNextSlot').value=t.next_slot||'HOME';$('cupTieSave').textContent='Update cup tie';
+    });
+    $('cupTieNew').addEventListener('click',reset);
+    $('cupTieSave').addEventListener('click',function(){
+      var comp=$('cupCompetition').value,match=$('cupMatch').value,round=$('cupRound').value.trim(),num=parseInt($('cupTieNumber').value,10);
+      if(!comp||!match||round.length<2||!Number.isInteger(num)||num<1){status('Choose the cup and fixture, then enter a round name and tie number.');return;}
+      var selected=edit.value?Number(edit.value):null,next=$('cupNextTie').value?Number($('cupNextTie').value):null;
+      $('cupTieSave').disabled=true;
+      db.rpc('admin_save_cup_tie',{p_id:selected,p_competition_id:Number(comp),p_season_id:$('cupSeason').value?Number($('cupSeason').value):null,p_match_id:Number(match),p_round_name:round,p_tie_number:num,p_next_tie_id:next,p_next_slot:next?$('cupNextSlot').value:null}).then(function(r){
+        $('cupTieSave').disabled=false;if(r.error){status(r.error.message);return;}status('Cup tie saved.');reset();loadTies();
+      });
+    });
+    loadTies();
+  }
+
   function loadLeagueOptions() {
     db.from('leagues').select('id, name').eq('is_active', true).order('sort_order').then(function (r) {
       $('fxLeague').innerHTML = '<option value="">Choose the league…</option>' + (r.data || []).map(function (l) {
@@ -952,6 +1017,7 @@
       '<h2 class="rt">All accounts and roles</h2><p class="muted">Change roles, suspend, restore or delete accounts. Actions are logged automatically.</p><div id="roleList" class="muted">Loading…</div>'+
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
     wireCompetitionAdmin();
+    wireCupAdmin();
     loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();
     $('pauseBtn').onclick=function(){setPause(true);};$('resumeBtn').onclick=function(){setPause(false);};
     $('freezeAppBtn').onclick=function(){setAppFreeze(true);};$('unfreezeAppBtn').onclick=function(){setAppFreeze(false);};
