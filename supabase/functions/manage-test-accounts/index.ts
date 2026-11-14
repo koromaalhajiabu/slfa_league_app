@@ -37,8 +37,19 @@ Deno.serve(async (req) => {
       if (fullName.length < 2 || fullName.length > 120) return json({ error: "Full name must be 2–120 characters." }, 400);
       if (password.length < 10) return json({ error: "Password must contain at least 10 characters." }, 400);
       if (!allowed.includes(role)) return json({ error: "Choose a valid test role." }, 400);
+      // Do not let a test signup consume or inherit a pending production role invitation.
+      const { data: invitation, error: inviteCheckError } = await admin.from("role_invitations").select("email").eq("email", email).maybeSingle();
+      if (inviteCheckError) throw inviteCheckError;
+      if (invitation) return json({ error: "This email already has a production staff invitation. Use a different email for testing." }, 409);
       const { data: created, error: createError } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { slfa_test_account: true, full_name: fullName } });
       if (createError) throw createError;
+      // The project's auth.users trigger creates a Pending user_profiles row. Verify it
+      // did not receive an active production role before registering the isolated test identity.
+      const { data: productionProfile, error: productionProfileError } = await admin.from("user_profiles").select("system_role,status").eq("id", created.user.id).maybeSingle();
+      if (productionProfileError || !productionProfile || String(productionProfile.status).toLowerCase() !== "pending") {
+        await admin.auth.admin.deleteUser(created.user.id);
+        return json({ error: "Safety check failed: the new identity did not remain a Pending production profile. No test account was created." }, 500);
+      }
       const { error: insertError } = await admin.from("slfa_test_accounts").insert({ user_id: created.user.id, email, full_name: fullName, test_role: role, created_by: authData.user.id });
       if (insertError) { await admin.auth.admin.deleteUser(created.user.id); throw insertError; }
       return json({ created: { user_id: created.user.id, email, full_name: fullName, test_role: role, status: "ACTIVE" } }, 201);
