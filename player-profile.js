@@ -100,6 +100,16 @@
         { label:'Clean sheets', value:sum(all[2].data,'clean_sheets'), error:!!all[2].error, icon:'🧤' },
         { label:'Man of the Match', value:sum(all[3].data,'awards'), error:!!all[3].error, icon:'★' }
       ];
+      var achievementRules = [
+        {key:'goals',label:'Goal threat',detail:'10+ published goals',value:metrics[0].value,threshold:10,icon:'⚽'},
+        {key:'assists',label:'Playmaker',detail:'5+ published assists',value:metrics[1].value,threshold:5,icon:'🎯'},
+        {key:'clean',label:'Safe hands',detail:'5+ published clean sheets',value:metrics[2].value,threshold:5,icon:'🧤'},
+        {key:'motm',label:'Match star',detail:'3+ published MOTM awards',value:metrics[3].value,threshold:3,icon:'★'}
+      ];
+      var earned = achievementRules.filter(function(a){return a.value != null && Number(a.value) >= a.threshold;});
+      var achievementHtml = '<section class="pp-achievements"><div class="pp-career-head"><span>CAREER MILESTONES</span><h3>Achievements</h3></div>' +
+        (earned.length ? '<div class="pp-achievement-grid">' + earned.map(function(a){return '<article class="pp-achievement"><span aria-hidden="true">'+a.icon+'</span><strong>'+a.label+'</strong><small>'+a.detail+'</small></article>';}).join('') + '</div>' :
+        '<p class="pp-note">Milestone badges appear when published statistics reach the stated thresholds. No milestone has been reached in the available records yet.</p>') + '</section>';
       var portrait = photo
         ? '<img class="pp-photo" src="' + esc(photo) + '" alt="' + esc(name) + '" onerror="this.hidden=true;this.nextElementSibling.hidden=false;"><div class="pp-photo pp-placeholder" hidden>' + esc(name.charAt(0).toUpperCase()) + '</div>'
         : '<div class="pp-photo pp-placeholder">' + esc(name.charAt(0).toUpperCase()) + '</div>';
@@ -108,7 +118,7 @@
         ((position || jersey) ? '<div class="pp-meta">' + (position ? '<span>' + esc(position) + '</span>' : '') + (jersey ? '<span>SHIRT #' + esc(jersey) + '</span>' : '') + '</div>' : '') +
         '</div></div><section class="pp-stats"><div class="pp-section-head"><div><span>SEASON PERFORMANCE</span><h3>Published statistics</h3></div><small>LIVE DATA</small></div><div class="pp-metrics">' +
         metrics.map(metricCard).join('') + '</div></section>';
-      content.innerHTML = baseHtml + '<section class="pp-career"><div class="pp-career-head"><span>PLAYER CAREER</span><h3>Match appearances</h3></div><div id="ppCareerBody"><p class="pp-note">Loading recorded match appearances…</p></div></section><div class="pp-profile-foot"><span class="pp-foot-mark">SL</span><p>Performance figures come from published league statistics. Appearance totals are counted from recorded matchday line-ups linked to this player registration. Missing records are not treated as zero.</p></div>';
+      content.innerHTML = baseHtml + achievementHtml + '<section class="pp-career"><div class="pp-career-head"><span>PLAYER CAREER</span><h3>Match appearances</h3></div><div id="ppCareerBody"><p class="pp-note">Loading recorded match appearances…</p></div></section><div class="pp-profile-foot"><span class="pp-foot-mark">SL</span><p>Performance figures come from published league statistics. Appearance totals are counted from recorded matchday line-ups linked to this player registration. Missing records are not treated as zero.</p></div>';
       var careerHost = content.querySelector('#ppCareerBody');
       var scoringHost = document.createElement('div');
       scoringHost.className = 'pp-scoring-history';
