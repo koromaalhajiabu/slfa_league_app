@@ -123,3 +123,9 @@
 .season-switch{display:flex;align-items:center;gap:10px;margin:8px 0 4px;flex-wrap:wrap}
 .season-switch label{font-weight:600}
 .season-switch select{min-height:44px;min-width:180px;padding:6px 10px;border-radius:10px;font:inherit}
+
+/* Competition expansion: metadata and official identity */
+.slfa-lp-card-logo{display:block;flex:0 0 48px;width:48px;height:48px;object-fit:contain;border-radius:13px;padding:4px;background:rgba(255,255,255,.94);border:1px solid var(--line)}
+.slfa-lp-card-description{display:block;color:var(--muted);font-size:9px;line-height:1.45}
+.slfa-lp-card-copy small{text-transform:capitalize;letter-spacing:.035em}
+@media(max-width:380px){.slfa-lp-card-logo{flex-basis:42px;width:42px;height:42px}}
