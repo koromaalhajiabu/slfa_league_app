@@ -16,6 +16,16 @@
   function dateText(v) { if (!v) return 'Date TBC'; var d = new Date(v); return isNaN(d) ? String(v) : d.toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
   function day(v) { var d = new Date(v); return isNaN(d) ? '' : d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function status(m) { return String(m.match_status || '').toUpperCase(); }
+  function clubKey(v) { return String(v || '').toLowerCase().replace(/\\bfc\\b/g, '').replace(/[^a-z0-9]/g, ''); }
+  function sameClub(a,b) { return clubKey(a) === clubKey(b); }
+  function clubForm(name) {
+    return allMatches.filter(function(m) {
+      return group(m)==='results' && (sameClub(m.home_team,name) || sameClub(m.away_team,name));
+    }).sort(function(a,b){return new Date(b.match_date)-new Date(a.match_date);}).slice(0,5).map(function(m) {
+      var home=sameClub(m.home_team,name),gf=Number(home?m.home_score:m.away_score)||0,ga=Number(home?m.away_score:m.home_score)||0;
+      return gf>ga?'W':gf<ga?'L':'D';
+    });
+  }
   function group(m) {
     var s = status(m);
     if (['LIVE','HT','1H','2H','ET','PEN','EXTRA_TIME'].indexOf(s) !== -1) return 'live';
@@ -157,6 +167,22 @@
       }).join('')+'</div>';}
       if(lu.length){var by={};lu.forEach(function(x){var n=x.league_clubs&&x.league_clubs.club_name||'Team',p=x.club_squad||{},v=(p.jersey_number?'#'+p.jersey_number+' ':'')+(p.player_name||'Player');by[n]=by[n]||{xi:[],bench:[]};(x.is_starter?by[n].xi:by[n].bench).push(v);});
         html+='<h4>Published line-ups</h4><div class="slfa-mc-lineups">'+Object.keys(by).map(function(n){return '<div><strong role="button" tabindex="0" data-open-club-name="'+esc(n)+'">'+esc(n)+'</strong><p><b>Starting:</b> '+esc(by[n].xi.join(', ')||'Not published')+'</p><p><b>Bench:</b> '+esc(by[n].bench.join(', ')||'Not published')+'</p></div>';}).join('')+'</div>';}
+      var current=allMatches.find(function(m){return String(m.id)===String(id);});
+      if(current){
+        var homeForm=clubForm(current.home_team),awayForm=clubForm(current.away_team);
+        var meetings=allMatches.filter(function(m){
+          return group(m)==='results' && ((sameClub(m.home_team,current.home_team)&&sameClub(m.away_team,current.away_team)) ||
+            (sameClub(m.home_team,current.away_team)&&sameClub(m.away_team,current.home_team)));
+        }).sort(function(x,y){return new Date(y.match_date)-new Date(x.match_date);});
+        var homeWins=0,awayWins=0,draws=0;
+        meetings.forEach(function(m){
+          var hIsHome=sameClub(m.home_team,current.home_team),gf=Number(hIsHome?m.home_score:m.away_score)||0,ga=Number(hIsHome?m.away_score:m.home_score)||0;
+          if(gf>ga)homeWins++;else if(gf<ga)awayWins++;else draws++;
+        });
+        html+='<section class="slfa-mc-preview"><h4>Match intelligence</h4><div class="slfa-mc-form-grid"><div><strong>'+esc(current.home_team)+'</strong><span>Recent form</span><b>'+esc(homeForm.join(' · ')||'No results')+'</b></div><div><strong>'+esc(current.away_team)+'</strong><span>Recent form</span><b>'+esc(awayForm.join(' · ')||'No results')+'</b></div></div>'+
+          '<div class="slfa-mc-h2h"><span>HEAD-TO-HEAD</span><strong>'+homeWins+' wins</strong><strong>'+draws+' draws</strong><strong>'+awayWins+' wins</strong><small>'+meetings.length+' completed meetings in available records</small></div>'+
+          (meetings.length?'<div class="slfa-mc-h2h-recent">'+meetings.slice(0,3).map(function(m){return '<p>'+esc(dateText(m.match_date))+' · '+esc(m.home_team)+' '+esc(m.home_score)+'–'+esc(m.away_score)+' '+esc(m.away_team)+'</p>';}).join('')+'</div>':'')+'</section>';
+      }
       if(lu.length||ev.length) html+='<div class="slfa-mc-print-row"><button type="button" class="secondary" data-print-match="'+esc(String(id))+'">Print match sheet</button></div>';
       box.innerHTML=(html||'<p class="slfa-mc-no-events">No additional match details have been published.</p>')+'<div class="slfa-mc-comments"></div><div class="slfa-mc-report"></div>';
       loadComments(id,box.querySelector('.slfa-mc-comments'));
