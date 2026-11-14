@@ -79,8 +79,8 @@
     return errors;
   }
   function template() {
-    var csv = 'League,Club,FIFA ID,Player Name,Date of Birth,Nationality,Position,Jersey Number,Photo URL\r\n' +
-      '"Leone Rock Premier League","Bo Rangers","FIFA-EXAMPLE-001","Example Player","2000-01-15","Sierra Leone","Forward","9",""\r\n';
+    var csv = 'League,Club,FIFA ID,Player Name,National ID,Date of Birth,Nationality,Position,Jersey Number,Photo URL\r\n' +
+      '"Leone Rock Premier League","Bo Rangers","FIFA-EXAMPLE-001","Example Player","NIN-EXAMPLE-001","2000-01-15","Sierra Leone","Forward","9",""\r\n';
     var a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8'}));
     a.download = 'slfa-fifa-connect-player-import-template.csv';
