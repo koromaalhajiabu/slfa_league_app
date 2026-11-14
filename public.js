@@ -163,7 +163,7 @@
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch (e) {}
   function loadLeagueData() {
     return Promise.all([
-      db.from('leagues').select('id, name').eq('is_active', true).order('sort_order'),
+      db.from('leagues').select('id, name, logo_url, competition_type, gender_category').eq('is_active', true).order('sort_order'),
       db.from('league_clubs').select('club_name, league_id').eq('is_active', true)
     ]).then(function (all) {
       leagueList = all[0].data || [];
@@ -173,6 +173,7 @@
     });
   }
   function leagueLogo(l) {
+    if (l.logo_url) return '<img class="league-chip-logo" src="' + esc(l.logo_url) + '" alt="" loading="lazy" onerror="this.hidden=true">';
     var n = String(l.name || '').toLowerCase();
     if (n.indexOf('leone rock') !== -1) {
       return '<img class="league-chip-logo" src="league-logos/leone-rock-premier-league.jpg" alt="Leone Rock Premier League logo" loading="lazy">';
