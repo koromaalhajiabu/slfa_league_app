@@ -1,47 +1,19 @@
 -- SLFA competition expansion.
--- Adds descriptive competition metadata and a Super Admin-only management RPC.
+-- Adds descriptive competition metadata and a Developer/Super Admin-only management RPC.
 -- Existing league IDs, clubs, fixtures, standings and results are preserved.
+--
+-- IMPORTANT:
+-- Do not backfill existing league rows in this SQL migration. The database has
+-- enforce_slfa_application_controls() triggers that correctly require an
+-- authenticated active league account for row changes. New metadata columns
+-- receive safe defaults; existing competition metadata can be completed
+-- through the authorised competition-management RPC after signing in.
 
 ALTER TABLE public.leagues
   ADD COLUMN IF NOT EXISTS competition_type text NOT NULL DEFAULT 'LEAGUE',
   ADD COLUMN IF NOT EXISTS gender_category text NOT NULL DEFAULT 'OPEN',
   ADD COLUMN IF NOT EXISTS description text,
   ADD COLUMN IF NOT EXISTS logo_url text;
-
-UPDATE public.leagues
-SET
-  competition_type = CASE
-    WHEN lower(name) LIKE '%cup%' THEN 'CUP'
-    WHEN lower(name) LIKE '%youth%' OR lower(name) LIKE '%under-%' THEN 'YOUTH'
-    WHEN competition_type IN ('LEAGUE','CUP','YOUTH','FUTSAL','OTHER') THEN competition_type
-    ELSE 'LEAGUE'
-  END,
-  gender_category = CASE
-    WHEN lower(name) LIKE '%women%' OR lower(name) LIKE '%female%' THEN 'WOMEN'
-    WHEN lower(name) LIKE '%men%' AND lower(name) NOT LIKE '%women%' THEN 'MEN'
-    WHEN gender_category IN ('MEN','WOMEN','MIXED','OPEN') THEN gender_category
-    ELSE 'OPEN'
-  END,
-  description = COALESCE(
-    NULLIF(description, ''),
-    CASE
-      WHEN lower(name) LIKE '%marampa%' AND lower(name) LIKE '%women%'
-        THEN 'The women’s premier league competition in Sierra Leone.'
-      WHEN lower(name) LIKE '%leone rock%'
-        THEN 'The top-tier men’s league competition in Sierra Leone.'
-      ELSE 'Official competition information, participating clubs, fixtures, results and statistics.'
-    END
-  ),
-  logo_url = COALESCE(
-    NULLIF(logo_url, ''),
-    CASE
-      WHEN lower(name) LIKE '%marampa%' AND lower(name) LIKE '%women%'
-        THEN 'league-logos/marampa-mines-womens-premier-league.jpg'
-      WHEN lower(name) LIKE '%leone rock%'
-        THEN 'league-logos/leone-rock-premier-league.jpg'
-      ELSE NULL
-    END
-  );
 
 ALTER TABLE public.leagues
   DROP CONSTRAINT IF EXISTS leagues_competition_type_check;
@@ -72,9 +44,10 @@ SET search_path = public
 AS $$
 DECLARE
   v_id bigint;
+  v_role text := public.app_role();
 BEGIN
-  IF public.app_role() IS DISTINCT FROM 'SUPER_ADMIN' THEN
-    RAISE EXCEPTION 'Only a Super Admin can manage competitions.';
+  IF v_role NOT IN ('DEVELOPER', 'SUPER_ADMIN') THEN
+    RAISE EXCEPTION 'Only the Developer or Super Admin can manage competitions.';
   END IF;
 
   IF char_length(trim(COALESCE(p_name, ''))) NOT BETWEEN 3 AND 100 THEN
