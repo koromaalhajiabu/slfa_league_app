@@ -122,3 +122,35 @@ begin
   end if;
 end $$;
 notify pgrst, 'reload schema';
+
+-- Expose the append-only row-activity trail inside the Super Admin audit timeline.
+create or replace function public.admin_activity_audit_feed(p_days integer default 90, p_limit integer default 200)
+returns jsonb
+language plpgsql stable security definer set search_path=public,pg_temp
+as $$
+declare result jsonb;
+begin
+  if public.app_role() is distinct from 'SUPER_ADMIN' then
+    raise exception 'Only a Super Admin can read the activity audit.';
+  end if;
+  p_days := least(greatest(coalesce(p_days,90),1),730);
+  p_limit := least(greatest(coalesce(p_limit,200),1),500);
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'at',a.occurred_at,
+    'area','Record activity · '||a.table_name,
+    'actor',coalesce(nullif(p.full_name,''),nullif(p.email,''),a.actor_role,'Unknown'),
+    'action',a.operation,
+    'summary',coalesce('Record '||a.row_id,'Record change'),
+    'reason',null
+  ) order by a.occurred_at desc),'[]'::jsonb)
+  into result
+  from (
+    select * from public.slfa_activity_audit
+    where occurred_at >= now()-make_interval(days=>p_days)
+    order by occurred_at desc limit p_limit
+  ) a
+  left join public.user_profiles p on p.id=a.actor_id;
+  return result;
+end $$;
+revoke all on function public.admin_activity_audit_feed(integer,integer) from public,anon;
+grant execute on function public.admin_activity_audit_feed(integer,integer) to authenticated;
