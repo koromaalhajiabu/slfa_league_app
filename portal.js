@@ -1,7 +1,12 @@
 // Portal pages: role access plus Developer-only application maintenance bypass.
 (function () {
   var cfg=window.SLFA_CONFIG;
-  var db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true}});
+  // Developer account access runs in a separate tab with sessionStorage, never the Developer tab's localStorage session.
+  var impersonationParams = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  var isDeveloperSession = impersonationParams.has('slfa-login-as');
+  var authOptions = {persistSession:true,autoRefreshToken:true};
+  if (isDeveloperSession) { authOptions.storage = window.sessionStorage; authOptions.storageKey = 'slfa-developer-account-session'; }
+  var db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:authOptions});
   window.slfaDb=db;
   var PAGES={DEVELOPER:'developer.html',SUPER_ADMIN:'super-admin.html',REFEREE:'referee.html',MEDIA_OFFICER:'media.html',DISCIPLINARY_OFFICER:'disciplinary.html',CLUB_ADMIN:'club.html'};
   var portal=document.body.dataset.portal;
@@ -74,7 +79,26 @@
     $('signIn').hidden=true;$('portalArea').hidden=false;$('whoName').textContent=p.full_name||p.email;
     $('whoRole').textContent=p.official_title||role.replace(/_/g,' ');window.slfaRenderRole(p);
   }
-  gate();
+  function finishDeveloperAccountSession() {
+    if (!isDeveloperSession) { gate(); return; }
+    var tokenHash = impersonationParams.get('slfa-login-as');
+    // Remove the one-time token from the address bar before exchanging it.
+    history.replaceState(null, document.title, location.pathname + location.search);
+    if (!tokenHash) { showSignIn('The secure account session link is missing. Start again from the Developer panel.'); return; }
+    db.auth.verifyOtp({type:'magiclink', token_hash:tokenHash}).then(function(result) {
+      if (result.error) { showSignIn('Secure account sign-in failed or expired. Return to your Developer tab and try again.'); return; }
+      var banner=document.createElement('div');
+      banner.className='post';
+      banner.style.cssText='margin:12px 0;border-left:4px solid #d69b35;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap';
+      banner.innerHTML='<div><strong>Developer-managed account session</strong><div class="muted">You are operating as this account in an isolated tab. Your original Developer session remains open in its own tab.</div></div><button type="button" class="secondary" id="slfaEndManagedSession">End session</button>';
+      var tools=$('roleTools'); if(tools&&tools.parentNode) tools.parentNode.insertBefore(banner,tools);
+      $('slfaEndManagedSession').addEventListener('click',function(){
+        db.auth.signOut().then(function(){location.replace('developer.html');});
+      });
+      gate();
+    });
+  }
+  finishDeveloperAccountSession();
   // Apply a freeze immediately to already-open staff portals, not only at sign-in.
   if(portal!=='DEVELOPER'){
     db.channel('portal-application-control').on('postgres_changes',{event:'*',schema:'public',table:'application_control'},function(){gate();}).subscribe();
