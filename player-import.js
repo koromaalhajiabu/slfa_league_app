@@ -56,6 +56,7 @@
         club: field(r, ['club','club_name','team']),
         player_name: field(r, ['player_name','player','full_name','name']),
         fifa_connect_id: field(r, ['fifa_id','fifa_connect_id','fifa_connect_id_number','fifa_player_id']),
+        player_nin: field(r, ['national_id','player_nin','nin','national_identification_number']),
         date_of_birth: field(r, ['date_of_birth','dob','birth_date']),
         nationality: field(r, ['nationality','country']),
         position: field(r, ['position','playing_position']),
@@ -67,7 +68,7 @@
   function validate(rows) {
     var errors = [], seen = {};
     rows.forEach(function (r) {
-      if (!r.league || !r.club || !r.player_name || !r.fifa_connect_id) errors.push('Line ' + r._line + ': League, Club, Player Name and FIFA ID are required.');
+      if (!r.league || !r.club || !r.player_name || !r.fifa_connect_id || !r.player_nin) errors.push('Line ' + r._line + ': League, Club, Player Name, FIFA ID and National ID are required.');
       var key = r.fifa_connect_id.toLowerCase();
       if (key && seen[key]) errors.push('Line ' + r._line + ': duplicate FIFA ID also appears on line ' + seen[key] + '.');
       if (key) seen[key] = r._line;
@@ -97,7 +98,7 @@
       '<p class="muted">Import the official player export supplied through SLFA\'s authorized FIFA Connect access. This imports registered players into the current SLFA app season; it does not connect to or modify FIFA Connect.</p>' +
       '<div class="btns"><button type="button" class="secondary" id="fciTemplate">Download CSV template</button></div>' +
       '<label for="fciFile">FIFA Connect CSV export</label><input id="fciFile" type="file" accept=".csv,text/csv">' +
-      '<p class="muted">Required columns: League, Club, FIFA ID, Player Name. Optional: Date of Birth (YYYY-MM-DD), Nationality, Position, Jersey Number, Photo URL.</p>' +
+      '<p class="muted">Required columns: League, Club, FIFA ID, Player Name, National ID. Optional: Date of Birth (YYYY-MM-DD), Nationality, Position, Jersey Number, Photo URL.</p>' +
       '<div class="btns"><button type="button" class="secondary" id="fciCheck" disabled>Validate and preview</button><button type="button" class="primary" id="fciImport" disabled>Import verified players</button></div>' +
       '<div id="fciMessage" class="status" role="status" aria-live="polite"></div>' +
       '<div id="fciPreview" class="muted"></div>' +
@@ -144,7 +145,7 @@
     message('Importing player records securely…');
     var payload = lastRows.map(function (r) {
       return {
-        league:r.league, club:r.club, player_name:r.player_name, fifa_connect_id:r.fifa_connect_id,
+        league:r.league, club:r.club, player_name:r.player_name, fifa_connect_id:r.fifa_connect_id, player_nin:r.player_nin,
         date_of_birth:r.date_of_birth || null, nationality:r.nationality || null, position:r.position || null,
         jersey_number:r.jersey_number || null, photo_url:r.photo_url || null
       };
