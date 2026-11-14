@@ -154,7 +154,6 @@
     else if (role === 'DISCIPLINARY_OFFICER') out = disciplinary(p);
     else if (role === 'REFEREE') out = referee(p);
     else if (role === 'DEVELOPER') out = developer(p);
-    else if (role === 'CLUB_ADMIN') out = clubManager(p);
     accountPrivacy();
     return out;
   };
@@ -1196,8 +1195,8 @@
   }
 
   // ---------- DEVELOPER PANEL ----------
-  var clubsCache = [], devUser = null;
-  var ROLE_OPTIONS = [['CLUB_ADMIN','Club Manager'],['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer'],['SUPER_ADMIN','Super Admin']];
+  var devUser = null;
+  var ROLE_OPTIONS = [['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer'],['SUPER_ADMIN','Super Admin / League Admin']];
   function developer(p) {
     devUser=p;
     box().innerHTML =
@@ -1207,7 +1206,7 @@
       '<label for="ivName">Full name</label><input id="ivName" type="text" autocomplete="name">'+input('ivEmail','Email address','email')+
       '<label for="ivPhoto">Round profile photo</label><input id="ivPhoto" type="file" accept="image/jpeg,image/png,image/webp"><div id="ivPhotoPreview" class="muted">No photo selected.</div>'+
       '<label for="ivRole">Role</label><select id="ivRole">'+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join('')+'</select>'+
-      '<label for="ivClub">Club (Club Managers only)</label><select id="ivClub"><option value="">Loading clubs…</option></select><div class="btns"><button class="primary" id="ivSave">Save role</button></div>'+
+      '<div class="btns"><button class="primary" id="ivSave">Save role</button></div>'+
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
       '<h2 class="rt">All accounts and roles</h2><p class="muted">Change roles, suspend, restore or delete accounts. Actions are logged automatically.</p><div id="roleList" class="muted">Loading…</div>'+
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
@@ -1225,19 +1224,13 @@
       if(r.error)throw r.error;return db.storage.from('developer-profiles').getPublicUrl(path).data.publicUrl;
     });
   }
-  function loadInviteForm(){
-    db.from('league_clubs').select('id,club_name').order('club_name').then(function(c){
-      $('ivClub').innerHTML='<option value="">No club</option>'+(c.data||[]).map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.club_name)+'</option>';}).join('');
-    });
-    $('ivSave').onclick=saveInvite;loadInvites();
-  }
+  function loadInviteForm(){ $('ivSave').onclick=saveInvite; loadInvites(); }
   function saveInvite(){
-    var name=$('ivName').value.trim(),email=$('ivEmail').value.trim().toLowerCase(),role=$('ivRole').value,club=$('ivClub').value||null,file=$('ivPhoto').files&&$('ivPhoto').files[0];
+    var name=$('ivName').value.trim(),email=$('ivEmail').value.trim().toLowerCase(),role=$('ivRole').value,file=$('ivPhoto').files&&$('ivPhoto').files[0];
     if(!name||!email){msg('Enter the full name and email address.');return;}
-    if(role==='CLUB_ADMIN'&&!club){msg('Choose the club for this Club Manager.');return;}
     msg('Saving role assignment…');
     uploadDevPhoto(email,file).then(function(photo){
-      return db.rpc('invite_user',{p_email:email,p_role:role,p_club:club,p_full_name:name,p_photo_url:photo});
+      return db.rpc('invite_user',{p_email:email,p_role:role,p_club:null,p_full_name:name,p_photo_url:photo});
     }).then(function(r){
       if(r.error){msg(r.error.message);return;}msg(r.data||'Role assignment saved.');
       $('ivName').value='';$('ivEmail').value='';$('ivPhoto').value='';$('ivPhotoPreview').textContent='No photo selected.';
@@ -1255,24 +1248,35 @@
   function setPause(v){db.rpc('set_system_pause',{p_paused:v}).then(function(r){msg(r.error?r.error.message:(v?'League paused.':'League resumed.'));loadLeagueState();});}
   function loadAppState(){db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(r){if(r.error){$('appState').textContent=r.error.message;return;}var v=!!(r.data&&r.data.app_frozen);$('appState').innerHTML=v?'<strong style="color:#b91c1c">Entire app frozen.</strong>':'<strong style="color:#16834a">Application available.</strong>';});}
   function setAppFreeze(v){db.rpc('set_application_freeze',{p_frozen:v}).then(function(r){msg(r.error?r.error.message:(v?'Entire app frozen.':'Application unfrozen.'));loadAppState();});}
-  function clubPicker(u){var opts='<option value="">No club</option>'+clubsCache.map(function(c){return '<option value="'+esc(c.id)+'"'+(c.id===u.club_id?' selected':'')+'>'+esc(c.club_name)+'</option>';}).join('');return '<label>Club</label><select data-club-for="'+esc(u.id)+'">'+opts+'</select><button class="small" data-club-apply="'+esc(u.id)+'">Apply club</button>';}
   function currentRoleKey(u){var r=String(u.system_role).toUpperCase();return r==='REFEREE'&&u.official_title==='Match Commissioner'?'MATCH_COMMISSIONER':r;}
+  function startManagedAccountSession(userId, button){
+    if(!confirm('Open this account in a separate, audited session? Your Developer session will remain signed in here. Actions in the new tab will be recorded under the selected account.')) return;
+    var target=window.open('about:blank','_blank');
+    if(!target){alert('Allow pop-ups for this site, then try again.');return;}
+    button.disabled=true;button.textContent='Preparing secure session…';
+    db.functions.invoke('developer-login-as-user',{body:{target_user_id:userId}}).then(function(result){
+      if(result.error||!result.data||!result.data.token_hash||!result.data.portal){
+        target.close();alert((result.data&&result.data.error)||(result.error&&result.error.message)||'Could not start the account session.');return;
+      }
+      var url=new URL(result.data.portal,location.href);
+      url.hash='slfa-login-as='+encodeURIComponent(result.data.token_hash);
+      target.location.replace(url.href);
+    }).catch(function(error){target.close();alert(error&&error.message?error.message:'Could not start the account session.');})
+    .finally(function(){button.disabled=false;button.textContent='Login as User';});
+  }
   function loadAccountsDev(p){
-    db.from('league_clubs').select('id,club_name').order('club_name').then(function(c){
-      clubsCache=c.data||[];return db.from('user_profiles').select('id,full_name,email,photo_url,system_role,status,club_id,official_title').order('email').limit(500);
-    }).then(function(r){
+    db.from('user_profiles').select('id,full_name,email,photo_url,system_role,status,official_title').order('email').limit(500).then(function(r){
       if(r.error){$('roleList').textContent=r.error.message;return;}var rows=r.data||[];
       $('roleList').innerHTML=rows.length?rows.map(function(u){
         var me=u.id===p.id,dev=String(u.system_role).toUpperCase()==='DEVELOPER',active=String(u.status).toLowerCase()==='active',waiting=String(u.system_role).toUpperCase()==='NONE';
         var opts=(waiting?'<option value="NONE" selected>Waiting for a role</option>':'')+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'"'+(currentRoleKey(u)===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('');
         var pic=u.photo_url?'<img src="'+esc(u.photo_url)+'" alt="" style="width:50px;height:50px;border-radius:50%;object-fit:cover;margin-right:10px">':'';
         return '<div class="post"><div style="display:flex;align-items:center">'+pic+'<div><strong>'+esc(u.full_name||u.email)+(me?' (you)':'')+'</strong><div class="muted">'+esc(u.email)+' · '+esc(u.status)+' · '+esc(u.system_role||'NONE')+'</div></div></div>'+
-          (dev?'<div class="muted">Developer account · protected</div>':'<label>Role</label><select data-role-for="'+esc(u.id)+'">'+opts+'</select>'+(String(u.system_role).toUpperCase()==='CLUB_ADMIN'?clubPicker(u):'')+
-          '<div class="btns"><button class="small" data-apply="'+esc(u.id)+'">Apply role</button>'+(me?'':'<button class="small '+(active?'danger':'')+'" data-status="'+esc(u.id)+'" data-next="'+(active?'Suspended':'Active')+'">'+(active?'Suspend':'Restore')+'</button><button class="small danger" data-delete="'+esc(u.id)+'">Delete account</button>')+'</div>')+'</div>';
+          (dev?'<div class="muted">Developer account · protected</div>':'<label>Role</label><select data-role-for="'+esc(u.id)+'">'+opts+'</select>'+'<div class="btns"><button class="small" data-apply="'+esc(u.id)+'">Apply role</button>'+(me?'':'<button class="small '+(active?'danger':'')+'" data-status="'+esc(u.id)+'" data-next="'+(active?'Suspended':'Active')+'">'+(active?'Suspend':'Restore')+'</button><button class="small danger" data-delete="'+esc(u.id)+'">Delete account</button>')+(dev||!active||me?'':'<button class="small secondary" data-login-as-account="'+esc(u.id)+'">Login as User</button>')+'</div>')+'</div>';
       }).join(''):'No accounts yet.';
       document.querySelectorAll('[data-apply]').forEach(function(b){b.onclick=function(){var id=b.dataset.apply,el=document.querySelector('[data-role-for="'+id+'"]');if(!el)return;db.rpc('set_user_role',{p_user:id,p_role:el.value}).then(function(x){msg(x.error?x.error.message:'Role updated.');loadAccountsDev(p);loadRoleLog();});};});
-      document.querySelectorAll('[data-club-apply]').forEach(function(b){b.onclick=function(){var id=b.dataset.clubApply,cl=document.querySelector('[data-club-for="'+id+'"]').value||null;db.rpc('set_user_club',{p_user:id,p_club:cl}).then(function(x){msg(x.error?x.error.message:'Club updated.');loadAccountsDev(p);});};});
       document.querySelectorAll('[data-status]').forEach(function(b){b.onclick=function(){var st=b.dataset.next;db.rpc('set_account_status',{p_user:b.dataset.status,p_status:st}).then(function(x){msg(x.error?x.error.message:(st==='Active'?'Account restored.':'Account suspended.'));loadAccountsDev(p);});};});
+      document.querySelectorAll('[data-login-as-account]').forEach(function(b){b.onclick=function(){startManagedAccountSession(b.dataset.loginAsAccount,b);};});
       document.querySelectorAll('[data-delete]').forEach(function(b){b.onclick=function(){if(!confirm('Permanently delete this account? This cannot be undone.'))return;db.rpc('delete_user_account',{p_user:b.dataset.delete}).then(function(x){msg(x.error?x.error.message:'Account deleted.');loadAccountsDev(p);});};});
     });
   }
