@@ -135,6 +135,7 @@ begin
   end if;
   p_days := least(greatest(coalesce(p_days,90),1),730);
   p_limit := least(greatest(coalesce(p_limit,200),1),500);
+  if to_regclass('public.slfa_activity_audit') is null then return '[]'::jsonb; end if;
   select coalesce(jsonb_agg(jsonb_build_object(
     'at',a.occurred_at,
     'area','Record activity · '||a.table_name,
