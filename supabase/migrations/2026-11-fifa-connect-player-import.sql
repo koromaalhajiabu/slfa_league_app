@@ -57,6 +57,7 @@ declare
   v_season_id public.seasons.id%type;
   v_existing_id public.club_squad.id%type;
   v_existing_club_id public.club_squad.club_id%type;
+  v_match_count integer := 0;
   v_inserted integer := 0;
   v_updated integer := 0;
   v_rows integer := 0;
@@ -118,9 +119,20 @@ begin
       raise exception 'Row %: club "%" was not found under "%"', v_rows, v_club_name, v_league_name;
     end if;
 
+    -- Match an existing app record by FIFA ID or National ID so earlier club-entered
+    -- records are enriched instead of duplicated.
+    select count(distinct id) into v_match_count
+      from public.club_squad
+      where season_id = v_season_id
+        and (fifa_connect_id = v_fifa_id or player_nin = v_nin);
+    if v_match_count > 1 then
+      raise exception 'Row %: FIFA ID % and National ID % point to different existing player records. Resolve the duplicate first.', v_rows, v_fifa_id, v_nin;
+    end if;
+
     select id, club_id into v_existing_id, v_existing_club_id
       from public.club_squad
-      where fifa_connect_id = v_fifa_id and season_id = v_season_id
+      where season_id = v_season_id
+        and (fifa_connect_id = v_fifa_id or player_nin = v_nin)
       limit 1;
 
     if v_existing_id is not null then
