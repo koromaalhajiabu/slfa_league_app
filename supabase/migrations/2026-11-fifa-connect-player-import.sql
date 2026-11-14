@@ -46,6 +46,7 @@ declare
   v_club_name text;
   v_player_name text;
   v_fifa_id text;
+  v_nin text;
   v_dob date;
   v_nationality text;
   v_position text;
@@ -92,14 +93,15 @@ begin
     v_club_name := nullif(btrim(v_row->>'club'), '');
     v_player_name := nullif(btrim(v_row->>'player_name'), '');
     v_fifa_id := nullif(btrim(v_row->>'fifa_connect_id'), '');
+    v_nin := nullif(btrim(v_row->>'player_nin'), '');
     v_nationality := nullif(btrim(v_row->>'nationality'), '');
     v_position := nullif(btrim(v_row->>'position'), '');
     v_photo := nullif(btrim(v_row->>'photo_url'), '');
     v_dob := nullif(btrim(v_row->>'date_of_birth'), '')::date;
     v_jersey := nullif(btrim(v_row->>'jersey_number'), '')::integer;
 
-    if v_league_name is null or v_club_name is null or v_player_name is null or v_fifa_id is null then
-      raise exception 'Row % is missing League, Club, Player Name or FIFA ID', v_rows;
+    if v_league_name is null or v_club_name is null or v_player_name is null or v_fifa_id is null or v_nin is null then
+      raise exception 'Row % is missing League, Club, Player Name, FIFA ID or National ID', v_rows;
     end if;
 
     select id into v_league_id from public.leagues
@@ -127,6 +129,7 @@ begin
       end if;
       update public.club_squad set
         player_name = v_player_name,
+        player_nin = v_nin,
         date_of_birth = v_dob,
         nationality = v_nationality,
         position = v_position,
@@ -138,11 +141,11 @@ begin
       v_updated := v_updated + 1;
     else
       insert into public.club_squad (
-        player_name, fifa_connect_id, date_of_birth, nationality, position,
+        player_name, player_nin, fifa_connect_id, date_of_birth, nationality, position,
         jersey_number, photo_url, status, registration_status,
         club_id, created_by, season_id
       ) values (
-        v_player_name, v_fifa_id, v_dob, v_nationality, v_position,
+        v_player_name, v_nin, v_fifa_id, v_dob, v_nationality, v_position,
         v_jersey, v_photo, 'Active', 'Approved',
         v_club_id, v_uid, v_season_id
       );
