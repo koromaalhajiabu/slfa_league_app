@@ -204,19 +204,7 @@
       '<button class="secondary" data-export="suspensions">Suspensions (CSV)</button>' +
       '<button class="primary" data-export="full_backup">Full backup (JSON)</button></div>' +
       '<div id="exportMsg" class="muted" role="status"></div>' +
-      '<h2 class="rt">Competition directory management</h2>' +
-      '<p class="muted">Create and maintain public competitions. New competitions appear automatically in the public League Centre, fixture selectors and competition directory.</p>' +
-      '<label for="coEdit">Existing competition</label><select id="coEdit"><option value="">Create a new competition</option></select>' +
-      input('coName', 'Competition name') +
-      '<label for="coType">Competition format</label><select id="coType"><option value="LEAGUE">League</option><option value="CUP">Cup</option><option value="YOUTH">Youth competition</option><option value="FUTSAL">Futsal</option><option value="OTHER">Other</option></select>' +
-      '<label for="coGender">Category</label><select id="coGender"><option value="MEN">Men</option><option value="WOMEN">Women</option><option value="MIXED">Mixed</option><option value="OPEN">Open / not specified</option></select>' +
-      '<label for="coDescription">Public description</label><textarea id="coDescription" rows="3" maxlength="500"></textarea>' +
-      input('coLogo', 'Competition logo URL or repository path (optional)') +
-      input('coSort', 'Display order', 'number', 'min="0" step="1" value="10"') +
-      '<label class="terms-row"><input id="coActive" type="checkbox" checked> <span>Publish this competition in the public app</span></label>' +
-      '<div class="btns"><button class="primary" id="coSave">Save competition</button><button class="secondary" id="coNew">New competition</button></div>' +
-      '<div id="competitionAdminList" class="muted">Loading competitions…</div>' +
-      '<h2 class="rt">Clubs</h2>' +
+       '<h2 class="rt">Clubs</h2>' +
       '<label for="clName">Club name</label><input id="clName" type="text">' +
       '<label for="clLeague">League</label><select id="clLeague"><option value="">Loading leagues…</option></select>' +
       input('clLogo', 'Logo link (optional)', 'url') +
