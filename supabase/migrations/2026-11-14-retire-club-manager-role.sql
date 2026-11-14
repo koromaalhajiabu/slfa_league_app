@@ -102,3 +102,7 @@ drop function if exists public.guard_squad_registration();
 -- Historical player/squad, club, announcement and profile-request records remain.
 notify pgrst, 'reload schema';
 commit;
+
+select
+  (select count(*) from public.user_profiles where upper(coalesce(system_role::text, '')) = 'CLUB_ADMIN') as remaining_club_manager_profiles,
+  (select count(*) from public.role_invitations where upper(coalesce(system_role::text, '')) = 'CLUB_ADMIN') as pending_club_manager_invitations;
