@@ -33,3 +33,24 @@
 @media(max-width:760px) { .pd-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .pd-tools { grid-template-columns:1fr 1fr; } .pd-tools .pd-search { grid-column:1/-1; } .pd-reset { grid-column:1/-1; } }
 @media(max-width:390px) { .pd-grid { grid-template-columns:1fr; } .pd-card { min-height:78px; } }
 @media(prefers-reduced-motion:reduce) { .pd-card { transition:none; } }
+
+/* Side-by-side player intelligence */
+.pd-compare-panel{display:grid;gap:10px;padding:14px;border:1px solid #b9dfc7;border-radius:15px;background:linear-gradient(140deg,#f3fbf5,#fff)}
+.pd-compare-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pd-compare-head>div{display:grid;gap:4px}
+.pd-compare-head span{color:#287b49;font-size:8px;font-weight:900;letter-spacing:.13em}
+.pd-compare-head strong{color:#173c29;font-size:14px}
+.pd-compare-head button{padding:7px 10px;border:1px solid #c9dfd0;border-radius:9px;background:#fff;color:#287b49;font-size:9px;font-weight:800}
+.pd-compare-selected,.pd-compare-note,.pd-compare-loading{margin:0;color:#65786b;font-size:10px;line-height:1.5}
+.pd-compare-run{justify-self:start;padding:9px 13px;border:0;border-radius:10px;background:#087b43;color:#fff;font-size:10px;font-weight:850}
+.pd-compare-run:disabled{opacity:.45}
+.pd-compare-toggle{position:absolute;left:10px;bottom:8px;padding:5px 7px;border:1px solid #b9ddc6;border-radius:7px;background:#eaf7ee;color:#08733c;font-size:8px;font-weight:850}
+.pd-compare-toggle[aria-pressed=true]{background:#087b43;color:#fff}
+.pd-open{right:10px;bottom:10px}
+.pd-compare-table-wrap{overflow-x:auto}
+.pd-compare-table{width:100%;min-width:310px;border-collapse:collapse;color:#173c29;font-size:10px}
+.pd-compare-table th,.pd-compare-table td{padding:9px 7px;border-bottom:1px solid #dcebe1;text-align:center}
+.pd-compare-table th:first-child{text-align:left}
+.pd-compare-table thead th{color:#087b43;font-size:10px}
+.pd-compare-table thead small{display:block;margin-top:3px;color:#708176;font-size:8px}
+@media(prefers-color-scheme:dark){.pd-compare-panel{background:#102b1c;border-color:rgba(112,220,158,.25)}.pd-compare-head strong,.pd-compare-table{color:#effff4}.pd-compare-table th,.pd-compare-table td{border-color:rgba(164,224,184,.15)}}
