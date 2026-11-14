@@ -345,6 +345,14 @@
       db.from('matches').select('id,league_id,match_date,venue,match_status,home_team,away_team,home_score,away_score').order('match_date',{ascending:false}).limit(1000),
       db.from('league_standings').select('league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos',{ascending:true})
     ]).then(function (r) {
+      if (r[0].error) {
+        return db.from('leagues').select('id,name').eq('is_active',true).order('sort_order').then(function(fallback) {
+          r[0] = fallback;
+          return r;
+        });
+      }
+      return r;
+    }).then(function (r) {
       leagues = r[0].error ? [] : (r[0].data || []);
       clubs = r[1].error ? [] : (r[1].data || []);
       matches = r[2].error ? [] : (r[2].data || []);
