@@ -7,7 +7,7 @@
   var host;
   if (!db || !nav || !switcher) return;
 
-  var leagues = [], clubs = [], matches = [], standings = [];
+  var leagues = [], clubs = [], matches = [], standings = [], cupTies = [];
   var selectedId = '';
   var loading = false, lastLoaded = 0;
 
@@ -196,6 +196,18 @@
     var h2hHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>HEAD-TO-HEAD</span><h4>Compare two clubs</h4></div></div>' +
       (teamRows.length >= 2 ? '<div class="slfa-lp-h2h-controls"><label>Club one<select id="slfaLpH2hA">'+h2hOptions+'</select></label><label>Club two<select id="slfaLpH2hB">'+h2hOptions+'</select></label></div><div id="slfaLpH2hResults" aria-live="polite"></div>' :
       '<p class="slfa-lp-empty">At least two clubs are needed for a comparison.</p>') + '</section>';
+    var cupRows = cupTies.filter(function(t){return String(t.competition_id)===id;});
+    var cupBracketHtml = String(lg.competition_type||'').toUpperCase()==='CUP' ?
+      '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>KNOCKOUT BRACKET</span><h4>Competition rounds</h4></div></div>' +
+      (cupRows.length ? cupRows.reduce(function(html,t){
+        var round=t.round_name||'Round';
+        var match=t.matches||{};
+        var label=(match.home_team||'To be confirmed')+' v '+(match.away_team||'To be confirmed');
+        var score=match.home_score!=null&&match.away_score!=null ? match.home_score+' – '+match.away_score : 'Fixture pending';
+        var winner=t.winner_team ? '<small class="slfa-lp-source">Winner: '+esc(t.winner_team)+'</small>' : '';
+        return html+'<article class="slfa-lp-match"><div class="slfa-lp-match-meta"><span>'+esc(round)+' · Tie '+esc(t.tie_number)+'</span><time>'+esc(score)+'</time></div><div class="slfa-lp-match-teams"><strong>'+esc(label)+'</strong></div>'+winner+'</article>';
+      },'') : '<p class="slfa-lp-empty">The knockout bracket has not been published yet.</p>') + '</section>' : '';
+
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-hero"><div><p class="slfa-lp-eyebrow">SLFA COMPETITION PROFILE</p>' +
       '<h3>' + esc(lg.name) + '</h3><p>' + esc(lg.description || 'Competition overview and published league information. Participating clubs are listed under Teams.') + '</p></div>' +
       (lg.logo_url ? '<img class="slfa-lp-competition-logo" src="' + esc(lg.logo_url) + '" alt="" loading="lazy">' :
@@ -209,7 +221,7 @@
       kpi(goals,'Goals recorded') + kpi(next.length,'Upcoming fixtures') + '</div>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>PARTICIPATING TEAMS</span><h4>Clubs in this competition</h4></div><small>' + teamRows.length + ' clubs</small></div>' +
       (clubCards ? '<div class="slfa-lp-clubs">' + clubCards + '</div>' : '<p class="slfa-lp-empty">No clubs have been published for this competition yet.</p>') + '</section>' +
-      tableHtml + analyticsHtml + h2hHtml +
+      cupBracketHtml + tableHtml + analyticsHtml + h2hHtml +
       '<div class="slfa-lp-match-panels"><section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>UP NEXT</span><h4>Upcoming fixtures</h4></div></div>' +
       (next.length ? next.slice(0,3).map(matchRow).join('') : '<p class="slfa-lp-empty">No upcoming fixtures published yet.</p>') + '</section>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>RECENT ACTION</span><h4>Latest results</h4></div></div>' +
@@ -359,6 +371,10 @@
       standings = r[3].error ? [] : (r[3].data || []);
       lastLoaded = Date.now();
       render();
+      db.from('cup_ties').select('id,competition_id,season_id,round_name,tie_number,winner_team,matches(home_team,away_team,home_score,away_score,match_status,match_date)').order('round_name').order('tie_number').then(function(ct){
+        cupTies = ct.error ? [] : (ct.data || []);
+        if (!host.hidden) render();
+      });
       if (r.some(function (x) { return !!x.error; })) {
         var warning = document.createElement('p');
         warning.className = 'slfa-lp-source';
@@ -384,7 +400,8 @@
   if (db.channel) db.channel('public-league-pages').on('postgres_changes',{event:'*',schema:'public',table:'leagues'},load)
     .on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},load)
     .on('postgres_changes',{event:'*',schema:'public',table:'matches'},load)
-    .on('postgres_changes',{event:'*',schema:'public',table:'league_standings'},load).subscribe();
+    .on('postgres_changes',{event:'*',schema:'public',table:'league_standings'},load)
+    .on('postgres_changes',{event:'*',schema:'public',table:'cup_ties'},load).subscribe();
   window.addEventListener('online',function(){ if(!host.hidden)load(); });
   load();
 })();
