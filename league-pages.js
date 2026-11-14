@@ -189,8 +189,8 @@
       return {name:name,homePoints:pointsFor(name,home),awayPoints:pointsFor(name,away),form:form || '—',played:all.length};
     });
     var analyticsHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>PERFORMANCE INTELLIGENCE</span><h4>Home, away and recent form</h4></div><small>From completed results</small></div>' +
-      '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table slfa-lp-analytics-table"><thead><tr><th>Club</th><th>P</th><th>Home pts</th><th>Away pts</th><th>Last 5</th></tr></thead><tbody>' +
-      analyticsRows.map(function(x) { return '<tr><td class="club">'+esc(x.name)+'</td><td>'+x.played+'</td><td>'+x.homePoints+'</td><td>'+x.awayPoints+'</td><td><strong class="slfa-lp-form">'+(Array.isArray(x.form)&&x.form.length?x.form.map(function(v){return '<i class="slfa-form-'+v.toLowerCase()+'" title="'+(v==='W'?'Win':v==='D'?'Draw':'Loss')+'">'+v+'</i>';}).join(''):'—')+'</strong></td></tr>'; }).join('') +
+      '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table slfa-lp-analytics-table"><thead><tr><th>Club</th><th>Pos</th><th>P</th><th>Home pts</th><th>Away pts</th><th>Last 5</th></tr></thead><tbody>' +
+      analyticsRows.map(function(x) { var standing=tableRows.find(function(r){return sameClub(r.club,x.name);}); return '<tr><td class="club">'+esc(x.name)+'</td><td>'+(standing?'<strong class="slfa-lp-current-rank">#'+esc(standing.pos)+'</strong>':'—')+'</td><td>'+x.played+'</td><td>'+x.homePoints+'</td><td>'+x.awayPoints+'</td><td><strong class="slfa-lp-form">'+(Array.isArray(x.form)&&x.form.length?x.form.map(function(v){return '<i class="slfa-form-'+v.toLowerCase()+'" title="'+(v==='W'?'Win':v==='D'?'Draw':'Loss')+'">'+v+'</i>';}).join(''):'—')+'</strong></td></tr>'; }).join('') +
       '</tbody></table></div></section>';
     var h2hOptions = teamRows.map(function(c) { return '<option value="'+esc(c.club_name)+'">'+esc(c.club_name)+'</option>'; }).join('');
     var h2hHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>HEAD-TO-HEAD</span><h4>Compare two clubs</h4></div></div>' +
@@ -199,14 +199,14 @@
     var cupRows = cupTies.filter(function(t){return String(t.competition_id)===id;});
     var cupBracketHtml = String(lg.competition_type||'').toUpperCase()==='CUP' ?
       '<section class="slfa-lp-panel slfa-cup-bracket-panel"><div class="slfa-lp-section-head"><div><span>KNOCKOUT BRACKET</span><h4>Competition rounds</h4></div></div>' +
-      (cupRows.length ? cupRows.reduce(function(html,t){
+      (cupRows.length ? '<nav class="slfa-cup-round-nav" aria-label="Filter cup rounds"><button type="button" class="is-active" data-cup-round="all">All rounds</button>' + Array.from(new Set(cupRows.map(function(t){return t.round_name||'Round';}))).map(function(r){return '<button type="button" data-cup-round="'+esc(r)+'">'+esc(r)+'</button>';}).join('') + '</nav><div class="slfa-cup-ties">' + cupRows.reduce(function(html,t){
         var round=t.round_name||'Round';
         var match=t.matches||{};
         var label=(match.home_team||'To be confirmed')+' v '+(match.away_team||'To be confirmed');
         var score=match.home_score!=null&&match.away_score!=null ? match.home_score+' – '+match.away_score : 'Fixture pending';
         var winner=t.winner_team ? '<small class="slfa-lp-source">Winner: '+esc(t.winner_team)+'</small>' : '';
-        return html+'<article class="slfa-lp-match"><div class="slfa-lp-match-meta"><span>'+esc(round)+' · Tie '+esc(t.tie_number)+'</span><time>'+esc(score)+'</time></div><div class="slfa-lp-match-teams"><strong>'+esc(label)+'</strong></div>'+winner+'</article>';
-      },'') : '<p class="slfa-lp-empty">The knockout bracket has not been published yet.</p>') + '</section>' : '';
+        return html+'<article class="slfa-lp-match" data-cup-tie data-round="'+esc(round)+'"><div class="slfa-lp-match-meta"><span>'+esc(round)+' · Tie '+esc(t.tie_number)+'</span><time>'+esc(score)+'</time></div><div class="slfa-lp-match-teams"><strong>'+esc(label)+'</strong></div>'+winner+'</article>';
+      },'') + '</div>' : '<p class="slfa-lp-empty">The knockout bracket has not been published yet.</p>') + '</section>' : '';
 
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-hero"><div><p class="slfa-lp-eyebrow">SLFA COMPETITION PROFILE</p>' +
       '<h3>' + esc(lg.name) + '</h3><p>' + esc(lg.description || 'Competition overview and published league information. Participating clubs are listed under Teams.') + '</p></div>' +
@@ -227,6 +227,13 @@
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>RECENT ACTION</span><h4>Latest results</h4></div></div>' +
       (recent.length ? recent.slice(0,3).map(matchRow).join('') : '<p class="slfa-lp-empty">No completed results published yet.</p>') + '</section></div>' +
       '<p class="slfa-lp-source">Club, match and fixture information reflects the records currently published in the SLFA League App. Official updates are subject to SLFA publication.</p></section>';
+    host.querySelectorAll('[data-cup-round]').forEach(function(button){
+      button.addEventListener('click',function(){
+        var chosen=button.getAttribute('data-cup-round');
+        host.querySelectorAll('[data-cup-round]').forEach(function(x){x.classList.toggle('is-active',x===button);});
+        host.querySelectorAll('[data-cup-tie]').forEach(function(tie){tie.hidden=chosen!=='all' && tie.getAttribute('data-round')!==chosen;});
+      });
+    });
     var back = document.getElementById('slfaLpAll');
     if (back) back.addEventListener('click', renderDirectory);
     host.querySelectorAll('[data-open-club]').forEach(function (button) {
