@@ -64,7 +64,7 @@ declare
   v_competitions integer := 0;
   v_batch_id uuid;
 begin
-  if v_uid is null or v_role not in ('SUPER_ADMIN', 'DEVELOPER') then
+  if v_uid is null or v_role <> 'SUPER_ADMIN' then
     raise exception 'Only an authenticated Super Admin can import FIFA Connect player records';
   end if;
 
