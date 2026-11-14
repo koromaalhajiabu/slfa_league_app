@@ -129,9 +129,15 @@
       var played = games.filter(completed), goals = played.reduce(function (n,m) {
         return n + (Number(m.home_score) || 0) + (Number(m.away_score) || 0);
       }, 0);
+      var logo = l.logo_url ? '<img class="slfa-lp-card-logo" src="' + esc(l.logo_url) + '" alt="" loading="lazy" onerror="this.hidden=true">' :
+        '<span class="slfa-lp-card-icon" aria-hidden="true">⚽</span>';
+      var type = String(l.competition_type || 'LEAGUE').replace(/_/g, ' ');
+      var category = String(l.gender_category || 'OPEN').replace(/_/g, ' ');
       return '<button type="button" class="slfa-lp-league-card" data-open-league="' + esc(id) + '">' +
-        '<span class="slfa-lp-card-icon" aria-hidden="true">⚽</span><span class="slfa-lp-card-copy"><strong>' + esc(l.name) +
-        '</strong><small>Public competition information</small><span class="slfa-lp-card-stats">' + teamCount + ' clubs · ' + played.length +
+        logo + '<span class="slfa-lp-card-copy"><strong>' + esc(l.name) +
+        '</strong><small>' + esc(type) + ' · ' + esc(category) + '</small>' +
+        (l.description ? '<span class="slfa-lp-card-description">' + esc(l.description) + '</span>' : '') +
+        '<span class="slfa-lp-card-stats">' + teamCount + ' clubs · ' + played.length +
         ' completed · ' + goals + ' goals</span></span><span class="slfa-lp-arrow" aria-hidden="true">›</span></button>';
     }).join('');
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-hero"><div><p class="slfa-lp-eyebrow">SIERRA LEONE FOOTBALL ASSOCIATION</p>' +
@@ -154,12 +160,13 @@
     var recent = played.sort(function (a,b) { return new Date(b.match_date)-new Date(a.match_date); });
     var goals = played.reduce(function (n,m) { return n + (Number(m.home_score)||0) + (Number(m.away_score)||0); }, 0);
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-hero"><div><p class="slfa-lp-eyebrow">SLFA COMPETITION PROFILE</p>' +
-      '<h3>' + esc(lg.name) + '</h3><p>Competition overview and published league information. Participating clubs are listed under Teams.</p></div>' +
+      '<h3>' + esc(lg.name) + '</h3><p>' + esc(lg.description || 'Competition overview and published league information. Participating clubs are listed under Teams.') + '</p></div>' +
+      (lg.logo_url ? '<img class="slfa-lp-competition-logo" src="' + esc(lg.logo_url) + '" alt="" loading="lazy">' :
       (String(lg.name || '').toLowerCase().indexOf('marampa') !== -1 && String(lg.name || '').toLowerCase().indexOf('women') !== -1
         ? '<img class="slfa-lp-competition-logo" src="league-logos/marampa-mines-womens-premier-league.jpg" alt="Marampa Mines Women\'s Premier League logo" loading="lazy">'
         : String(lg.name || '').toLowerCase().indexOf('leone rock') !== -1
         ? '<img class="slfa-lp-competition-logo" src="league-logos/leone-rock-premier-league.jpg" alt="Leone Rock Premier League logo" loading="lazy">'
-        : '<span class="slfa-lp-hero-mark">SLFA</span>') + '</div>' +
+        : '<span class="slfa-lp-hero-mark">SLFA</span>')) + '</div>' +
       '<div class="slfa-lp-detail-actions"><button type="button" id="slfaLpAll">‹ All competitions</button><span>Public information</span></div>' +
       '<div class="slfa-lp-kpis">' + kpi(teamRows.length,'Participating clubs') + kpi(played.length,'Matches completed') +
       kpi(goals,'Goals recorded') + kpi(next.length,'Upcoming fixtures') + '</div>' +
@@ -262,7 +269,7 @@
     loading = true;
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-loading">Loading public competition information…</div></section>';
     Promise.all([
-      db.from('leagues').select('id,name').eq('is_active',true).order('sort_order'),
+      db.from('leagues').select('id,name,competition_type,gender_category,description,logo_url,sort_order').eq('is_active',true).order('sort_order'),
       db.from('league_clubs').select('id,league_id,club_name,logo_url,stadium,city,founded_year,about').eq('is_active',true).order('club_name'),
       db.from('matches').select('id,league_id,match_date,venue,match_status,home_team,away_team,home_score,away_score').order('match_date',{ascending:false}).limit(1000),
       db.from('league_standings').select('league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos',{ascending:true})
