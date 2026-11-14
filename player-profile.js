@@ -25,6 +25,51 @@
     if (!rows || !rows.length) return null;
     return rows.reduce(function (n, row) { return n + (Number(row[key]) || 0); }, 0);
   }
+  function loadScoringHistory(host, name, club) {
+    if (!host) return;
+    host.innerHTML = '<p class="pp-note">Loading goals and assists by season…</p>';
+    Promise.all([
+      db.from('match_events').select('match_id').eq('event_type','GOAL').eq('team_name',club).eq('player_name',name),
+      db.from('match_events').select('match_id').eq('event_type','GOAL').eq('team_name',club).eq('assist_player_name',name)
+    ]).then(function(events) {
+      if (events[0].error || events[1].error) { host.innerHTML = '<p class="pp-note">Season scoring history is temporarily unavailable.</p>'; return; }
+      var goals=events[0].data||[], assists=events[1].data||[];
+      var ids=Array.from(new Set(goals.concat(assists).map(function(x){return String(x.match_id);})));
+      if(!ids.length){host.innerHTML='<p class="pp-note">No published goal or assist events are linked to this player yet.</p>';return;}
+      return Promise.all([
+        db.from('matches').select('id,season_id,match_status,match_date').in('id',ids),
+        db.from('seasons').select('id,name,start_date,end_date').order('start_date')
+      ]).then(function(data) {
+        if(data[0].error){host.innerHTML='<p class="pp-note">Season scoring history is temporarily unavailable.</p>';return;}
+        var matchMap={},seasonRows=data[1].error?[]:(data[1].data||[]);
+        (data[0].data||[]).forEach(function(m){matchMap[String(m.id)]=m;});
+        function seasonKey(match){
+          if(match.season_id!=null)return String(match.season_id);
+          var date=String(match.match_date||'').slice(0,10);
+          var found=seasonRows.find(function(s){return date>=String(s.start_date)&&date<=String(s.end_date);});
+          return found?String(found.id):'unknown';
+        }
+        var grouped={};
+        function count(list,key){
+          list.forEach(function(ev){
+            var m=matchMap[String(ev.match_id)];
+            if(!m||String(m.match_status||'').toUpperCase()!=='FT')return;
+            var k=seasonKey(m);
+            if(!grouped[k])grouped[k]={goals:0,assists:0};
+            grouped[k][key]++;
+          });
+        }
+        count(goals,'goals');count(assists,'assists');
+        var names={};seasonRows.forEach(function(s){names[String(s.id)]=s.name;});
+        var rows=Object.keys(grouped).map(function(k){return {season:names[k]||(k==='unknown'?'Season not recorded':'Season '+k),goals:grouped[k].goals,assists:grouped[k].assists};})
+          .sort(function(a,b){return a.season.localeCompare(b.season);});
+        host.innerHTML='<div class="pp-scoring-head"><span>SEASON-BY-SEASON</span><strong>Goals and assists</strong></div>'+
+          '<div class="pp-career-table-wrap"><table class="pp-career-table"><thead><tr><th>Season</th><th>Goals</th><th>Assists</th></tr></thead><tbody>'+
+          rows.map(function(r){return '<tr><td>'+esc(r.season)+'</td><td>'+r.goals+'</td><td>'+r.assists+'</td></tr>';}).join('')+
+          '</tbody></table></div><p class="pp-note">Counts are based on goal events in completed matches and are linked to the player name and club shown above.</p>';
+      });
+    }).catch(function(){host.innerHTML='<p class="pp-note">Season scoring history is temporarily unavailable.</p>';});
+  }
   function metricCard(metric) {
     var value = metric.value == null ? '—' : esc(metric.value);
     var foot = metric.error ? 'Temporarily unavailable' : (metric.value == null ? 'No published figure yet' : 'Published league record');
@@ -65,6 +110,10 @@
         metrics.map(metricCard).join('') + '</div></section>';
       content.innerHTML = baseHtml + '<section class="pp-career"><div class="pp-career-head"><span>PLAYER CAREER</span><h3>Match appearances</h3></div><div id="ppCareerBody"><p class="pp-note">Loading recorded match appearances…</p></div></section><div class="pp-profile-foot"><span class="pp-foot-mark">SL</span><p>Performance figures come from published league statistics. Appearance totals are counted from recorded matchday line-ups linked to this player registration. Missing records are not treated as zero.</p></div>';
       var careerHost = content.querySelector('#ppCareerBody');
+      var scoringHost = document.createElement('div');
+      scoringHost.className = 'pp-scoring-history';
+      careerHost.parentNode.insertBefore(scoringHost, careerHost.nextSibling);
+      loadScoringHistory(scoringHost, name, club);
       if (!playerId) { careerHost.innerHTML = '<p class="pp-note">Match appearances are not linked to this player record yet.</p>'; return; }
       db.from('match_lineups').select('match_id,is_starter').eq('player_id', playerId).then(function (lineupRes) {
         if (thisRequest !== requestId || !dialog.open) return;
