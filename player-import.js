@@ -68,7 +68,7 @@
   function validate(rows) {
     var errors = [], seen = {};
     rows.forEach(function (r) {
-      if (!r.league || !r.club || !r.player_name || !r.fifa_connect_id || !r.player_nin) errors.push('Line ' + r._line + ': League, Club, Player Name, FIFA ID and National ID are required.');
+      if (!r.league || !r.club || !r.player_name || !r.fifa_connect_id || !r.player_nin || !r.date_of_birth) errors.push('Line ' + r._line + ': League, Club, Player Name, FIFA ID, National ID and Date of Birth are required.');
       var key = r.fifa_connect_id.toLowerCase();
       if (key && seen[key]) errors.push('Line ' + r._line + ': duplicate FIFA ID also appears on line ' + seen[key] + '.');
       if (key) seen[key] = r._line;
@@ -98,7 +98,7 @@
       '<p class="muted">Import the official player export supplied through SLFA\'s authorized FIFA Connect access. This imports registered players into the current SLFA app season; it does not connect to or modify FIFA Connect.</p>' +
       '<div class="btns"><button type="button" class="secondary" id="fciTemplate">Download CSV template</button></div>' +
       '<label for="fciFile">FIFA Connect CSV export</label><input id="fciFile" type="file" accept=".csv,text/csv">' +
-      '<p class="muted">Required columns: League, Club, FIFA ID, Player Name, National ID. Optional: Date of Birth (YYYY-MM-DD), Nationality, Position, Jersey Number, Photo URL.</p>' +
+      '<p class="muted">Required columns: League, Club, FIFA ID, Player Name, National ID, Date of Birth (YYYY-MM-DD). Optional: Nationality, Position, Jersey Number, Photo URL.</p>' +
       '<div class="btns"><button type="button" class="secondary" id="fciCheck" disabled>Validate and preview</button><button type="button" class="primary" id="fciImport" disabled>Import verified players</button></div>' +
       '<div id="fciMessage" class="status" role="status" aria-live="polite"></div>' +
       '<div id="fciPreview" class="muted"></div>' +
