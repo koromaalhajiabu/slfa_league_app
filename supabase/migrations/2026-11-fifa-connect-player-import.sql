@@ -101,8 +101,8 @@ begin
     v_dob := nullif(btrim(v_row->>'date_of_birth'), '')::date;
     v_jersey := nullif(btrim(v_row->>'jersey_number'), '')::integer;
 
-    if v_league_name is null or v_club_name is null or v_player_name is null or v_fifa_id is null or v_nin is null then
-      raise exception 'Row % is missing League, Club, Player Name, FIFA ID or National ID', v_rows;
+    if v_league_name is null or v_club_name is null or v_player_name is null or v_fifa_id is null or v_nin is null or nullif(btrim(v_row->>'date_of_birth'), '') is null then
+      raise exception 'Row % is missing League, Club, Player Name, FIFA ID, National ID or Date of Birth', v_rows;
     end if;
 
     select id into v_league_id from public.leagues
@@ -142,11 +142,11 @@ begin
       update public.club_squad set
         player_name = v_player_name,
         player_nin = v_nin,
-        date_of_birth = v_dob,
-        nationality = v_nationality,
-        position = v_position,
-        jersey_number = v_jersey,
-        photo_url = v_photo,
+        date_of_birth = coalesce(v_dob, date_of_birth),
+        nationality = coalesce(v_nationality, nationality),
+        position = coalesce(v_position, position),
+        jersey_number = coalesce(v_jersey, jersey_number),
+        photo_url = coalesce(v_photo, photo_url),
         status = 'Active',
         registration_status = 'Approved'
       where id = v_existing_id;
