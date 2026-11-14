@@ -53,3 +53,20 @@
 @keyframes slfaPanelIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:650px){.slfa-mc-heading{padding:16px}.slfa-mc-card{border-radius:15px}.slfa-mc-teams{gap:5px}.slfa-mc-team{font-size:10px}.slfa-mc-card-bottom{gap:8px;flex-wrap:wrap}.slfa-lp-table{min-width:560px}.slfa-cup-bracket-panel .slfa-lp-match{padding:11px}}
 @media(prefers-reduced-motion:reduce){.slfa-mc-card,.slfa-mc-live-dot,.slfa-mc-detail,.slfa-lp-table tbody tr,.pp-metric{animation:none!important;transition:none!important}.slfa-mc-card:hover,.pp-metric:hover{transform:none}}
+
+/* SLFA interactive matchday behaviours */
+.slfa-goal-celebration{position:fixed;z-index:99999;left:50%;top:18%;width:min(88vw,340px);padding:20px 22px;text-align:center;border:1px solid rgba(141,240,176,.55);border-radius:22px;color:#fff;background:radial-gradient(circle at 50% 0,rgba(141,240,176,.26),transparent 55%),linear-gradient(135deg,#052f20,#087b43 65%,#082f48);box-shadow:0 22px 70px rgba(0,0,0,.4);opacity:0;pointer-events:none;transform:translate(-50%,-18px) scale(.92)}
+.slfa-goal-celebration.is-visible{animation:slfaGoalPop .42s cubic-bezier(.2,.9,.25,1.2) forwards}
+.slfa-goal-celebration strong{display:block;font-size:36px;letter-spacing:.12em;color:#b9ffd1;text-shadow:0 0 24px rgba(141,240,176,.5)}
+.slfa-goal-celebration span,.slfa-goal-celebration small{display:block;margin-top:5px}.slfa-goal-burst{font-size:22px;letter-spacing:10px;color:#f5d98f}
+@keyframes slfaGoalPop{0%{opacity:0;transform:translate(-50%,-18px) scale(.92)}15%,85%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-8px) scale(.98)}}
+.pp-achievements{margin:20px 0;padding:17px;border:1px solid rgba(141,240,176,.2);border-radius:16px;background:linear-gradient(135deg,rgba(8,123,67,.07),rgba(105,184,239,.05))}
+.pp-achievement-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px}
+.pp-achievement{display:flex;flex-direction:column;gap:5px;padding:12px;border:1px solid rgba(8,123,67,.17);border-radius:12px;background:rgba(255,255,255,.65)}
+.pp-achievement>span{font-size:22px}.pp-achievement strong{font-size:12px}.pp-achievement small{font-size:10px;opacity:.72}
+.slfa-cup-round-nav{display:flex;gap:7px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:thin}
+.slfa-cup-round-nav button{flex:0 0 auto;padding:8px 12px;border:1px solid rgba(105,184,239,.22);border-radius:999px;background:rgba(105,184,239,.07);font-size:11px}
+.slfa-cup-round-nav button.is-active{background:#087b43;color:#fff;border-color:#087b43}
+.slfa-lp-match[hidden]{display:none!important}
+.slfa-lp-current-rank{display:inline-grid;place-items:center;min-width:30px;padding:4px 6px;border-radius:7px;background:rgba(229,199,126,.18);color:inherit}
+@media(prefers-reduced-motion:reduce){.slfa-goal-celebration.is-visible{animation:none;opacity:1;transform:translate(-50%,0)}}
