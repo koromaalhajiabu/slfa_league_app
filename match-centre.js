@@ -16,7 +16,7 @@
   function dateText(v) { if (!v) return 'Date TBC'; var d = new Date(v); return isNaN(d) ? String(v) : d.toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
   function day(v) { var d = new Date(v); return isNaN(d) ? '' : d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function status(m) { return String(m.match_status || '').toUpperCase(); }
-  function clubKey(v) { return String(v || '').toLowerCase().replace(/\\bfc\\b/g, '').replace(/[^a-z0-9]/g, ''); }
+  function clubKey(v) { return String(v || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, ''); }
   function sameClub(a,b) { return clubKey(a) === clubKey(b); }
   function clubForm(name) {
     return allMatches.filter(function(m) {
