@@ -4,6 +4,9 @@ alter table public.club_squad
   add column if not exists fifa_connect_id text,
   add column if not exists nationality text;
 
+-- Keep private identifiers out of anonymous public reads.
+revoke select (player_nin, date_of_birth, fifa_connect_id) on public.club_squad from anon;
+
 create unique index if not exists club_squad_fifa_connect_season_uidx
   on public.club_squad (fifa_connect_id, season_id)
   where fifa_connect_id is not null and btrim(fifa_connect_id) <> '';
