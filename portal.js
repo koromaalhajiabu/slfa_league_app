@@ -8,7 +8,7 @@
   if (isDeveloperSession) { authOptions.storage = window.sessionStorage; authOptions.storageKey = 'slfa-developer-account-session'; }
   var db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:authOptions});
   window.slfaDb=db;
-  var PAGES={DEVELOPER:'developer.html',SUPER_ADMIN:'super-admin.html',REFEREE:'referee.html',MEDIA_OFFICER:'media.html',DISCIPLINARY_OFFICER:'disciplinary.html',CLUB_ADMIN:'club.html'};
+  var PAGES={DEVELOPER:'developer.html',SUPER_ADMIN:'super-admin.html',REFEREE:'referee.html',MEDIA_OFFICER:'media.html',DISCIPLINARY_OFFICER:'disciplinary.html'};
   var portal=document.body.dataset.portal;
   var lastFreezeState=null;
   function $(id){return document.getElementById(id);}
