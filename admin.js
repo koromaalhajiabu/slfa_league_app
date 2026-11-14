@@ -512,9 +512,13 @@
     wireAudit();
     var list = $('auditList'); if (!list) return;
     list.textContent = 'Loading…';
-    db.rpc('admin_audit_feed', { p_days: Number($('auDays').value) || 90, p_limit: 200 }).then(function (r) {
-      if (r.error) { list.textContent = 'The audit log could not be loaded.'; return; }
-      auditRows = r.data || [];
+    Promise.all([
+      db.rpc('admin_audit_feed', { p_days: Number($('auDays').value) || 90, p_limit: 200 }),
+      db.rpc('admin_activity_audit_feed', { p_days: Number($('auDays').value) || 90, p_limit: 300 })
+    ]).then(function (results) {
+      if (results[0].error) { list.textContent = 'The audit log could not be loaded.'; return; }
+      auditRows = (results[0].data || []).concat(results[1].error ? [] : (results[1].data || []))
+        .sort(function(a,b){return new Date(b.at)-new Date(a.at);}).slice(0,500);
       var area = $('auArea'), keep = area.value, areas = {};
       auditRows.forEach(function (x) { areas[x.area] = true; });
       area.innerHTML = '<option value="">All areas</option>' + Object.keys(areas).sort().map(function (a) { return '<option value="' + esc(a) + '">' + esc(a) + '</option>'; }).join('');
