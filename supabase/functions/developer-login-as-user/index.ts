@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
   const role = String(target.system_role || "").toUpperCase();
   if (String(target.status).toLowerCase() !== "active") return reply(403, { error: "Only active accounts can be opened." });
   if (role === "DEVELOPER" || !portalFor[role]) return reply(403, { error: "This account type cannot be opened through managed login." });
-  const portal = new URL(portalFor[role], req.headers.get("origin") || "https://koromaalhajiabu.github.io/slfa_league_app/").toString();
+  const portal = new URL(portalFor[role], "https://koromaalhajiabu.github.io/slfa_league_app/").toString();
   // Log before issuing credentials; the audit table is service-role-only and append-only.
   const { error: auditError } = await admin.from("developer_account_sessions").insert({
     developer_id: actor.id, target_user_id: target.id, target_email: target.email,
