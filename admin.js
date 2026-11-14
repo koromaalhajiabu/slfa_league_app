@@ -1210,7 +1210,7 @@
       '<label for="ivClub">Club (Club Managers only)</label><select id="ivClub"><option value="">Loading clubs…</option></select><div class="btns"><button class="primary" id="ivSave">Save role</button></div>'+
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
       '<h2 class="rt">All accounts and roles</h2><p class="muted">Change roles, suspend, restore or delete accounts. Actions are logged automatically.</p><div id="roleList" class="muted">Loading…</div>'+
-      '<h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div><div class="status" id="roleMsg"></div>';
+      '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
     loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();if(window.slfaDeveloperWorkspace)window.slfaDeveloperWorkspace(p);
     $('pauseBtn').onclick=function(){setPause(true);};$('resumeBtn').onclick=function(){setPause(false);};
     $('freezeAppBtn').onclick=function(){setAppFreeze(true);};$('unfreezeAppBtn').onclick=function(){setAppFreeze(false);};
