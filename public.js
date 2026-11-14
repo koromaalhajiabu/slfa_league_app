@@ -166,6 +166,14 @@
       db.from('leagues').select('id, name, logo_url, competition_type, gender_category').eq('is_active', true).order('sort_order'),
       db.from('league_clubs').select('club_name, league_id').eq('is_active', true)
     ]).then(function (all) {
+      if (all[0].error) {
+        return db.from('leagues').select('id, name').eq('is_active', true).order('sort_order').then(function (fallback) {
+          all[0] = fallback;
+          return all;
+        });
+      }
+      return all;
+    }).then(function (all) {
       leagueList = all[0].data || [];
       clubLeague = {};
       (all[1].data || []).forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; });
