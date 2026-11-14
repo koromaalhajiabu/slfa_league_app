@@ -1211,7 +1211,7 @@
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
       '<h2 class="rt">All accounts and roles</h2><p class="muted">Change roles, suspend, restore or delete accounts. Actions are logged automatically.</p><div id="roleList" class="muted">Loading…</div>'+
       '<h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div><div class="status" id="roleMsg"></div>';
-    loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();
+    loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();if(window.slfaDeveloperWorkspace)window.slfaDeveloperWorkspace(p);
     $('pauseBtn').onclick=function(){setPause(true);};$('resumeBtn').onclick=function(){setPause(false);};
     $('freezeAppBtn').onclick=function(){setAppFreeze(true);};$('unfreezeAppBtn').onclick=function(){setAppFreeze(false);};
     $('ivPhoto').onchange=function(){var f=this.files&&this.files[0];if(!f){$('ivPhotoPreview').textContent='No photo selected.';return;}if(['image/jpeg','image/png','image/webp'].indexOf(f.type)===-1||f.size>4*1024*1024){this.value='';msg('Choose a JPG, PNG or WebP photo no larger than 4 MB.');return;}var u=URL.createObjectURL(f);$('ivPhotoPreview').innerHTML='<img src="'+u+'" alt="Profile preview" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #16834a">';};
