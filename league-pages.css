@@ -129,3 +129,9 @@
 .slfa-lp-card-description{display:block;color:var(--muted);font-size:9px;line-height:1.45}
 .slfa-lp-card-copy small{text-transform:capitalize;letter-spacing:.035em}
 @media(max-width:380px){.slfa-lp-card-logo{flex-basis:42px;width:42px;height:42px}}
+
+.slfa-lp-club-link{display:flex;align-items:center;gap:9px;min-height:58px;padding:9px;background:var(--card)}
+.slfa-lp-club-link>span:nth-child(2){flex:1;min-width:0}
+.slfa-lp-club-link>span:nth-child(2) strong{font-size:10px}
+.slfa-lp-club-link>span:nth-child(2) small{display:block;margin-top:3px;color:var(--muted);font-size:8px}
+.slfa-lp-club-link .slfa-lp-club-arrow{font-size:20px}
