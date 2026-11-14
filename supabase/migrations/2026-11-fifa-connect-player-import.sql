@@ -74,7 +74,10 @@ begin
     raise exception 'Your SLFA account is not active';
   end if;
 
-  if jsonb_typeof(p_rows) is distinct from 'array' or jsonb_array_length(p_rows) = 0 then
+  if jsonb_typeof(p_rows) is distinct from 'array' then
+    raise exception 'The import payload must be a JSON array of player records';
+  end if;
+  if jsonb_array_length(p_rows) = 0 then
     raise exception 'The import file contains no player rows';
   end if;
   if jsonb_array_length(p_rows) > 5000 then
