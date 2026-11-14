@@ -24,7 +24,7 @@ WITH expected(kind, object_name) AS (
     ('TABLE','fan_reports'),
     ('TABLE','app_events'),
     ('TABLE','audit_logs'),
-    ('TABLE','offline_referee_submissions'),
+    ('TABLE','referee_offline_submissions'),
     ('FUNCTION','submit_match_comment'),
     ('FUNCTION','submit_fan_report'),
     ('FUNCTION','set_push_clubs'),
