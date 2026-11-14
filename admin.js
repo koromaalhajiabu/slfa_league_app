@@ -204,6 +204,18 @@
       '<button class="secondary" data-export="suspensions">Suspensions (CSV)</button>' +
       '<button class="primary" data-export="full_backup">Full backup (JSON)</button></div>' +
       '<div id="exportMsg" class="muted" role="status"></div>' +
+      '<h2 class="rt">Competition directory management</h2>' +
+      '<p class="muted">Create and maintain public competitions. New competitions appear automatically in the public League Centre, fixture selectors and competition directory.</p>' +
+      '<label for="coEdit">Existing competition</label><select id="coEdit"><option value="">Create a new competition</option></select>' +
+      input('coName', 'Competition name') +
+      '<label for="coType">Competition format</label><select id="coType"><option value="LEAGUE">League</option><option value="CUP">Cup</option><option value="YOUTH">Youth competition</option><option value="FUTSAL">Futsal</option><option value="OTHER">Other</option></select>' +
+      '<label for="coGender">Category</label><select id="coGender"><option value="MEN">Men</option><option value="WOMEN">Women</option><option value="MIXED">Mixed</option><option value="OPEN">Open / not specified</option></select>' +
+      '<label for="coDescription">Public description</label><textarea id="coDescription" rows="3" maxlength="500"></textarea>' +
+      input('coLogo', 'Competition logo URL or repository path (optional)') +
+      input('coSort', 'Display order', 'number', 'min="0" step="1" value="10"') +
+      '<label class="terms-row"><input id="coActive" type="checkbox" checked> <span>Publish this competition in the public app</span></label>' +
+      '<div class="btns"><button class="primary" id="coSave">Save competition</button><button class="secondary" id="coNew">New competition</button></div>' +
+      '<div id="competitionAdminList" class="muted">Loading competitions…</div>' +
       '<h2 class="rt">Clubs</h2>' +
       '<label for="clName">Club name</label><input id="clName" type="text">' +
       '<label for="clLeague">League</label><select id="clLeague"><option value="">Loading leagues…</option></select>' +
@@ -304,6 +316,7 @@
     });
 
     loadLeagueOptions();
+    wireCompetitionAdmin();
     wireClubs();
     loadReview();
     loadClubProfileReview();
@@ -750,6 +763,77 @@
       }).join('');
     });
   }
+  function wireCompetitionAdmin() {
+    var rows = [];
+    var edit = $('coEdit');
+    function resetForm() {
+      edit.value = '';
+      $('coName').value = '';
+      $('coType').value = 'LEAGUE';
+      $('coGender').value = 'OPEN';
+      $('coDescription').value = '';
+      $('coLogo').value = '';
+      $('coSort').value = '10';
+      $('coActive').checked = true;
+      $('coSave').textContent = 'Save competition';
+    }
+    function load() {
+      db.from('leagues').select('id,name,competition_type,gender_category,description,logo_url,sort_order,is_active').order('sort_order').then(function (r) {
+        if (r.error) { msg('Competition list could not be loaded: ' + r.error.message); return; }
+        rows = r.data || [];
+        edit.innerHTML = '<option value="">Create a new competition</option>' + rows.map(function (x) {
+          return '<option value="' + esc(x.id) + '">' + esc(x.name) + (x.is_active ? '' : ' · unpublished') + '</option>';
+        }).join('');
+        $('competitionAdminList').innerHTML = rows.length ? '<div class="scroll"><table class="table"><thead><tr><th>Competition</th><th>Type</th><th>Status</th></tr></thead><tbody>' +
+          rows.map(function (x) { return '<tr><td>' + esc(x.name) + '</td><td>' + esc(x.competition_type || 'LEAGUE') + '</td><td>' + (x.is_active ? 'Published' : 'Unpublished') + '</td></tr>'; }).join('') +
+          '</tbody></table></div>' : '<p class="muted">No competitions have been created yet.</p>';
+      });
+    }
+    edit.addEventListener('change', function () {
+      var row = rows.find(function (x) { return String(x.id) === String(edit.value); });
+      if (!row) { resetForm(); return; }
+      $('coName').value = row.name || '';
+      $('coType').value = row.competition_type || 'LEAGUE';
+      $('coGender').value = row.gender_category || 'OPEN';
+      $('coDescription').value = row.description || '';
+      $('coLogo').value = row.logo_url || '';
+      $('coSort').value = row.sort_order == null ? 10 : row.sort_order;
+      $('coActive').checked = !!row.is_active;
+      $('coSave').textContent = 'Update competition';
+    });
+    $('coNew').addEventListener('click', resetForm);
+    $('coSave').addEventListener('click', function () {
+      var name = $('coName').value.trim();
+      var sort = parseInt($('coSort').value, 10);
+      if (name.length < 3) { msg('Enter a competition name of at least 3 characters.'); return; }
+      if (!Number.isInteger(sort) || sort < 0) { msg('Display order must be a whole number of zero or more.'); return; }
+      var selected = edit.value ? Number(edit.value) : null;
+      $('coSave').disabled = true;
+      db.rpc('admin_upsert_competition', {
+        p_id: selected,
+        p_name: name,
+        p_type: $('coType').value,
+        p_gender: $('coGender').value,
+        p_description: $('coDescription').value.trim() || null,
+        p_logo_url: $('coLogo').value.trim() || null,
+        p_sort_order: sort,
+        p_is_active: $('coActive').checked
+      }).then(function (r) {
+        $('coSave').disabled = false;
+        if (r.error) { msg('Could not save competition: ' + r.error.message); return; }
+        msg(selected ? 'Competition updated.' : 'Competition created and ready for clubs and fixtures.');
+        resetForm();
+        load();
+        loadLeagueOptions();
+        loadClubAdmin();
+      }).catch(function (e) {
+        $('coSave').disabled = false;
+        msg('Could not save competition: ' + (e && e.message ? e.message : 'Unknown error.'));
+      });
+    });
+    load();
+  }
+
   function loadLeagueOptions() {
     db.from('leagues').select('id, name').eq('is_active', true).order('sort_order').then(function (r) {
       $('fxLeague').innerHTML = '<option value="">Choose the league…</option>' + (r.data || []).map(function (l) {
