@@ -3,7 +3,7 @@
   'use strict';
   var db = window.slfaDb, host = document.getElementById('matchList');
   if (!db || !host) return;
-  var allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer;
+  var allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer, celebratedGoals = {};
   // Season: the picker stores the chosen season; the default is the current season.
   function selectedSeason() { var stored = ''; try { stored = localStorage.getItem('slfa_season') || ''; } catch (e) {} var cur = seasons.filter(function (x) { return x.is_current; })[0] || null; return seasons.filter(function (x) { return String(x.id) === stored; })[0] || cur; }
   // Matches saved without a season count toward the season their date falls in.
@@ -89,6 +89,27 @@
       if (group(a) === 'upcoming' && group(b) === 'upcoming') return new Date(a.match_date)-new Date(b.match_date);
       return new Date(b.match_date)-new Date(a.match_date);
     });
+  }
+  function goalCelebration(event) {
+    if (!event || String(event.event_type || '').toUpperCase() !== 'GOAL') return;
+    var key = [event.match_id,event.minute,event.player_name,event.team_name].join('|');
+    if (celebratedGoals[key]) return;
+    celebratedGoals[key] = true;
+    var layer = document.getElementById('slfa-goal-celebration');
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.id = 'slfa-goal-celebration';
+      layer.className = 'slfa-goal-celebration';
+      layer.setAttribute('role','status');
+      layer.setAttribute('aria-live','polite');
+      document.body.appendChild(layer);
+    }
+    layer.innerHTML = '<div class="slfa-goal-burst" aria-hidden="true">⚽ ✦ ⚽</div><strong>GOAL!</strong><span>' + esc(event.player_name || 'Goal recorded') + '</span><small>' + esc(event.team_name || 'SLFA match') + (event.minute == null ? '' : ' · ' + esc(event.minute) + "'") + '</small>';
+    layer.classList.remove('is-visible');
+    void layer.offsetWidth;
+    layer.classList.add('is-visible');
+    window.clearTimeout(layer._hideTimer);
+    layer._hideTimer = window.setTimeout(function(){layer.classList.remove('is-visible');},4200);
   }
   function livePreview(m) {
     var events = liveEvents.filter(function (e) { return String(e.match_id) === String(m.id); });
@@ -339,7 +360,7 @@
   if(window.MutationObserver){new MutationObserver(function(){if(!host.querySelector('.slfa-match-centre-v2')&&matches.length)render();}).observe(host,{childList:true,subtree:true});}
   var switcher=document.getElementById('leagueSwitch');
   if(switcher)switcher.addEventListener('click',function(){window.setTimeout(render,50);});
-  if(db.channel)db.channel('public-match-centre').on('postgres_changes',{event:'*',schema:'public',table:'matches'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'match_events'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},schedule).subscribe();
+  if(db.channel)db.channel('public-match-centre').on('postgres_changes',{event:'*',schema:'public',table:'matches'},schedule).on('postgres_changes',{event:'INSERT',schema:'public',table:'match_events'},function(payload){var e=payload&&payload.new;if(e)goalCelebration(e);schedule();}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'match_events'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},schedule).subscribe();
   window.addEventListener('online',schedule);
   window.setInterval(fetchData,60000);
   fetchData();
