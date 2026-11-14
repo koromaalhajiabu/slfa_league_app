@@ -185,12 +185,12 @@
       var all = played.filter(function(m) { return sameClub(m.home_team,name) || sameClub(m.away_team,name); });
       var home = all.filter(function(m) { return sameClub(m.home_team,name); });
       var away = all.filter(function(m) { return sameClub(m.away_team,name); });
-      var form = all.slice().sort(function(a,b) { return new Date(b.match_date)-new Date(a.match_date); }).slice(0,5).reverse().map(function(m) { return outcomeFor(name,m); }).join(' ');
+      var form = all.slice().sort(function(a,b) { return new Date(b.match_date)-new Date(a.match_date); }).slice(0,5).reverse().map(function(m) { return outcomeFor(name,m); });
       return {name:name,homePoints:pointsFor(name,home),awayPoints:pointsFor(name,away),form:form || '—',played:all.length};
     });
     var analyticsHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>PERFORMANCE INTELLIGENCE</span><h4>Home, away and recent form</h4></div><small>From completed results</small></div>' +
       '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table slfa-lp-analytics-table"><thead><tr><th>Club</th><th>P</th><th>Home pts</th><th>Away pts</th><th>Last 5</th></tr></thead><tbody>' +
-      analyticsRows.map(function(x) { return '<tr><td class="club">'+esc(x.name)+'</td><td>'+x.played+'</td><td>'+x.homePoints+'</td><td>'+x.awayPoints+'</td><td><strong class="slfa-lp-form">'+esc(x.form)+'</strong></td></tr>'; }).join('') +
+      analyticsRows.map(function(x) { return '<tr><td class="club">'+esc(x.name)+'</td><td>'+x.played+'</td><td>'+x.homePoints+'</td><td>'+x.awayPoints+'</td><td><strong class="slfa-lp-form">'+(Array.isArray(x.form)&&x.form.length?x.form.map(function(v){return '<i class="slfa-form-'+v.toLowerCase()+'" title="'+(v==='W'?'Win':v==='D'?'Draw':'Loss')+'">'+v+'</i>';}).join(''):'—')+'</strong></td></tr>'; }).join('') +
       '</tbody></table></div></section>';
     var h2hOptions = teamRows.map(function(c) { return '<option value="'+esc(c.club_name)+'">'+esc(c.club_name)+'</option>'; }).join('');
     var h2hHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>HEAD-TO-HEAD</span><h4>Compare two clubs</h4></div></div>' +
@@ -198,7 +198,7 @@
       '<p class="slfa-lp-empty">At least two clubs are needed for a comparison.</p>') + '</section>';
     var cupRows = cupTies.filter(function(t){return String(t.competition_id)===id;});
     var cupBracketHtml = String(lg.competition_type||'').toUpperCase()==='CUP' ?
-      '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>KNOCKOUT BRACKET</span><h4>Competition rounds</h4></div></div>' +
+      '<section class="slfa-lp-panel slfa-cup-bracket-panel"><div class="slfa-lp-section-head"><div><span>KNOCKOUT BRACKET</span><h4>Competition rounds</h4></div></div>' +
       (cupRows.length ? cupRows.reduce(function(html,t){
         var round=t.round_name||'Round';
         var match=t.matches||{};
