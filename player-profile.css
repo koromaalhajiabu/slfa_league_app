@@ -62,3 +62,8 @@
 .pp-career-table { width:100%; border-collapse:collapse; color:#e9fff0; font-size:11px; }
 .pp-career-table th,.pp-career-table td { padding:10px 8px; border-bottom:1px solid rgba(164,224,184,.12); text-align:left; }
 .pp-career-table th { color:#a9dabb; font-size:9px; letter-spacing:.08em; }
+
+.pp-scoring-history{margin-top:13px;padding:14px;border:1px solid rgba(137,221,165,.16);border-radius:16px;background:rgba(8,45,29,.48)}
+.pp-scoring-head{display:grid;gap:4px;margin-bottom:9px}
+.pp-scoring-head span{color:#8be5ad;font-size:8px;font-weight:900;letter-spacing:.14em}
+.pp-scoring-head strong{color:#f2fff6;font-size:14px}
