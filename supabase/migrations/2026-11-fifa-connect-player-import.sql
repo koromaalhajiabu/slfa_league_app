@@ -142,6 +142,7 @@ begin
       update public.club_squad set
         player_name = v_player_name,
         player_nin = v_nin,
+        fifa_connect_id = v_fifa_id,
         date_of_birth = coalesce(v_dob, date_of_birth),
         nationality = coalesce(v_nationality, nationality),
         position = coalesce(v_position, position),
