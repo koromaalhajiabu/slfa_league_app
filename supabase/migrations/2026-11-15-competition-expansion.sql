@@ -13,12 +13,14 @@ SET
   competition_type = CASE
     WHEN lower(name) LIKE '%cup%' THEN 'CUP'
     WHEN lower(name) LIKE '%youth%' OR lower(name) LIKE '%under-%' THEN 'YOUTH'
-    ELSE COALESCE(NULLIF(competition_type, ''), 'LEAGUE')
+    WHEN competition_type IN ('LEAGUE','CUP','YOUTH','FUTSAL','OTHER') THEN competition_type
+    ELSE 'LEAGUE'
   END,
   gender_category = CASE
     WHEN lower(name) LIKE '%women%' OR lower(name) LIKE '%female%' THEN 'WOMEN'
     WHEN lower(name) LIKE '%men%' AND lower(name) NOT LIKE '%women%' THEN 'MEN'
-    ELSE COALESCE(NULLIF(gender_category, ''), 'OPEN')
+    WHEN gender_category IN ('MEN','WOMEN','MIXED','OPEN') THEN gender_category
+    ELSE 'OPEN'
   END,
   description = COALESCE(
     NULLIF(description, ''),
@@ -79,11 +81,11 @@ BEGIN
     RAISE EXCEPTION 'Competition name must contain between 3 and 100 characters.';
   END IF;
 
-  IF p_type NOT IN ('LEAGUE','CUP','YOUTH','FUTSAL','OTHER') THEN
+  IF p_type IS NULL OR p_type NOT IN ('LEAGUE','CUP','YOUTH','FUTSAL','OTHER') THEN
     RAISE EXCEPTION 'Choose a valid competition format.';
   END IF;
 
-  IF p_gender NOT IN ('MEN','WOMEN','MIXED','OPEN') THEN
+  IF p_gender IS NULL OR p_gender NOT IN ('MEN','WOMEN','MIXED','OPEN') THEN
     RAISE EXCEPTION 'Choose a valid competition category.';
   END IF;
 
@@ -97,6 +99,14 @@ BEGIN
 
   IF length(COALESCE(p_logo_url, '')) > 500 THEN
     RAISE EXCEPTION 'Competition logo path cannot exceed 500 characters.';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.leagues l
+    WHERE lower(trim(l.name)) = lower(trim(p_name))
+      AND (p_id IS NULL OR l.id <> p_id)
+  ) THEN
+    RAISE EXCEPTION 'A competition with this name already exists.';
   END IF;
 
   IF p_id IS NULL THEN
