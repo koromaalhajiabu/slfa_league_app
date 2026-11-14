@@ -93,6 +93,9 @@ grant execute on function public.invite_user(text,text,uuid,text,text) to authen
 drop function if exists public.set_user_club(uuid, uuid);
 drop function if exists public.submit_club_profile_change(text, text, integer, text);
 
+drop trigger if exists guard_club_profile_direct_update on public.league_clubs;
+drop function if exists public.guard_club_profile_direct_update();
+
 drop trigger if exists guard_squad_registration on public.club_squad;
 drop function if exists public.guard_squad_registration();
 
