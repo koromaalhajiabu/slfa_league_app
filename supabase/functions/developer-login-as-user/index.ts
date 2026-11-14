@@ -12,7 +12,6 @@ function reply(status: number, body: Record<string, unknown>) {
 }
 const portalFor: Record<string, string> = {
   SUPER_ADMIN: "super-admin.html",
-  CLUB_ADMIN: "club.html",
   REFEREE: "referee.html",
   DISCIPLINARY_OFFICER: "disciplinary.html",
   MEDIA_OFFICER: "media.html",
