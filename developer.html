@@ -82,6 +82,20 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
   <section id="portalArea" class="card" hidden>
     <div class="row"><span id="whoName"></span><span class="muted" id="whoRole"></span></div>
     <div id="signedIn"><div id="roleTools"></div></div>
+    <section id="developerCompetitionAdmin" class="card" aria-labelledby="developerCompetitionHeading">
+      <h2 class="rt" id="developerCompetitionHeading">Competition directory management</h2>
+      <p class="muted">Create and maintain public competitions. New competitions appear automatically in the public League Centre and competition directory.</p>
+      <label for="coEdit">Existing competition</label><select id="coEdit"><option value="">Create a new competition</option></select>
+      <label for="coName">Competition name</label><input id="coName" type="text">
+      <label for="coType">Competition format</label><select id="coType"><option value="LEAGUE">League</option><option value="CUP">Cup</option><option value="YOUTH">Youth competition</option><option value="FUTSAL">Futsal</option><option value="OTHER">Other</option></select>
+      <label for="coGender">Category</label><select id="coGender"><option value="MEN">Men</option><option value="WOMEN">Women</option><option value="MIXED">Mixed</option><option value="OPEN">Open / not specified</option></select>
+      <label for="coDescription">Public description</label><textarea id="coDescription" rows="3" maxlength="500"></textarea>
+      <label for="coLogo">Competition logo URL or repository path (optional)</label><input id="coLogo" type="text">
+      <label for="coSort">Display order</label><input id="coSort" type="number" min="0" step="1" value="10">
+      <label class="terms-row"><input id="coActive" type="checkbox" checked> <span>Publish this competition in the public app</span></label>
+      <div class="btns"><button class="primary" id="coSave" type="button">Save competition</button><button class="secondary" id="coNew" type="button">New competition</button></div>
+      <div id="competitionAdminList" class="muted">Loading competitions…</div>
+    </section>
     <div class="btns"><button class="secondary" id="pSignOut">Sign out</button></div>
   </section>
 </main>
