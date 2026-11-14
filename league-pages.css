@@ -135,3 +135,15 @@
 .slfa-lp-club-link>span:nth-child(2) strong{font-size:10px}
 .slfa-lp-club-link>span:nth-child(2) small{display:block;margin-top:3px;color:var(--muted);font-size:8px}
 .slfa-lp-club-link .slfa-lp-club-arrow{font-size:20px}
+
+/* League analytics and head-to-head comparison */
+.slfa-lp-analytics-table{min-width:520px}
+.slfa-lp-form{color:#75d69c;letter-spacing:.08em;font-size:10px}
+.slfa-lp-h2h-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.slfa-lp-h2h-controls label{display:grid;gap:5px;color:var(--muted);font-size:10px;font-weight:700}
+.slfa-lp-h2h-controls select{width:100%;min-height:42px;padding:7px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+.slfa-lp-h2h-summary{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto minmax(0,1fr);align-items:center;gap:7px;padding:11px 8px;border:1px solid var(--line);border-radius:12px;background:rgba(0,114,198,.06);text-align:center}
+.slfa-lp-h2h-summary strong{font-size:10px;overflow-wrap:anywhere}
+.slfa-lp-h2h-summary b{color:var(--accent2);font-size:18px}
+.slfa-lp-h2h-summary span{color:var(--muted);font-size:8px}
+@media(max-width:420px){.slfa-lp-h2h-controls{grid-template-columns:1fr}.slfa-lp-h2h-summary{gap:4px;padding:9px 5px}.slfa-lp-h2h-summary strong{font-size:8px}}
