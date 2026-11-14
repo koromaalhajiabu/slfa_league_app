@@ -168,6 +168,34 @@
       '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table"><thead><tr><th>#</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>' +
       tableRows.map(function (r) { return '<tr><td>' + esc(r.pos) + '</td><td class="club">' + esc(r.club) + '</td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc((Number(r.gf)||0)-(Number(r.ga)||0)) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>'; }).join('') +
       '</tbody></table></div></section>' : '';
+    function outcomeFor(club, match) {
+      var home = sameClub(match.home_team, club);
+      var gf = Number(home ? match.home_score : match.away_score) || 0;
+      var ga = Number(home ? match.away_score : match.home_score) || 0;
+      return gf > ga ? 'W' : gf < ga ? 'L' : 'D';
+    }
+    function pointsFor(club, list) {
+      return list.reduce(function(total, match) {
+        var result = outcomeFor(club, match);
+        return total + (result === 'W' ? 3 : result === 'D' ? 1 : 0);
+      }, 0);
+    }
+    var analyticsRows = teamRows.map(function(c) {
+      var name = c.club_name;
+      var all = played.filter(function(m) { return sameClub(m.home_team,name) || sameClub(m.away_team,name); });
+      var home = all.filter(function(m) { return sameClub(m.home_team,name); });
+      var away = all.filter(function(m) { return sameClub(m.away_team,name); });
+      var form = all.slice().sort(function(a,b) { return new Date(b.match_date)-new Date(a.match_date); }).slice(0,5).reverse().map(function(m) { return outcomeFor(name,m); }).join(' ');
+      return {name:name,homePoints:pointsFor(name,home),awayPoints:pointsFor(name,away),form:form || '—',played:all.length};
+    });
+    var analyticsHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>PERFORMANCE INTELLIGENCE</span><h4>Home, away and recent form</h4></div><small>From completed results</small></div>' +
+      '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table slfa-lp-analytics-table"><thead><tr><th>Club</th><th>P</th><th>Home pts</th><th>Away pts</th><th>Last 5</th></tr></thead><tbody>' +
+      analyticsRows.map(function(x) { return '<tr><td class="club">'+esc(x.name)+'</td><td>'+x.played+'</td><td>'+x.homePoints+'</td><td>'+x.awayPoints+'</td><td><strong class="slfa-lp-form">'+esc(x.form)+'</strong></td></tr>'; }).join('') +
+      '</tbody></table></div></section>';
+    var h2hOptions = teamRows.map(function(c) { return '<option value="'+esc(c.club_name)+'">'+esc(c.club_name)+'</option>'; }).join('');
+    var h2hHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>HEAD-TO-HEAD</span><h4>Compare two clubs</h4></div></div>' +
+      (teamRows.length >= 2 ? '<div class="slfa-lp-h2h-controls"><label>Club one<select id="slfaLpH2hA">'+h2hOptions+'</select></label><label>Club two<select id="slfaLpH2hB">'+h2hOptions+'</select></label></div><div id="slfaLpH2hResults" aria-live="polite"></div>' :
+      '<p class="slfa-lp-empty">At least two clubs are needed for a comparison.</p>') + '</section>';
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-hero"><div><p class="slfa-lp-eyebrow">SLFA COMPETITION PROFILE</p>' +
       '<h3>' + esc(lg.name) + '</h3><p>' + esc(lg.description || 'Competition overview and published league information. Participating clubs are listed under Teams.') + '</p></div>' +
       (lg.logo_url ? '<img class="slfa-lp-competition-logo" src="' + esc(lg.logo_url) + '" alt="" loading="lazy">' :
@@ -181,7 +209,7 @@
       kpi(goals,'Goals recorded') + kpi(next.length,'Upcoming fixtures') + '</div>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>PARTICIPATING TEAMS</span><h4>Clubs in this competition</h4></div><small>' + teamRows.length + ' clubs</small></div>' +
       (clubCards ? '<div class="slfa-lp-clubs">' + clubCards + '</div>' : '<p class="slfa-lp-empty">No clubs have been published for this competition yet.</p>') + '</section>' +
-      tableHtml +
+      tableHtml + analyticsHtml + h2hHtml +
       '<div class="slfa-lp-match-panels"><section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>UP NEXT</span><h4>Upcoming fixtures</h4></div></div>' +
       (next.length ? next.slice(0,3).map(matchRow).join('') : '<p class="slfa-lp-empty">No upcoming fixtures published yet.</p>') + '</section>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>RECENT ACTION</span><h4>Latest results</h4></div></div>' +
@@ -195,6 +223,29 @@
         if (club) renderClubProfile(club, lg);
       });
     });
+    function renderHeadToHead() {
+      var a = document.getElementById('slfaLpH2hA'), b = document.getElementById('slfaLpH2hB'), out = document.getElementById('slfaLpH2hResults');
+      if (!a || !b || !out) return;
+      var one = a.value, two = b.value;
+      if (!one || !two || sameClub(one,two)) { out.innerHTML = '<p class="slfa-lp-empty">Choose two different clubs.</p>'; return; }
+      var meetings = played.filter(function(m) {
+        return (sameClub(m.home_team,one) && sameClub(m.away_team,two)) || (sameClub(m.home_team,two) && sameClub(m.away_team,one));
+      }).sort(function(x,y) { return new Date(y.match_date)-new Date(x.match_date); });
+      var winsOne=0,winsTwo=0,draws=0;
+      meetings.forEach(function(m) {
+        var oneHome=sameClub(m.home_team,one), gf=Number(oneHome?m.home_score:m.away_score)||0, ga=Number(oneHome?m.away_score:m.home_score)||0;
+        if(gf>ga)winsOne++;else if(gf<ga)winsTwo++;else draws++;
+      });
+      out.innerHTML='<div class="slfa-lp-h2h-summary"><strong>'+esc(one)+'</strong><b>'+winsOne+'</b><span>Wins</span><b>'+draws+'</b><span>Draws</span><b>'+winsTwo+'</b><strong>'+esc(two)+'</strong></div>'+
+        (meetings.length?meetings.slice(0,8).map(matchRow).join(''):'<p class="slfa-lp-empty">No completed head-to-head matches are recorded yet.</p>');
+    }
+    var h2hA=document.getElementById('slfaLpH2hA'),h2hB=document.getElementById('slfaLpH2hB');
+    if(h2hA&&h2hB){
+      if(h2hB.options.length>1)h2hB.selectedIndex=1;
+      h2hA.addEventListener('change',renderHeadToHead);
+      h2hB.addEventListener('change',renderHeadToHead);
+      renderHeadToHead();
+    }
   }
   function clubKey(value) {
     return String(value || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, '');
