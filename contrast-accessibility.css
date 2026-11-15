@@ -20,3 +20,25 @@ html[data-theme="light"] body :is(input,select,textarea)::placeholder{color:#637
 html[data-theme="light"] body :is(button.primary,.primary,button[type="submit"]){background:#075fa8;color:#fff;border-color:#075fa8}
 html[data-theme="light"] body :is(button.secondary,.secondary){background:#eaf2fc;color:#123e68;border-color:rgba(7,95,168,.25)}
 html[data-theme="light"] body :is(.tabs button[aria-selected="true"],.chip.on,.active .chip){color:#fff}
+
+
+/* Targeted fixture planner and Developer-panel readability corrections */
+.fixture-planner-panel{margin:16px 0 22px;padding:18px;border:1px solid var(--slfa-border);border-radius:16px;background:var(--slfa-surface-2);color:var(--slfa-text);box-shadow:0 8px 22px rgba(0,0,0,.08)}
+.fixture-planner-panel .rt{margin-top:0;color:var(--slfa-text)}
+.fixture-planner-intro{margin:0 0 12px;color:var(--slfa-muted);font-size:13px;line-height:1.55}
+.fixture-planner-panel label{color:var(--slfa-text)}
+.fixture-planner-panel input,.fixture-planner-panel select{background:var(--slfa-surface);color:var(--slfa-text);border-color:var(--slfa-border)}
+html[data-theme="light"] body .fixture-planner-panel{background:#fff!important;background-image:none!important;border:1px solid #c9d7e7!important;color:#142b43!important;box-shadow:0 8px 22px rgba(25,55,90,.08)!important}
+html[data-theme="light"] body .fixture-planner-panel :is(h2,h3,p,label,span,strong){color:#142b43!important;-webkit-text-fill-color:#142b43!important;text-shadow:none!important}
+html[data-theme="light"] body .fixture-planner-panel .fixture-planner-intro{color:#52677f!important;-webkit-text-fill-color:#52677f!important}
+html[data-theme="light"] body .fixture-planner-panel :is(input,select){background:#fff!important;color:#142b43!important;-webkit-text-fill-color:#142b43!important;border-color:#b9c9dc!important}
+html[data-theme="light"] body[data-portal="DEVELOPER"] .portal-head h1,
+html[data-theme="light"] body[data-portal="DEVELOPER"] .portal-head p,
+html[data-theme="light"] body[data-portal="DEVELOPER"] #portalArea,
+html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools,
+html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools :is(h1,h2,h3,h4,h5,h6,p,li,label,span,strong,em,small,div){color:#142b43!important;-webkit-text-fill-color:#142b43!important;text-shadow:none!important;animation:none!important}
+html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools .muted,
+html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools small{color:#52677f!important;-webkit-text-fill-color:#52677f!important}
+html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools :is(input,select,textarea){background:#fff!important;color:#142b43!important;-webkit-text-fill-color:#142b43!important;border-color:#b9c9dc!important}
+html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools button.primary{color:#fff!important;-webkit-text-fill-color:#fff!important}
+html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools button.secondary{color:#075f42!important;-webkit-text-fill-color:#075f42!important}
