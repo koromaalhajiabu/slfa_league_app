@@ -159,9 +159,23 @@ from pg_policies
 where schemaname='storage' and tablename='objects'
 order by policyname;
 
--- 14. Recent operational activity volume, grouped by role and table.
-select actor_role, table_name, operation, count(*) as changes
+-- 14. Recent operational activity and audit-attribution coverage.
+-- NULL actor_id / actor_role values are reported, not rewritten or guessed.
+select coalesce(actor_role, '<NULL>') as actor_role,
+       table_name, operation,
+       count(*) as changes,
+       count(*) filter (where actor_id is null) as missing_actor_id,
+       count(*) filter (where actor_role is null) as missing_actor_role,
+       count(distinct actor_id) as distinct_actors
 from public.slfa_activity_audit
 where occurred_at >= now() - interval '30 days'
 group by actor_role, table_name, operation
 order by changes desc, table_name;
+
+-- 15. Recent audit samples for investigating attribution.
+-- This displays UUIDs only; it does not expose account names or email addresses.
+select id, actor_id, actor_role, table_name, operation, row_id, occurred_at
+from public.slfa_activity_audit
+where occurred_at >= now() - interval '30 days'
+order by occurred_at desc
+limit 100;
