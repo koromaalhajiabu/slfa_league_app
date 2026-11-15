@@ -42,3 +42,43 @@ html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools small{color:#5
 html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools :is(input,select,textarea){background:#fff!important;color:#142b43!important;-webkit-text-fill-color:#142b43!important;border-color:#b9c9dc!important}
 html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools button.primary{color:#fff!important;-webkit-text-fill-color:#fff!important}
 html[data-theme="light"] body[data-portal="DEVELOPER"] #roleTools button.secondary{color:#075f42!important;-webkit-text-fill-color:#075f42!important}
+
+
+/* Developer portal: override its legacy bright typography in light mode. */
+html[data-theme="light"] body[data-portal="DEVELOPER"] .portal-head,
+html[data-theme="light"] body[data-portal="DEVELOPER"] .portal-head :is(h1,h2,h3,p,a,span,small),
+html[data-theme="light"] body[data-portal="DEVELOPER"] #portalArea,
+html[data-theme="light"] body[data-portal="DEVELOPER"] #portalArea :not(button):not(input):not(select):not(textarea):not(svg):not(path):not(.badge):not(.status-badge):not(.chip):not(.slfa-form-W):not(.slfa-form-D):not(.slfa-form-L) {
+  color:#142b43!important;
+  -webkit-text-fill-color:#142b43!important;
+  text-shadow:none!important;
+  animation:none!important;
+}
+html[data-theme="light"] body[data-portal="DEVELOPER"] #portalArea :is(.muted,small,.help-text,.description,.sub) {
+  color:#52677f!important;
+  -webkit-text-fill-color:#52677f!important;
+}
+html[data-theme="light"] body[data-portal="DEVELOPER"] #portalArea a {
+  color:#075fa8!important;
+  -webkit-text-fill-color:#075fa8!important;
+}
+html[data-theme="light"] body[data-portal="DEVELOPER"] #portalArea :is(input,select,textarea) {
+  color:#142b43!important;
+  -webkit-text-fill-color:#142b43!important;
+  background:#fff!important;
+  border-color:#b9c9dc!important;
+}
+html[data-theme="light"] body[data-portal="DEVELOPER"] #portalArea button.primary {
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+}
+html[data-theme="light"] body[data-portal="DEVELOPER"] #portalArea button.secondary {
+  color:#075f42!important;
+  -webkit-text-fill-color:#075f42!important;
+}
+html[data-theme="light"] body[data-portal="DEVELOPER"] #whoName,
+html[data-theme="light"] body[data-portal="DEVELOPER"] #whoRole {
+  color:#142b43!important;
+  -webkit-text-fill-color:#142b43!important;
+  text-shadow:none!important;
+}
