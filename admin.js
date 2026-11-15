@@ -309,6 +309,8 @@
     loadLeagueOptions();
     wireCompetitionAdmin();
     wireCupAdmin();
+    loadDeveloperOverview();
+    $('devRefreshOverview').onclick=loadDeveloperOverview;
     wireClubs();
     loadReview();
     loadClubProfileReview();
@@ -1013,6 +1015,7 @@
   function developer(p) {
     devUser=p;
     box().innerHTML =
+      '<section class="dev-overview" id="developerOverview"><h2 class="rt">Platform overview</h2><p class="muted">Live database totals and public app activity. Counts are loaded from the connected database.</p><div class="dev-metric-grid">'+[['devMetricAccounts','Accounts'],['devMetricMatches','Fixtures'],['devMetricClubs','Clubs'],['devMetricReports','Open fan reports'],['devMetricNews','Media posts']].map(function(x){return '<article class="dev-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="dev-activity"><strong>Last 30 days · public app activity</strong><div id="devMetricActivity" class="muted">Loading activity…</div></div><button class="secondary" type="button" id="devRefreshOverview">Refresh overview</button><div class="status" id="devOverviewStatus" role="status"></div></section>'+
       '<h2 class="rt">League operations</h2><div id="leagueState" class="muted">Checking…</div><div class="btns"><button class="secondary" id="pauseBtn">Pause league</button><button class="primary" id="resumeBtn">Resume league</button></div>'+
       '<h2 class="rt">Whole application</h2><div id="appState" class="muted">Checking…</div><div class="btns"><button class="secondary" id="freezeAppBtn">Freeze entire app</button><button class="primary" id="unfreezeAppBtn">Unfreeze entire app</button></div>'+
       '<h2 class="rt">Assign a role</h2><p class="muted">Full name, email (unique account ID), and a round photo selected from your phone gallery.</p>'+
@@ -1029,6 +1032,35 @@
     $('pauseBtn').onclick=function(){setPause(true);};$('resumeBtn').onclick=function(){setPause(false);};
     $('freezeAppBtn').onclick=function(){setAppFreeze(true);};$('unfreezeAppBtn').onclick=function(){setAppFreeze(false);};
     $('ivPhoto').onchange=function(){var f=this.files&&this.files[0];if(!f){$('ivPhotoPreview').textContent='No photo selected.';return;}if(['image/jpeg','image/png','image/webp'].indexOf(f.type)===-1||f.size>4*1024*1024){this.value='';msg('Choose a JPG, PNG or WebP photo no larger than 4 MB.');return;}var u=URL.createObjectURL(f);$('ivPhotoPreview').innerHTML='<img src="'+u+'" alt="Profile preview" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #16834a">';};
+  }
+
+  function loadDeveloperOverview(){
+    var specs=[
+      ['devMetricAccounts','user_profiles','*'],
+      ['devMetricMatches','matches','*'],
+      ['devMetricClubs','league_clubs','*'],
+      ['devMetricReports','fan_reports','*'],
+      ['devMetricNews','media_posts','*']
+    ];
+    var status=$('devOverviewStatus');
+    if(status)status.textContent='Refreshing live totals…';
+    Promise.all(specs.map(function(s){
+      return db.from(s[1]).select(s[2],{count:'exact',head:true}).then(function(r){
+        var el=$(s[0]);
+        if(el)el.textContent=r.error?'—':(r.count==null?'—':Number(r.count).toLocaleString());
+        return {name:s[1],error:r.error};
+      }).catch(function(){var el=$(s[0]);if(el)el.textContent='—';return {name:s[1],error:true};});
+    })).then(function(results){
+      var failed=results.filter(function(x){return x.error;});
+      if(status)status.textContent=failed.length?('Some totals are unavailable because database permissions or tables prevented reading: '+failed.map(function(x){return x.name;}).join(', ')+'.'):'All database totals refreshed successfully.';
+    });
+    db.rpc('analytics_summary',{p_days:30}).then(function(r){
+      var el=$('devMetricActivity');if(!el)return;
+      if(r.error){el.textContent='Activity summary is currently unavailable.';return;}
+      var rows=r.data||[];
+      var total=rows.reduce(function(sum,x){return sum+Number(x.total||0);},0);
+      el.textContent=total.toLocaleString()+' recorded app events across '+rows.length+' event types.';
+    }).catch(function(){var el=$('devMetricActivity');if(el)el.textContent='Activity summary is currently unavailable.';});
   }
   function uploadDevPhoto(email,file){
     if(!file)return Promise.resolve(null);
