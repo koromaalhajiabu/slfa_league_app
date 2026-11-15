@@ -197,6 +197,7 @@
 
   function superAdmin(p) {
     box().innerHTML =
+      '<section class="sa-command-centre"><h2 class="rt">Super Admin Command Centre</h2><p class="muted">Live operational overview from the connected SLFA database. These are record totals, not performance estimates.</p><div class="sa-metric-grid">'+[['saMetricCompetitions','Competitions'],['saMetricSeasons','Seasons'],['saMetricMatches','Fixtures and results'],['saMetricClubs','Clubs'],['saMetricPlayers','Squad records'],['saMetricReports','Fan reports']].map(function(x){return '<article class="sa-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="muted" id="saOverviewStatus" role="status">Loading operational totals…</div><button class="secondary" type="button" id="saRefreshOverview">Refresh overview</button></section>' +
       '<h2 class="rt">Downloads</h2>' +
       '<p class="muted">Super Admin only. Each download is recorded in the export log.</p>' +
       '<div class="btns"><button class="secondary" data-export="matches">Matches and results (CSV)</button>' +
@@ -309,8 +310,8 @@
     loadLeagueOptions();
     wireCompetitionAdmin();
     wireCupAdmin();
-    loadDeveloperOverview();
-    $('devRefreshOverview').onclick=loadDeveloperOverview;
+    loadSuperAdminOverview();
+    $('saRefreshOverview').onclick=loadSuperAdminOverview;
     wireClubs();
     loadReview();
     loadClubProfileReview();
@@ -1015,7 +1016,7 @@
   function developer(p) {
     devUser=p;
     box().innerHTML =
-      '<section class="dev-overview" id="developerOverview"><h2 class="rt">Platform overview</h2><p class="muted">Live database totals and public app activity. Counts are loaded from the connected database.</p><div class="dev-metric-grid">'+[['devMetricAccounts','Accounts'],['devMetricMatches','Fixtures'],['devMetricClubs','Clubs'],['devMetricReports','Open fan reports'],['devMetricNews','Media posts']].map(function(x){return '<article class="dev-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="dev-activity"><strong>Last 30 days · public app activity</strong><div id="devMetricActivity" class="muted">Loading activity…</div></div><button class="secondary" type="button" id="devRefreshOverview">Refresh overview</button><div class="status" id="devOverviewStatus" role="status"></div></section>'+
+      '<section class="dev-overview" id="developerOverview"><h2 class="rt">Platform overview</h2><p class="muted">Live database totals and public app activity. Counts are loaded from the connected database.</p><div class="dev-metric-grid">'+[['devMetricAccounts','Accounts'],['devMetricMatches','Fixtures'],['devMetricClubs','Clubs'],['devMetricReports','Fan reports'],['devMetricNews','Media posts']].map(function(x){return '<article class="dev-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="dev-activity"><strong>Last 30 days · public app activity</strong><div id="devMetricActivity" class="muted">Loading activity…</div></div><button class="secondary" type="button" id="devRefreshOverview">Refresh overview</button><div class="status" id="devOverviewStatus" role="status"></div></section>'+
       '<h2 class="rt">League operations</h2><div id="leagueState" class="muted">Checking…</div><div class="btns"><button class="secondary" id="pauseBtn">Pause league</button><button class="primary" id="resumeBtn">Resume league</button></div>'+
       '<h2 class="rt">Whole application</h2><div id="appState" class="muted">Checking…</div><div class="btns"><button class="secondary" id="freezeAppBtn">Freeze entire app</button><button class="primary" id="unfreezeAppBtn">Unfreeze entire app</button></div>'+
       '<h2 class="rt">Assign a role</h2><p class="muted">Full name, email (unique account ID), and a round photo selected from your phone gallery.</p>'+
@@ -1028,12 +1029,36 @@
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
     wireCompetitionAdmin();
     wireCupAdmin();
+    loadDeveloperOverview();
+    $('devRefreshOverview').onclick=loadDeveloperOverview;
     loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();
     $('pauseBtn').onclick=function(){setPause(true);};$('resumeBtn').onclick=function(){setPause(false);};
     $('freezeAppBtn').onclick=function(){setAppFreeze(true);};$('unfreezeAppBtn').onclick=function(){setAppFreeze(false);};
     $('ivPhoto').onchange=function(){var f=this.files&&this.files[0];if(!f){$('ivPhotoPreview').textContent='No photo selected.';return;}if(['image/jpeg','image/png','image/webp'].indexOf(f.type)===-1||f.size>4*1024*1024){this.value='';msg('Choose a JPG, PNG or WebP photo no larger than 4 MB.');return;}var u=URL.createObjectURL(f);$('ivPhotoPreview').innerHTML='<img src="'+u+'" alt="Profile preview" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #16834a">';};
   }
 
+  function loadSuperAdminOverview(){
+    var specs=[
+      ['saMetricCompetitions','leagues'],
+      ['saMetricSeasons','seasons'],
+      ['saMetricMatches','matches'],
+      ['saMetricClubs','league_clubs'],
+      ['saMetricPlayers','club_squad'],
+      ['saMetricReports','fan_reports']
+    ];
+    var status=$('saOverviewStatus');
+    if(status)status.textContent='Refreshing live operational totals…';
+    Promise.all(specs.map(function(s){
+      return db.from(s[1]).select('*',{count:'exact',head:true}).then(function(r){
+        var el=$(s[0]);
+        if(el)el.textContent=r.error?'Unavailable':(r.count==null?'—':Number(r.count).toLocaleString());
+        return {name:s[1],error:r.error};
+      }).catch(function(){var el=$(s[0]);if(el)el.textContent='Unavailable';return {name:s[1],error:true};});
+    })).then(function(results){
+      var failed=results.filter(function(x){return x.error;});
+      if(status)status.textContent=failed.length?'Some totals are unavailable under the current database permissions: '+failed.map(function(x){return x.name;}).join(', ')+'.':'All operational totals refreshed successfully.';
+    });
+  }
   function loadDeveloperOverview(){
     var specs=[
       ['devMetricAccounts','user_profiles','*'],
