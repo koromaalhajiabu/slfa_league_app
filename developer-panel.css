@@ -34,3 +34,19 @@ body[data-portal="DEVELOPER"] #roleTools .post {
   background: #fff;
 }
 body[data-portal="DEVELOPER"] #roleTools .status { color: #0756a5; }
+
+
+/* Developer platform overview metrics */
+.dev-overview{margin:18px 0;padding:18px;border:1px solid rgba(22,131,74,.2);border-radius:18px;background:linear-gradient(145deg,rgba(22,131,74,.07),rgba(0,114,198,.06))}
+.dev-overview .rt{margin-top:0}
+.dev-metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:10px;margin:14px 0}
+.dev-metric{min-width:0;padding:14px;border:1px solid var(--slfa-border,rgba(128,150,170,.25));border-radius:13px;background:var(--slfa-surface,#0b2545);display:flex;flex-direction:column;gap:8px}
+.dev-metric span{font-size:11px;line-height:1.35;color:var(--slfa-muted,#c4d1e2)}
+.dev-metric strong{font-size:25px;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--slfa-text,#f4f8ff)}
+.dev-activity{padding:12px 14px;border-radius:12px;background:rgba(128,150,170,.09);margin:12px 0}
+.dev-activity>strong{display:block;margin-bottom:5px}
+html[data-theme="light"] body[data-portal="DEVELOPER"] .dev-overview{background:#f0f7fc;border-color:#cbdbea}
+html[data-theme="light"] body[data-portal="DEVELOPER"] .dev-metric{background:#fff;border-color:#d2deea}
+html[data-theme="light"] body[data-portal="DEVELOPER"] .dev-metric :is(span,strong){color:#142b43!important;-webkit-text-fill-color:#142b43!important}
+html[data-theme="light"] body[data-portal="DEVELOPER"] .dev-metric span{color:#52677f!important;-webkit-text-fill-color:#52677f!important}
+@media(max-width:420px){.dev-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dev-metric strong{font-size:22px}}
