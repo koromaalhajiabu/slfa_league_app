@@ -147,3 +147,14 @@
 .slfa-lp-h2h-summary b{color:var(--accent2);font-size:18px}
 .slfa-lp-h2h-summary span{color:var(--muted);font-size:8px}
 @media(max-width:420px){.slfa-lp-h2h-controls{grid-template-columns:1fr}.slfa-lp-h2h-summary{gap:4px;padding:9px 5px}.slfa-lp-h2h-summary strong{font-size:8px}}
+
+/* Historical competition scoring trend */
+.slfa-lp-season-trends{margin-top:12px}
+.slfa-lp-season-row{padding:10px 0;border-bottom:1px solid var(--line)}
+.slfa-lp-season-row:last-of-type{border-bottom:0}
+.slfa-lp-season-meta{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:7px}
+.slfa-lp-season-meta strong{font-size:11px;color:var(--ink)}
+.slfa-lp-season-meta span{font-size:9px;color:var(--muted);text-align:right}
+.slfa-lp-season-track{height:9px;border-radius:99px;background:rgba(0,114,198,.10);overflow:hidden}
+.slfa-lp-season-track i{display:block;height:100%;min-width:2px;border-radius:99px;background:linear-gradient(90deg,#16834a,#0756a5)}
+@media(max-width:480px){.slfa-lp-season-meta{align-items:flex-start;flex-direction:column;gap:3px}.slfa-lp-season-meta span{text-align:left}}
