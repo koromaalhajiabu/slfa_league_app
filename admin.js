@@ -216,12 +216,15 @@
       input('seasonName', 'Season name, for example 2025/26') +
       input('seasonStart', 'Start date', 'date') + input('seasonEnd', 'End date', 'date') +
       '<div class="btns"><button class="primary" id="seasonAdd">Add season</button></div>' +
-      '<h2 class="rt">Add a fixture</h2>' +
-      '<label for="fxLeague">League</label><select id="fxLeague"><option value="">Loading leagues…</option></select>' +
+      '<section id="fixturePlannerPanel" class="fixture-planner-panel" aria-labelledby="fixturePlannerHeading">' +
+      '<h2 class="rt" id="fixturePlannerHeading">Fixture planner · Add a fixture</h2>' +
+      '<p class="fixture-planner-intro">Schedule a match by selecting its competition and season, then entering both teams, kick-off time and venue.</p>' +
+      '<label for="fxLeague">Competition / league</label><select id="fxLeague"><option value="">Loading leagues…</option></select>' +
       '<label for="fxSeason">Season</label><select id="fxSeason"><option value="">Loading seasons…</option></select>' +
       input('fxHome', 'Home team') + input('fxAway', 'Away team') +
       input('fxDate', 'Date and time', 'datetime-local') + input('fxVenue', 'Venue') +
       '<div class="btns"><button class="primary" id="fxSave">Add fixture</button></div>' +
+      '</section>' +
       '<h2 class="rt">Import fixtures and results</h2>' +
       '<p class="muted">Add many matches at once from a CSV file, for example a past season. <button type="button" class="secondary" id="impTemplate">Download the template</button> Season, league and club names must match the app exactly.</p>' +
       '<label for="impFile">CSV file</label><input type="file" id="impFile" accept=".csv,text/csv">' +
