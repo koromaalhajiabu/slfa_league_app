@@ -7,7 +7,7 @@
   var host;
   if (!db || !nav || !switcher) return;
 
-  var leagues = [], clubs = [], matches = [], standings = [], cupTies = [];
+  var leagues = [], clubs = [], matches = [], standings = [], cupTies = [], seasons = [];
   var selectedId = '';
   var loading = false, lastLoaded = 0;
 
@@ -192,6 +192,21 @@
       '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table slfa-lp-analytics-table"><thead><tr><th>Club</th><th>Pos</th><th>P</th><th>Home pts</th><th>Away pts</th><th>Last 5</th></tr></thead><tbody>' +
       analyticsRows.map(function(x) { var standing=tableRows.find(function(r){return sameClub(r.club,x.name);}); return '<tr><td class="club">'+esc(x.name)+'</td><td>'+(standing?'<strong class="slfa-lp-current-rank">#'+esc(standing.pos)+'</strong>':'—')+'</td><td>'+x.played+'</td><td>'+x.homePoints+'</td><td>'+x.awayPoints+'</td><td><strong class="slfa-lp-form">'+(Array.isArray(x.form)&&x.form.length?x.form.map(function(v){return '<i class="slfa-form-'+v.toLowerCase()+'" title="'+(v==='W'?'Win':v==='D'?'Draw':'Loss')+'">'+v+'</i>';}).join(''):'—')+'</strong></td></tr>'; }).join('') +
       '</tbody></table></div></section>';
+    var seasonTrendRows = seasons.map(function(season) {
+      var seasonMatches = games.filter(function(m) {
+        if (m.season_id != null) return String(m.season_id) === String(season.id);
+        var day = String(m.match_date || '').slice(0,10);
+        return day && day >= String(season.start_date || '') && day <= String(season.end_date || '');
+      }).filter(completed);
+      var seasonGoals = seasonMatches.reduce(function(total,m) {
+        return total + (Number(m.home_score)||0) + (Number(m.away_score)||0);
+      },0);
+      return {name:season.name,played:seasonMatches.length,goals:seasonGoals,average:seasonMatches.length ? seasonGoals/seasonMatches.length : 0};
+    }).filter(function(x){return x.played>0;}).sort(function(a,b){return a.name.localeCompare(b.name);});
+    var maxSeasonGoals = seasonTrendRows.reduce(function(max,x){return Math.max(max,x.goals);},0) || 1;
+    var seasonTrendHtml = '<section class="slfa-lp-panel slfa-lp-season-trends"><div class="slfa-lp-section-head"><div><span>HISTORICAL PERFORMANCE</span><h4>Season-by-season scoring trends</h4></div><small>Completed matches only</small></div>' +
+      (seasonTrendRows.length ? seasonTrendRows.map(function(x){return '<div class="slfa-lp-season-row"><div class="slfa-lp-season-meta"><strong>'+esc(x.name)+'</strong><span>'+x.played+' matches · '+x.goals+' goals · '+x.average.toFixed(2)+' goals/match</span></div><div class="slfa-lp-season-track" role="img" aria-label="'+esc(x.name)+': '+x.goals+' goals"><i style="width:'+Math.round(x.goals/maxSeasonGoals*100)+'%"></i></div></div>';}).join('') : '<p class="slfa-lp-empty">Historical season scoring will appear when completed matches are linked to published seasons.</p>') +
+      '<p class="slfa-lp-source">Matches are grouped by their assigned season. Older matches without a season ID are matched by their date within the season dates.</p></section>';
     var h2hOptions = teamRows.map(function(c) { return '<option value="'+esc(c.club_name)+'">'+esc(c.club_name)+'</option>'; }).join('');
     var h2hHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>HEAD-TO-HEAD</span><h4>Compare two clubs</h4></div></div>' +
       (teamRows.length >= 2 ? '<div class="slfa-lp-h2h-controls"><label>Club one<select id="slfaLpH2hA">'+h2hOptions+'</select></label><label>Club two<select id="slfaLpH2hB">'+h2hOptions+'</select></label></div><div id="slfaLpH2hResults" aria-live="polite"></div>' :
@@ -221,7 +236,7 @@
       kpi(goals,'Goals recorded') + kpi(next.length,'Upcoming fixtures') + '</div>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>PARTICIPATING TEAMS</span><h4>Clubs in this competition</h4></div><small>' + teamRows.length + ' clubs</small></div>' +
       (clubCards ? '<div class="slfa-lp-clubs">' + clubCards + '</div>' : '<p class="slfa-lp-empty">No clubs have been published for this competition yet.</p>') + '</section>' +
-      cupBracketHtml + tableHtml + analyticsHtml + h2hHtml +
+      cupBracketHtml + tableHtml + analyticsHtml + seasonTrendHtml + h2hHtml +
       '<div class="slfa-lp-match-panels"><section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>UP NEXT</span><h4>Upcoming fixtures</h4></div></div>' +
       (next.length ? next.slice(0,3).map(matchRow).join('') : '<p class="slfa-lp-empty">No upcoming fixtures published yet.</p>') + '</section>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>RECENT ACTION</span><h4>Latest results</h4></div></div>' +
@@ -361,8 +376,9 @@
     Promise.all([
       db.from('leagues').select('id,name,competition_type,gender_category,description,logo_url,sort_order').eq('is_active',true).order('sort_order'),
       db.from('league_clubs').select('id,league_id,club_name,logo_url,stadium,city,founded_year,about').eq('is_active',true).order('club_name'),
-      db.from('matches').select('id,league_id,match_date,venue,match_status,home_team,away_team,home_score,away_score').order('match_date',{ascending:false}).limit(1000),
-      db.from('league_standings').select('league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos',{ascending:true})
+      db.from('matches').select('id,league_id,season_id,match_date,venue,match_status,home_team,away_team,home_score,away_score').order('match_date',{ascending:false}).limit(1000),
+      db.from('league_standings').select('league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos',{ascending:true}),
+      db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date',{ascending:true})
     ]).then(function (r) {
       if (r[0].error) {
         return db.from('leagues').select('id,name').eq('is_active',true).order('sort_order').then(function(fallback) {
@@ -376,6 +392,7 @@
       clubs = r[1].error ? [] : (r[1].data || []);
       matches = r[2].error ? [] : (r[2].data || []);
       standings = r[3].error ? [] : (r[3].data || []);
+      seasons = r[4].error ? [] : (r[4].data || []);
       lastLoaded = Date.now();
       render();
       db.from('cup_ties').select('id,competition_id,season_id,round_name,tie_number,winner_team,matches(home_team,away_team,home_score,away_score,match_status,match_date)').order('round_name').order('tie_number').then(function(ct){
