@@ -573,38 +573,48 @@
       });
   }
 
-  // Every signed-in staff member can download their own account data and ask for deletion.
+  // Staff can export their own data. The protected platform owner does not
+  // receive the Super Admin deletion-request workflow.
   function accountPrivacy() {
     var b = $('roleTools'); if (!b || $('accountPrivacy')) return;
-    var sec = document.createElement('div');
-    sec.id = 'accountPrivacy';
-    sec.innerHTML = '<h2 class="rt">My account data</h2>' +
-      '<p class="muted">Download a copy of the account details the app holds for you, or ask a Super Admin to delete your account.</p>' +
-      '<div class="btns"><button class="secondary" id="apDownload">Download my account data (JSON)</button></div>' +
-      '<label for="apNote">Reason for deletion (optional)</label><textarea id="apNote" rows="2" maxlength="500"></textarea>' +
-      '<div class="btns"><button class="secondary" id="apDelete">Ask for my account to be deleted</button></div>' +
-      '<div id="apStatus" class="muted" role="status"></div>';
-    b.appendChild(sec);
-    function say(t) { $('apStatus').textContent = t; }
-    $('apDownload').addEventListener('click', function () {
-      say('Preparing your copy…');
-      db.rpc('staff_my_data').then(function (r) {
-        if (r.error) { say('Your data could not be prepared right now.'); return; }
-        var out = Object.assign({ exported_at: new Date().toISOString() }, r.data || {});
-        var blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
-        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'slfa-my-account-data.json';
-        document.body.appendChild(a); a.click();
-        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-        say('Your copy has been saved to this device.');
+    db.auth.getUser().then(function (u) {
+      if (!u || u.error || !u.data || !u.data.user) return;
+      var isProtectedOwner = String(u.data.user.email || '').toLowerCase() === 'koromaalhajiabu0@gmail.com';
+      var sec = document.createElement('div');
+      sec.id = 'accountPrivacy';
+      sec.innerHTML = '<h2 class="rt">My account data</h2>' +
+        '<p class="muted">Download a copy of the account details the app holds for you.</p>' +
+        '<div class="btns"><button class="secondary" id="apDownload">Download my account data (JSON)</button></div>' +
+        (isProtectedOwner
+          ? '<p class="muted">This is the protected platform Developer account. Account deletion is not available through the Super Admin request workflow.</p>'
+          : '<p class="muted">You may ask a Super Admin to review an account deletion request.</p>' +
+            '<label for="apNote">Reason for deletion (optional)</label><textarea id="apNote" rows="2" maxlength="500"></textarea>' +
+            '<div class="btns"><button class="secondary" id="apDelete">Ask for my account to be deleted</button></div>') +
+        '<div id="apStatus" class="muted" role="status"></div>';
+      b.appendChild(sec);
+      function say(t) { $('apStatus').textContent = t; }
+      $('apDownload').addEventListener('click', function () {
+        say('Preparing your copy…');
+        db.rpc('staff_my_data').then(function (r) {
+          if (r.error) { say('Your data could not be prepared right now.'); return; }
+          var out = Object.assign({ exported_at: new Date().toISOString() }, r.data || {});
+          var blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+          var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'slfa-my-account-data.json';
+          document.body.appendChild(a); a.click();
+          setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+          say('Your copy has been saved to this device.');
+        });
       });
-    });
-    $('apDelete').addEventListener('click', function () {
-      if (!window.confirm('Ask a Super Admin to delete your account? You will keep access until it is done.')) return;
-      say('Sending your request…');
-      db.rpc('staff_request_deletion', { p_note: $('apNote').value.trim() }).then(function (r) {
-        say(r.error ? r.error.message : 'Request sent. A Super Admin will review it.');
-        if (!r.error) $('apNote').value = '';
-      });
+      if (!isProtectedOwner) {
+        $('apDelete').addEventListener('click', function () {
+          if (!window.confirm('Ask a Super Admin to delete your account? You will keep access until it is done.')) return;
+          say('Sending your request…');
+          db.rpc('staff_request_deletion', { p_note: $('apNote').value.trim() }).then(function (r) {
+            say(r.error ? r.error.message : 'Request sent. A Super Admin will review it.');
+            if (!r.error) $('apNote').value = '';
+          });
+        });
+      }
     });
   }
 
