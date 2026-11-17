@@ -742,6 +742,209 @@
       loadMatchesForResult();
     });
   }
+  // Historical final tables are stored separately from the automatically calculated live table.
+  var HIST_STANDINGS_HEADERS = ['position','club','played','won','drawn','lost','goals_for','goals_against','points'];
+  var histCsvRows = [];
+  function validateHistoricalRows(rows) {
+    var problems = [], clubs = {}, positions = {};
+    if (!rows.length) problems.push('Add at least one club row.');
+    if (rows.length > 100) problems.push('A historical table can contain no more than 100 clubs.');
+    rows.forEach(function (x, index) {
+      var line = index + 1, club = String(x.club || '').trim();
+      if (!club) problems.push('Row ' + line + ': enter a club name.');
+      else {
+        var clubKey = club.toLowerCase();
+        if (clubs[clubKey]) problems.push('Row ' + line + ': ' + club + ' appears more than once.');
+        clubs[clubKey] = true;
+      }
+      ['pos','mp','w','d','l','gf','ga','pts'].forEach(function (key) {
+        if (!Number.isInteger(x[key]) || x[key] < (key === 'pos' ? 1 : 0)) {
+          problems.push('Row ' + line + ': ' + key.toUpperCase() + ' must be a ' + (key === 'pos' ? 'positive' : 'non-negative') + ' whole number.');
+        }
+      });
+      if (Number.isInteger(x.mp) && Number.isInteger(x.w) && Number.isInteger(x.d) && Number.isInteger(x.l) && x.mp !== x.w + x.d + x.l) {
+        problems.push('Row ' + line + ': played must equal wins + draws + losses.');
+      }
+      if (Number.isInteger(x.pos)) {
+        if (positions[x.pos]) problems.push('Row ' + line + ': position ' + x.pos + ' is used more than once.');
+        positions[x.pos] = true;
+      }
+    });
+    return problems;
+  }
+  function historicalRowMarkup(x) {
+    x = x || {};
+    function field(name, value, min) {
+      return '<input type="number" min="' + min + '" step="1" inputmode="numeric" data-hist-field="' + name + '" value="' + esc(value == null ? 0 : value) + '" aria-label="' + name.toUpperCase() + '">';
+    }
+    return '<tr data-hist-row><td>' + field('pos', x.pos == null ? 1 : x.pos, 1) + '</td>' +
+      '<td><input type="text" maxlength="120" data-hist-field="club" value="' + esc(x.club || '') + '" aria-label="Club name"></td>' +
+      '<td>' + field('mp', x.mp, 0) + '</td><td>' + field('w', x.w, 0) + '</td><td>' + field('d', x.d, 0) + '</td><td>' + field('l', x.l, 0) + '</td>' +
+      '<td>' + field('gf', x.gf, 0) + '</td><td>' + field('ga', x.ga, 0) + '</td><td>' + field('pts', x.pts, 0) + '</td>' +
+      '<td><button type="button" class="secondary hist-remove-row" aria-label="Remove club row">Remove</button></td></tr>';
+  }
+  function renderHistoricalRows(rows) {
+    var host = $('histRows'); if (!host) return;
+    host.innerHTML = (rows.length ? rows : [{}]).map(historicalRowMarkup).join('');
+  }
+  function loadHistoricalStandingsRows() {
+    var leagueId = $('histLeague') && $('histLeague').value;
+    var seasonId = $('histSeason') && $('histSeason').value;
+    var host = $('histRows'), status = $('histManualMsg');
+    histCsvRows = [];
+    if ($('histImport')) $('histImport').disabled = true;
+    if ($('histCsvPreview')) $('histCsvPreview').textContent = '';
+    if (!leagueId || !seasonId) {
+      if (host) host.innerHTML = '<tr><td colspan="10">Choose a league and past season, then load the table.</td></tr>';
+      if (status) status.textContent = 'Select both a league and a past season.';
+      return;
+    }
+    if (host) host.innerHTML = '<tr><td colspan="10">Loading historical table…</td></tr>';
+    if (status) status.textContent = 'Loading saved table and club list…';
+    Promise.all([
+      db.from('season_standings').select('pos,club,mp,w,d,l,gf,ga,pts').eq('season_id', Number(seasonId)).eq('league_id', Number(leagueId)).order('pos', { ascending: true }),
+      db.from('league_clubs').select('club_name,is_active').eq('league_id', Number(leagueId)).order('club_name', { ascending: true })
+    ]).then(function (all) {
+      if (all[0].error) {
+        if (host) host.innerHTML = '<tr><td colspan="10">Historical table storage is not ready. The Super Admin database migration must be applied first.</td></tr>';
+        if (status) status.textContent = 'Could not load historical standings: ' + all[0].error.message;
+        return;
+      }
+      var saved = all[0].data || [];
+      var clubs = all[1].error ? [] : (all[1].data || []).filter(function (x) { return x.is_active; });
+      var rows = saved.length ? saved : clubs.map(function (x, index) {
+        return { pos: index + 1, club: x.club_name, mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
+      });
+      renderHistoricalRows(rows);
+      if (status) status.textContent = saved.length
+        ? 'Loaded ' + saved.length + ' saved club record(s). You can edit the table before saving.'
+        : 'No table is saved for this season yet. Active clubs have been added as a starting list; enter their final figures.';
+    }).catch(function (error) {
+      if (host) host.innerHTML = '<tr><td colspan="10">Could not load the historical table.</td></tr>';
+      if (status) status.textContent = error.message || 'Historical table could not be loaded.';
+    });
+  }
+  function collectManualHistoricalRows() {
+    var host = $('histRows'), rows = [];
+    if (!host) return rows;
+    host.querySelectorAll('[data-hist-row]').forEach(function (tr) {
+      var row = {};
+      tr.querySelectorAll('[data-hist-field]').forEach(function (el) {
+        var key = el.getAttribute('data-hist-field');
+        row[key] = key === 'club' ? el.value.trim() : (el.value.trim() === '' ? NaN : Number(el.value));
+      });
+      rows.push(row);
+    });
+    return rows;
+  }
+  function saveHistoricalStandings(rows, source) {
+    var leagueId = $('histLeague') && $('histLeague').value;
+    var seasonId = $('histSeason') && $('histSeason').value;
+    var status = $('histManualMsg');
+    if (!leagueId || !seasonId) { if (status) status.textContent = 'Choose a league and a past season first.'; return; }
+    var problems = validateHistoricalRows(rows);
+    if (problems.length) {
+      if (status) status.textContent = problems.slice(0, 12).join(' ');
+      return;
+    }
+    if (!confirm('Save ' + rows.length + ' club record(s) for this past season? This replaces the saved historical table for this league and season only.')) return;
+    var manualButton = $('histSave'), importButton = $('histImport');
+    if (manualButton) manualButton.disabled = true;
+    if (importButton) importButton.disabled = true;
+    if (status) status.textContent = 'Saving historical standings…';
+    db.rpc('admin_save_season_standings', {
+      p_season_id: Number(seasonId),
+      p_league_id: Number(leagueId),
+      p_rows: rows
+    }).then(function (r) {
+      if (manualButton) manualButton.disabled = false;
+      if (importButton) importButton.disabled = !histCsvRows.length;
+      if (r.error) { if (status) status.textContent = r.error.message; return; }
+      if (status) status.textContent = (source === 'csv' ? 'CSV import complete. ' : 'Manual table saved. ') + Number(r.data || rows.length) + ' club record(s) published for this past season.';
+      loadHistoricalStandingsRows();
+    }).catch(function (error) {
+      if (manualButton) manualButton.disabled = false;
+      if (importButton) importButton.disabled = !histCsvRows.length;
+      if (status) status.textContent = error.message || 'Historical standings could not be saved.';
+    });
+  }
+  function historicalStandingsTemplate() {
+    var sample = ['1','Bo Rangers','30','20','7','3','55','18','67'];
+    var csv = HIST_STANDINGS_HEADERS.join(',') + '\n' + sample.join(',') + '\n';
+    saveFile('slfa-historical-standings-template.csv', '\ufeff' + csv, 'text/csv;charset=utf-8');
+  }
+  function checkHistoricalStandingsCsv() {
+    var file = $('histCsvFile').files && $('histCsvFile').files[0];
+    var preview = $('histCsvPreview'), button = $('histImport');
+    histCsvRows = []; button.disabled = true;
+    if (!file) { preview.textContent = 'Choose a CSV file first.'; return; }
+    if (!$('histLeague').value || !$('histSeason').value) { preview.textContent = 'Choose a league and past season first.'; return; }
+    preview.textContent = 'Checking CSV…';
+    var reader = new FileReader();
+    reader.onload = function () {
+      var table = parseCsv(String(reader.result || ''));
+      if (table.length < 2) { preview.textContent = 'The file needs a header row and at least one club row.'; return; }
+      var head = table[0].map(function (h) { return String(h).replace(/^\uFEFF/, '').trim().toLowerCase(); });
+      var missing = HIST_STANDINGS_HEADERS.filter(function (h) { return head.indexOf(h) < 0; });
+      if (missing.length) { preview.textContent = 'Missing CSV column(s): ' + missing.join(', ') + '.'; return; }
+      var rows = table.slice(1).map(function (cells) {
+        var item = {};
+        head.forEach(function (h, index) { item[h] = (cells[index] || '').trim(); });
+        return {
+          pos: item.position === '' ? NaN : Number(item.position),
+          club: item.club,
+          mp: item.played === '' ? NaN : Number(item.played),
+          w: item.won === '' ? NaN : Number(item.won),
+          d: item.drawn === '' ? NaN : Number(item.drawn),
+          l: item.lost === '' ? NaN : Number(item.lost),
+          gf: item.goals_for === '' ? NaN : Number(item.goals_for),
+          ga: item.goals_against === '' ? NaN : Number(item.goals_against),
+          pts: item.points === '' ? NaN : Number(item.points)
+        };
+      });
+      var problems = validateHistoricalRows(rows);
+      if (problems.length) {
+        preview.innerHTML = '<p>CSV check found ' + problems.length + ' issue(s). Correct the file and check it again.</p><ul>' +
+          problems.slice(0, 30).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') +
+          '</ul>' + (problems.length > 30 ? '<p>And ' + (problems.length - 30) + ' more issue(s).</p>' : '');
+        return;
+      }
+      histCsvRows = rows;
+      preview.textContent = rows.length + ' club row(s) passed validation. Select Import standings to publish this historical table.';
+      button.disabled = false;
+    };
+    reader.onerror = function () { preview.textContent = 'The CSV file could not be read.'; };
+    reader.readAsText(file);
+  }
+  function wireHistoricalStandings() {
+    if (!$('histLeague') || !$('histSeason')) return;
+    $('histLeague').addEventListener('change', loadHistoricalStandingsRows);
+    $('histSeason').addEventListener('change', loadHistoricalStandingsRows);
+    $('histLoad').addEventListener('click', loadHistoricalStandingsRows);
+    $('histTemplate').addEventListener('click', historicalStandingsTemplate);
+    $('histCheck').addEventListener('click', checkHistoricalStandingsCsv);
+    $('histImport').addEventListener('click', function () {
+      if (histCsvRows.length) saveHistoricalStandings(histCsvRows, 'csv');
+    });
+    $('histSave').addEventListener('click', function () {
+      saveHistoricalStandings(collectManualHistoricalRows(), 'manual');
+    });
+    $('histAddRow').addEventListener('click', function () {
+      var rows = collectManualHistoricalRows(), next = rows.reduce(function (n, x) {
+        return Math.max(n, Number.isInteger(x.pos) ? x.pos : 0);
+      }, 0) + 1;
+      var host = $('histRows');
+      if (host && host.querySelector('[data-hist-row]')) host.insertAdjacentHTML('beforeend', historicalRowMarkup({ pos: next }));
+      else renderHistoricalRows([{ pos: next }]);
+    });
+    $('histRows').addEventListener('click', function (event) {
+      var remove = event.target.closest && event.target.closest('.hist-remove-row');
+      if (!remove) return;
+      var row = remove.closest('[data-hist-row]');
+      if (row) row.remove();
+    });
+  }
+
   function loadMatchesForResult() {
     db.from('matches').select('id, match_date, season_id, home_team, away_team, home_score').order('match_date', { ascending: false }).limit(500)
       .then(function (r) {
