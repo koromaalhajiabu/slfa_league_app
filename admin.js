@@ -765,6 +765,7 @@
   function wireCompetitionAdmin() {
     var rows = [];
     var edit = $('coEdit');
+    if (!edit || !$('coSave') || !$('coNew') || !$('competitionAdminList')) return;
     function resetForm() {
       edit.value = '';
       $('coName').value = '';
