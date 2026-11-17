@@ -11,3 +11,22 @@ html[data-theme="light"] .sa-metric{background:#fff;border-color:#d2deea}
 html[data-theme="light"] .sa-metric span{color:#52677f!important;-webkit-text-fill-color:#52677f!important}
 html[data-theme="light"] .sa-metric strong{color:#142b43!important;-webkit-text-fill-color:#142b43!important}
 @media(max-width:420px){.sa-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sa-metric strong{font-size:22px}}
+
+
+/* Historical league standings editor: scrollable on phones without shrinking the figures. */
+.hist-standings-admin{margin:20px 0;padding:16px;border:1px solid rgba(30,181,58,.24);border-radius:16px;background:rgba(0,114,198,.045)}
+.hist-standings-admin h3.rt{margin:18px 0 8px;font-size:13px}
+.hist-standings-scroll{width:100%;overflow-x:auto;margin:12px 0;border:1px solid rgba(128,150,170,.24);border-radius:12px;-webkit-overflow-scrolling:touch}
+.hist-standings-table{width:100%;min-width:780px;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.hist-standings-table th,.hist-standings-table td{padding:7px 6px;border-bottom:1px solid rgba(128,150,170,.2);text-align:center;white-space:nowrap}
+.hist-standings-table th{font-size:10px;letter-spacing:.04em;color:var(--muted)}
+.hist-standings-table input{width:58px;min-height:39px;padding:6px;border:1px solid rgba(128,150,170,.38);border-radius:8px;background:rgba(255,255,255,.08);color:inherit;font:inherit;text-align:center}
+.hist-standings-table td:nth-child(2) input{width:170px;min-width:150px;text-align:left}
+.hist-standings-table td:last-child button{min-height:36px;padding:5px 9px;font-size:10px}
+.hist-standings-admin .btns{flex-wrap:wrap}
+.hist-standings-admin .btns button{min-height:42px}
+.hist-standings-admin #histCsvPreview{margin:8px 0}
+.hist-standings-admin #histCsvPreview ul{padding-left:20px}
+html[data-theme="light"] .hist-standings-admin{background:#f7fbff;border-color:#d2e2ef}
+html[data-theme="light"] .hist-standings-table input{background:#fff;color:#0b1a30;border-color:#c8d6e4}
+@media(max-width:480px){.hist-standings-admin{padding:11px}.hist-standings-admin .btns button{flex:1 1 100%}}
