@@ -1097,3 +1097,39 @@ html body .slfa-club-share { margin:6px 0 10px; padding:8px 12px; border-radius:
   .table .relegation-mark { min-width:18px; height:16px; padding:0 3px; margin-left:3px; font-size:8px; }
   .standings-legend { font-size:11px; }
 }
+
+
+/* Strong, unmistakable relegation-zone treatment: red rows and red position badges */
+.table tbody tr.relegation-zone td {
+  background: rgba(220, 38, 38, .19) !important;
+  border-top: 1px solid rgba(220, 38, 38, .42) !important;
+  border-bottom: 1px solid rgba(220, 38, 38, .42) !important;
+}
+.table tbody tr.relegation-zone td:first-child {
+  border-left: 4px solid #c62828 !important;
+}
+.table .relegation-position-cell {
+  text-align: center !important;
+}
+.table .relegation-position {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 27px;
+  height: 25px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: #c62828 !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(120, 0, 0, .22);
+}
+@media (max-width: 420px) {
+  .table .relegation-position {
+    min-width: 23px;
+    height: 22px;
+    padding: 0 3px;
+    border-radius: 5px;
+  }
+}
