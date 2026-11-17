@@ -370,8 +370,19 @@
       if (currentLeague && String(lg.id) !== currentLeague) return;
       var items = rows.filter(function (r) { return (r.league_id || null) === (lg.id || null); });
       if (!items.length) return;
-      html += '<tr class="league-row"><td colspan="9">' + esc(lg.name) + '</td></tr>' + items.map(function (r) {
-        return '<tr><td>' + esc(r.pos) + '</td><td class="club"><span class="table-club" role="button" tabindex="0" data-open-club-name="' + esc(r.club) + '">' + (logos[r.club] ? '<img class="table-club-logo" src="' + esc(logos[r.club]) + '" alt="" loading="lazy">' : '<span class="table-club-logo table-club-fallback">' + esc((r.club || '?').charAt(0).toUpperCase()) + '</span>') + '<span>' + esc(r.club) + '</span></span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
+      // Each competition has its own relegation zone: the bottom four clubs
+      // in that league's current displayed standings, independent of other leagues.
+      var rankedItems = items.slice().sort(function (a, b) {
+        var ap = Number(a.pos), bp = Number(b.pos);
+        if (Number.isFinite(ap) && Number.isFinite(bp)) return ap - bp;
+        return 0;
+      });
+      var relegationStart = Math.max(0, rankedItems.length - 4);
+      html += '<tr class="league-row"><td colspan="9">' + esc(lg.name) + '</td></tr>' + rankedItems.map(function (r, index) {
+        var inRelegationZone = index >= relegationStart;
+        var rowClass = inRelegationZone ? ' class="relegation-zone" aria-label="Relegation zone"' : '';
+        var relegationMark = inRelegationZone ? '<span class="relegation-mark" title="Relegation zone" aria-label="Relegation zone">RZ</span>' : '';
+        return '<tr' + rowClass + '><td>' + esc(r.pos) + '</td><td class="club"><span class="table-club" role="button" tabindex="0" data-open-club-name="' + esc(r.club) + '">' + (logos[r.club] ? '<img class="table-club-logo" src="' + esc(logos[r.club]) + '" alt="" loading="lazy">' : '<span class="table-club-logo table-club-fallback">' + esc((r.club || '?').charAt(0).toUpperCase()) + '</span>') + '<span>' + esc(r.club) + '</span>' + relegationMark + '</span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
       }).join('');
     });
     $('tableBody').innerHTML = html;
