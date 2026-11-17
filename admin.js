@@ -231,6 +231,23 @@
       '<label for="impFile">CSV file</label><input type="file" id="impFile" accept=".csv,text/csv">' +
       '<div class="btns"><button class="secondary" id="impCheck">Check file</button><button class="primary" id="impGo" disabled>Import matches</button></div>' +
       '<div id="impPreview" class="muted" aria-live="polite"></div>' +
+      '<section class="hist-standings-admin" aria-labelledby="histStandingsHeading">' +
+      '<h2 class="rt" id="histStandingsHeading">Historical league standings</h2>' +
+      '<p class="muted">Publish the final table for a completed season. Choose a league and a past season, then use either bulk CSV import or manual entry. Saving replaces only that league’s table for the selected past season; it does not change fixtures, match results or the current live table.</p>' +
+      '<label for="histLeague">League competition</label><select id="histLeague"><option value="">Choose a league…</option></select>' +
+      '<label for="histSeason">Past season</label><select id="histSeason"><option value="">Choose a past season…</option></select>' +
+      '<h3 class="rt">Option 1 · Bulk CSV import</h3>' +
+      '<p class="muted">Download the template, fill in one row per club, choose the file and check it before importing.</p>' +
+      '<div class="btns"><button type="button" class="secondary" id="histTemplate">Download standings template</button></div>' +
+      '<label for="histCsvFile">Historical standings CSV</label><input type="file" id="histCsvFile" accept=".csv,text/csv">' +
+      '<div class="btns"><button type="button" class="secondary" id="histCheck">Check CSV</button><button type="button" class="primary" id="histImport" disabled>Import standings</button></div>' +
+      '<div id="histCsvPreview" class="muted" aria-live="polite"></div>' +
+      '<h3 class="rt">Option 2 · Manual entry</h3>' +
+      '<p class="muted">Load the selected season’s table, type or correct each club’s final figures, and add or remove rows as needed. Played must equal wins + draws + losses.</p>' +
+      '<div class="hist-standings-scroll"><table class="hist-standings-table"><thead><tr><th>Pos</th><th>Club</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>Pts</th><th></th></tr></thead><tbody id="histRows"><tr><td colspan="10">Choose a league and past season, then load the table.</td></tr></tbody></table></div>' +
+      '<div class="btns"><button type="button" class="secondary" id="histLoad">Load table</button><button type="button" class="secondary" id="histAddRow">Add club row</button><button type="button" class="primary" id="histSave">Save manual table</button></div>' +
+      '<div class="status" id="histManualMsg" role="status"></div>' +
+      '</section>' +
       '<h2 class="rt">Enter a result</h2>' +
       '<label for="resSeason">Season of the match</label><select id="resSeason"><option value="">Loading seasons…</option></select>' +
       '<label for="resMatch">Match</label><select id="resMatch"><option value="">Loading matches…</option></select>' +
@@ -332,6 +349,7 @@
     loadSeasonAdmin();
     loadAuditLog();
     wireImport();
+    wireHistoricalStandings();
     if ($('resSeason')) $('resSeason').addEventListener('change', loadMatchesForResult);
     if ($('seasonAdd')) $('seasonAdd').addEventListener('click', function () {
       db.rpc('create_season', { p_name: $('seasonName').value.trim(), p_start: $('seasonStart').value, p_end: $('seasonEnd').value }).then(function (res) {
@@ -695,6 +713,15 @@
         el.innerHTML = (id === 'resSeason' ? '<option value="">All seasons</option>' : '<option value="">Choose a season…</option>') + opts;
         if (current) el.value = String(current.id);
       });
+      var histSeason = $('histSeason');
+      if (histSeason) {
+        var previousHistSeason = histSeason.value;
+        var pastSeasons = seasonCache.filter(function (x) { return !x.is_current; });
+        histSeason.innerHTML = '<option value="">Choose a past season…</option>' + pastSeasons.map(function (x) {
+          return '<option value="' + esc(x.id) + '">' + esc(x.name) + '</option>';
+        }).join('');
+        if (pastSeasons.some(function (x) { return String(x.id) === String(previousHistSeason); })) histSeason.value = previousHistSeason;
+      }
       var list = $('seasonList');
       if (list) {
         list.innerHTML = seasonCache.length ? seasonCache.map(function (x) {
@@ -870,9 +897,17 @@
   }
 
   function loadLeagueOptions() {
-    db.from('leagues').select('id, name').eq('is_active', true).order('sort_order').then(function (r) {
-      $('fxLeague').innerHTML = '<option value="">Choose the league…</option>' + (r.data || []).map(function (l) {
+    db.from('leagues').select('id, name, competition_type').eq('is_active', true).order('sort_order').then(function (r) {
+      var leagues = r.data || [];
+      $('fxLeague').innerHTML = '<option value="">Choose the league…</option>' + leagues.map(function (l) {
         return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>'; }).join('');
+      if ($('histLeague')) {
+        $('histLeague').innerHTML = '<option value="">Choose a league…</option>' + leagues.filter(function (l) {
+          return String(l.competition_type || 'LEAGUE').toUpperCase() === 'LEAGUE';
+        }).map(function (l) {
+          return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>';
+        }).join('');
+      }
     });
   }
   function wireClubs() {
