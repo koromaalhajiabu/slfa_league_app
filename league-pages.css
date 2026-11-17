@@ -158,3 +158,9 @@
 .slfa-lp-season-track{height:9px;border-radius:99px;background:rgba(0,114,198,.10);overflow:hidden}
 .slfa-lp-season-track i{display:block;height:100%;min-width:2px;border-radius:99px;background:linear-gradient(90deg,#16834a,#0756a5)}
 @media(max-width:480px){.slfa-lp-season-meta{align-items:flex-start;flex-direction:column;gap:3px}.slfa-lp-season-meta span{text-align:left}}
+
+
+/* Public season selector for current and archived league tables. */
+.slfa-lp-season-select{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:10px;font-weight:700;white-space:nowrap}
+.slfa-lp-season-select select{max-width:190px;min-height:39px;padding:6px 9px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);font:inherit}
+@media(max-width:520px){.slfa-lp-panel>.slfa-lp-section-head:has(.slfa-lp-season-select){align-items:flex-start;flex-direction:column}.slfa-lp-season-select{width:100%;justify-content:space-between}.slfa-lp-season-select select{flex:1;max-width:none}}
