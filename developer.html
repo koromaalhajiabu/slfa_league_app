@@ -84,21 +84,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
     <div id="signedIn"><div id="roleTools"></div></div>
     
 
-    <section id="cupBracketAdmin" class="card" aria-labelledby="cupBracketHeading">
-      <h2 class="rt" id="cupBracketHeading">Knockout cup bracket</h2>
-      <p class="muted">Create single-match knockout ties, connect each winner to the next round, and advance the officially confirmed winner. Create the next-round fixture first in Add a fixture.</p>
-      <label for="cupTieEdit">Existing cup tie</label><select id="cupTieEdit"><option value="">Create a new tie</option></select>
-      <label for="cupCompetition">Cup competition</label><select id="cupCompetition"><option value="">Loading cups…</option></select>
-      <label for="cupSeason">Season</label><select id="cupSeason"><option value="">No season selected</option></select>
-      <label for="cupMatch">Match fixture</label><select id="cupMatch"><option value="">Choose a cup first…</option></select>
-      <label for="cupRound">Round name</label><input id="cupRound" type="text" maxlength="60" placeholder="Round of 16, Quarter-final, Semi-final, Final">
-      <label for="cupTieNumber">Tie number in this round</label><input id="cupTieNumber" type="number" min="1" step="1" value="1">
-      <label for="cupNextTie">Next-round tie (optional)</label><select id="cupNextTie"><option value="">No next tie / Final</option></select>
-      <label for="cupNextSlot">Winner enters next tie as</label><select id="cupNextSlot"><option value="HOME">Home team</option><option value="AWAY">Away team</option></select>
-      <div class="btns"><button class="primary" id="cupTieSave" type="button">Save cup tie</button><button class="secondary" id="cupTieNew" type="button">New tie</button></div>
-      <div id="cupTieList" class="muted" aria-live="polite">Loading cup ties…</div>
-      <div class="status" id="cupTieMsg" role="status"></div>
-    </section>
+
 
     <div class="btns"><button class="secondary" id="pSignOut">Sign out</button></div>
   </section>
