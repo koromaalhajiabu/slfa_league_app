@@ -555,17 +555,11 @@
     var b = $('roleTools'); if (!b || $('accountPrivacy')) return;
     db.auth.getUser().then(function (u) {
       if (!u || u.error || !u.data || !u.data.user) return;
-      var isProtectedOwner = String(u.data.user.email || '').toLowerCase() === 'koromaalhajiabu0@gmail.com';
       var sec = document.createElement('div');
       sec.id = 'accountPrivacy';
       sec.innerHTML = '<h2 class="rt">My account data</h2>' +
         '<p class="muted">Download a copy of the account details the app holds for you.</p>' +
         '<div class="btns"><button class="secondary" id="apDownload">Download my account data (JSON)</button></div>' +
-        (isProtectedOwner
-          ? ''
-          : '<p class="muted">You may ask a Super Admin to review an account deletion request.</p>' +
-            '<label for="apNote">Reason for deletion (optional)</label><textarea id="apNote" rows="2" maxlength="500"></textarea>' +
-            '<div class="btns"><button class="secondary" id="apDelete">Ask for my account to be deleted</button></div>') +
         '<div id="apStatus" class="muted" role="status"></div>';
       b.appendChild(sec);
       function say(t) { $('apStatus').textContent = t; }
@@ -581,16 +575,7 @@
           say('Your copy has been saved to this device.');
         });
       });
-      if (!isProtectedOwner) {
-        $('apDelete').addEventListener('click', function () {
-          if (!window.confirm('Ask a Super Admin to delete your account? You will keep access until it is done.')) return;
-          say('Sending your request…');
-          db.rpc('staff_request_deletion', { p_note: $('apNote').value.trim() }).then(function (r) {
-            say(r.error ? r.error.message : 'Request sent. A Super Admin will review it.');
-            if (!r.error) $('apNote').value = '';
-          });
-        });
-      }
+
     });
   }
 
