@@ -382,7 +382,8 @@
         var inRelegationZone = index >= relegationStart;
         var rowClass = inRelegationZone ? ' class="relegation-zone" aria-label="Relegation zone"' : '';
         var relegationMark = inRelegationZone ? '<span class="relegation-mark" title="Relegation zone" aria-label="Relegation zone">RZ</span>' : '';
-        return '<tr' + rowClass + '><td>' + esc(r.pos) + '</td><td class="club"><span class="table-club" role="button" tabindex="0" data-open-club-name="' + esc(r.club) + '">' + (logos[r.club] ? '<img class="table-club-logo" src="' + esc(logos[r.club]) + '" alt="" loading="lazy">' : '<span class="table-club-logo table-club-fallback">' + esc((r.club || '?').charAt(0).toUpperCase()) + '</span>') + '<span>' + esc(r.club) + '</span>' + relegationMark + '</span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
+        var positionCell = inRelegationZone ? '<td class="relegation-position-cell"><span class="relegation-position">' + esc(r.pos) + '</span></td>' : '<td>' + esc(r.pos) + '</td>';
+        return '<tr' + rowClass + '>' + positionCell + '<td class="club"><span class="table-club" role="button" tabindex="0" data-open-club-name="' + esc(r.club) + '">' + (logos[r.club] ? '<img class="table-club-logo" src="' + esc(logos[r.club]) + '" alt="" loading="lazy">' : '<span class="table-club-logo table-club-fallback">' + esc((r.club || '?').charAt(0).toUpperCase()) + '</span>') + '<span>' + esc(r.club) + '</span>' + relegationMark + '</span></td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.gf) + '</td><td>' + esc(r.ga) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>';
       }).join('');
     });
     $('tableBody').innerHTML = html;
