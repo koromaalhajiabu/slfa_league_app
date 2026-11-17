@@ -166,9 +166,10 @@
     var defaultTableSeason = leagueSeasonOptions.filter(function (x) { return x.is_current; })[0] || leagueSeasonOptions[0] || null;
     var tableSeasonId = tableSeasonChoice[id] || (defaultTableSeason ? String(defaultTableSeason.id) : '');
     var chosenTableSeason = leagueSeasonOptions.filter(function (x) { return String(x.id) === String(tableSeasonId); })[0] || null;
+    var currentTableRows = standings.filter(function (r) { return String(r.league_id) === id; });
     var tableRows = (chosenTableSeason && !chosenTableSeason.is_current
       ? historicalStandings.filter(function (r) { return String(r.league_id) === id && String(r.season_id) === String(chosenTableSeason.id); })
-      : standings.filter(function (r) { return String(r.league_id) === id; }))
+      : currentTableRows.slice())
       .sort(function (a,b) { return Number(a.pos) - Number(b.pos); });
     var clubCards = teamRows.map(function (c) {
       return '<button type="button" class="slfa-lp-club slfa-lp-club-link" data-open-club="' + esc(c.id) + '">' +
@@ -207,7 +208,7 @@
     });
     var analyticsHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>PERFORMANCE INTELLIGENCE</span><h4>Home, away and recent form</h4></div><small>From completed results</small></div>' +
       '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table slfa-lp-analytics-table"><thead><tr><th>Club</th><th>Pos</th><th>P</th><th>Home pts</th><th>Away pts</th><th>Last 5</th></tr></thead><tbody>' +
-      analyticsRows.map(function(x) { var standing=tableRows.find(function(r){return sameClub(r.club,x.name);}); return '<tr><td class="club">'+esc(x.name)+'</td><td>'+(standing?'<strong class="slfa-lp-current-rank">#'+esc(standing.pos)+'</strong>':'—')+'</td><td>'+x.played+'</td><td>'+x.homePoints+'</td><td>'+x.awayPoints+'</td><td><strong class="slfa-lp-form">'+(Array.isArray(x.form)&&x.form.length?x.form.map(function(v){return '<i class="slfa-form-'+v.toLowerCase()+'" title="'+(v==='W'?'Win':v==='D'?'Draw':'Loss')+'">'+v+'</i>';}).join(''):'—')+'</strong></td></tr>'; }).join('') +
+      analyticsRows.map(function(x) { var standing=currentTableRows.find(function(r){return sameClub(r.club,x.name);}); return '<tr><td class="club">'+esc(x.name)+'</td><td>'+(standing?'<strong class="slfa-lp-current-rank">#'+esc(standing.pos)+'</strong>':'—')+'</td><td>'+x.played+'</td><td>'+x.homePoints+'</td><td>'+x.awayPoints+'</td><td><strong class="slfa-lp-form">'+(Array.isArray(x.form)&&x.form.length?x.form.map(function(v){return '<i class="slfa-form-'+v.toLowerCase()+'" title="'+(v==='W'?'Win':v==='D'?'Draw':'Loss')+'">'+v+'</i>';}).join(''):'—')+'</strong></td></tr>'; }).join('') +
       '</tbody></table></div></section>';
     var seasonTrendRows = seasons.map(function(season) {
       var seasonMatches = games.filter(function(m) {
