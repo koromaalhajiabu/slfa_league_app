@@ -1063,3 +1063,37 @@ html body .slfa-club-share { margin:6px 0 10px; padding:8px 12px; border-radius:
 .app-legal .app-credit strong{font-weight:600;color:inherit}
 .app-legal a{display:inline-block;margin-top:5px;color:#9fb6d3;text-decoration:underline;text-underline-offset:3px}
 @media(max-width:480px){.app-legal{padding:20px 12px 26px;font-size:.84rem}}
+
+
+/* Public standings: automatically identify the bottom four clubs in each league */
+.standings-legend {
+  display:flex; align-items:center; gap:9px; margin:0 0 12px;
+  color:var(--muted); font-size:12px; line-height:1.45;
+}
+.standings-legend-swatch {
+  display:inline-block; width:18px; height:12px; flex:0 0 18px;
+  border-left:4px solid #c62828; border-radius:2px;
+  background:rgba(198,40,40,.18);
+}
+.table tbody tr.relegation-zone td {
+  background:rgba(198,40,40,.13);
+  border-top:1px solid rgba(220,38,38,.28);
+  border-bottom:1px solid rgba(220,38,38,.28);
+}
+.table tbody tr.relegation-zone:hover td { background:rgba(198,40,40,.2); }
+.table tbody tr.relegation-zone td:first-child {
+  border-left:4px solid #d32f2f;
+  color:#ef5350;
+  font-weight:800;
+}
+.table .relegation-mark {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:22px; height:18px; padding:0 4px; margin-left:5px;
+  border-radius:4px; background:#b71c1c; color:#fff;
+  font:800 9px/1 Inter,system-ui,sans-serif; letter-spacing:.04em;
+  vertical-align:middle;
+}
+@media (max-width:420px) {
+  .table .relegation-mark { min-width:18px; height:16px; padding:0 3px; margin-left:3px; font-size:8px; }
+  .standings-legend { font-size:11px; }
+}
