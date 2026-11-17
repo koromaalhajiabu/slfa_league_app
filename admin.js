@@ -1100,15 +1100,15 @@
   }
 
   function loadLeagueOptions() {
-    db.from('leagues').select('id, name, competition_type').eq('is_active', true).order('sort_order').then(function (r) {
+    db.from('leagues').select('id, name, competition_type, is_active').order('sort_order').then(function (r) {
       var leagues = r.data || [];
-      $('fxLeague').innerHTML = '<option value="">Choose the league…</option>' + leagues.map(function (l) {
+      $('fxLeague').innerHTML = '<option value="">Choose the league…</option>' + leagues.filter(function (l) { return l.is_active; }).map(function (l) {
         return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>'; }).join('');
       if ($('histLeague')) {
         $('histLeague').innerHTML = '<option value="">Choose a league…</option>' + leagues.filter(function (l) {
           return String(l.competition_type || 'LEAGUE').toUpperCase() === 'LEAGUE';
         }).map(function (l) {
-          return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>';
+          return '<option value="' + esc(l.id) + '">' + esc(l.name) + (l.is_active ? '' : ' · archived competition') + '</option>';
         }).join('');
       }
     });
