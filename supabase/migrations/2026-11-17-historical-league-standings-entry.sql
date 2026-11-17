@@ -68,8 +68,11 @@ BEGIN
     RAISE EXCEPTION 'Choose an existing league competition.';
   END IF;
 
-  IF jsonb_typeof(p_rows) IS DISTINCT FROM 'array'
-     OR jsonb_array_length(p_rows) NOT BETWEEN 1 AND 100 THEN
+  IF jsonb_typeof(p_rows) IS DISTINCT FROM 'array' THEN
+    RAISE EXCEPTION 'Provide a CSV import or manual table containing club rows.';
+  END IF;
+
+  IF jsonb_array_length(p_rows) NOT BETWEEN 1 AND 100 THEN
     RAISE EXCEPTION 'Provide between 1 and 100 club rows.';
   END IF;
 
