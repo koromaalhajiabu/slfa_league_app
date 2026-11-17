@@ -253,7 +253,6 @@
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<h2 class="rt">Fan comments awaiting approval</h2><div id="pendingComments" class="muted">Loading…</div>' +
-      '<h2 class="rt">Privacy requests from staff</h2><div id="privacyRequests" class="muted">Loading…</div>' +
       '<h2 class="rt">Audit log</h2>' +
       '<p class="muted">Recent changes across the app, newest first. Read only.</p>' +
       '<label for="auDays">Show</label><select id="auDays"><option value="30">Last 30 days</option><option value="90" selected>Last 90 days</option><option value="365">Last year</option></select>' +
@@ -330,7 +329,6 @@
     loadPendingResults();
     loadPendingComments();
     loadFanReports();
-    loadPrivacyRequests();
     loadSeasonAdmin();
     loadAuditLog();
     wireImport();
@@ -551,28 +549,6 @@
     });
   }
 
-  // Staff privacy requests. A Super Admin marks each one done after reviewing it. Nothing is deleted automatically.
-  function loadPrivacyRequests() {
-    var box = $('privacyRequests'); if (!box) return;
-    db.from('privacy_requests').select('id, request_type, note, created_at, user_profiles(full_name, email, system_role)').eq('status', 'OPEN').order('created_at', { ascending: true }).limit(100)
-      .then(function (r) {
-        if (r.error) { box.textContent = 'Requests could not be loaded.'; return; }
-        var rows = r.data || [];
-        box.innerHTML = rows.length ? rows.map(function (x) {
-          var u = x.user_profiles || {};
-          return '<div class="post"><strong>Account deletion</strong> · ' + esc(u.full_name || 'Staff member') + ' (' + esc(u.system_role || '') + ')' +
-            '<p>' + esc(u.email || '') + '</p>' + (x.note ? '<p>' + esc(x.note) + '</p>' : '') +
-            '<div class="btns"><button class="primary" data-privacy-done="' + x.id + '">Mark done</button></div></div>';
-        }).join('') : 'No open requests.';
-        box.querySelectorAll('[data-privacy-done]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            db.from('privacy_requests').update({ status: 'DONE', resolved_at: new Date().toISOString() }).eq('id', Number(b.dataset.privacyDone)).then(function (res) {
-              msg(res.error ? res.error.message : 'Request marked done. Remove the account in the Supabase dashboard if it should be deleted.'); loadPrivacyRequests(); });
-          });
-        });
-      });
-  }
-
   // Staff can export their own data. The protected platform owner does not
   // receive the Super Admin deletion-request workflow.
   function accountPrivacy() {
@@ -586,7 +562,7 @@
         '<p class="muted">Download a copy of the account details the app holds for you.</p>' +
         '<div class="btns"><button class="secondary" id="apDownload">Download my account data (JSON)</button></div>' +
         (isProtectedOwner
-          ? '<p class="muted">This is the protected platform Developer account. Account deletion is not available through the Super Admin request workflow.</p>'
+          ? ''
           : '<p class="muted">You may ask a Super Admin to review an account deletion request.</p>' +
             '<label for="apNote">Reason for deletion (optional)</label><textarea id="apNote" rows="2" maxlength="500"></textarea>' +
             '<div class="btns"><button class="secondary" id="apDelete">Ask for my account to be deleted</button></div>') +
