@@ -182,7 +182,7 @@
     var tableEmpty = chosenTableSeason && !chosenTableSeason.is_current
       ? 'No historical final table has been published for ' + chosenTableSeason.name + ' yet.'
       : 'No current league standings are available yet.';
-    var tableHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head slfa-lp-table-head"><div><span>LEAGUE TABLE</span><h4>' + esc(tableTitle) + '</h4></div>' + tableSeasonControl + '</div>' +
+    var tableHtml = String(lg.competition_type || 'LEAGUE').toUpperCase() === 'CUP' ? '' : '<section class="slfa-lp-panel"><div class="slfa-lp-section-head slfa-lp-table-head"><div><span>LEAGUE TABLE</span><h4>' + esc(tableTitle) + '</h4></div>' + tableSeasonControl + '</div>' +
       (tableRows.length ? '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table"><thead><tr><th>#</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>' +
       tableRows.map(function (r) { return '<tr><td>' + esc(r.pos) + '</td><td class="club">' + esc(r.club) + '</td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc((Number(r.gf)||0)-(Number(r.ga)||0)) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>'; }).join('') +
       '</tbody></table></div>' : '<p class="slfa-lp-empty">' + esc(tableEmpty) + '</p>') + '</section>';
@@ -424,7 +424,7 @@
         cupTies = ct.error ? [] : (ct.data || []);
         if (!host.hidden) render();
       });
-      if (r.some(function (x) { return !!x.error; })) {
+      if (r.slice(0, 5).some(function (x) { return !!x.error; })) {
         var warning = document.createElement('p');
         warning.className = 'slfa-lp-source';
         warning.textContent = 'Some competition information could not be loaded. Please try again when connected.';
