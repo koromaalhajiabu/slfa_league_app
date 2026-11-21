@@ -37,10 +37,21 @@
                 '<p><strong>Incidents</strong><br>' + esc(x.incident_details || 'None recorded') + '</p>' +
                 '<p><strong>Security / crowd</strong><br>' + esc(x.security_arrangements || 'Not recorded') + ' · ' + esc(x.crowd_behaviour || 'Not recorded') + '</p>' +
                 '<p><strong>Recommendations</strong><br>' + esc(x.recommendations || 'None provided') + '</p>' +
-                '<p><strong>Evidence files:</strong> ' + ((x.evidence_paths || []).length) + '</p>' +
+                '<p><strong>Photographic evidence</strong></p>' +
+                (((x.evidence_paths || []).map(function (path) {
+                  return '<button type="button" class="secondary small" data-mc-evidence="' + esc(path) + '">Open ' + esc(path.split('/').pop()) + '</button>';
+                }).join(' ')) || '<p class="muted">No evidence files attached.</p>') +
                 '<label for="mcReview_' + esc(x.id) + '">Review notes</label><textarea id="mcReview_' + esc(x.id) + '" rows="2" maxlength="2000"></textarea>' +
                 '<button type="button" class="primary" data-mc-review="' + esc(x.id) + '">Mark reviewed and lock report</button></article>';
             }).join('');
+            $('mcAdminList').querySelectorAll('[data-mc-evidence]').forEach(function (b) {
+              b.addEventListener('click', function () {
+                db.storage.from('match-commissioner-evidence').createSignedUrl(b.getAttribute('data-mc-evidence'), 900).then(function (r) {
+                  if (r.error) { $('mcAdminMsg').textContent = 'Could not open evidence: ' + r.error.message; return; }
+                  window.open(r.data.signedUrl, '_blank', 'noopener');
+                });
+              });
+            });
             $('mcAdminList').querySelectorAll('[data-mc-review]').forEach(function (b) {
               b.addEventListener('click', function () {
                 var id=b.getAttribute('data-mc-review'), note=$('mcReview_'+id).value.trim();
