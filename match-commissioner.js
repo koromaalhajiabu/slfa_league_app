@@ -69,7 +69,8 @@
       return '<article class="mc-history-item"><div><strong>' + esc((m.home_team || 'Home') + ' v ' + (m.away_team || 'Away')) +
         '</strong><span class="mc-status mc-status-' + esc(String(r.report_status || 'DRAFT').toLowerCase()) + '">' +
         esc(r.report_status || 'DRAFT') + '</span></div><small>' + esc(dateText(m.match_date)) + ' · Updated ' +
-        esc(dateText(r.updated_at || r.created_at)) + '</small></article>';
+        esc(dateText(r.updated_at || r.created_at)) + '</small>' +
+        (r.review_notes ? '<p class="muted">Review notes: ' + esc(r.review_notes) + '</p>' : '') + '</article>';
     }).join('') : '<p class="muted">No reports have been saved yet.</p>';
   }
   function showMatch(m) {
