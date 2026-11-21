@@ -263,9 +263,9 @@
       '<label for="lvMatch">Match</label><select id="lvMatch"><option value="">Loading matches…</option></select>' +
       '<p class="muted">The referee starts, pauses, times and ends the match.</p>' +
       '<div id="lvPanel" class="hidden"><p class="muted">Goals and cards are recorded by the assigned referees and the match commissioner.</p></div>' +
-      '<h2 class="rt">Assign a referee</h2>' +
+      '<h2 class="rt">Assign match official</h2><p class="muted">Appoint a referee or Match Commissioner to a specific fixture. Select the duty separately for each appointment.</p>' +
       '<label for="asMatch">Match</label><select id="asMatch"><option value="">Loading…</option></select>' +
-      '<label for="asRef">Referee</label><select id="asRef"><option value="">Loading referees…</option></select>' +
+      '<label for="asRef">Match official</label><select id="asRef"><option value="">Loading referees…</option></select>' +
       '<label for="asRole">Role at the match</label><select id="asRole"><option value="MAIN">Main referee</option><option value="ASSISTANT">Assistant referee</option><option value="MATCH_COMMISSIONER">Match commissioner</option></select>' +
       '<div class="btns"><button class="primary" id="asSave">Assign</button></div>' +
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
@@ -362,7 +362,7 @@
     });
     $('asSave').addEventListener('click', function () {
       var m = $('asMatch').value, r = $('asRef').value, role = $('asRole').value;
-      if (!m || !r) { msg('Choose a match and a referee.'); return; }
+      if (!m || !r) { msg('Choose a match and a match official.'); return; }
       db.auth.getUser().then(function (u) {
         return db.from('match_referee_assignments').insert([{ match_id: Number(m), referee_user_id: r, assigned_by: u.data.user.id, official_role: role, assignment_status: 'ACTIVE' }]);
       }).then(function (res) { msg(res.error ? res.error.message : 'Official assigned.'); });
