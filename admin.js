@@ -149,7 +149,7 @@
   window.slfaRenderRole = function (p) {
     var role = String(p.system_role).toUpperCase();
     var out;
-    if (role === 'SUPER_ADMIN') out = superAdmin(p);
+    if (role === 'SUPER_ADMIN') { out = superAdmin(p); if (typeof window.slfaRenderCommissionerReportsAdmin === 'function') window.slfaRenderCommissionerReportsAdmin(p); }
     else if (role === 'MEDIA_OFFICER') out = mediaOfficer(p);
     else if (role === 'DISCIPLINARY_OFFICER') out = disciplinary(p);
     else if (role === 'REFEREE' && String(p.official_title || '').trim().toLowerCase() === 'match commissioner' && typeof window.slfaRenderMatchCommissioner === 'function') out = window.slfaRenderMatchCommissioner(p);
