@@ -36,7 +36,7 @@
     rows.forEach(function(p){track(p.id,'IMPRESSION');});
     box.querySelectorAll('[data-media-video]').forEach(function(v){v.addEventListener('play',function(){track(v.dataset.mediaVideo,'VIDEO_PLAY');},{once:true});});
     box.querySelectorAll('[data-video-click]').forEach(function(a){a.addEventListener('click',function(){track(a.dataset.videoClick,'VIDEO_CLICK');});});
-    box.querySelectorAll('[data-share]').forEach(function(b){b.addEventListener('click',function(e){var id=b.dataset.share,p=rows.find(function(x){return String(x.id)===String(id);});if(!p)return;track(id,'SHARE');var u=shareUrl(p);if(navigator.share){navigator.share({title:p.title,text:p.body||'SLFA Media Centre',url:u}).catch(function(){});}else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(function(){b.textContent='Link copied';}).catch(function(){window.prompt('Copy this media link',u);});}else window.prompt('Copy this media link',u);});});
+    box.querySelectorAll('[data-share]').forEach(function(b){b.addEventListener('click',function(){var id=b.dataset.share,p=rows.find(function(x){return String(x.id)===String(id);});if(!p)return;track(id,'SHARE');if(b.tagName==='A')return;var u=shareUrl(p);if(navigator.share){navigator.share({title:p.title,text:p.body||'SLFA Media Centre',url:u}).catch(function(){});}else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(function(){b.textContent='Link copied';}).catch(function(){window.prompt('Copy this media link',u);});}else window.prompt('Copy this media link',u);});});
   }
   function load(){
     box.innerHTML='<div class="pm-centre"><div class="pm-empty">Loading approved media…</div></div>';
