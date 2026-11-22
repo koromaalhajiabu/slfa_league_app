@@ -313,7 +313,7 @@
     var clubGames = matches.filter(function (m) {
       return String(m.league_id) === id && (sameClub(m.home_team, name) || sameClub(m.away_team, name));
     });
-    var played = clubGames.filter(completed).sort(function (a,b) { return new Date(b.match_date)-new Date(a.match_date); });
+    var played = clubGames.filter(function(m){return completed(m)&&m.home_score!=null&&m.away_score!=null;}).sort(function (a,b) { return new Date(b.match_date)-new Date(a.match_date); });
     var next = clubGames.filter(upcoming).sort(function (a,b) { return new Date(a.match_date)-new Date(b.match_date); });
     var stats = {w:0,d:0,l:0,gf:0,ga:0};
     played.forEach(function (m) {
