@@ -13,8 +13,7 @@
     { value: 'crimson-elite', label: 'Crimson Elite' },
     { value: 'custom', label: 'Custom colour' }
   ];
-  var PRESET_KEY = 'slfa_palette_v1';
-  var CUSTOM_KEY = 'slfa_custom_accent_v1';
+  var GLOBAL_CACHE_KEY = 'slfa_global_appearance_v1';
   var CONFIG_KEY = 'appearance_config';
   var DEFAULT_ACCENT = '#62d7ff';
   var db = null;
@@ -58,8 +57,6 @@
         document.documentElement.style.removeProperty(v);
       });
     }
-    safeSet(PRESET_KEY, current.palette);
-    safeSet(CUSTOM_KEY, current.custom_accent);
     updateThemeColour();
     return current;
   }
@@ -90,6 +87,7 @@
       var value = configFromValue(res.data.value);
       if (!value) return false;
       current = value;
+      safeSet(GLOBAL_CACHE_KEY, JSON.stringify(value));
       applyPreset(value.palette, value.custom_accent);
       syncControls();
       return true;
@@ -122,7 +120,10 @@
         return;
       }
       var saved = configFromValue(res.data && res.data.value);
-      if (saved) applyPreset(saved.palette, saved.custom_accent);
+      if (saved) {
+        safeSet(GLOBAL_CACHE_KEY, JSON.stringify(saved));
+        applyPreset(saved.palette, saved.custom_accent);
+      }
       setStatus('System theme updated for everyone.', false);
       syncControls();
     }).catch(function () {
@@ -173,6 +174,13 @@
     picker.setAttribute('aria-label', 'Set custom system accent colour');
     picker.title = 'Set custom system accent colour';
 
+    var publish = document.createElement('button');
+    publish.type = 'button';
+    publish.id = 'slfaThemePublish';
+    publish.className = 'small';
+    publish.textContent = 'Publish';
+    publish.setAttribute('aria-label', 'Publish the selected system colour theme');
+
     var status = document.createElement('span');
     status.id = 'slfaThemeStatus';
     status.setAttribute('role', 'status');
@@ -181,6 +189,7 @@
     wrap.appendChild(label);
     wrap.appendChild(select);
     wrap.appendChild(picker);
+    wrap.appendChild(publish);
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
     else header.appendChild(wrap);
     header.appendChild(status);
@@ -193,8 +202,13 @@
     picker.addEventListener('input', function () {
       applyPreset('custom', picker.value);
       select.value = 'custom';
-      saveGlobalTheme();
+      setStatus('Preview only. Tap Publish to apply this colour to everyone.', false);
     });
+    picker.addEventListener('change', function () {
+      applyPreset('custom', picker.value);
+      select.value = 'custom';
+    });
+    publish.addEventListener('click', saveGlobalTheme);
   }
   function addStars() {
     if (!document.body || document.getElementById('slfa-cosmos')) return;
@@ -233,9 +247,10 @@
   function init() {
     if (!document.body) return;
     db = getDb();
-    var localPreset = validPreset(safeGet(PRESET_KEY) || 'night-sky');
-    var localAccent = safeHex(safeGet(CUSTOM_KEY) || DEFAULT_ACCENT);
-    applyPreset(localPreset, localAccent);
+    var cached = null;
+    try { cached = JSON.parse(safeGet(GLOBAL_CACHE_KEY) || 'null'); } catch (e) {}
+    var cachedConfig = configFromValue(cached);
+    applyPreset(cachedConfig ? cachedConfig.palette : 'night-sky', cachedConfig ? cachedConfig.custom_accent : DEFAULT_ACCENT);
     addStars();
 
     // All viewers receive the same palette from the database. Local storage is only an offline fallback.
