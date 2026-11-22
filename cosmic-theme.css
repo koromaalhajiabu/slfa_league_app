@@ -258,3 +258,14 @@ html[data-theme="light"] .team,
 html[data-theme="light"] .match {
   border-color: var(--slfa-light-line) !important;
 }
+
+#slfaThemeStatus {
+  display:block; flex-basis:100%; margin:3px 4px 0; color:var(--slfa-accent);
+  font-size:10px; line-height:1.3; text-align:right; min-height:13px;
+}
+#slfaThemeStatus[data-error="true"] { color:#ff9aa5; }
+#slfaThemeControls select:focus-visible,
+#slfaThemeControls input:focus-visible { outline:2px solid var(--slfa-accent); outline-offset:2px; }
+@media (max-width:620px) {
+  #slfaThemeStatus { text-align:left; font-size:9px; }
+}
