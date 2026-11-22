@@ -100,7 +100,8 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
 @keyframes kltSlfaIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 </style>
 <meta name="klt-dashboard-version" content="2026-11-22-premium-v3">
-<link rel="stylesheet" href="cosmic-theme.css?v=4">
+<link rel="stylesheet" href="cosmic-theme.css?v=5">
+<style id="slfa-public-hide-developer-theme">/* Developer theme controls must never appear in the public viewer, including when an older cached script attempts to inject them. */#slfaThemeControls,#slfaThemeStatus,#slfaThemeSelect,#slfaAccentColor,#slfaThemePublish{display:none!important;visibility:hidden!important;pointer-events:none!important}</style>
 </head>
 <body>
 <header class="topbar">
@@ -268,7 +269,7 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
   });
   window.addEventListener('appinstalled', function () { document.getElementById('installBtn').hidden = true; });
   if (isIOS) document.getElementById('iosHint').hidden = false;
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js?v=204').catch(function () {});
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js?v=205').catch(function () {});
 })();
 </script>
 <script>
@@ -410,6 +411,6 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
 <script src="home-dashboard.js?v=3"></script>
 <script src="player-profile.js?v=4"></script>
 <script src="player-directory.js?v=3"></script>
-<script src="cosmic-theme.js?v=4"></script>
+<script src="cosmic-theme.js?v=5"></script>
 </body>
 </html>
