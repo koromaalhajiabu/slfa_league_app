@@ -78,6 +78,7 @@
   function openProfile(trigger) {
     var name = trigger.getAttribute('data-profile-player') || '';
     var club = trigger.getAttribute('data-profile-club') || '';
+    var clubLogo = trigger.getAttribute('data-profile-club-logo') || '';
     var photo = trigger.getAttribute('data-profile-photo') || '';
     var position = trigger.getAttribute('data-profile-position') || '';
     var jersey = trigger.getAttribute('data-profile-jersey') || '';
@@ -113,8 +114,11 @@
       var portrait = photo
         ? '<img class="pp-photo" src="' + esc(photo) + '" alt="' + esc(name) + '" onerror="this.hidden=true;this.nextElementSibling.hidden=false;"><div class="pp-photo pp-placeholder" hidden>' + esc(name.charAt(0).toUpperCase()) + '</div>'
         : '<div class="pp-photo pp-placeholder">' + esc(name.charAt(0).toUpperCase()) + '</div>';
+      var clubCrest = clubLogo
+        ? '<img class="pp-club-crest" src="'+esc(clubLogo)+'" alt="" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false;"><span class="pp-club-crest pp-club-initial" hidden>'+esc(String(club||'?').charAt(0).toUpperCase())+'</span>'
+        : '<span class="pp-club-crest pp-club-initial">'+esc(String(club||'?').charAt(0).toUpperCase())+'</span>';
       var baseHtml = '<div class="pp-cover"><span class="pp-cover-label">PLAYER PERFORMANCE PROFILE</span><span class="pp-cover-ball" aria-hidden="true">⚽</span></div>' +
-        '<div class="pp-heading">' + portrait + '<div class="pp-identity"><span class="pp-kicker">PLAYER PROFILE</span><h2 id="playerProfileTitle">' + esc(name) + '</h2><p>' + esc(club || 'Club not listed') + '</p>' +
+        '<div class="pp-heading">' + portrait + '<div class="pp-identity"><span class="pp-kicker">PLAYER PROFILE</span><h2 id="playerProfileTitle">' + esc(name) + '</h2><div class="pp-club-line">'+clubCrest+'<p>' + esc(club || 'Club not listed') + '</p></div>' +
         ((position || jersey) ? '<div class="pp-meta">' + (position ? '<span>' + esc(position) + '</span>' : '') + (jersey ? '<span>SHIRT #' + esc(jersey) + '</span>' : '') + '</div>' : '') +
         '</div></div><section class="pp-stats"><div class="pp-section-head"><div><span>SEASON PERFORMANCE</span><h3>Published statistics</h3></div><small>LIVE DATA</small></div><div class="pp-metrics">' +
         metrics.map(metricCard).join('') + '</div></section>';
@@ -151,7 +155,7 @@
             var rows = Object.keys(grouped).map(function (k) { return grouped[k]; }).sort(function (a,b) { return a.season.localeCompare(b.season); });
             var totalApps = rows.reduce(function (n,r){return n+r.appearances;},0);
             var totalStarts = rows.reduce(function (n,r){return n+r.starts;},0);
-            careerHost.innerHTML = '<div class="pp-career-totals"><div><small>APPEARANCES</small><strong>' + totalApps + '</strong></div><div><small>STARTS</small><strong>' + totalStarts + '</strong></div></div>' +
+            careerHost.innerHTML = '<div class="pp-career-totals"><div><small>APPEARANCES</small><strong>' + totalApps + '</strong></div><div><small>STARTS</small><strong>' + totalStarts + '</strong></div><div><small>START RATE</small><strong>' + (totalApps?Math.round(totalStarts/totalApps*100)+'%':'—') + '</strong></div></div>' +
               '<div class="pp-career-table-wrap"><table class="pp-career-table"><thead><tr><th>Season</th><th>Apps</th><th>Starts</th></tr></thead><tbody>' +
               rows.map(function(r){return '<tr><td>' + esc(r.season) + '</td><td>' + r.appearances + '</td><td>' + r.starts + '</td></tr>';}).join('') + '</tbody></table></div>' +
               '<p class="pp-note">Only completed matches with a saved line-up are counted. This is a record of the linked registration, not an assumed full career history.</p>';
