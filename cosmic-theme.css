@@ -173,3 +173,88 @@ html[data-theme="light"] #slfa-cosmos { opacity: .12; }
   #slfa-cosmos .slfa-star { animation: none !important; opacity: .55; }
   #slfa-cosmos .slfa-comet { display: none !important; animation: none !important; }
 }
+
+/* Matching premium colour treatments for the existing light-mode setting. */
+html[data-theme="light"] {
+  --slfa-light-page: linear-gradient(155deg,#eef6ff,#f8fbff 52%,#edf5fb);
+  --slfa-light-hero: linear-gradient(120deg,#0b325a,#146e9b 58%,#154b78);
+  --slfa-light-accent: #086aa7;
+  --slfa-light-line: rgba(20,105,156,.22);
+  --slfa-light-button: linear-gradient(120deg,#087fc5,#12a7cb 54%,#0877a8);
+}
+html[data-theme="light"][data-palette="emerald-prestige"] {
+  --slfa-light-page: linear-gradient(155deg,#edf9f2,#f9fdfb 52%,#e8f5ee);
+  --slfa-light-hero: linear-gradient(120deg,#07533b,#12845d 58%,#146878);
+  --slfa-light-accent: #08784f; --slfa-light-line: rgba(8,120,79,.2);
+  --slfa-light-button: linear-gradient(120deg,#087849,#12a978 56%,#086a9e);
+}
+html[data-theme="light"][data-palette="royal-amethyst"] {
+  --slfa-light-page: linear-gradient(155deg,#f2edfc,#fcfaff 52%,#eee9fa);
+  --slfa-light-hero: linear-gradient(120deg,#39205f,#70469b 58%,#365b8c);
+  --slfa-light-accent: #7042a7; --slfa-light-line: rgba(112,66,167,.2);
+  --slfa-light-button: linear-gradient(120deg,#7042be,#965fe0 55%,#376fb8);
+}
+html[data-theme="light"][data-palette="obsidian-gold"] {
+  --slfa-light-page: linear-gradient(155deg,#f7f2e5,#fffdf8 52%,#f1ecdd);
+  --slfa-light-hero: linear-gradient(120deg,#51401c,#886a2e 58%,#3e5667);
+  --slfa-light-accent: #866112; --slfa-light-line: rgba(134,97,18,.2);
+  --slfa-light-button: linear-gradient(120deg,#916515,#c18a22 56%,#5e748b);
+}
+html[data-theme="light"][data-palette="arctic-silver"] {
+  --slfa-light-page: linear-gradient(155deg,#edf4f9,#fbfdff 52%,#eaf1f7);
+  --slfa-light-hero: linear-gradient(120deg,#234a68,#47799b 58%,#315b83);
+  --slfa-light-accent: #356d96; --slfa-light-line: rgba(53,109,150,.2);
+  --slfa-light-button: linear-gradient(120deg,#356b9c,#559bc9 56%,#3974ac);
+}
+html[data-theme="light"][data-palette="crimson-elite"] {
+  --slfa-light-page: linear-gradient(155deg,#fff0f3,#fffbfc 52%,#fbeef2);
+  --slfa-light-hero: linear-gradient(120deg,#6a233c,#a94461 58%,#42587c);
+  --slfa-light-accent: #a52f58; --slfa-light-line: rgba(165,47,88,.2);
+  --slfa-light-button: linear-gradient(120deg,#a52f58,#d14f70 56%,#8a5a8f);
+}
+html[data-theme="light"][data-palette="custom"] {
+  --slfa-light-accent: var(--slfa-accent);
+  --slfa-light-line: var(--slfa-glow);
+  --slfa-light-button: var(--slfa-accent);
+}
+html[data-theme="light"] body { background: var(--slfa-light-page) !important; }
+html[data-theme="light"] .topbar,
+html[data-theme="light"] .portal-head {
+  background: rgba(255,255,255,.84) !important;
+  border-bottom-color: var(--slfa-light-line) !important;
+}
+html[data-theme="light"] .hero {
+  background: var(--slfa-light-hero) !important;
+  border-color: var(--slfa-light-line) !important;
+  box-shadow: 0 12px 34px rgba(15,45,75,.14) !important;
+}
+html[data-theme="light"] .tabs button[aria-selected="true"],
+html[data-theme="light"] button.primary,
+html[data-theme="light"] .install-btn {
+  background: var(--slfa-light-button) !important;
+  border-color: var(--slfa-light-line) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+html[data-theme="light"] .kicker,
+html[data-theme="light"] .sub,
+html[data-theme="light"] .rt,
+html[data-theme="light"] .card h2,
+html[data-theme="light"] .score,
+html[data-theme="light"] .score-big,
+html[data-theme="light"] .pval,
+html[data-theme="light"] .table .pts,
+html[data-theme="light"] .news a,
+html[data-theme="light"] .portal-head .back {
+  color: var(--slfa-light-accent) !important;
+  -webkit-text-fill-color: var(--slfa-light-accent) !important;
+}
+html[data-theme="light"] .card,
+html[data-theme="light"] .view.card,
+html[data-theme="light"] .portal .card,
+html[data-theme="light"] .ps-panel,
+html[data-theme="light"] .news,
+html[data-theme="light"] .team,
+html[data-theme="light"] .match {
+  border-color: var(--slfa-light-line) !important;
+}
