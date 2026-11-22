@@ -831,6 +831,7 @@
 
   // Video highlights and replays: published news posts that carry a video link
   function loadVideos() {
+    if (window.slfaPremiumMediaLoad) { window.slfaPremiumMediaLoad(); return; }
     var box = $('videoList'); if (!box) return;
     var q = db.from('media_posts').select('id, title, category, video_url, published_at, league_id').eq('status', 'PUBLISHED').not('video_url', 'is', null);
     if (currentLeague) q = q.or('league_id.is.null,league_id.eq.' + currentLeague);
