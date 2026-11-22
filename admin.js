@@ -1824,6 +1824,7 @@
       '<section class="pm-report-form"><h3>Professional match report</h3>' +
       '<label for="npReport">Match summary</label><textarea id="npReport" rows="3" placeholder="Verified account of the match…"></textarea>' +
       '<label for="npKeyMoments">Key moments</label><textarea id="npKeyMoments" rows="3" placeholder="Goals, cards, substitutions and decisive moments…"></textarea>' +
+      '<label for="npLineups">Recorded starting line-ups and substitutes</label><textarea id="npLineups" rows="4" placeholder="Automatically populated from recorded match sheets where available."></textarea>' +
       input('npPOTM','Player of the match') +
       '<label for="npManagerComments">Manager comments</label><textarea id="npManagerComments" rows="2"></textarea>' +
       '<label for="npAnalysis">Post-match analysis</label><textarea id="npAnalysis" rows="3"></textarea></section>' +
@@ -1857,13 +1858,13 @@
         return Promise.all(jobs).then(function(uploaded){
           var uploadedPhotos=uploaded.filter(function(x){return typeof x==='string';}),uploadedVideo=uploaded.filter(function(x){return x&&x.uploadedVideoPath;})[0];
           var gallery=externalGallery,cover=imageLink||null,videoUrl=videoLink||null;
-          var report={summary:$('npReport').value.trim(),key_moments:$('npKeyMoments').value.trim(),player_of_the_match:$('npPOTM').value.trim(),manager_comments:$('npManagerComments').value.trim(),analysis:$('npAnalysis').value.trim()};
+          var report={summary:$('npReport').value.trim(),key_moments:$('npKeyMoments').value.trim(),lineups:$('npLineups').value.trim(),player_of_the_match:$('npPOTM').value.trim(),manager_comments:$('npManagerComments').value.trim(),analysis:$('npAnalysis').value.trim()};
           return db.from('media_posts').insert([{category:$('npMediaType').value==='GALLERY'?'PHOTO':($('npMediaType').value==='MATCH_REPORT'?'MATCH_REPORT':$('npCat').value),media_type:$('npMediaType').value,interviewee:$('npInterviewee').value.trim()||null,gallery_urls:gallery,media_metadata:{report:$('npMediaType').value==='MATCH_REPORT'?report:null,staged_assets:{photos:uploadedPhotos,video:uploadedVideo?uploadedVideo.uploadedVideoPath:null}},title:t,body:$('npBody').value.trim(),match_id:$('npMatch').value||null,league_id:$('npLeague').value?Number($('npLeague').value):null,image_url:cover,video_url:videoUrl,status:status,created_by:userId,created_by_name:p.full_name||p.email,submitted_at:status==='SUBMITTED'?new Date().toISOString():null}]);
         });
       }).then(function(r){
         if(r.error){msg(r.error.message);$('npUploadStatus').textContent='Submission failed. Check the file size and connection.';return;}
         msg(status==='SUBMITTED'?'Media submitted for approval.':'Draft saved.');$('npUploadStatus').textContent='Upload and save completed.';
-        ['npTitle','npBody','npImage','npVideo','npGallery','npInterviewee','npReport','npKeyMoments','npPOTM','npManagerComments','npAnalysis'].forEach(function(id){if($(id))$(id).value='';});
+        ['npTitle','npBody','npImage','npVideo','npGallery','npInterviewee','npReport','npKeyMoments','npLineups','npPOTM','npManagerComments','npAnalysis'].forEach(function(id){if($(id))$(id).value='';});
         $('npMatch').value='';$('npLeague').value='';photoInput.value='';videoInput.value='';$('npGalleryNames').textContent='No photos selected.';$('npVideoName').textContent='No video selected.';loadMine();
       }).catch(function(e){msg(e.message||'Upload or submission failed.');$('npUploadStatus').textContent='Upload failed. Check your connection and try again.';});
     }
@@ -1873,11 +1874,27 @@
     $('npVideoFile').addEventListener('change',function(){var f=this.files&&this.files[0];$('npVideoName').textContent=f?f.name+' ('+(f.size/1048576).toFixed(1)+' MB)':'No video selected.';});
     $('npDraft').addEventListener('click', function () { save('DRAFT'); });
     $('npSubmit').addEventListener('click', function () { save('SUBMITTED'); });
+    function prefillReportFromMatch(matchId){
+      if(!matchId||$('npMediaType').value!=='MATCH_REPORT')return;
+      Promise.all([
+        db.from('matches').select('id,home_team,away_team,home_score,away_score,match_date,venue,match_status,motm_name').eq('id',Number(matchId)).maybeSingle(),
+        db.from('match_events').select('event_type,team_name,player_name,minute,assist_player_name,published_at').eq('match_id',String(matchId)).not('published_at','is',null).order('minute',{ascending:true}),
+        db.from('match_lineups').select('is_starter,league_clubs(club_name),club_squad(player_name,jersey_number)').eq('match_id',Number(matchId))
+      ]).then(function(all){
+        var m=all[0].data,events=all[1].data||[],lineups=all[2].data||[];if(!m)return;
+        if(!$('npReport').value.trim()&&m.match_status==='FT'&&m.home_score!=null&&m.away_score!=null){$('npReport').value='Verified result: '+m.home_team+' '+m.home_score+'–'+m.away_score+' '+m.away_team+'. Played '+new Date(m.match_date).toLocaleDateString()+(m.venue?' at '+m.venue:'')+'.';}
+        if(!$('npKeyMoments').value.trim()&&events.length){$('npKeyMoments').value=events.map(function(e){return (e.minute!=null?e.minute+"' ":'')+String(e.event_type||'EVENT').replace(/_/g,' ').toLowerCase()+' — '+(e.player_name||'Player not recorded')+' ('+(e.team_name||'Team not recorded')+')'+(e.assist_player_name?' · Assist: '+e.assist_player_name:'');}).join('\n');}
+        if(!$('npLineups').value.trim()&&lineups.length){var grouped={};lineups.forEach(function(x){var club=x.league_clubs&&x.league_clubs.club_name||'Team';(grouped[club]=grouped[club]||[]).push((x.is_starter?'Starting':'Substitute')+': '+(x.club_squad&&x.club_squad.player_name||'Player')+(x.club_squad&&x.club_squad.jersey_number?' #'+x.club_squad.jersey_number:''));});$('npLineups').value=Object.keys(grouped).map(function(club){return club+'\n'+grouped[club].join('\n');}).join('\n\n');}
+        if(!$('npPOTM').value.trim()&&m.motm_name)$('npPOTM').value=m.motm_name;
+        $('npUploadStatus').textContent='Verified match result, published events and available team sheets loaded. Review all details before submission.';
+      }).catch(function(){msg('Match-linked data could not be loaded. You can complete the report manually.');});
+    }
     $('npMatch').addEventListener('change', function () {
       var opt = this.options[this.selectedIndex];
       if (opt && opt.value && $('npMediaType').value === 'NEWS') { $('npCat').value = 'MATCH_REPORT'; $('npMediaType').value = 'MATCH_REPORT'; }
       if (opt && opt.dataset.league) $('npLeague').value = opt.dataset.league;
       if (opt && opt.dataset.title && !$('npTitle').value.trim()) $('npTitle').value = opt.dataset.title;
+      if (opt && opt.value) prefillReportFromMatch(opt.value);
     });
     db.from('matches').select('id, home_team, away_team, home_score, away_score, match_date, league_id').eq('match_status', 'FT').order('match_date', { ascending: false }).limit(40).then(function (r) {
       $('npMatch').innerHTML = '<option value="">Not linked to a match</option>' + (r.data || []).map(function (m) {
