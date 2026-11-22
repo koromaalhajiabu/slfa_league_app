@@ -144,7 +144,7 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
       <div id="signedIn" class="hidden">
         <div class="row"><span id="whoName"></span><span class="muted" id="whoRole"></span></div>
         <div class="btns"><button class="primary" id="openPortal" hidden>Open my portal</button></div>
-        <div class="btns"><button class="secondary" id="signoutBtn">Sign out</button></div>
+        <div class="btns"><button class="primary" id="switchAccountBtn" type="button">Sign in / Create another account</button><button class="secondary" id="signoutBtn">Sign out</button></div>
       </div>
 
     </div>
@@ -352,6 +352,16 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
 
   $('signoutBtn').addEventListener('click', function () {
     db.auth.signOut().then(showSignedOut);
+  });
+
+  // Allow staff to return to the sign-in and account-creation form without leaving the admin panel.
+  $('switchAccountBtn').addEventListener('click', function () {
+    $('authStatus').textContent = 'Switching account…';
+    db.auth.signOut().then(function (r) {
+      if (r && r.error) { $('authStatus').textContent = 'Could not switch accounts. Please try again.'; return; }
+      showSignedOut();
+      $('email').focus();
+    });
   });
 
   function showSignedOut() {
