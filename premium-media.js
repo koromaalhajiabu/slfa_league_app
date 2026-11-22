@@ -59,6 +59,7 @@
     function section(title,key){return '<section class="pm-section"><h3>'+title+'</h3>'+(groups[key].length?'<div class="pm-grid">'+groups[key].map(function(p){return card(p,key);}).join('')+'</div>':'<div class="pm-empty">No '+title.toLowerCase()+' published yet.</div>')+'</section>';}
     box.innerHTML='<div class="pm-centre"><header class="pm-hero"><small>SLFA · OFFICIAL FOOTBALL MEDIA</small><h2>Premium Media Centre</h2><p>Matchday photography, video highlights, player and coach interviews, and professional match reports.</p></header>'+section('Match photo galleries','GALLERY')+section('Video highlights','VIDEO')+section('Interviews','INTERVIEW')+section('Professional match reports','MATCH_REPORT')+'</div>';
     wireCards(rows);
+    if(location.hash&&location.hash.indexOf('#media-')===0){var target=document.getElementById(decodeURIComponent(location.hash.slice(1)));if(target)setTimeout(function(){target.scrollIntoView({behavior:'smooth',block:'start'});},180);}
   }
   window.slfaPremiumMediaLoad=load;
   nav.addEventListener('click',function(){window.setTimeout(load,120);});
