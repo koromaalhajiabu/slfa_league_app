@@ -123,6 +123,12 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
     <summary>Admin</summary>
     <div class="admin-body">
 
+      <div id="staffAccountActions" aria-label="Account actions" style="display:grid!important;grid-template-columns:1fr;gap:9px;width:100%;margin:0 0 14px;position:relative;z-index:99999">
+        <button class="primary" id="switchAccountBtn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Sign in / Switch account</button>
+        <button class="secondary" id="createAccountFromSignedIn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Create account</button>
+        <button class="secondary" id="signoutBtn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Sign out</button>
+      </div>
+
       <div id="signedOut">
         <p class="admin-intro">Staff sign-in</p>
         <label for="email">Email</label>
@@ -149,11 +155,6 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
       <div id="signedIn" class="hidden">
         <div class="row"><span id="whoName"></span><span class="muted" id="whoRole"></span></div>
         <div class="btns"><button class="primary" id="openPortal" hidden>Open my portal</button></div>
-        <div id="staffAccountActions" aria-label="Account actions" style="display:grid!important;grid-template-columns:1fr;gap:9px;width:100%;margin-top:14px">
-          <button class="primary" id="switchAccountBtn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Switch account / Sign in</button>
-          <button class="secondary" id="createAccountFromSignedIn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Create account</button>
-          <button class="secondary" id="signoutBtn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Sign out</button>
-        </div>
       </div>
 
     </div>
