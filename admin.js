@@ -1798,10 +1798,14 @@
       '<h2 class="rt">New news post</h2>' +
       '<label for="npCat">Category</label><select id="npCat"><option value="NEWS">News</option><option value="PRESS_RELEASE">Press release</option><option value="MATCH_REPORT">Match report</option><option value="ANNOUNCEMENT">Announcement</option></select>' +
       '<label for="npMatch">Match (for match reports, optional)</label><select id="npMatch"><option value="">Not linked to a match</option></select>' +
-      '<label for="npLeague">League (leave as All leagues for general news)</label><select id="npLeague"><option value="">All leagues (general)</option></select>' +
-      input('npTitle', 'Title') +
-      '<label for="npBody">Story</label><textarea id="npBody" rows="5"></textarea>' +
-      input('npImage', 'Photo link (optional)', 'url') + input('npVideo', 'Video link (optional)', 'url') +
+      '<label for="npLeague">Competition</label><select id="npLeague"><option value="">All competitions</option></select>' +
+      '<label for="npMediaType">Media format</label><select id="npMediaType"><option value="NEWS">News / announcement</option><option value="GALLERY">Match photo gallery</option><option value="VIDEO">Video highlights</option><option value="INTERVIEW">Player / coach interview</option><option value="MATCH_REPORT">Professional match report</option></select>' +
+      input('npTitle', 'Headline / title') +
+      '<label for="npInterviewee">Interview subject (optional)</label><input id="npInterviewee" type="text" maxlength="120" placeholder="Player, coach or official">' +
+      '<label for="npBody">Story / editorial summary</label><textarea id="npBody" rows="5" placeholder="Write the introduction and key context…"></textarea>' +
+      '<label for="npGallery">Gallery image URLs (one URL per line; for photo galleries)</label><textarea id="npGallery" rows="4" placeholder="https://…"></textarea>' +
+      input('npImage', 'Cover photo URL (optional)', 'url') + input('npVideo', 'Video URL (YouTube or Vimeo)', 'url') +
+      '<label for="npReport">Match report (optional structured report)</label><textarea id="npReport" rows="7" placeholder="MATCH SUMMARY:\nKEY MOMENTS:\nPLAYER OF THE MATCH:\nMANAGER COMMENTS:\nPOST-MATCH ANALYSIS:"></textarea>' +
       '<p class="muted">All posts are reviewed by a Super Admin before they appear in the public News Centre. Save a draft or submit it for approval.</p>' +
       '<div class="btns"><button class="secondary" id="npDraft">Save draft</button><button class="primary" id="npSubmit">Submit for approval</button></div>' +
       '<h2 class="rt">My posts</h2><div id="myPosts" class="muted">Loading…</div>' +
@@ -1816,7 +1820,11 @@
       if (!t) { msg('Give the post a title.'); return; }
       db.auth.getUser().then(function (u) {
         return db.from('media_posts').insert([{
-          category: $('npCat').value, title: t, body: $('npBody').value.trim(), match_id: $('npMatch').value || null,
+          category: $('npMediaType').value === 'GALLERY' ? 'PHOTO' : ($('npMediaType').value === 'MATCH_REPORT' ? 'MATCH_REPORT' : $('npCat').value),
+          media_type: $('npMediaType').value, interviewee: $('npInterviewee').value.trim() || null,
+          gallery_urls: $('npGallery').value.split(/\\r?\\n/).map(function(x){return x.trim();}).filter(function(x){return /^https?:\\/\\//i.test(x);}),
+          media_metadata: $('npMediaType').value === 'MATCH_REPORT' ? { report: $('npReport').value.trim() } : {},
+          title: t, body: $('npBody').value.trim(), match_id: $('npMatch').value || null,
           league_id: $('npLeague').value ? Number($('npLeague').value) : null,
           image_url: $('npImage').value.trim() || null, video_url: $('npVideo').value.trim() || null,
           status: status, created_by: u.data.user.id, created_by_name: p.full_name || p.email,
@@ -1826,14 +1834,14 @@
       }).then(function (r) {
         if (r.error) { msg(r.error.message); return; }
         msg(status === 'SUBMITTED' ? 'Sent to the Super Admin for approval.' : status === 'PUBLISHED' ? 'Published.' : 'Draft saved.');
-        $('npTitle').value = ''; $('npBody').value = ''; $('npImage').value = ''; $('npVideo').value = ''; $('npMatch').value = ''; $('npLeague').value = ''; loadMine();
+        $('npTitle').value = ''; $('npBody').value = ''; $('npImage').value = ''; $('npVideo').value = ''; $('npGallery').value = ''; $('npInterviewee').value = ''; $('npReport').value = ''; $('npMatch').value = ''; $('npLeague').value = ''; loadMine();
       });
     }
     $('npDraft').addEventListener('click', function () { save('DRAFT'); });
     $('npSubmit').addEventListener('click', function () { save('SUBMITTED'); });
     $('npMatch').addEventListener('change', function () {
       var opt = this.options[this.selectedIndex];
-      if (opt && opt.value) $('npCat').value = 'MATCH_REPORT';
+      if (opt && opt.value) { $('npCat').value = 'MATCH_REPORT'; $('npMediaType').value = 'MATCH_REPORT'; }
       if (opt && opt.dataset.title && !$('npTitle').value.trim()) $('npTitle').value = opt.dataset.title;
     });
     db.from('matches').select('id, home_team, away_team, home_score, away_score, match_date').eq('match_status', 'FT').order('match_date', { ascending: false }).limit(40).then(function (r) {
