@@ -1817,7 +1817,10 @@
 
     function save(status) {
       var t = $('npTitle').value.trim();
+      var imageLink = $('npImage').value.trim(), videoLink = $('npVideo').value.trim();
       if (!t) { msg('Give the post a title.'); return; }
+      if (imageLink && !/^https:\/\//i.test(imageLink)) { msg('Cover photo links must use HTTPS.'); return; }
+      if (videoLink && !/^https:\/\/(www\\.|m\\.|vm\\.)?(youtube\\.com|youtu\\.be|vimeo\\.com|tiktok\\.com|facebook\\.com|fb\\.watch)\/\\S+$/i.test(videoLink)) { msg('Use a valid HTTPS YouTube, Vimeo, TikTok or Facebook video link.'); return; }
       db.auth.getUser().then(function (u) {
         return db.from('media_posts').insert([{
           category: $('npMediaType').value === 'GALLERY' ? 'PHOTO' : ($('npMediaType').value === 'MATCH_REPORT' ? 'MATCH_REPORT' : $('npCat').value),
@@ -1826,7 +1829,7 @@
           media_metadata: $('npMediaType').value === 'MATCH_REPORT' ? { report: $('npReport').value.trim() } : {},
           title: t, body: $('npBody').value.trim(), match_id: $('npMatch').value || null,
           league_id: $('npLeague').value ? Number($('npLeague').value) : null,
-          image_url: $('npImage').value.trim() || null, video_url: $('npVideo').value.trim() || null,
+          image_url: imageLink || null, video_url: videoLink || null,
           status: status, created_by: u.data.user.id, created_by_name: p.full_name || p.email,
           submitted_at: status === 'SUBMITTED' ? new Date().toISOString() : null,
           published_at: status === 'PUBLISHED' ? new Date().toISOString() : null
