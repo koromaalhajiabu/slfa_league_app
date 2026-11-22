@@ -260,7 +260,9 @@
     verifyDeveloper().then(function (allowed) {
       if (!allowed) return;
       addControls();
-      loadGlobalTheme();
+      loadGlobalTheme().then(function (exists) {
+        if (!exists) saveGlobalTheme();
+      });
     });
 
     if (db && db.channel) {
