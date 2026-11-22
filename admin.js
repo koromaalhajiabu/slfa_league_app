@@ -1795,7 +1795,7 @@
   // ---------- MEDIA OFFICER ----------
   function mediaOfficer(p) {
     box().innerHTML =
-      '<h2 class="rt">New news post</h2>' +
+      '<h2 class="rt">Premium Media Studio</h2>' +
       '<label for="npCat">Category</label><select id="npCat"><option value="NEWS">News</option><option value="PRESS_RELEASE">Press release</option><option value="MATCH_REPORT">Match report</option><option value="ANNOUNCEMENT">Announcement</option></select>' +
       '<label for="npMatch">Match (for match reports, optional)</label><select id="npMatch"><option value="">Not linked to a match</option></select>' +
       '<label for="npLeague">Competition</label><select id="npLeague"><option value="">All competitions</option></select>' +
