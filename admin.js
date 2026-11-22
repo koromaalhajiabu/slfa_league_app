@@ -1792,9 +1792,18 @@
       input('npTitle', 'Headline / title') +
       '<label for="npInterviewee">Interview subject (optional)</label><input id="npInterviewee" type="text" maxlength="120" placeholder="Player, coach or official">' +
       '<label for="npBody">Story / editorial summary</label><textarea id="npBody" rows="5" placeholder="Write the introduction and key context…"></textarea>' +
-      '<label for="npGallery">Gallery image URLs (one URL per line; for photo galleries)</label><textarea id="npGallery" rows="4" placeholder="https://…"></textarea>' +
-      input('npImage', 'Cover photo URL (optional)', 'url') + input('npVideo', 'Video URL (YouTube or Vimeo)', 'url') +
-      '<label for="npReport">Match report (optional structured report)</label><textarea id="npReport" rows="7" placeholder="MATCH SUMMARY:\nKEY MOMENTS:\nPLAYER OF THE MATCH:\nMANAGER COMMENTS:\nPOST-MATCH ANALYSIS:"></textarea>' +
+      '<label for="npGallery">Additional gallery image URLs (one HTTPS link per line)</label><textarea id="npGallery" rows="3" placeholder="https://…"></textarea>' +
+      '<label for="npGalleryFiles">Upload match photographs from your phone (up to 12 images, 8 MB each)</label><input id="npGalleryFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple>' +
+      '<div id="npGalleryNames" class="muted">No photos selected.</div>' +
+      input('npImage', 'Cover photo URL (optional)', 'url') + input('npVideo', 'Video link (optional)', 'url') +
+      '<label for="npVideoFile">Or upload a video (MP4, WebM or MOV · maximum 45 MB)</label><input id="npVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime">' +
+      '<div id="npVideoName" class="muted">No video selected.</div><div id="npUploadStatus" class="status" role="status"></div>' +
+      '<section class="pm-report-form"><h3>Professional match report</h3>' +
+      '<label for="npReport">Match summary</label><textarea id="npReport" rows="3" placeholder="Verified account of the match…"></textarea>' +
+      '<label for="npKeyMoments">Key moments</label><textarea id="npKeyMoments" rows="3" placeholder="Goals, cards, substitutions and decisive moments…"></textarea>' +
+      input('npPOTM','Player of the match') +
+      '<label for="npManagerComments">Manager comments</label><textarea id="npManagerComments" rows="2"></textarea>' +
+      '<label for="npAnalysis">Post-match analysis</label><textarea id="npAnalysis" rows="3"></textarea></section>' +
       '<p class="muted">All posts are reviewed by a Super Admin before they appear in the public News Centre. Save a draft or submit it for approval.</p>' +
       '<div class="btns"><button class="secondary" id="npDraft">Save draft</button><button class="primary" id="npSubmit">Submit for approval</button></div>' +
       '<h2 class="rt">My posts</h2><div id="myPosts" class="muted">Loading…</div>' +
@@ -1805,30 +1814,38 @@
       '<div class="status" id="roleMsg"></div>';
 
     function save(status) {
-      var t = $('npTitle').value.trim();
-      var imageLink = $('npImage').value.trim(), videoLink = $('npVideo').value.trim();
-      if (!t) { msg('Give the post a title.'); return; }
-      if (imageLink && !/^https:\/\//i.test(imageLink)) { msg('Cover photo links must use HTTPS.'); return; }
-      if (videoLink && !/^https:\/\/(www\.|m\.|vm\.)?(youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|facebook\.com|fb\.watch)\/\S+$/i.test(videoLink)) { msg('Use a valid HTTPS YouTube, Vimeo, TikTok or Facebook video link.'); return; }
-      db.auth.getUser().then(function (u) {
-        return db.from('media_posts').insert([{
-          category: $('npMediaType').value === 'GALLERY' ? 'PHOTO' : ($('npMediaType').value === 'MATCH_REPORT' ? 'MATCH_REPORT' : $('npCat').value),
-          media_type: $('npMediaType').value, interviewee: $('npInterviewee').value.trim() || null,
-          gallery_urls: $('npGallery').value.split(/\r?\n/).map(function(x){return x.trim();}).filter(function(x){return /^https:\/\//i.test(x);}),
-          media_metadata: $('npMediaType').value === 'MATCH_REPORT' ? { report: $('npReport').value.trim() } : {},
-          title: t, body: $('npBody').value.trim(), match_id: $('npMatch').value || null,
-          league_id: $('npLeague').value ? Number($('npLeague').value) : null,
-          image_url: imageLink || null, video_url: videoLink || null,
-          status: status, created_by: u.data.user.id, created_by_name: p.full_name || p.email,
-          submitted_at: status === 'SUBMITTED' ? new Date().toISOString() : null,
-          published_at: status === 'PUBLISHED' ? new Date().toISOString() : null
-        }]);
-      }).then(function (r) {
-        if (r.error) { msg(r.error.message); return; }
-        msg(status === 'SUBMITTED' ? 'Sent to the Super Admin for approval.' : status === 'PUBLISHED' ? 'Published.' : 'Draft saved.');
-        $('npTitle').value = ''; $('npBody').value = ''; $('npImage').value = ''; $('npVideo').value = ''; $('npGallery').value = ''; $('npInterviewee').value = ''; $('npReport').value = ''; $('npMatch').value = ''; $('npLeague').value = ''; loadMine();
-      });
+      var t=$('npTitle').value.trim(),imageLink=$('npImage').value.trim(),videoLink=$('npVideo').value.trim();
+      var photoInput=$('npGalleryFiles'),videoInput=$('npVideoFile'),photos=Array.prototype.slice.call(photoInput.files||[]),videoFile=videoInput.files&&videoInput.files[0];
+      if(!t){msg('Give the post a title.');return;}
+      if(imageLink&&imageLink.indexOf('https://')!==0){msg('Cover photo links must use HTTPS.');return;}
+      if(videoLink){try{var vhost=new URL(videoLink).hostname.toLowerCase();if(videoLink.indexOf('https://')!==0||!['youtube.com','www.youtube.com','m.youtube.com','youtu.be','www.youtu.be','vimeo.com','www.vimeo.com','player.vimeo.com','tiktok.com','www.tiktok.com','facebook.com','www.facebook.com','fb.watch'].some(function(h){return vhost===h||vhost.endsWith('.'+h);}))throw new Error();}catch(e){msg('Use a valid HTTPS YouTube, Vimeo, TikTok or Facebook video link.');return;}}
+      if(photos.length>12){msg('Select no more than 12 gallery photographs.');return;}
+      if(photos.some(function(f){return ['image/jpeg','image/png','image/webp','image/gif'].indexOf(f.type)<0||f.size>8*1024*1024;})){msg('Each photograph must be JPG, PNG, WebP or GIF and no larger than 8 MB.');return;}
+      if(videoFile&&(['video/mp4','video/webm','video/quicktime'].indexOf(videoFile.type)<0||videoFile.size>45*1024*1024)){msg('Video must be MP4, WebM or MOV and no larger than 45 MB.');return;}
+      if(videoLink&&videoFile){msg('Use either a video link or an uploaded video, not both.');return;}
+      var externalGallery=$('npGallery').value.split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean);
+      if(externalGallery.some(function(x){return x.indexOf('https://')!==0;})){msg('Gallery links must use HTTPS.');return;}
+      db.auth.getUser().then(function(u){
+        if(!u.data||!u.data.user)throw new Error('Your session has expired. Sign in again.');
+        var userId=u.data.user.id,folder=userId+'/'+Date.now()+'-'+Math.random().toString(36).slice(2),jobs=[];
+        photos.forEach(function(file,i){var safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'-').slice(-80)||('photo-'+i+'.jpg'),path=folder+'/photo-'+i+'-'+safe;jobs.push(db.storage.from('slfa-media').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type}).then(function(up){if(up.error)throw up.error;return db.storage.from('slfa-media').getPublicUrl(up.data.path).data.publicUrl;}));});
+        if(videoFile){var vn=videoFile.name.replace(/[^a-zA-Z0-9._-]/g,'-').slice(-80)||'match-video.mp4',vp=folder+'/video-'+vn;jobs.push(db.storage.from('slfa-media').upload(vp,videoFile,{cacheControl:'3600',upsert:false,contentType:videoFile.type}).then(function(up){if(up.error)throw up.error;return {uploadedVideo:db.storage.from('slfa-media').getPublicUrl(up.data.path).data.publicUrl};}));}
+        $('npUploadStatus').textContent=jobs.length?'Uploading media files…':'Preparing submission…';
+        return Promise.all(jobs).then(function(uploaded){
+          var uploadedPhotos=uploaded.filter(function(x){return typeof x==='string';}),uploadedVideo=uploaded.filter(function(x){return x&&x.uploadedVideo;})[0];
+          var gallery=externalGallery.concat(uploadedPhotos),cover=imageLink||gallery[0]||null,videoUrl=uploadedVideo?uploadedVideo.uploadedVideo:(videoLink||null);
+          var report={summary:$('npReport').value.trim(),key_moments:$('npKeyMoments').value.trim(),player_of_the_match:$('npPOTM').value.trim(),manager_comments:$('npManagerComments').value.trim(),analysis:$('npAnalysis').value.trim()};
+          return db.from('media_posts').insert([{category:$('npMediaType').value==='GALLERY'?'PHOTO':($('npMediaType').value==='MATCH_REPORT'?'MATCH_REPORT':$('npCat').value),media_type:$('npMediaType').value,interviewee:$('npInterviewee').value.trim()||null,gallery_urls:gallery,media_metadata:$('npMediaType').value==='MATCH_REPORT'?{report:report}:{},title:t,body:$('npBody').value.trim(),match_id:$('npMatch').value||null,league_id:$('npLeague').value?Number($('npLeague').value):null,image_url:cover,video_url:videoUrl,status:status,created_by:userId,created_by_name:p.full_name||p.email,submitted_at:status==='SUBMITTED'?new Date().toISOString():null}]);
+        });
+      }).then(function(r){
+        if(r.error){msg(r.error.message);$('npUploadStatus').textContent='Submission failed. Check the file size and connection.';return;}
+        msg(status==='SUBMITTED'?'Media submitted for approval.':'Draft saved.');$('npUploadStatus').textContent='Upload and save completed.';
+        ['npTitle','npBody','npImage','npVideo','npGallery','npInterviewee','npReport','npKeyMoments','npPOTM','npManagerComments','npAnalysis'].forEach(function(id){if($(id))$(id).value='';});
+        $('npMatch').value='';$('npLeague').value='';photoInput.value='';videoInput.value='';$('npGalleryNames').textContent='No photos selected.';$('npVideoName').textContent='No video selected.';loadMine();
+      }).catch(function(e){msg(e.message||'Upload or submission failed.');$('npUploadStatus').textContent='Upload failed. Check your connection and try again.';});
     }
+    $('npGalleryFiles').addEventListener('change',function(){var fs=Array.prototype.slice.call(this.files||[]);$('npGalleryNames').textContent=fs.length?fs.map(function(f){return f.name+' ('+(f.size/1048576).toFixed(1)+' MB)';}).join(' · '):'No photos selected.';});
+    $('npVideoFile').addEventListener('change',function(){var f=this.files&&this.files[0];$('npVideoName').textContent=f?f.name+' ('+(f.size/1048576).toFixed(1)+' MB)':'No video selected.';});
     $('npDraft').addEventListener('click', function () { save('DRAFT'); });
     $('npSubmit').addEventListener('click', function () { save('SUBMITTED'); });
     $('npMatch').addEventListener('change', function () {
