@@ -1,0 +1,175 @@
+/* SLFA 2026 Cosmic Matchday — shared visual layer for public and staff screens */
+:root {
+  --slfa-page-bg: radial-gradient(ellipse at 50% -18%, #12365f 0%, transparent 42%), radial-gradient(ellipse at 8% 28%, rgba(15, 74, 106, .28), transparent 36%), linear-gradient(155deg, #020817 0%, #07152b 52%, #030b1c 100%);
+  --slfa-panel-bg: linear-gradient(145deg, rgba(12, 33, 59, .88), rgba(5, 16, 34, .91));
+  --slfa-hero-bg: radial-gradient(ellipse at 88% 12%, rgba(54, 196, 255, .22), transparent 40%), linear-gradient(120deg, #071a35 0%, #0a3150 54%, #09213b 100%);
+  --slfa-accent: #62d7ff;
+  --slfa-accent-2: #42e2ae;
+  --slfa-line: rgba(98, 215, 255, .24);
+  --slfa-glow: rgba(63, 184, 255, .22);
+  --slfa-button-bg: linear-gradient(120deg, #087fc5, #12a7cb 54%, #0877a8);
+}
+html[data-palette="emerald-prestige"] {
+  --slfa-page-bg: radial-gradient(ellipse at 52% -20%, #164a3b 0%, transparent 43%), linear-gradient(150deg, #031711, #06291f 52%, #03121b);
+  --slfa-panel-bg: linear-gradient(145deg, rgba(9, 48, 37, .9), rgba(3, 24, 25, .93));
+  --slfa-hero-bg: radial-gradient(ellipse at 85% 12%, rgba(72, 224, 157, .22), transparent 42%), linear-gradient(120deg, #06251e, #0b6245 56%, #063e4c);
+  --slfa-accent: #55e6a8; --slfa-accent-2: #70d8ff; --slfa-line: rgba(85, 230, 168, .25); --slfa-glow: rgba(45, 210, 144, .22);
+  --slfa-button-bg: linear-gradient(120deg, #087849, #12a978 56%, #086a9e);
+}
+html[data-palette="royal-amethyst"] {
+  --slfa-page-bg: radial-gradient(ellipse at 52% -20%, #35215f 0%, transparent 44%), linear-gradient(150deg, #10091e, #1c1236 54%, #0b1024);
+  --slfa-panel-bg: linear-gradient(145deg, rgba(43, 28, 75, .9), rgba(18, 17, 45, .93));
+  --slfa-hero-bg: radial-gradient(ellipse at 86% 10%, rgba(191, 127, 255, .25), transparent 42%), linear-gradient(120deg, #21113d, #57327f 56%, #1a2851);
+  --slfa-accent: #d6a2ff; --slfa-accent-2: #8ebaff; --slfa-line: rgba(197, 150, 255, .25); --slfa-glow: rgba(166, 103, 255, .22);
+  --slfa-button-bg: linear-gradient(120deg, #7042be, #965fe0 55%, #376fb8);
+}
+html[data-palette="obsidian-gold"] {
+  --slfa-page-bg: radial-gradient(ellipse at 52% -20%, #51401b 0%, transparent 44%), linear-gradient(150deg, #100e0a, #201b12 55%, #090d16);
+  --slfa-panel-bg: linear-gradient(145deg, rgba(53, 43, 25, .88), rgba(20, 23, 31, .94));
+  --slfa-hero-bg: radial-gradient(ellipse at 88% 12%, rgba(255, 204, 91, .23), transparent 42%), linear-gradient(120deg, #211b10, #5b451b 55%, #1a2939);
+  --slfa-accent: #ffd16b; --slfa-accent-2: #f4f0db; --slfa-line: rgba(255, 209, 107, .25); --slfa-glow: rgba(238, 181, 61, .2);
+  --slfa-button-bg: linear-gradient(120deg, #916515, #c18a22 56%, #5e748b);
+}
+html[data-palette="arctic-silver"] {
+  --slfa-page-bg: radial-gradient(ellipse at 52% -20%, #244b6d 0%, transparent 43%), linear-gradient(150deg, #06111e, #10243a 55%, #071321);
+  --slfa-panel-bg: linear-gradient(145deg, rgba(27, 49, 70, .9), rgba(8, 22, 39, .94));
+  --slfa-hero-bg: radial-gradient(ellipse at 88% 12%, rgba(198, 231, 255, .23), transparent 42%), linear-gradient(120deg, #11283e, #315a78 55%, #152a43);
+  --slfa-accent: #c5eaff; --slfa-accent-2: #83caff; --slfa-line: rgba(197, 234, 255, .24); --slfa-glow: rgba(138, 204, 255, .2);
+  --slfa-button-bg: linear-gradient(120deg, #356b9c, #559bc9 56%, #3974ac);
+}
+html[data-palette="crimson-elite"] {
+  --slfa-page-bg: radial-gradient(ellipse at 52% -20%, #572334 0%, transparent 43%), linear-gradient(150deg, #160912, #2b1020 54%, #0c101d);
+  --slfa-panel-bg: linear-gradient(145deg, rgba(56, 25, 43, .9), rgba(22, 15, 31, .94));
+  --slfa-hero-bg: radial-gradient(ellipse at 88% 12%, rgba(255, 115, 143, .22), transparent 42%), linear-gradient(120deg, #2a1120, #712d47 55%, #1c2946);
+  --slfa-accent: #ff9cb0; --slfa-accent-2: #ffd08d; --slfa-line: rgba(255, 156, 176, .25); --slfa-glow: rgba(244, 94, 132, .2);
+  --slfa-button-bg: linear-gradient(120deg, #a52f58, #d14f70 56%, #8a5a8f);
+}
+
+/* The palette layer intentionally stays out of the existing manually selected light mode. */
+html:not([data-theme="light"]) body {
+  isolation: isolate;
+  color: #f4f8ff !important;
+  background: var(--slfa-page-bg) !important;
+  background-attachment: fixed !important;
+}
+html:not([data-theme="light"]) body::before { display: none !important; }
+#slfa-cosmos {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  opacity: .76; contain: strict;
+}
+#slfa-cosmos .slfa-star {
+  position: absolute; display: block; width: 2px; height: 2px; border-radius: 50%;
+  background: #f7fcff; box-shadow: 0 0 7px rgba(189, 230, 255, .9);
+  opacity: .32; animation: slfaStarTwinkle var(--twinkle, 4s) ease-in-out var(--delay, 0s) infinite;
+}
+#slfa-cosmos .slfa-comet {
+  position: absolute; display: block; width: clamp(76px, 13vw, 150px); height: 2px;
+  border-radius: 99px; opacity: 0;
+  background: linear-gradient(90deg, transparent, var(--slfa-accent), #fff);
+  filter: drop-shadow(0 0 5px var(--slfa-accent)) drop-shadow(0 0 12px var(--slfa-glow));
+  transform: rotate(-34deg); transform-origin: right center;
+  animation: slfaShootingStar var(--travel, 10s) linear var(--delay, 0s) infinite;
+}
+.topbar, .portal-head, main, .portal, .app-legal { position: relative; z-index: 1; }
+html:not([data-theme="light"]) .topbar,
+html:not([data-theme="light"]) .portal-head {
+  background: rgba(2, 10, 25, .78) !important;
+  border-bottom: 1px solid var(--slfa-line) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, .28);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+html:not([data-theme="light"]) .hero {
+  background: var(--slfa-hero-bg) !important;
+  border: 1px solid var(--slfa-line) !important;
+  box-shadow: 0 22px 58px rgba(0, 0, 0, .36), 0 0 32px var(--slfa-glow) !important;
+}
+html:not([data-theme="light"]) .card,
+html:not([data-theme="light"]) .view.card,
+html:not([data-theme="light"]) .slfa-home-dashboard,
+html:not([data-theme="light"]) .portal .card,
+html:not([data-theme="light"]) .ps-summary-card,
+html:not([data-theme="light"]) .ps-panel,
+html:not([data-theme="light"]) .news-card,
+html:not([data-theme="light"]) .team,
+html:not([data-theme="light"]) .match,
+html:not([data-theme="light"]) .news,
+html:not([data-theme="light"]) .news-controls,
+html:not([data-theme="light"]) .admin-body {
+  background: var(--slfa-panel-bg) !important;
+  border-color: var(--slfa-line) !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, .28), 0 0 25px var(--slfa-glow) !important;
+}
+html:not([data-theme="light"]) .kicker,
+html:not([data-theme="light"]) .sub,
+html:not([data-theme="light"]) .rt,
+html:not([data-theme="light"]) .card h2,
+html:not([data-theme="light"]) .score,
+html:not([data-theme="light"]) .score-big,
+html:not([data-theme="light"]) .pval,
+html:not([data-theme="light"]) .table .pts,
+html:not([data-theme="light"]) .news a,
+html:not([data-theme="light"]) .portal-head .back {
+  color: var(--slfa-accent) !important;
+}
+html:not([data-theme="light"]) .brand h1,
+html:not([data-theme="light"]) .portal-head h1,
+html:not([data-theme="light"]) .title,
+html:not([data-theme="light"]) .news-centre-hero h2,
+html:not([data-theme="light"]) .ps-hero h2 { color: #f5f9ff !important; -webkit-text-fill-color: #f5f9ff !important; }
+html:not([data-theme="light"]) .tabs button[aria-selected="true"],
+html:not([data-theme="light"]) button.primary,
+html:not([data-theme="light"]) .install-btn {
+  background: var(--slfa-button-bg) !important;
+  border-color: var(--slfa-line) !important;
+  box-shadow: 0 0 22px var(--slfa-glow), 0 8px 22px rgba(0, 0, 0, .28) !important;
+}
+html:not([data-theme="light"]) .tabs button,
+html:not([data-theme="light"]) .share-app,
+html:not([data-theme="light"]) details.admin > summary,
+html:not([data-theme="light"]) .theme-toggle,
+html:not([data-theme="light"]) button.secondary,
+html:not([data-theme="light"]) button.small {
+  border-color: var(--slfa-line) !important;
+}
+html:not([data-theme="light"]) .match:hover,
+html:not([data-theme="light"]) .team:hover { border-color: var(--slfa-accent) !important; box-shadow: 0 0 22px var(--slfa-glow) !important; }
+#slfaThemeControls {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0 2px;
+  padding: 4px 7px; border-radius: 13px; border: 1px solid var(--slfa-line);
+  background: rgba(3, 16, 34, .48); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+#slfaThemeControls .slfa-theme-label {
+  display: inline; margin: 0 2px 0 0; color: var(--slfa-accent); font-size: 10px;
+  font-weight: 700; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
+}
+#slfaThemeSelect {
+  width: auto; min-width: 112px; max-width: 148px; margin: 0; padding: 7px 25px 7px 9px;
+  border-radius: 9px; border: 1px solid var(--slfa-line); background: #071b31;
+  color: #f4f8ff; font: 600 11px Inter, sans-serif; line-height: 1.2;
+}
+#slfaAccentColor {
+  width: 29px; min-width: 29px; height: 29px; margin: 0; padding: 3px;
+  border-radius: 8px; cursor: pointer; background: #071b31; border: 1px solid var(--slfa-line);
+}
+html[data-theme="light"] #slfaThemeControls { background: rgba(255,255,255,.85); border-color: rgba(10,60,100,.2); }
+html[data-theme="light"] #slfaThemeControls .slfa-theme-label { color: #0a5fa8; }
+html[data-theme="light"] #slfaThemeSelect { background: #fff; color: #0b1a30; border-color: rgba(10,60,100,.25); }
+html[data-theme="light"] #slfaAccentColor { background: #fff; border-color: rgba(10,60,100,.25); }
+html[data-theme="light"] #slfa-cosmos { opacity: .12; }
+@media (max-width: 620px) {
+  #slfaThemeControls { gap: 5px; padding: 3px 5px; }
+  #slfaThemeControls .slfa-theme-label { display: none; }
+  #slfaThemeSelect { min-width: 102px; max-width: 126px; font-size: 10px; }
+}
+@keyframes slfaStarTwinkle { 0%,100% { opacity: .22; transform: scale(.8); } 50% { opacity: .92; transform: scale(1.45); } }
+@keyframes slfaShootingStar {
+  0%, 74% { opacity: 0; transform: translate3d(16vw, -12vh, 0) rotate(-34deg) scaleX(.2); }
+  77% { opacity: .95; }
+  84% { opacity: 0; transform: translate3d(-42vw, 36vh, 0) rotate(-34deg) scaleX(1); }
+  100% { opacity: 0; transform: translate3d(-42vw, 36vh, 0) rotate(-34deg) scaleX(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #slfa-cosmos .slfa-star { animation: none !important; opacity: .55; }
+  #slfa-cosmos .slfa-comet { display: none !important; animation: none !important; }
+}
