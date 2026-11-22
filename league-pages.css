@@ -164,3 +164,35 @@
 .slfa-lp-season-select{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:10px;font-weight:700;white-space:nowrap}
 .slfa-lp-season-select select{max-width:190px;min-height:39px;padding:6px 9px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);font:inherit}
 @media(max-width:520px){.slfa-lp-table-head{align-items:flex-start;flex-direction:column}.slfa-lp-season-select{width:100%;justify-content:space-between}.slfa-lp-season-select select{flex:1;max-width:none}}
+
+
+/* ELITE CLUB PROFILE — performance and approved squad discovery */
+.slfa-lp-profile .slfa-lp-hero{position:relative;overflow:hidden;min-height:122px}
+.slfa-lp-profile .slfa-lp-hero:after{content:"";position:absolute;right:-42px;bottom:-110px;width:230px;height:230px;border:1px solid rgba(255,255,255,.17);border-radius:50%;box-shadow:0 0 0 19px rgba(255,255,255,.035),0 0 0 43px rgba(255,255,255,.025);pointer-events:none}
+.slfa-lp-performance-panel{border-color:rgba(88,220,150,.22);background:linear-gradient(145deg,rgba(7,108,67,.12),var(--card))}
+.slfa-lp-form-strip{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:12px;background:rgba(0,114,198,.055)}
+.slfa-lp-form-strip>strong{color:var(--muted);font-size:9px;letter-spacing:.12em}
+.slfa-lp-form-strip>div{display:flex;gap:6px}
+.slfa-lp-form-chip{display:grid;place-items:center;width:27px;height:27px;border-radius:9px;font-size:10px;font-style:normal;font-weight:900}
+.slfa-lp-form-chip.slfa-form-w{background:rgba(35,172,93,.18);color:#42d889}
+.slfa-lp-form-chip.slfa-form-d{background:rgba(185,149,55,.18);color:#d8b85d}
+.slfa-lp-form-chip.slfa-form-l{background:rgba(225,81,91,.16);color:#f08087}
+.slfa-lp-form-empty{color:var(--muted);font-size:10px}
+.slfa-lp-home-away{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:9px}
+.slfa-lp-home-away article{display:grid;gap:5px;min-width:0;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.slfa-lp-home-away article>span{color:var(--muted);font-size:8px;font-weight:850;letter-spacing:.09em}
+.slfa-lp-home-away article>strong{color:var(--ink);font-size:16px}
+.slfa-lp-home-away article>b{color:var(--accent2);font-size:12px}
+.slfa-lp-home-away article small{color:var(--muted);font-size:8px;font-weight:500}
+.slfa-lp-squad-tools{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:9px;margin:-2px 0 12px}
+.slfa-lp-squad-tools label{display:grid;gap:5px;color:var(--muted);font-size:8px;font-weight:850;letter-spacing:.08em}
+.slfa-lp-squad-tools input,.slfa-lp-squad-tools select{width:100%;min-width:0;min-height:40px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;font-size:11px;letter-spacing:normal}
+.slfa-lp-club-leaders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.slfa-lp-leader{display:flex;align-items:center;gap:10px;min-width:0;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.slfa-lp-leader>span{display:grid;place-items:center;width:37px;height:37px;flex:0 0 37px;border-radius:11px;background:rgba(0,114,198,.09);font-size:18px}
+.slfa-lp-leader>div{display:grid;gap:3px;min-width:0}
+.slfa-lp-leader small{color:var(--muted);font-size:8px;font-weight:800;letter-spacing:.05em}
+.slfa-lp-leader strong{overflow-wrap:anywhere;color:var(--ink);font-size:10px}
+.slfa-lp-leader em{color:var(--accent2);font-size:9px;font-style:normal}
+@media(max-width:520px){.slfa-lp-home-away{grid-template-columns:1fr 1fr}.slfa-lp-home-away article:last-child{grid-column:1/-1}.slfa-lp-club-leaders{grid-template-columns:1fr}.slfa-lp-squad-tools{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.slfa-lp-profile .slfa-lp-hero:after{display:none}}
