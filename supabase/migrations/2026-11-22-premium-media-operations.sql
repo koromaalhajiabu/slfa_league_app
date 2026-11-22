@@ -49,4 +49,9 @@ create policy media_engagement_admin_read on public.media_engagement for select 
 using(app_role()=any(array['SUPER_ADMIN','DEVELOPER']::text[]));
 grant insert on public.media_engagement to anon,authenticated;
 grant select on public.media_engagement to authenticated;
+grant usage,select on sequence public.media_engagement_id_seq to anon,authenticated;
+drop policy if exists media_posts_superadmin_review on public.media_posts;
+create policy media_posts_superadmin_review on public.media_posts for update to authenticated
+using (app_role()=any(array['SUPER_ADMIN','DEVELOPER']::text[]))
+with check (app_role()=any(array['SUPER_ADMIN','DEVELOPER']::text[]) and status=any(array['DRAFT','SUBMITTED','RETURNED','PUBLISHED','REJECTED']::text[]));
 notify pgrst,'reload schema';
