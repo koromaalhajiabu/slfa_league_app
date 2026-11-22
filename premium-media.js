@@ -63,6 +63,7 @@
   }
   window.slfaPremiumMediaLoad=load;
   nav.addEventListener('click',function(){window.setTimeout(load,120);});
+  if(location.hash&&location.hash.indexOf('#media-')===0)nav.click();
   document.addEventListener('slfa:league-change',function(){if(!box.hidden)load();});
   window.addEventListener('online',function(){if(!box.hidden)load();});
 })();
