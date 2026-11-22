@@ -67,3 +67,15 @@
 .pp-scoring-head{display:grid;gap:4px;margin-bottom:9px}
 .pp-scoring-head span{color:#8be5ad;font-size:8px;font-weight:900;letter-spacing:.14em}
 .pp-scoring-head strong{color:#f2fff6;font-size:14px}
+
+
+/* Elite player profile identity and career summary */
+.pp-club-line{display:flex;align-items:center;gap:8px;margin-top:7px;min-width:0}
+.pp-club-line p{margin:0;overflow-wrap:anywhere}
+.pp-club-crest{width:27px;height:27px;flex:0 0 27px;object-fit:contain;padding:2px;border:1px solid rgba(126,230,164,.28);border-radius:50%;background:rgba(255,255,255,.95)}
+.pp-club-initial{display:grid;place-items:center;color:#087b43;font-size:11px;font-weight:900}
+.pp-career-totals{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pp-career-totals>div{min-width:0;padding:10px 8px}
+.pp-career-totals small{font-size:8px;letter-spacing:.06em}
+.pp-career-totals strong{font-size:22px}
+@media(max-width:390px){.pp-career-totals{gap:6px}.pp-career-totals>div{padding:9px 6px}.pp-career-totals strong{font-size:19px}}
