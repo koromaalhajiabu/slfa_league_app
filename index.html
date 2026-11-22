@@ -38,9 +38,11 @@
 <link rel="stylesheet" href="button-system.css?v=1">
 <style>
 details.admin.staff-only:not(.staff-open){display:none !important}
-#staffAccountActions{display:grid!important;grid-template-columns:minmax(0,1fr);gap:9px;width:100%;margin-top:14px;position:relative;z-index:5}
+#staffAccountActions{display:flex!important;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px;position:relative;z-index:1000}
 #staffAccountActions.hidden{display:none!important}
-#staffAccountActions button{display:flex!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important;flex:none!important;position:relative!important;z-index:6!important}
+#staffAccountActions button{display:inline-flex!important;align-items:center;justify-content:center;visibility:visible!important;opacity:1!important;width:auto!important;min-height:38px!important;flex:0 1 auto!important;padding:8px 12px!important;border-radius:999px!important;font-size:11px!important;white-space:nowrap!important;position:relative!important;z-index:1001!important}
+@media(max-width:640px){.top-controls{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px}.staff-front-actions{order:3;width:100%;justify-content:flex-end}.staff-front-actions button{min-height:36px!important;padding:7px 10px!important;font-size:10px!important}}
+
 </style>
 <style id="slfa-live-text-motion">
 /* Premium SLFA typography: restrained motion, clean contrast and flag-inspired accents */
@@ -119,15 +121,14 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
   <div class="top-controls">
   <label class="lang-picker"><span class="lang-picker-label">Language</span><select id="langSelect"></select></label>
   <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false">Light mode</button>
+  <div id="staffAccountActions" class="staff-front-actions" aria-label="Staff account actions">
+          <button class="primary" id="switchAccountBtn" type="button">Sign in / Switch account</button>
+          <button class="secondary" id="createAccountFromSignedIn" type="button">Create account</button>
+          <button class="secondary" id="signoutBtn" type="button">Sign out</button>
+        </div>
 <details class="admin staff-only" id="adminDropdown">
     <summary>Admin</summary>
     <div class="admin-body">
-
-      <div id="staffAccountActions" aria-label="Account actions" style="display:grid!important;grid-template-columns:1fr;gap:9px;width:100%;margin:0 0 14px;position:relative;z-index:99999">
-        <button class="primary" id="switchAccountBtn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Sign in / Switch account</button>
-        <button class="secondary" id="createAccountFromSignedIn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Create account</button>
-        <button class="secondary" id="signoutBtn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Sign out</button>
-      </div>
 
       <div id="signedOut">
         <p class="admin-intro">Staff sign-in</p>
@@ -366,6 +367,8 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
 
   // Allow staff to return to the sign-in and account-creation form without leaving the admin panel.
   $('switchAccountBtn').addEventListener('click', function () {
+    $('adminDropdown').open = true;
+    if (location.hash !== '#staff') location.hash = 'staff';
     $('authStatus').textContent = 'Switching account…';
     db.auth.signOut().then(function (r) {
       if (r && r.error) { $('authStatus').textContent = 'Could not switch accounts. Please try again.'; return; }
@@ -375,6 +378,8 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
   });
 
   $('createAccountFromSignedIn').addEventListener('click', function () {
+    $('adminDropdown').open = true;
+    if (location.hash !== '#staff') location.hash = 'staff';
     $('authStatus').textContent = 'Preparing account creation…';
     db.auth.signOut().then(function (r) {
       if (r && r.error) { $('authStatus').textContent = 'Could not switch accounts. Please try again.'; return; }
