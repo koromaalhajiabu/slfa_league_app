@@ -148,6 +148,7 @@
   }
   function addControls() {
     var anchor = document.getElementById('themeToggle');
+    if (!document.body || document.body.dataset.portal !== 'DEVELOPER') return;
     var header = document.querySelector('.topbar .top-controls') || document.querySelector('.portal-head');
     if (document.getElementById('slfaThemeControls') || !header) return;
     var wrap = document.createElement('div');
