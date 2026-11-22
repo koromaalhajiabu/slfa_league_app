@@ -270,6 +270,8 @@
       '<div class="btns"><button class="primary" id="asSave">Assign</button></div>' +
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
+      '<h2 class="rt">Published media</h2><div id="publishedMediaList" class="muted">Loading…</div>' +
+      '<h2 class="rt">Media engagement · last 30 days</h2><div id="mediaAnalytics" class="muted">Loading…</div>' +
       '<h2 class="rt">Fan comments awaiting approval</h2><div id="pendingComments" class="muted">Loading…</div>' +
       '<h2 class="rt">Audit log</h2>' +
       '<p class="muted">Recent changes across the app, newest first. Read only.</p>' +
@@ -1194,32 +1196,18 @@
   }
 
   function loadReview() {
-    db.from('media_posts').select('id, title, category, body, image_url, video_url, created_by_name, submitted_at').eq('status', 'SUBMITTED').order('submitted_at', { ascending: true })
-      .then(function (r) {
-        var rows = r.data || [];
-        $('reviewList').innerHTML = rows.length ? rows.map(function (p) {
-          return '<article class="post"><div class="muted">' + esc(CAT_LABEL[p.category] || p.category) + ' · submitted by ' + esc(p.created_by_name || 'Media Officer') + '</div>' +
-            (p.image_url ? '<img class="review-news-image" src="' + esc(p.image_url) + '" alt="">' : '') +
-            '<strong>' + esc(p.title) + '</strong><p>' + esc(p.body || '') + '</p>' +
-            (p.video_url ? '<p><a href="' + esc(p.video_url) + '" target="_blank" rel="noopener noreferrer">Review attached video ↗</a></p>' : '') +
-            '<div class="muted">Submitted ' + esc(p.submitted_at ? new Date(p.submitted_at).toLocaleString() : 'date unavailable') + '</div>' +
-            '<div class="btns"><button class="primary" data-pub="' + esc(p.id) + '">Approve &amp; publish</button><button class="secondary" data-ret="' + esc(p.id) + '">Return to author</button></div></article>';
-        }).join('') : 'Nothing waiting for approval.';
-        document.querySelectorAll('[data-pub]').forEach(function (b) { b.addEventListener('click', function () { decide(b.dataset.pub, 'PUBLISHED'); }); });
-        document.querySelectorAll('[data-ret]').forEach(function (b) { b.addEventListener('click', function () { decide(b.dataset.ret, 'RETURNED'); }); });
-      });
+    var host=$('reviewList');if(!host)return;
+    db.from('media_posts').select('id,title,category,body,image_url,video_url,gallery_urls,media_type,interviewee,media_metadata,created_by_name,submitted_at').eq('status','SUBMITTED').order('submitted_at',{ascending:true}).then(function(r){
+      if(r.error){host.textContent='Could not load submissions: '+r.error.message;return;}var rows=r.data||[];
+      host.innerHTML=rows.length?rows.map(function(p){var pics=(Array.isArray(p.gallery_urls)?p.gallery_urls:[]).slice(0,5);if(p.image_url&&pics.indexOf(p.image_url)<0)pics.unshift(p.image_url);var report=p.media_metadata&&p.media_metadata.report;var reportText=report&&typeof report==='object'?Object.keys(report).map(function(k){return k.replace(/_/g,' ').toUpperCase()+': '+(report[k]||'');}).join('\n'):String(report||'');
+        return '<article class="post pm-review-card"><div class="muted">'+esc(p.media_type||p.category)+' · '+esc(p.created_by_name||'Media Officer')+'</div><strong>'+esc(p.title)+'</strong><p>'+esc(p.body||'')+'</p>'+(pics.length?'<div class="pm-review-thumbs">'+pics.map(function(u){return '<a href="'+esc(u)+'" target="_blank" rel="noopener"><img src="'+esc(u)+'" alt="Submitted media"></a>';}).join('')+'</div>':'')+(p.video_url?'<p><a href="'+esc(p.video_url)+'" target="_blank" rel="noopener">Preview video ↗</a></p>':'')+(p.interviewee?'<p>Interview subject: '+esc(p.interviewee)+'</p>':'')+(reportText?'<pre class="pm-review-report">'+esc(reportText)+'</pre>':'')+'<label for="mediaReviewNote'+esc(p.id)+'">Review note</label><textarea id="mediaReviewNote'+esc(p.id)+'" rows="2" placeholder="Required when returning or rejecting"></textarea><div class="btns"><button class="primary" data-pub="'+esc(p.id)+'">Approve &amp; publish</button><button class="secondary" data-ret="'+esc(p.id)+'">Return for changes</button><button class="secondary" data-rej="'+esc(p.id)+'">Reject</button></div></article>';
+      }).join(''):'Nothing waiting for approval.';
+      host.querySelectorAll('[data-pub]').forEach(function(b){b.onclick=function(){decide(b.dataset.pub,'PUBLISHED','');};});host.querySelectorAll('[data-ret]').forEach(function(b){b.onclick=function(){decide(b.dataset.ret,'RETURNED',($('mediaReviewNote'+b.dataset.ret)||{}).value||'');};});host.querySelectorAll('[data-rej]').forEach(function(b){b.onclick=function(){decide(b.dataset.rej,'REJECTED',($('mediaReviewNote'+b.dataset.rej)||{}).value||'');};});
+    });loadPublishedMedia();loadMediaAnalytics();
   }
-  function decide(id, status) {
-    var upd = { status: status };
-    if (status === 'PUBLISHED') upd.published_at = new Date().toISOString();
-    db.auth.getUser().then(function (u) {
-      upd.reviewed_by = u.data.user.id; upd.reviewed_at = new Date().toISOString();
-      return db.from('media_posts').update(upd).eq('id', id);
-    }).then(function (r) {
-      if (r.error) { msg(r.error.message); return; }
-      msg(status === 'PUBLISHED' ? 'Published.' : 'Returned to the Media Officer.'); loadReview();
-    });
-  }
+  function decide(id,status,note){if((status==='RETURNED'||status==='REJECTED')&&!String(note||'').trim()){msg('Add a review note before returning or rejecting.');return;}if(status==='REJECTED'&&!confirm('Remove this item from public view?'))return;var upd={status:status,review_note:String(note||'').trim()||null};if(status==='PUBLISHED')upd.published_at=new Date().toISOString();db.auth.getUser().then(function(u){if(!u.data||!u.data.user)throw new Error('Session expired. Sign in again.');upd.reviewed_by=u.data.user.id;upd.reviewed_at=new Date().toISOString();return db.from('media_posts').update(upd).eq('id',id);}).then(function(r){if(r.error){msg(r.error.message);return;}msg(status==='PUBLISHED'?'Media published.':status==='RETURNED'?'Returned to author.':'Media rejected and hidden.');loadReview();}).catch(function(e){msg(e.message||'Review action failed.');});}
+  function loadPublishedMedia(){var host=$('publishedMediaList');if(!host)return;db.from('media_posts').select('id,title,media_type,published_at').eq('status','PUBLISHED').order('published_at',{ascending:false}).limit(25).then(function(r){if(r.error){host.textContent='Published media list unavailable.';return;}host.innerHTML=(r.data||[]).length?r.data.map(function(p){return '<div class="pm-published-row"><span><strong>'+esc(p.title)+'</strong><small>'+esc(p.media_type||'MEDIA')+' · '+esc(p.published_at?new Date(p.published_at).toLocaleDateString():'')+'</small></span><button class="secondary" data-unpublish="'+esc(p.id)+'">Unpublish</button><button class="secondary" data-remove-media="'+esc(p.id)+'">Remove</button></div>';}).join(''):'No published media yet.';host.querySelectorAll('[data-unpublish]').forEach(function(b){b.onclick=function(){decide(b.dataset.unpublish,'RETURNED','Unpublished by an authorised reviewer.');};});host.querySelectorAll('[data-remove-media]').forEach(function(b){b.onclick=function(){decide(b.dataset.removeMedia,'REJECTED','Removed from public view by an authorised reviewer.');};});});}
+  function loadMediaAnalytics(){var host=$('mediaAnalytics');if(!host)return;var since=new Date(Date.now()-30*86400000).toISOString();db.from('media_engagement').select('event_type,created_at').gte('created_at',since).order('created_at',{ascending:false}).limit(10000).then(function(r){if(r.error){host.textContent='Engagement data unavailable.';return;}var n={IMPRESSION:0,VIDEO_PLAY:0,VIDEO_CLICK:0,SHARE:0};(r.data||[]).forEach(function(x){if(n[x.event_type]!=null)n[x.event_type]++;});host.innerHTML='<div class="pm-analytics-grid">'+[['Impressions',n.IMPRESSION],['Video plays / clicks',n.VIDEO_PLAY+n.VIDEO_CLICK],['Shares',n.SHARE]].map(function(x){return '<div><strong>'+x[1]+'</strong><span>'+x[0]+'</span></div>';}).join('')+'</div><p class="muted">Last 30 days · deduplicated browser engagement signals, not verified unique audience figures.</p>';});}
 
   // ---------- DEVELOPER PANEL ----------
   var devUser = null;
@@ -1236,13 +1224,14 @@
       '<label for="ivRole">Role</label><select id="ivRole">'+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join('')+'</select>'+
       '<div class="btns"><button class="primary" id="ivSave">Save role</button></div>'+
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
+      '<h2 class="rt">Media approval centre</h2><div id="reviewList" class="muted">Loading submissions…</div><h3 class="rt">Published media</h3><div id="publishedMediaList" class="muted">Loading…</div><h3 class="rt">Media engagement · last 30 days</h3><div id="mediaAnalytics" class="muted">Loading…</div>' +
       '<h2 class="rt">All accounts and roles</h2><p class="muted">Change roles, suspend, restore or delete accounts. Actions are logged automatically.</p><div id="roleList" class="muted">Loading…</div>'+
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
     wireCompetitionAdmin();
     wireCupAdmin();
     loadDeveloperOverview();
     $('devRefreshOverview').onclick=loadDeveloperOverview;
-    loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();
+    loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();loadReview();
     $('pauseBtn').onclick=function(){setPause(true);};$('resumeBtn').onclick=function(){setPause(false);};
     $('freezeAppBtn').onclick=function(){setAppFreeze(true);};$('unfreezeAppBtn').onclick=function(){setAppFreeze(false);};
     $('ivPhoto').onchange=function(){var f=this.files&&this.files[0];if(!f){$('ivPhotoPreview').textContent='No photo selected.';return;}if(['image/jpeg','image/png','image/webp'].indexOf(f.type)===-1||f.size>4*1024*1024){this.value='';msg('Choose a JPG, PNG or WebP photo no larger than 4 MB.');return;}var u=URL.createObjectURL(f);$('ivPhotoPreview').innerHTML='<img src="'+u+'" alt="Profile preview" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #16834a">';};
