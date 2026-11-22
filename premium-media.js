@@ -26,7 +26,7 @@
     var imgs=(Array.isArray(p.gallery_urls)?p.gallery_urls:[]).map(safe).filter(Boolean);if(p.image_url&&safe(p.image_url)&&imgs.indexOf(safe(p.image_url))<0)imgs.unshift(safe(p.image_url));
     var gallery=imgs.length?'<div class="pm-gallery">'+imgs.map(function(u){return '<a href="'+esc(u)+'" target="_blank" rel="noopener"><img loading="lazy" src="'+esc(u)+'" alt="'+esc(p.title)+' photograph"></a>';}).join('')+'</div>':'';
     var v=videoMarkup(p),match=p.match_details;
-    var fixture=match?'<div class="pm-fixture">'+esc(match.home_team)+' '+(match.home_score==null?'v':' '+match.home_score+'–'+match.away_score+' ')+esc(match.away_team)+'<small>'+esc(match.match_date?new Date(match.match_date).toLocaleDateString():'')+(match.venue?' · '+esc(match.venue):'')+'</small></div>':'';
+    var fixture=match?'<div class="pm-fixture">'+esc(match.home_team)+' '+(match.home_score==null?'v':' '+match.home_score+'–'+match.away_score+' ')+esc(match.away_team)+'<small>'+esc(p.competition_name||'Competition')+' · '+esc(match.match_date?new Date(match.match_date).toLocaleDateString():'')+(match.venue?' · '+esc(match.venue):'')+'</small></div>':'';
     var share='<div class="pm-share"><button type="button" data-share="'+esc(p.id)+'">Share</button><a target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(p.title+' '+shareUrl(p))+'" data-share="'+esc(p.id)+'">WhatsApp</a><a target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(shareUrl(p))+'" data-share="'+esc(p.id)+'">Facebook</a></div>';
     var body='<div class="pm-card-body"><span class="pm-tag">'+esc(type.replace('_',' '))+' · '+esc(p.published_at?new Date(p.published_at).toLocaleDateString():'')+'</span><h4>'+esc(p.title)+'</h4>'+fixture+(p.interviewee?'<p>Featuring '+esc(p.interviewee)+'</p>':'')+(p.body?'<p>'+esc(p.body)+'</p>':'')+reportMarkup(p)+(type==='VIDEO'||type==='INTERVIEW'?v:'')+share+'</div>';
     var visual=type==='VIDEO'||type==='INTERVIEW'?v:(gallery||(safe(p.image_url)?'<img loading="lazy" src="'+esc(safe(p.image_url))+'" alt="'+esc(p.title)+'">':''));
@@ -45,11 +45,10 @@
       var rows=r.data||[],league='';try{league=localStorage.getItem('slfa_league')||'';}catch(e){}
       if(league)rows=rows.filter(function(p){return !p.league_id||String(p.league_id)===league;});
       var ids=rows.map(function(p){return p.match_id;}).filter(Boolean);
-      var matchQuery=ids.length?db.from('matches').select('id,home_team,away_team,home_score,away_score,match_date,venue').in('id',ids):Promise.resolve({data:[]});
-      matchQuery.then(function(mr){
-        var matches={};(mr.data||[]).forEach(function(m){matches[String(m.id)]=m;});
-        rows.forEach(function(p){p.match_details=matches[String(p.match_id)]||null;});
-        render(rows);
+      var matchQuery=ids.length?db.from('matches').select('id,home_team,away_team,home_score,away_score,match_date,venue,league_id').in('id',ids):Promise.resolve({data:[]});
+      Promise.all([matchQuery,db.from('leagues').select('id,name')]).then(function(all){
+        var matches={},leagues={};(all[0].data||[]).forEach(function(m){matches[String(m.id)]=m;});(all[1].data||[]).forEach(function(l){leagues[String(l.id)]=l.name;});
+        rows.forEach(function(p){p.match_details=matches[String(p.match_id)]||null;p.competition_name=leagues[String(p.league_id)]||'';});render(rows);
       });
     });
   }
