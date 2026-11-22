@@ -1853,6 +1853,8 @@
         $('npMatch').value='';$('npLeague').value='';photoInput.value='';videoInput.value='';$('npGalleryNames').textContent='No photos selected.';$('npVideoName').textContent='No video selected.';loadMine();
       }).catch(function(e){msg(e.message||'Upload or submission failed.');$('npUploadStatus').textContent='Upload failed. Check your connection and try again.';});
     }
+    function toggleReportFields(){var section=document.querySelector('.pm-report-form');if(section)section.hidden=$('npMediaType').value!=='MATCH_REPORT';}
+    $('npMediaType').addEventListener('change',toggleReportFields);toggleReportFields();
     $('npGalleryFiles').addEventListener('change',function(){var fs=Array.prototype.slice.call(this.files||[]);$('npGalleryNames').textContent=fs.length?fs.map(function(f){return f.name+' ('+(f.size/1048576).toFixed(1)+' MB)';}).join(' · '):'No photos selected.';});
     $('npVideoFile').addEventListener('change',function(){var f=this.files&&this.files[0];$('npVideoName').textContent=f?f.name+' ('+(f.size/1048576).toFixed(1)+' MB)':'No video selected.';});
     $('npDraft').addEventListener('click', function () { save('DRAFT'); });
