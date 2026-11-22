@@ -149,11 +149,11 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
       <div id="signedIn" class="hidden">
         <div class="row"><span id="whoName"></span><span class="muted" id="whoRole"></span></div>
         <div class="btns"><button class="primary" id="openPortal" hidden>Open my portal</button></div>
-      </div>
-
-      <div id="staffAccountActions" class="staff-account-actions hidden" aria-label="Account actions">
-        <button class="primary" id="switchAccountBtn" type="button">Switch account / Create account</button>
-        <button class="secondary" id="signoutBtn" type="button">Sign out</button>
+        <div id="staffAccountActions" aria-label="Account actions" style="display:grid!important;grid-template-columns:1fr;gap:9px;width:100%;margin-top:14px">
+          <button class="primary" id="switchAccountBtn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Switch account / Sign in</button>
+          <button class="secondary" id="createAccountFromSignedIn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Create account</button>
+          <button class="secondary" id="signoutBtn" type="button" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important">Sign out</button>
+        </div>
       </div>
 
     </div>
@@ -373,10 +373,19 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
     });
   });
 
+  $('createAccountFromSignedIn').addEventListener('click', function () {
+    $('authStatus').textContent = 'Preparing account creation…';
+    db.auth.signOut().then(function (r) {
+      if (r && r.error) { $('authStatus').textContent = 'Could not switch accounts. Please try again.'; return; }
+      showSignedOut();
+      $('createBox').classList.remove('hidden');
+      $('fullName').focus();
+    });
+  });
+
   function showSignedOut() {
     $('signedOut').classList.remove('hidden');
     $('signedIn').classList.add('hidden');
-    $('staffAccountActions').classList.add('hidden');
     $('createBox').classList.add('hidden');
     $('authStatus').textContent = '';
   }
@@ -407,10 +416,6 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
           if (openAfter && page) { location.href = page; return; }
           $('signedOut').classList.add('hidden');
           $('signedIn').classList.remove('hidden');
-          $('staffAccountActions').classList.remove('hidden');
-          $('staffAccountActions').style.setProperty('display', 'grid', 'important');
-          $('switchAccountBtn').hidden = false;
-          $('signoutBtn').hidden = false;
           $('whoName').textContent = p.full_name || p.email;
           $('whoRole').textContent = role.replace(/_/g, ' ');
           $('openPortal').hidden = !page;
