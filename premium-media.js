@@ -5,7 +5,7 @@
   var nav=document.querySelector('[data-tab="videos"]');
   if(!db||!box||!nav)return;
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  function safeUrl(v){try{var u=new URL(v);return /^https?:$/.test(u.protocol)?u.href:'';}catch(e){return '';}}
+  function safeUrl(v){try{var u=new URL(v);return u.protocol==='https:'?u.href:'';}catch(e){return '';}}
   function embed(v){var u=safeUrl(v);if(!u)return '';try{var x=new URL(u),id='';if(x.hostname==='youtu.be')id=x.pathname.slice(1);else if(/youtube\.com$/.test(x.hostname)){id=x.searchParams.get('v')||((x.pathname.match(/\/embed\/([^/]+)/)||[])[1]);}if(id)return 'https://www.youtube-nocookie.com/embed/'+encodeURIComponent(id);if(/vimeo\.com$/.test(x.hostname)){id=x.pathname.split('/').filter(Boolean).pop();if(/^\d+$/.test(id))return 'https://player.vimeo.com/video/'+id;}}catch(e){}return '';}
   function mediaCard(p,type){
     var imgs=(Array.isArray(p.gallery_urls)?p.gallery_urls:[]).map(safeUrl).filter(Boolean);
