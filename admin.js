@@ -1859,10 +1859,11 @@
     $('npSubmit').addEventListener('click', function () { save('SUBMITTED'); });
     $('npMatch').addEventListener('change', function () {
       var opt = this.options[this.selectedIndex];
-      if (opt && opt.value) { $('npCat').value = 'MATCH_REPORT'; $('npMediaType').value = 'MATCH_REPORT'; }
+      if (opt && opt.value && $('npMediaType').value === 'NEWS') { $('npCat').value = 'MATCH_REPORT'; $('npMediaType').value = 'MATCH_REPORT'; }
+      if (opt && opt.dataset.league) $('npLeague').value = opt.dataset.league;
       if (opt && opt.dataset.title && !$('npTitle').value.trim()) $('npTitle').value = opt.dataset.title;
     });
-    db.from('matches').select('id, home_team, away_team, home_score, away_score, match_date').eq('match_status', 'FT').order('match_date', { ascending: false }).limit(40).then(function (r) {
+    db.from('matches').select('id, home_team, away_team, home_score, away_score, match_date, league_id').eq('match_status', 'FT').order('match_date', { ascending: false }).limit(40).then(function (r) {
       $('npMatch').innerHTML = '<option value="">Not linked to a match</option>' + (r.data || []).map(function (m) {
         var t = 'Match report: ' + m.home_team + ' ' + m.home_score + '–' + m.away_score + ' ' + m.away_team;
         return '<option value="' + esc(m.id) + '" data-title="' + esc(t) + '">' + esc(m.home_team) + ' ' + esc(m.home_score) + '–' + esc(m.away_score) + ' ' + esc(m.away_team) + ' · ' + esc(new Date(m.match_date).toLocaleDateString()) + '</option>';
