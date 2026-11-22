@@ -1822,7 +1822,7 @@
         return db.from('media_posts').insert([{
           category: $('npMediaType').value === 'GALLERY' ? 'PHOTO' : ($('npMediaType').value === 'MATCH_REPORT' ? 'MATCH_REPORT' : $('npCat').value),
           media_type: $('npMediaType').value, interviewee: $('npInterviewee').value.trim() || null,
-          gallery_urls: $('npGallery').value.split(/\\r?\\n/).map(function(x){return x.trim();}).filter(function(x){return /^https?:\\/\\//i.test(x);}),
+          gallery_urls: $('npGallery').value.split(/\r?\n/).map(function(x){return x.trim();}).filter(function(x){return /^https?:\/\//i.test(x);}),
           media_metadata: $('npMediaType').value === 'MATCH_REPORT' ? { report: $('npReport').value.trim() } : {},
           title: t, body: $('npBody').value.trim(), match_id: $('npMatch').value || null,
           league_id: $('npLeague').value ? Number($('npLeague').value) : null,
