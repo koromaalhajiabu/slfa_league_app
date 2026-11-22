@@ -1,6 +1,9 @@
-/* SLFA 2026 appearance controls and animated night-sky layer. No external dependencies. */
+/* SLFA 2026 appearance system.
+   Global palette is readable to the public but writable only through the
+   existing app_settings RLS policy for active DEVELOPER accounts. */
 (function () {
   'use strict';
+
   var PRESETS = [
     { value: 'night-sky', label: 'Night Sky' },
     { value: 'emerald-prestige', label: 'Emerald Prestige' },
@@ -12,37 +15,186 @@
   ];
   var PRESET_KEY = 'slfa_palette_v1';
   var CUSTOM_KEY = 'slfa_custom_accent_v1';
+  var CONFIG_KEY = 'appearance_config';
   var DEFAULT_ACCENT = '#62d7ff';
+  var db = null;
+  var current = { palette: 'night-sky', custom_accent: DEFAULT_ACCENT };
+  var saving = false;
 
   function safeGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
   function safeSet(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
+  function safeHex(value) { return /^#[0-9a-f]{6}$/i.test(value || '') ? value : DEFAULT_ACCENT; }
   function validPreset(value) {
     return PRESETS.some(function (p) { return p.value === value; }) ? value : 'night-sky';
   }
   function hexToRgba(hex, alpha) {
-    var match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '');
-    if (!match) return 'rgba(98,215,255,' + alpha + ')';
-    return 'rgba(' + parseInt(match[1], 16) + ',' + parseInt(match[2], 16) + ',' + parseInt(match[3], 16) + ',' + alpha + ')';
+    var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '');
+    if (!m) return 'rgba(98,215,255,' + alpha + ')';
+    return 'rgba(' + parseInt(m[1],16) + ',' + parseInt(m[2],16) + ',' + parseInt(m[3],16) + ',' + alpha + ')';
   }
-  function applyPreset(preset, persist) {
-    preset = validPreset(preset);
-    document.documentElement.setAttribute('data-palette', preset);
-    if (preset === 'custom') {
-      var custom = safeGet(CUSTOM_KEY) || DEFAULT_ACCENT;
-      document.documentElement.style.setProperty('--slfa-accent', custom);
-      document.documentElement.style.setProperty('--slfa-accent-2', custom);
-      document.documentElement.style.setProperty('--slfa-glow', hexToRgba(custom, .22));
+  function getDb() {
+    if (window.slfaDb) return window.slfaDb;
+    if (window.supabase && window.SLFA_CONFIG && window.SLFA_CONFIG.supabaseUrl && window.SLFA_CONFIG.supabasePublishableKey) {
+      try {
+        window.slfaDb = window.supabase.createClient(window.SLFA_CONFIG.supabaseUrl, window.SLFA_CONFIG.supabasePublishableKey, {
+          auth: { persistSession: true, autoRefreshToken: true }
+        });
+        return window.slfaDb;
+      } catch (e) {}
+    }
+    return null;
+  }
+  function applyPreset(preset, accent) {
+    current.palette = validPreset(preset);
+    current.custom_accent = safeHex(accent || current.custom_accent);
+    document.documentElement.setAttribute('data-palette', current.palette);
+    if (current.palette === 'custom') {
+      document.documentElement.style.setProperty('--slfa-accent', current.custom_accent);
+      document.documentElement.style.setProperty('--slfa-accent-2', current.custom_accent);
+      document.documentElement.style.setProperty('--slfa-glow', hexToRgba(current.custom_accent, .22));
+      document.documentElement.style.setProperty('--slfa-line', hexToRgba(current.custom_accent, .25));
     } else {
-      document.documentElement.style.removeProperty('--slfa-accent');
-      document.documentElement.style.removeProperty('--slfa-accent-2');
-      document.documentElement.style.removeProperty('--slfa-glow');
+      ['--slfa-accent','--slfa-accent-2','--slfa-glow','--slfa-line'].forEach(function (v) {
+        document.documentElement.style.removeProperty(v);
+      });
     }
-    if (persist) safeSet(PRESET_KEY, preset);
+    safeSet(PRESET_KEY, current.palette);
+    safeSet(CUSTOM_KEY, current.custom_accent);
+    updateThemeColour();
+    return current;
+  }
+  function updateThemeColour() {
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta && document.documentElement.getAttribute('data-theme') !== 'light') {
-      var colour = preset === 'emerald-prestige' ? '#063328' : preset === 'royal-amethyst' ? '#21113d' : preset === 'obsidian-gold' ? '#211b10' : preset === 'arctic-silver' ? '#11283e' : preset === 'crimson-elite' ? '#2a1120' : preset === 'custom' ? (safeGet(CUSTOM_KEY) || DEFAULT_ACCENT) : '#020817';
-      meta.setAttribute('content', colour);
-    }
+    if (!meta || document.documentElement.getAttribute('data-theme') === 'light') return;
+    var map = {
+      'night-sky':'#020817',
+      'emerald-prestige':'#063328',
+      'royal-amethyst':'#21113d',
+      'obsidian-gold':'#211b10',
+      'arctic-silver':'#11283e',
+      'crimson-elite':'#2a1120'
+    };
+    meta.setAttribute('content', current.palette === 'custom' ? current.custom_accent : (map[current.palette] || '#020817'));
+  }
+  function configFromValue(value) {
+    if (!value || typeof value !== 'object') return null;
+    return {
+      palette: validPreset(value.palette),
+      custom_accent: safeHex(value.custom_accent)
+    };
+  }
+  function loadGlobalTheme() {
+    if (!db) return Promise.resolve(false);
+    return db.from('app_settings').select('value').eq('key', CONFIG_KEY).maybeSingle().then(function (res) {
+      if (res.error || !res.data) return false;
+      var value = configFromValue(res.data.value);
+      if (!value) return false;
+      current = value;
+      applyPreset(value.palette, value.custom_accent);
+      syncControls();
+      return true;
+    }).catch(function () { return false; });
+  }
+  function syncControls() {
+    var select = document.getElementById('slfaThemeSelect');
+    var picker = document.getElementById('slfaAccentColor');
+    if (select) select.value = current.palette;
+    if (picker) picker.value = current.custom_accent;
+  }
+  function setStatus(message, error) {
+    var el = document.getElementById('slfaThemeStatus');
+    if (!el) return;
+    el.textContent = message;
+    el.setAttribute('data-error', error ? 'true' : 'false');
+  }
+  function saveGlobalTheme() {
+    if (!db || saving) return;
+    saving = true;
+    setStatus('Saving system theme…', false);
+    var payload = {
+      key: CONFIG_KEY,
+      value: { palette: current.palette, custom_accent: current.custom_accent }
+    };
+    db.from('app_settings').upsert(payload, { onConflict: 'key' }).select('key,value').single().then(function (res) {
+      if (res.error) {
+        setStatus('Could not save. Check that this is your active Developer account, then try again.', true);
+        loadGlobalTheme().then(syncControls);
+        return;
+      }
+      var saved = configFromValue(res.data && res.data.value);
+      if (saved) applyPreset(saved.palette, saved.custom_accent);
+      setStatus('System theme updated for everyone.', false);
+      syncControls();
+    }).catch(function () {
+      setStatus('Could not save the system theme. Check your connection and try again.', true);
+      loadGlobalTheme().then(syncControls);
+    }).finally(function () { saving = false; });
+  }
+  function verifyDeveloper() {
+    if (!db || !document.body || document.body.dataset.portal !== 'DEVELOPER') return Promise.resolve(false);
+    return db.auth.getUser().then(function (auth) {
+      if (auth.error || !auth.data || !auth.data.user) return false;
+      return db.from('user_profiles')
+        .select('system_role,status')
+        .eq('id', auth.data.user.id)
+        .maybeSingle()
+        .then(function (profile) {
+          return !!(profile.data &&
+            String(profile.data.system_role).toUpperCase() === 'DEVELOPER' &&
+            String(profile.data.status).toLowerCase() === 'active');
+        });
+    }).catch(function () { return false; });
+  }
+  function addControls() {
+    var anchor = document.getElementById('themeToggle');
+    var header = document.querySelector('.topbar .top-controls') || document.querySelector('.portal-head');
+    if (document.getElementById('slfaThemeControls') || !header) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'slfaThemeControls';
+    wrap.setAttribute('aria-label', 'Developer system appearance controls');
+
+    var label = document.createElement('span');
+    label.className = 'slfa-theme-label';
+    label.textContent = 'System theme';
+
+    var select = document.createElement('select');
+    select.id = 'slfaThemeSelect';
+    select.setAttribute('aria-label', 'Change the system colour theme');
+    PRESETS.forEach(function (p) {
+      var option = document.createElement('option');
+      option.value = p.value;
+      option.textContent = p.label;
+      select.appendChild(option);
+    });
+
+    var picker = document.createElement('input');
+    picker.type = 'color';
+    picker.id = 'slfaAccentColor';
+    picker.setAttribute('aria-label', 'Set custom system accent colour');
+    picker.title = 'Set custom system accent colour';
+
+    var status = document.createElement('span');
+    status.id = 'slfaThemeStatus';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+
+    wrap.appendChild(label);
+    wrap.appendChild(select);
+    wrap.appendChild(picker);
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
+    else header.appendChild(wrap);
+    header.appendChild(status);
+
+    syncControls();
+    select.addEventListener('change', function () {
+      applyPreset(select.value, current.custom_accent);
+      saveGlobalTheme();
+    });
+    picker.addEventListener('input', function () {
+      applyPreset('custom', picker.value);
+      select.value = 'custom';
+      saveGlobalTheme();
+    });
   }
   function addStars() {
     if (!document.body || document.getElementById('slfa-cosmos')) return;
@@ -62,10 +214,10 @@
     }
     if (!reduced) {
       [
-        { top: '8%', left: '82%', delay: '-2s', travel: '11s' },
-        { top: '31%', left: '94%', delay: '-7s', travel: '13s' },
-        { top: '53%', left: '75%', delay: '-4s', travel: '15s' },
-        { top: '17%', left: '58%', delay: '-10s', travel: '17s' }
+        { top:'8%', left:'82%', delay:'-2s', travel:'11s' },
+        { top:'31%', left:'94%', delay:'-7s', travel:'13s' },
+        { top:'53%', left:'75%', delay:'-4s', travel:'15s' },
+        { top:'17%', left:'58%', delay:'-10s', travel:'17s' }
       ].forEach(function (item) {
         var comet = document.createElement('i');
         comet.className = 'slfa-comet';
@@ -78,54 +230,40 @@
     }
     document.body.insertBefore(layer, document.body.firstChild);
   }
-  function addControls() {
-    var anchor = document.getElementById('themeToggle');
-    var header = document.querySelector('.topbar .top-controls') || document.querySelector('.portal-head');
-    if (document.getElementById('slfaThemeControls') || !header) return;
-    var wrap = document.createElement('div');
-    wrap.id = 'slfaThemeControls';
-    wrap.setAttribute('aria-label', 'Appearance settings');
-    var label = document.createElement('span');
-    label.className = 'slfa-theme-label';
-    label.textContent = 'Theme';
-    var select = document.createElement('select');
-    select.id = 'slfaThemeSelect';
-    select.setAttribute('aria-label', 'Choose a premium colour theme');
-    PRESETS.forEach(function (p) {
-      var option = document.createElement('option');
-      option.value = p.value;
-      option.textContent = p.label;
-      select.appendChild(option);
-    });
-    var picker = document.createElement('input');
-    picker.type = 'color';
-    picker.id = 'slfaAccentColor';
-    picker.setAttribute('aria-label', 'Choose custom accent colour');
-    picker.title = 'Choose custom accent colour';
-    wrap.appendChild(label);
-    wrap.appendChild(select);
-    wrap.appendChild(picker);
-    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
-    else header.appendChild(wrap);
-
-    var saved = validPreset(safeGet(PRESET_KEY));
-    select.value = saved;
-    picker.value = safeGet(CUSTOM_KEY) || DEFAULT_ACCENT;
-    select.addEventListener('change', function () { applyPreset(select.value, true); });
-    picker.addEventListener('input', function () {
-      safeSet(CUSTOM_KEY, picker.value);
-      select.value = 'custom';
-      applyPreset('custom', true);
-    });
-  }
   function init() {
     if (!document.body) return;
-    applyPreset(safeGet(PRESET_KEY) || 'night-sky', false);
+    db = getDb();
+    var localPreset = validPreset(safeGet(PRESET_KEY) || 'night-sky');
+    var localAccent = safeHex(safeGet(CUSTOM_KEY) || DEFAULT_ACCENT);
+    applyPreset(localPreset, localAccent);
     addStars();
-    addControls();
+
+    // All viewers receive the same palette from the database. Local storage is only an offline fallback.
+    loadGlobalTheme();
+
+    // The colour editor is created only on the Developer portal and only after database role verification.
+    verifyDeveloper().then(function (allowed) {
+      if (!allowed) return;
+      addControls();
+      loadGlobalTheme();
+    });
+
+    if (db && db.channel) {
+      try {
+        db.channel('slfa-global-appearance')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'app_settings',
+            filter: 'key=eq.' + CONFIG_KEY
+          }, function () { loadGlobalTheme(); })
+          .subscribe();
+      } catch (e) {}
+    }
     document.addEventListener('visibilitychange', function () {
       var layer = document.getElementById('slfa-cosmos');
       if (layer) layer.style.animationPlayState = document.hidden ? 'paused' : 'running';
+      if (!document.hidden) loadGlobalTheme();
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
