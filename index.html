@@ -36,7 +36,12 @@
 <link rel="stylesheet" href="contrast-accessibility.css?v=2">
 <link rel="stylesheet" href="button-motion.css?v=1">
 <link rel="stylesheet" href="button-system.css?v=1">
-<style>details.admin.staff-only:not(.staff-open){display:none !important}</style>
+<style>
+details.admin.staff-only:not(.staff-open){display:none !important}
+#staffAccountActions{display:grid!important;grid-template-columns:minmax(0,1fr);gap:9px;width:100%;margin-top:14px;position:relative;z-index:5}
+#staffAccountActions.hidden{display:none!important}
+#staffAccountActions button{display:flex!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:46px!important;flex:none!important;position:relative!important;z-index:6!important}
+</style>
 <style id="slfa-live-text-motion">
 /* Premium SLFA typography: restrained motion, clean contrast and flag-inspired accents */
 @keyframes slfaPremiumTitle {
@@ -144,8 +149,11 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
       <div id="signedIn" class="hidden">
         <div class="row"><span id="whoName"></span><span class="muted" id="whoRole"></span></div>
         <div class="btns"><button class="primary" id="openPortal" hidden>Open my portal</button></div>
-        <button class="primary" id="switchAccountBtn" type="button" style="display:block;width:100%;min-height:44px;margin-top:14px;flex:none">Switch account / Create account</button>
-        <button class="secondary" id="signoutBtn" style="display:block;width:100%;min-height:40px;margin-top:8px">Sign out</button>
+      </div>
+
+      <div id="staffAccountActions" class="staff-account-actions hidden" aria-label="Account actions">
+        <button class="primary" id="switchAccountBtn" type="button">Switch account / Create account</button>
+        <button class="secondary" id="signoutBtn" type="button">Sign out</button>
       </div>
 
     </div>
@@ -368,6 +376,7 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
   function showSignedOut() {
     $('signedOut').classList.remove('hidden');
     $('signedIn').classList.add('hidden');
+    $('staffAccountActions').classList.add('hidden');
     $('createBox').classList.add('hidden');
     $('authStatus').textContent = '';
   }
@@ -398,6 +407,7 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
           if (openAfter && page) { location.href = page; return; }
           $('signedOut').classList.add('hidden');
           $('signedIn').classList.remove('hidden');
+          $('staffAccountActions').classList.remove('hidden');
           $('whoName').textContent = p.full_name || p.email;
           $('whoRole').textContent = role.replace(/_/g, ' ');
           $('openPortal').hidden = !page;
