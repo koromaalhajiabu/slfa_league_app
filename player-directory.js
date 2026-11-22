@@ -46,7 +46,9 @@
         '</p><button type="button" class="pd-compare-run" id="pdCompareRun" '+(compareIds.length===2?'':'disabled')+'>Compare selected players</button><div id="pdCompareResult" aria-live="polite"></div></section>' : '') +
       (list.length ? '<div class="pd-grid">' + list.map(function(p){
         var playerClub=clubs.find(function(c){return String(c.id)===String(p.club_id);});
-        return '<article class="pd-card player-profile-trigger" tabindex="0" data-profile-player="' + esc(p.player_name) + '" data-profile-id="' + esc(p.id) + '" data-profile-club="' + esc(p.club_name) + '" data-profile-club-logo="' + esc(playerClub&&playerClub.logo_url||'') + '" data-profile-photo="' + esc(p.photo_url || '') + '" data-profile-position="' + esc(p.position || '') + '" data-profile-jersey="' + esc(p.jersey_number || '') + '">' +
+        var playerClubLogo=playerClub&&playerClub.logo_url||'';
+        if(String(playerClubLogo).toLowerCase().indexOf('slfa-logo')!==-1)playerClubLogo='';
+        return '<article class="pd-card player-profile-trigger" tabindex="0" data-profile-player="' + esc(p.player_name) + '" data-profile-id="' + esc(p.id) + '" data-profile-club="' + esc(p.club_name) + '" data-profile-club-logo="' + esc(playerClubLogo) + '" data-profile-photo="' + esc(p.photo_url || '') + '" data-profile-position="' + esc(p.position || '') + '" data-profile-jersey="' + esc(p.jersey_number || '') + '">' +
           portrait(p.photo_url,p.player_name) + '<div class="pd-card-info"><strong>' + esc(p.player_name) + '</strong><span>' + esc(p.club_name) + '</span><small>' + (p.position ? esc(p.position) : 'Position not listed') + '</small></div>' +
           (p.jersey_number ? '<b class="pd-shirt">#' + esc(p.jersey_number) + '</b>' : '') + '<button type="button" class="pd-compare-toggle" data-compare-player="' + esc(p.id) + '" aria-pressed="' + compareIds.some(function(id){return String(id)===String(p.id);}) + '">' +
           (compareIds.some(function(id){return String(id)===String(p.id);}) ? 'Selected' : 'Compare') + '</button><span class="pd-open">VIEW PROFILE ↗</span></article>';
