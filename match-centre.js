@@ -91,7 +91,7 @@
     });
   }
   function goalCelebration(event) {
-    if (!event || String(event.event_type || '').toUpperCase() !== 'GOAL') return;
+    if (!event || !event.published_at || String(event.event_type || '').toUpperCase() !== 'GOAL') return;
     var key = [event.match_id,event.minute,event.player_name,event.team_name].join('|');
     if (celebratedGoals[key]) return;
     celebratedGoals[key] = true;
@@ -191,7 +191,7 @@
     if(box.dataset.loaded)return;
     box.innerHTML='<p class="slfa-mc-detail-loading">Loading published match details…</p>';
     Promise.all([
-      db.from('match_events').select('event_type,team_name,player_name,player_off_name,assist_player_name,minute').eq('match_id',String(id)).order('minute',{ascending:true}),
+      db.from('match_events').select('event_type,team_name,player_name,player_off_name,assist_player_name,minute,published_at').eq('match_id',String(id)).not('published_at','is',null).order('minute',{ascending:true}),
       db.from('match_lineups').select('is_starter,league_clubs(club_name),club_squad(player_name,jersey_number)').eq('match_id',String(id))
     ]).then(function(a){
       box.dataset.loaded='1';var ev=a[0].error?[]:(a[0].data||[]),lu=a[1].error?[]:(a[1].data||[]),html='';
@@ -232,7 +232,7 @@
     Promise.all([
       db.from('matches').select('match_date,venue,home_team,away_team,home_score,away_score,match_status').eq('id', String(id)).maybeSingle(),
       db.from('match_lineups').select('is_starter,league_clubs(club_name),club_squad(player_name,jersey_number)').eq('match_id', String(id)),
-      db.from('match_events').select('event_type,team_name,player_name,player_off_name,assist_player_name,minute').eq('match_id', String(id)).order('minute', { ascending: true })
+      db.from('match_events').select('event_type,team_name,player_name,player_off_name,assist_player_name,minute,published_at').eq('match_id', String(id)).not('published_at', 'is', null).order('minute', { ascending: true })
     ]).then(function (a) {
       var m = (a[0].data) || {}, lu = a[1].data || [], ev = a[2].data || [];
       var when = m.match_date ? new Date(m.match_date).toLocaleString('en-GB', { timeZone: 'Africa/Freetown', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
@@ -351,7 +351,7 @@
       (a[1].data||[]).forEach(function(x){leagueNames[String(x.id)]=x.name;});
       (a[2].data||[]).forEach(function(x){clubLogos[x.club_name]=x.logo_url || clubLogoFallback(x.club_name);});
       var live=matches.filter(function(m){return group(m)==='live';});
-      var eventQuery=live.length?db.from('match_events').select('match_id,event_type,team_name,player_name,minute').in('match_id',live.map(function(m){return String(m.id);})).order('minute',{ascending:true}):Promise.resolve({data:[]});
+      var eventQuery=live.length?db.from('match_events').select('match_id,event_type,team_name,player_name,minute,published_at').in('match_id',live.map(function(m){return String(m.id);})).not('published_at','is',null).order('minute',{ascending:true}):Promise.resolve({data:[]});
       return eventQuery.then(function(g){
         liveEvents=g.error?[]:(g.data||[]);
         if(!g.error&&live.length){
@@ -377,7 +377,7 @@
   if(window.MutationObserver){new MutationObserver(function(){if(!host.querySelector('.slfa-match-centre-v2')&&matches.length)render();}).observe(host,{childList:true,subtree:true});}
   var switcher=document.getElementById('leagueSwitch');
   if(switcher)switcher.addEventListener('click',function(){window.setTimeout(render,50);});
-  if(db.channel)db.channel('public-match-centre').on('postgres_changes',{event:'*',schema:'public',table:'matches'},schedule).on('postgres_changes',{event:'INSERT',schema:'public',table:'match_events'},function(payload){var e=payload&&payload.new;if(e)goalCelebration(e);schedule();}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'match_events'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},schedule).subscribe();
+  if(db.channel)db.channel('public-match-centre').on('postgres_changes',{event:'*',schema:'public',table:'matches'},schedule).on('postgres_changes',{event:'INSERT',schema:'public',table:'match_events'},function(payload){var e=payload&&payload.new;if(e&&e.published_at)goalCelebration(e);schedule();}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'match_events'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'match_lineups'},schedule).subscribe();
   window.addEventListener('online',schedule);
   window.setInterval(fetchData,60000);
   fetchData();
