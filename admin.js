@@ -1828,7 +1828,7 @@
       if(!t){msg('Give the post a title.');return;}
       if(imageLink&&imageLink.indexOf('https://')!==0){msg('Cover photo links must use HTTPS.');return;}
       if(videoLink){try{var vhost=new URL(videoLink).hostname.toLowerCase();if(videoLink.indexOf('https://')!==0||!['youtube.com','www.youtube.com','m.youtube.com','youtu.be','www.youtu.be','vimeo.com','www.vimeo.com','player.vimeo.com','tiktok.com','www.tiktok.com','facebook.com','www.facebook.com','fb.watch'].some(function(h){return vhost===h||vhost.endsWith('.'+h);}))throw new Error();}catch(e){msg('Use a valid HTTPS YouTube, Vimeo, TikTok or Facebook video link.');return;}}
-      if(photos.length>12){msg('Select no more than 12 gallery photographs.');return;}
+      if(photos.length>12){msg('Select no more than 12 gallery photographs.');return;}if(photos.reduce(function(n,f){return n+f.size;},0)>40*1024*1024){msg('The combined gallery upload must be 40 MB or less.');return;}
       if(photos.some(function(f){return ['image/jpeg','image/png','image/webp','image/gif'].indexOf(f.type)<0||f.size>8*1024*1024;})){msg('Each photograph must be JPG, PNG, WebP or GIF and no larger than 8 MB.');return;}
       if(videoFile&&(['video/mp4','video/webm','video/quicktime'].indexOf(videoFile.type)<0||videoFile.size>45*1024*1024)){msg('Video must be MP4, WebM or MOV and no larger than 45 MB.');return;}
       if(videoLink&&videoFile){msg('Use either a video link or an uploaded video, not both.');return;}
