@@ -31,7 +31,7 @@
     });
   }
   function render(rows){
-    var chosen=localStorage.getItem('slfa_league')||'';
+    var chosen='';try{chosen=localStorage.getItem('slfa_league')||'';}catch(e){}
     if(chosen)rows=rows.filter(function(p){return !p.league_id||String(p.league_id)===chosen;});
     function typed(p){if(p.media_type)return p.media_type; if(p.category==='PHOTO')return 'GALLERY';if(p.category==='MATCH_REPORT')return 'MATCH_REPORT';return p.video_url?'VIDEO':'NEWS';}
     var groups={GALLERY:[],VIDEO:[],INTERVIEW:[],MATCH_REPORT:[]};
