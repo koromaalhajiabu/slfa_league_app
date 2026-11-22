@@ -269,3 +269,17 @@ html[data-theme="light"] .match {
 @media (max-width:620px) {
   #slfaThemeStatus { text-align:left; font-size:9px; }
 }
+
+#slfaThemePublish {
+  min-width:58px; margin:0; padding:7px 10px; border-radius:9px;
+  border:1px solid var(--slfa-line); background:var(--slfa-button-bg);
+  color:#fff; font:700 10px Inter,sans-serif; cursor:pointer; white-space:nowrap;
+}
+#slfaThemePublish:hover { filter:brightness(1.12); transform:translateY(-1px); }
+#slfaThemePublish:disabled { opacity:.55; cursor:wait; }
+@media (max-width:620px) {
+  #slfaThemeControls { flex-wrap:wrap; }
+  #slfaThemeSelect { flex:1 1 112px; }
+  #slfaAccentColor { flex:0 0 29px; }
+  #slfaThemePublish { flex:0 0 auto; }
+}
