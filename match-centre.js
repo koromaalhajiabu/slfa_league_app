@@ -128,8 +128,11 @@
   function card(m) {
     var s = status(m), g = group(m), score = m.home_score != null && m.away_score != null ?
       '<strong class="slfa-mc-score">'+esc(m.home_score)+'<i>:</i>'+esc(m.away_score)+'</strong>' : '<span class="slfa-mc-vs">VS</span>';
-    return '<article class="slfa-mc-card '+(g==='live'?'is-live':'')+'"><div class="slfa-mc-card-top"><b class="slfa-mc-status status-'+esc(s.toLowerCase())+'">'+(g==='live'?'<i class="slfa-mc-live-dot"></i>':'')+esc(label(m))+'</b><span class="slfa-mc-league">'+esc(leagueNames[String(m.league_id)] || 'SLFA Competition')+'</span></div>'+
-      '<div class="slfa-mc-teams"><div class="slfa-mc-team">'+crest(m.home_team)+'<span role="button" tabindex="0" data-open-club-name="'+esc(m.home_team)+'">'+esc(m.home_team)+'</span></div>'+score+'<div class="slfa-mc-team">'+crest(m.away_team)+'<span role="button" tabindex="0" data-open-club-name="'+esc(m.away_team)+'">'+esc(m.away_team)+'</span></div></div>'+
+    var homeWinner = g === 'results' && Number(m.home_score) > Number(m.away_score);
+    var awayWinner = g === 'results' && Number(m.away_score) > Number(m.home_score);
+    var cardState = g === 'live' ? 'is-live' : g === 'results' ? 'is-result' : g === 'upcoming' ? 'is-upcoming' : '';
+    return '<article class="slfa-mc-card '+cardState+'"><div class="slfa-mc-card-top"><b class="slfa-mc-status status-'+esc(s.toLowerCase())+'">'+(g==='live'?'<i class="slfa-mc-live-dot"></i>':'')+esc(label(m))+'</b><span class="slfa-mc-league">'+esc(leagueNames[String(m.league_id)] || 'SLFA Competition')+'</span></div>'+
+      '<div class="slfa-mc-teams"><div class="slfa-mc-team'+(homeWinner?' is-winner':'')+'">'+crest(m.home_team)+'<span role="button" tabindex="0" data-open-club-name="'+esc(m.home_team)+'">'+esc(m.home_team)+'</span></div>'+score+'<div class="slfa-mc-team'+(awayWinner?' is-winner':'')+'">'+crest(m.away_team)+'<span role="button" tabindex="0" data-open-club-name="'+esc(m.away_team)+'">'+esc(m.away_team)+'</span></div></div>'+
       '<div class="slfa-mc-card-bottom"><span>'+esc(dateText(m.match_date))+'</span><span>'+esc(m.venue || 'Venue TBC')+'</span></div>'+
       (m.motm_name?'<p class="slfa-mc-motm">★ Man of the Match: '+esc(m.motm_name)+(m.motm_jersey_number?' · #'+esc(m.motm_jersey_number):'')+'</p>':'')+
       (g==='live'?livePreview(m):'')+
@@ -137,15 +140,29 @@
   }
   function render() {
     var list = selected(), clubs = {};
+    // Competition/date/club scope is shared by filters and the live overview.
+    var scoped = matches.filter(function (m) {
+      if (league() && String(m.league_id || '') !== league()) return false;
+      if (chosenDate && day(m.match_date) !== chosenDate) return false;
+      if (chosenClub && m.home_team !== chosenClub && m.away_team !== chosenClub) return false;
+      return true;
+    });
+    var liveCount = scoped.filter(function (m) { return group(m) === 'live'; }).length;
+    var upcomingCount = scoped.filter(function (m) { return group(m) === 'upcoming'; }).length;
+    var resultCount = scoped.filter(function (m) { return group(m) === 'results'; }).length;
     matches.forEach(function (m) { if (!league() || String(m.league_id || '') === league()) { clubs[m.home_team]=1; clubs[m.away_team]=1; } });
     var options = Object.keys(clubs).sort().map(function (n) { return '<option value="'+esc(n)+'"'+(chosenClub===n?' selected':'')+'>'+esc(n)+'</option>'; }).join('');
-    var filters = [['all','All'],['upcoming','Upcoming'],['results','Results'],['other','Other']].map(function (f) {
-      var n = f[0]==='all' ? matches.length : matches.filter(function(m){return group(m)===f[0];}).length;
+    var filters = [['all','All'],['live','Live'],['upcoming','Upcoming'],['results','Results'],['other','Other']].map(function (f) {
+      var n = f[0]==='all' ? scoped.length : scoped.filter(function(m){return group(m)===f[0];}).length;
       return '<button type="button" class="slfa-mc-filter'+(filter===f[0]?' active':'')+'" data-mc-filter="'+f[0]+'" aria-pressed="'+(filter===f[0])+'">'+f[1]+' <span class="slfa-mc-count-pill">'+n+'</span></button>';
     }).join('');
     host.innerHTML = '<section class="slfa-match-centre-v2" aria-label="Match Centre"><div class="slfa-mc-heading"><div><p class="slfa-mc-eyebrow">THE SLFA LEAGUE APP</p><h3>Match Centre</h3><p>Fixtures, live scores and completed results</p></div><span class="slfa-mc-update">'+(updated?'Updated '+new Date(updated).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'Public match information')+'</span></div>'+
       '<div class="slfa-mc-tools"><div class="slfa-mc-filters" role="group" aria-label="Match filters">'+filters+'</div><div class="slfa-mc-selects"><label>Date<input type="date" id="mcDate" value="'+esc(chosenDate)+'"></label><label>Club<select id="mcClub"><option value="">All clubs</option>'+options+'</select></label><button type="button" class="slfa-mc-reset" id="mcReset">Reset</button></div></div>'+
-      '<div class="slfa-mc-summary" aria-live="polite"><button type="button" id="mcRefresh" aria-label="Refresh match information">↻ Refresh</button></div>'+
+      '<div class="slfa-mc-summary" aria-live="polite">'+
+      '<span class="slfa-mc-summary-stat live"><i aria-hidden="true"></i><b>'+liveCount+'</b><small>Live now</small></span>'+
+      '<span class="slfa-mc-summary-stat"><b>'+upcomingCount+'</b><small>Upcoming</small></span>'+
+      '<span class="slfa-mc-summary-stat"><b>'+resultCount+'</b><small>Results</small></span>'+
+      '<button type="button" id="mcRefresh" aria-label="Refresh match information">↻ Refresh</button></div>'+
       '<p class="slfa-mc-count">'+list.length+' match'+(list.length===1?'':'es')+' shown</p>'+
       (list.length?'<div class="slfa-mc-grid">'+list.map(card).join('')+'</div>':'<div class="slfa-mc-empty"><span>⚽</span><strong>No matches found</strong><p>Try another date, club or match filter.</p></div>')+
       '<p class="slfa-mc-footnote">Scores and match details reflect information currently published in the app.</p></section>';
