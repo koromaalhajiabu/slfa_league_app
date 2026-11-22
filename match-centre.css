@@ -135,3 +135,31 @@
 .slfa-mc-h2h-recent{margin-top:7px}
 .slfa-mc-h2h-recent p{margin:5px 0;color:var(--muted);font-size:9px}
 @media(max-width:430px){.slfa-mc-form-grid{grid-template-columns:1fr}.slfa-mc-h2h small{width:100%;margin-left:0}}
+
+
+/* ELITE MATCH CENTRE — live overview, status clarity and result emphasis */
+.slfa-mc-summary{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.slfa-mc-summary-stat{display:flex;align-items:center;gap:8px;min-width:105px;padding:9px 12px;border:1px solid rgba(126,205,163,.2);border-radius:13px;background:linear-gradient(145deg,rgba(10,110,68,.16),rgba(255,255,255,.025));}
+.slfa-mc-summary-stat b{color:var(--ink);font-size:16px;font-variant-numeric:tabular-nums;line-height:1}
+.slfa-mc-summary-stat small{color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.04em}
+.slfa-mc-summary-stat.live{border-color:rgba(255,111,122,.3);background:linear-gradient(145deg,rgba(150,35,49,.16),rgba(255,255,255,.025))}
+.slfa-mc-summary-stat.live b{color:#ff9ba2}
+.slfa-mc-summary-stat.live i{width:7px;height:7px;border-radius:50%;background:#fa6974;box-shadow:0 0 0 4px rgba(250,105,116,.14);animation:slfaMcPulse 1.5s infinite}
+.slfa-mc-summary button{align-self:center}
+.slfa-mc-card.is-result{border-color:rgba(104,230,163,.21)}
+.slfa-mc-card.is-upcoming{border-color:rgba(122,177,236,.17)}
+.slfa-mc-team.is-winner .slfa-mc-crest{border-color:rgba(110,242,167,.65);box-shadow:0 0 0 3px rgba(56,190,116,.12),0 0 19px rgba(56,190,116,.16)}
+.slfa-mc-team.is-winner span:last-child{color:#9df0bc}
+.slfa-mc-team:not(.is-winner) span:last-child{transition:color .18s ease}
+.slfa-mc-share,.slfa-mc-details-btn,.slfa-mc-reset{min-height:38px}
+.slfa-mc-filter{min-height:36px}
+.slfa-mc-team [role="button"]{cursor:pointer}
+.slfa-mc-team [role="button"]:focus-visible{outline:2px solid #9bf2bd;outline-offset:3px;border-radius:4px}
+@media(max-width:420px){
+  .slfa-mc-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .slfa-mc-summary-stat{min-width:0;justify-content:center;gap:5px;padding:9px 5px}
+  .slfa-mc-summary-stat b{font-size:15px}
+  .slfa-mc-summary-stat small{font-size:8px}
+  .slfa-mc-summary button{grid-column:1/-1;width:100%;min-height:40px}
+}
+@media(prefers-reduced-motion:reduce){.slfa-mc-summary-stat.live i{animation:none}}
