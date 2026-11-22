@@ -40,6 +40,7 @@
     box.innerHTML='<div class="pm-centre"><header class="pm-hero"><small>SLFA · OFFICIAL FOOTBALL MEDIA</small><h2>Premium Media Centre</h2><p>Matchday photography, video highlights, player and coach interviews, and professional match reports.</p></header>'+
       section('Match photo galleries','GALLERY')+section('Video highlights','VIDEO')+section('Interviews','INTERVIEW')+section('Professional match reports','MATCH_REPORT')+'</div>';
   }
+  window.slfaPremiumMediaLoad=load;
   nav.addEventListener('click',function(){window.setTimeout(load,120);});
   document.addEventListener('slfa:league-change',function(){if(!box.hidden)load();});
   window.addEventListener('online',function(){if(!box.hidden)load();});
