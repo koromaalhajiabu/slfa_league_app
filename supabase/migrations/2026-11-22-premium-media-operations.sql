@@ -55,3 +55,31 @@ create policy media_posts_superadmin_review on public.media_posts for update to 
 using (app_role()=any(array['SUPER_ADMIN','DEVELOPER']::text[]))
 with check (app_role()=any(array['SUPER_ADMIN','DEVELOPER']::text[]) and status=any(array['DRAFT','SUBMITTED','RETURNED','PUBLISHED','REJECTED']::text[]));
 notify pgrst,'reload schema';
+
+
+-- Private upload staging: unpublished media cannot be fetched anonymously.
+insert into storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
+values ('slfa-media-staging','slfa-media-staging',false,52428800,array['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/webm','video/quicktime'])
+on conflict (id) do update set public=false,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
+
+drop policy if exists slfa_media_upload_own on storage.objects;
+drop policy if exists slfa_media_publish_insert on storage.objects;
+create policy slfa_media_publish_insert on storage.objects for insert to authenticated
+with check (bucket_id='slfa-media' and (storage.foldername(name))[1]=(select auth.uid())::text and app_role()=any(array['SUPER_ADMIN','DEVELOPER']::text[]));
+
+drop policy if exists slfa_media_delete_own_or_admin on storage.objects;
+drop policy if exists slfa_media_delete_admin on storage.objects;
+create policy slfa_media_delete_admin on storage.objects for delete to authenticated
+using (bucket_id='slfa-media' and app_role()=any(array['SUPER_ADMIN','DEVELOPER']::text[]));
+
+drop policy if exists slfa_staging_upload_own on storage.objects;
+create policy slfa_staging_upload_own on storage.objects for insert to authenticated
+with check (bucket_id='slfa-media-staging' and (storage.foldername(name))[1]=(select auth.uid())::text and app_role()=any(array['MEDIA_OFFICER','SUPER_ADMIN','DEVELOPER']::text[]));
+
+drop policy if exists slfa_staging_read_own_or_reviewer on storage.objects;
+create policy slfa_staging_read_own_or_reviewer on storage.objects for select to authenticated
+using (bucket_id='slfa-media-staging' and ((storage.foldername(name))[1]=(select auth.uid())::text or app_role()=any(array['SUPER_ADMIN','DEVELOPER']::text[])));
+
+drop policy if exists slfa_staging_delete_own_or_reviewer on storage.objects;
+create policy slfa_staging_delete_own_or_reviewer on storage.objects for delete to authenticated
+using (bucket_id='slfa-media-staging' and ((storage.foldername(name))[1]=(select auth.uid())::text or app_role()=any(array['SUPER_ADMIN','DEVELOPER']::text[])));
