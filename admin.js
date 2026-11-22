@@ -1820,7 +1820,7 @@
       var imageLink = $('npImage').value.trim(), videoLink = $('npVideo').value.trim();
       if (!t) { msg('Give the post a title.'); return; }
       if (imageLink && !/^https:\/\//i.test(imageLink)) { msg('Cover photo links must use HTTPS.'); return; }
-      if (videoLink && !/^https:\/\/(www\\.|m\\.|vm\\.)?(youtube\\.com|youtu\\.be|vimeo\\.com|tiktok\\.com|facebook\\.com|fb\\.watch)\/\\S+$/i.test(videoLink)) { msg('Use a valid HTTPS YouTube, Vimeo, TikTok or Facebook video link.'); return; }
+      if (videoLink && !/^https:\/\/(www\.|m\.|vm\.)?(youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|facebook\.com|fb\.watch)\/\S+$/i.test(videoLink)) { msg('Use a valid HTTPS YouTube, Vimeo, TikTok or Facebook video link.'); return; }
       db.auth.getUser().then(function (u) {
         return db.from('media_posts').insert([{
           category: $('npMediaType').value === 'GALLERY' ? 'PHOTO' : ($('npMediaType').value === 'MATCH_REPORT' ? 'MATCH_REPORT' : $('npCat').value),
