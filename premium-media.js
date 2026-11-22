@@ -12,7 +12,7 @@
   function reportMarkup(p){
     var r=p.media_metadata&&p.media_metadata.report;if(!r)return '';
     if(typeof r==='string')return '<div class="pm-report">'+esc(r)+'</div>';
-    var labels=[['summary','Match summary'],['key_moments','Key moments'],['player_of_the_match','Player of the match'],['manager_comments','Manager comments'],['analysis','Post-match analysis']];
+    var labels=[['summary','Match summary'],['key_moments','Key moments'],['lineups','Recorded team line-ups'],['player_of_the_match','Player of the match'],['manager_comments','Manager comments'],['analysis','Post-match analysis']];
     return '<div class="pm-report">'+labels.filter(function(x){return r[x[0]];}).map(function(x){return '<section><strong>'+x[1]+'</strong><p>'+esc(r[x[0]])+'</p></section>';}).join('')+'</div>';
   }
   function videoMarkup(p){
