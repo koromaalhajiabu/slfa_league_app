@@ -280,7 +280,7 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
   });
   window.addEventListener('appinstalled', function () { document.getElementById('installBtn').hidden = true; });
   if (isIOS) document.getElementById('iosHint').hidden = false;
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js?v=219').catch(function () {});
+  // Service worker registration is handled once by sw-update.js. Avoid competing registrations.
 })();
 </script>
 <script>
@@ -408,6 +408,9 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
           $('signedOut').classList.add('hidden');
           $('signedIn').classList.remove('hidden');
           $('staffAccountActions').classList.remove('hidden');
+          $('staffAccountActions').style.setProperty('display', 'grid', 'important');
+          $('switchAccountBtn').hidden = false;
+          $('signoutBtn').hidden = false;
           $('whoName').textContent = p.full_name || p.email;
           $('whoRole').textContent = role.replace(/_/g, ' ');
           $('openPortal').hidden = !page;
