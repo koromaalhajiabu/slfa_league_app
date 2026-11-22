@@ -1804,7 +1804,7 @@
       input('npPOTM','Player of the match') +
       '<label for="npManagerComments">Manager comments</label><textarea id="npManagerComments" rows="2"></textarea>' +
       '<label for="npAnalysis">Post-match analysis</label><textarea id="npAnalysis" rows="3"></textarea></section>' +
-      '<p class="muted">All posts are reviewed by a Super Admin before they appear in the public News Centre. Save a draft or submit it for approval.</p>' +
+      '<p class="muted">All posts are reviewed by a Super Admin or Developer before appearing in the public Media Centre. Save a draft or submit it for approval.</p>' +
       '<div class="btns"><button class="secondary" id="npDraft">Save draft</button><button class="primary" id="npSubmit">Submit for approval</button></div>' +
       '<h2 class="rt">My posts</h2><div id="myPosts" class="muted">Loading…</div>' +
       '<h2 class="rt">Fan poll</h2>' +
