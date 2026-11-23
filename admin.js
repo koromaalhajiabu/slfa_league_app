@@ -1247,14 +1247,13 @@
       '<label for="ivRole">Role</label><select id="ivRole">'+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join('')+'</select>'+
       '<div class="btns"><button class="primary" id="ivSave">Save role</button></div>'+
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
-      '<h2 class="rt">Media approval centre</h2><div id="reviewList" class="muted">Loading submissions…</div><h3 class="rt">Published media</h3><div id="publishedMediaList" class="muted">Loading…</div><h3 class="rt">Media engagement · last 30 days</h3><div id="mediaAnalytics" class="muted">Loading…</div>' +
       '<h2 class="rt">All accounts and roles</h2><p class="muted">Change roles, suspend, restore or delete accounts. Actions are logged automatically.</p><div id="roleList" class="muted">Loading…</div>'+
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
     wireCompetitionAdmin();
     wireCupAdmin();
     loadDeveloperOverview();
     $('devRefreshOverview').onclick=loadDeveloperOverview;
-    loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();loadReview();
+    loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();
     $('pauseBtn').onclick=function(){setPause(true);};$('resumeBtn').onclick=function(){setPause(false);};
     $('freezeAppBtn').onclick=function(){setAppFreeze(true);};$('unfreezeAppBtn').onclick=function(){setAppFreeze(false);};
     $('ivPhoto').onchange=function(){var f=this.files&&this.files[0];if(!f){$('ivPhotoPreview').textContent='No photo selected.';return;}if(['image/jpeg','image/png','image/webp'].indexOf(f.type)===-1||f.size>4*1024*1024){this.value='';msg('Choose a JPG, PNG or WebP photo no larger than 4 MB.');return;}var u=URL.createObjectURL(f);$('ivPhotoPreview').innerHTML='<img src="'+u+'" alt="Profile preview" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #16834a">';};
