@@ -980,13 +980,25 @@
   }
   function setAlertStatus(msg) { var el = $('alertStatus'); if (el) el.textContent = msg; }
   var alertBtn = $('alertBtn');
+  var ALERT_CATEGORIES = [
+    { value: 'FIXTURES', label: 'New fixtures' },
+    { value: 'KICKOFF', label: 'Kick-off alerts' },
+    { value: 'GOALS', label: 'Goals' },
+    { value: 'CARDS', label: 'Yellow and red cards' },
+    { value: 'FULL_TIME', label: 'Full-time results' },
+    { value: 'NEWS', label: 'League news' },
+    { value: 'ANNOUNCEMENTS', label: 'Announcements' },
+    { value: 'MATCH_UPDATES', label: 'Other match updates' }
+  ];
+  var DEFAULT_ALERT_TYPES = ALERT_CATEGORIES.map(function (x) { return x.value; });
+
   if (alertBtn) {
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
       alertBtn.disabled = true;
       setAlertStatus('Alerts are not supported on this browser. On iPhone, add the app to your Home Screen first.');
     }
     alertBtn.addEventListener('click', function () {
-      setAlertStatus('Turning on alerts…');
+      setAlertStatus('Checking this device…');
       Notification.requestPermission().then(function (perm) {
         if (perm !== 'granted') { setAlertStatus('Alerts are off. You can allow them in your browser settings.'); return; }
         return navigator.serviceWorker.register('sw.js').then(function (reg) {
@@ -999,52 +1011,95 @@
           var j = sub.toJSON();
           return db.from('push_subscriptions').insert([{ user_id: null, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth }]).then(function (res) {
             if (res.error && res.error.code !== '23505') throw res.error;
-            setAlertStatus('Alerts are on for this device. Choose the clubs you follow below.');
-            showClubPicker(j.endpoint);
+            alertBtn.textContent = 'Manage alerts';
+            setAlertStatus('Alerts are on for this device. Choose the clubs and alert types you want.');
+            showAlertPreferences(j.endpoint);
           });
         }).catch(function () { setAlertStatus('Could not turn on alerts. Please try again.'); });
       });
     });
   }
 
-  // Club picker: a phone gets goal, card, kick-off and full-time alerts only for the clubs it follows
-  function showClubPicker(endpoint) {
+  // Each device can choose both the clubs and the types of league alerts it receives.
+  function showAlertPreferences(endpoint) {
     var box = $('alertClubs');
     if (!box) return;
     box.hidden = false;
-    box.innerHTML = '<p class="muted">Loading clubs…</p>';
-    db.from('league_clubs').select('club_name').eq('is_active', true).order('club_name').then(function (r) {
-      var names = (r.data || []).map(function (c) { return c.club_name; });
-      box.innerHTML = '<fieldset class="alert-clubs"><legend>Clubs you follow</legend>' +
-        '<label class="alert-clubs-all"><input type="checkbox" id="acAll" checked> All clubs</label>' +
-        '<div class="alert-clubs-list">' + names.map(function (n) {
-          return '<label><input type="checkbox" class="acClub" value="' + esc(n) + '" disabled> ' + esc(n) + '</label>';
-        }).join('') + '</div>' +
-        '<button type="button" class="primary" id="acSave">Save my clubs</button></fieldset>';
+    box.innerHTML = '<p class="muted">Loading alert preferences…</p>';
+
+    Promise.all([
+      db.from('league_clubs').select('club_name').eq('is_active', true).order('club_name'),
+      db.rpc('get_push_preferences', { p_endpoint: endpoint })
+    ]).then(function (results) {
+      var clubsResult = results[0], prefResult = results[1];
+      if (clubsResult.error) {
+        box.innerHTML = '<p class="muted">The club list could not be loaded. Please try again.</p>';
+        return;
+      }
+
+      var names = (clubsResult.data || []).map(function (c) { return c.club_name; });
+      var pref = !prefResult.error && prefResult.data && prefResult.data[0] ? prefResult.data[0] : null;
+      var savedClubs = pref ? pref.club_names : null;
+      var savedTypes = pref && Array.isArray(pref.alert_types) ? pref.alert_types : DEFAULT_ALERT_TYPES.slice();
+      var allClubs = !savedClubs;
+
+      box.innerHTML =
+        '<div class="alert-preferences">' +
+          '<fieldset class="alert-clubs">' +
+            '<legend>Clubs you follow</legend>' +
+            '<label class="alert-clubs-all"><input type="checkbox" id="acAll"' + (allClubs ? ' checked' : '') + '> All clubs</label>' +
+            '<div class="alert-clubs-list">' + names.map(function (n) {
+              var checked = savedClubs && savedClubs.indexOf(n) !== -1;
+              return '<label><input type="checkbox" class="acClub" value="' + esc(n) + '"' + (checked ? ' checked' : '') + (allClubs ? ' disabled' : '') + '> ' + esc(n) + '</label>';
+            }).join('') + '</div>' +
+          '</fieldset>' +
+          '<fieldset class="alert-settings">' +
+            '<legend>Notification types</legend>' +
+            '<div class="alert-options-list">' + ALERT_CATEGORIES.map(function (x) {
+              return '<label><input type="checkbox" class="acType" value="' + esc(x.value) + '"' + (savedTypes.indexOf(x.value) !== -1 ? ' checked' : '') + '> ' + esc(x.label) + '</label>';
+            }).join('') + '</div>' +
+          '</fieldset>' +
+          '<button type="button" class="primary" id="acSave">Save alert preferences</button>' +
+        '</div>';
+
       var all = box.querySelector('#acAll');
       all.addEventListener('change', function () {
-        box.querySelectorAll('.acClub').forEach(function (c) { c.disabled = all.checked; if (all.checked) c.checked = false; });
-      });
-      box.querySelector('#acSave').addEventListener('click', function () {
-        var picked = Array.prototype.slice.call(box.querySelectorAll('.acClub:checked')).map(function (c) { return c.value; });
-        if (!all.checked && !picked.length) { setAlertStatus('Pick at least one club, or choose All clubs.'); return; }
-        db.rpc('set_push_clubs', { p_endpoint: endpoint, p_clubs: all.checked ? null : picked }).then(function (res) {
-          setAlertStatus(res.error ? 'Could not save your clubs. Please try again.' : 'Your clubs are saved for this device.');
+        box.querySelectorAll('.acClub').forEach(function (c) {
+          c.disabled = all.checked;
+          if (all.checked) c.checked = false;
         });
       });
+
+      box.querySelector('#acSave').addEventListener('click', function () {
+        var pickedClubs = Array.prototype.slice.call(box.querySelectorAll('.acClub:checked')).map(function (c) { return c.value; });
+        var pickedTypes = Array.prototype.slice.call(box.querySelectorAll('.acType:checked')).map(function (c) { return c.value; });
+        if (!all.checked && !pickedClubs.length) { setAlertStatus('Choose at least one club, or select All clubs.'); return; }
+        if (!pickedTypes.length) { setAlertStatus('Choose at least one notification type.'); return; }
+
+        var save = box.querySelector('#acSave');
+        save.disabled = true;
+        setAlertStatus('Saving alert preferences…');
+        db.rpc('set_push_preferences', {
+          p_endpoint: endpoint,
+          p_clubs: all.checked ? null : pickedClubs,
+          p_alert_types: pickedTypes
+        }).then(function (res) {
+          save.disabled = false;
+          setAlertStatus(res.error ? 'Could not save preferences. Please try again.' : 'Your alert preferences have been saved on this device.');
+        });
+      });
+    }).catch(function () {
+      box.innerHTML = '<p class="muted">Alert preferences could not be loaded. Please try again.</p>';
     });
   }
-  // Let a fan who already turned on alerts change their clubs later
+
+  // Show the preference manager immediately for a device that has already subscribed.
   if (alertBtn && 'serviceWorker' in navigator && 'PushManager' in window) {
     navigator.serviceWorker.ready.then(function (reg) {
       return reg.pushManager.getSubscription();
     }).then(function (sub) {
       if (!sub) return;
-      var change = document.createElement('button');
-      change.type = 'button'; change.className = 'secondary'; change.textContent = 'Change my clubs';
-      change.addEventListener('click', function () { showClubPicker(sub.endpoint); });
-      var status = $('alertStatus');
-      if (status && status.parentNode) status.parentNode.insertBefore(change, status);
+      alertBtn.textContent = 'Manage alerts';
     }).catch(function () {});
   }
 
