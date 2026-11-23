@@ -102,7 +102,18 @@
       '<div class="btns"><button type="button" class="secondary" id="fciCheck" disabled>Validate and preview</button><button type="button" class="primary" id="fciImport" disabled>Import verified players</button></div>' +
       '<div id="fciMessage" class="status" role="status" aria-live="polite"></div>' +
       '<div id="fciPreview" class="muted"></div>' +
-      '<h3>Recent import history</h3><div id="fciHistory" class="muted">Loading import history…</div>';
+      '<h3>Recent import history</h3><div id="fciHistory" class="muted">Loading import history…</div>' +
+      '<section class="player-photo-upload" aria-labelledby="playerPhotoHeading">' +
+        '<h3 id="playerPhotoHeading">Player Photo Upload</h3>' +
+        '<p class="muted">Choose an existing player, select a portrait from your phone or computer, preview it and save it to the player profile. High-resolution images are automatically resized before upload.</p>' +
+        '<label for="pPhotoSearch">Find a player</label><input id="pPhotoSearch" type="search" autocomplete="off" placeholder="Search player name, club or shirt number">' +
+        '<label for="pPhotoPlayer">Player record</label><select id="pPhotoPlayer"><option value="">Loading registered players…</option></select>' +
+        '<div class="player-photo-preview"><img id="pPhotoPreview" alt="Player photo preview" hidden><span id="pPhotoPreviewNote">Choose a player to see the current portrait.</span></div>' +
+        '<label for="pPhotoFile">Player portrait (JPG, PNG or WebP)</label><input id="pPhotoFile" type="file" accept="image/jpeg,image/png,image/webp">' +
+        '<p class="muted" id="pPhotoFileInfo">Maximum original image size: 12 MB. The app compresses it to fit the 2 MB storage limit.</p>' +
+        '<div class="btns"><button type="button" class="primary" id="pPhotoUpload" disabled>Upload and save player photo</button><button type="button" class="secondary" id="pPhotoRefresh">Refresh player list</button></div>' +
+        '<div id="pPhotoMessage" class="status" role="status" aria-live="polite"></div>' +
+      '</section>';
     host.appendChild(section);
     node('fciTemplate').addEventListener('click', template);
     node('fciFile').addEventListener('change', function () {
@@ -113,7 +124,13 @@
     });
     node('fciCheck').addEventListener('click', checkFile);
     node('fciImport').addEventListener('click', importFile);
+    node('pPhotoSearch').addEventListener('input', renderPlayerPhotoOptions);
+    node('pPhotoPlayer').addEventListener('change', showSelectedPlayerPhoto);
+    node('pPhotoFile').addEventListener('change', previewChosenPlayerPhoto);
+    node('pPhotoUpload').addEventListener('click', uploadPlayerPhoto);
+    node('pPhotoRefresh').addEventListener('click', loadPlayerPhotoOptions);
     loadHistory();
+    loadPlayerPhotoOptions();
   }
   function checkFile() {
     var file = node('fciFile').files && node('fciFile').files[0];
@@ -157,8 +174,238 @@
       lastRows = null; node('fciFile').value = ''; node('fciCheck').disabled = true; node('fciImport').disabled = true;
       node('fciPreview').textContent = 'Import batch completed successfully.';
       loadHistory();
+      loadPlayerPhotoOptions();
     }).catch(function (e) { message('Import failed: ' + (e.message || 'Unexpected error.'), true); node('fciImport').disabled = false; });
   }
+  // Player portraits are stored in the existing public member-photos bucket.
+  // The database Storage policies restrict writes to active Super Admin / Developer accounts.
+  var playerPhotoRows = [], playerPhotoPreviewUrl = null, playerPhotoBusy = false;
+  var PLAYER_PHOTO_COMPRESSED_LIMIT = 1800 * 1024;
+  var PLAYER_PHOTO_SOURCE_LIMIT = 12 * 1024 * 1024;
+
+  function playerPhotoMessage(text, bad) {
+    var el = node('pPhotoMessage');
+    if (!el) return;
+    el.textContent = text || '';
+    el.style.color = bad ? '#b42318' : 'inherit';
+  }
+  function releasePlayerPhotoPreview() {
+    if (playerPhotoPreviewUrl) {
+      URL.revokeObjectURL(playerPhotoPreviewUrl);
+      playerPhotoPreviewUrl = null;
+    }
+  }
+  function selectedPlayerPhotoRow() {
+    var id = node('pPhotoPlayer') && node('pPhotoPlayer').value;
+    return playerPhotoRows.find(function (p) { return String(p.id) === String(id); }) || null;
+  }
+  function playerPhotoLabel(p) {
+    var club = p.league_clubs && p.league_clubs.club_name ? p.league_clubs.club_name : 'Club not recorded';
+    var shirt = p.jersey_number ? ' · #' + p.jersey_number : '';
+    var registration = p.registration_status || 'Unspecified';
+    return p.player_name + ' · ' + club + shirt + ' · ' + registration;
+  }
+  function showSelectedPlayerPhoto() {
+    var p = selectedPlayerPhotoRow(), img = node('pPhotoPreview'), note = node('pPhotoPreviewNote');
+    var file = node('pPhotoFile').files && node('pPhotoFile').files[0];
+    node('pPhotoUpload').disabled = !p || !file || playerPhotoBusy;
+    if (file && playerPhotoPreviewUrl) return;
+    if (p && p.photo_url) {
+      img.onerror = function () {
+        img.hidden = true;
+        note.textContent = 'A photo URL is saved, but the image could not be previewed.';
+      };
+      img.src = p.photo_url;
+      img.hidden = false;
+      note.textContent = 'Current player portrait';
+    } else {
+      img.removeAttribute('src');
+      img.hidden = true;
+      note.textContent = p ? 'No portrait has been uploaded for this player.' : 'Choose a player to see the current portrait.';
+    }
+  }
+  function renderPlayerPhotoOptions() {
+    var select = node('pPhotoPlayer');
+    if (!select) return;
+    var previous = select.value;
+    var query = String(node('pPhotoSearch').value || '').trim().toLowerCase();
+    var filtered = playerPhotoRows.filter(function (p) {
+      if (!query) return true;
+      return [p.player_name, p.league_clubs && p.league_clubs.club_name, p.jersey_number, p.registration_status]
+        .join(' ').toLowerCase().indexOf(query) !== -1;
+    });
+    select.innerHTML = '<option value="">Choose a registered player…</option>' + filtered.map(function (p) {
+      return '<option value="' + esc(p.id) + '">' + esc(playerPhotoLabel(p)) + '</option>';
+    }).join('');
+    if (filtered.some(function (p) { return String(p.id) === String(previous); })) select.value = previous;
+    showSelectedPlayerPhoto();
+    if (!filtered.length) playerPhotoMessage(query ? 'No player matches that search.' : 'No player records are available yet.', false);
+  }
+  function loadPlayerPhotoOptions() {
+    var select = node('pPhotoPlayer');
+    if (!select) return;
+    select.innerHTML = '<option value="">Loading registered players…</option>';
+    playerPhotoMessage('Loading player records…', false);
+    db.from('club_squad')
+      .select('id,player_name,jersey_number,photo_url,registration_status,status,league_clubs(club_name)')
+      .order('player_name', {ascending:true})
+      .limit(1000)
+      .then(function (r) {
+        if (r.error) throw r.error;
+        playerPhotoRows = r.data || [];
+        node('pPhotoSearch').value = '';
+        renderPlayerPhotoOptions();
+        playerPhotoMessage(playerPhotoRows.length + ' player record(s) ready. Select a player to upload or replace a portrait.', false);
+      })
+      .catch(function (e) {
+        select.innerHTML = '<option value="">Player list unavailable</option>';
+        playerPhotoMessage(e.message || 'Could not load player records.', true);
+      });
+  }
+  function previewChosenPlayerPhoto() {
+    var input = node('pPhotoFile'), file = input.files && input.files[0];
+    var img = node('pPhotoPreview'), note = node('pPhotoPreviewNote');
+    releasePlayerPhotoPreview();
+    if (!file) {
+      node('pPhotoFileInfo').textContent = 'Maximum original image size: 12 MB. The app compresses it to fit the 2 MB storage limit.';
+      showSelectedPlayerPhoto();
+      return;
+    }
+    if (['image/jpeg','image/png','image/webp'].indexOf(file.type) === -1) {
+      input.value = '';
+      node('pPhotoUpload').disabled = true;
+      playerPhotoMessage('Choose a JPG, PNG or WebP image.', true);
+      showSelectedPlayerPhoto();
+      return;
+    }
+    if (file.size > PLAYER_PHOTO_SOURCE_LIMIT) {
+      input.value = '';
+      node('pPhotoUpload').disabled = true;
+      playerPhotoMessage('The selected image is larger than 12 MB. Choose a smaller photo.', true);
+      showSelectedPlayerPhoto();
+      return;
+    }
+    playerPhotoPreviewUrl = URL.createObjectURL(file);
+    img.src = playerPhotoPreviewUrl;
+    img.hidden = false;
+    note.textContent = 'New photo preview';
+    node('pPhotoFileInfo').textContent = file.name + ' · ' + (file.size / 1048576).toFixed(2) + ' MB before compression.';
+    node('pPhotoUpload').disabled = !selectedPlayerPhotoRow() || playerPhotoBusy;
+    playerPhotoMessage('Preview ready. Upload to save this portrait to the selected player.', false);
+  }
+  function compressPlayerPhoto(file, playerId) {
+    return new Promise(function (resolve, reject) {
+      var sourceUrl = URL.createObjectURL(file), image = new Image();
+      image.onload = function () {
+        URL.revokeObjectURL(sourceUrl);
+        var width = image.naturalWidth || image.width, height = image.naturalHeight || image.height;
+        if (!width || !height) { reject(new Error('The selected image could not be read.')); return; }
+        var scale = Math.min(1, 1280 / Math.max(width, height));
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(width * scale));
+        canvas.height = Math.max(1, Math.round(height * scale));
+        var context = canvas.getContext('2d');
+        if (!context) { reject(new Error('This browser cannot prepare the selected image.')); return; }
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        var qualities = [0.88,0.82,0.76,0.70,0.64,0.58];
+        function encode(index) {
+          canvas.toBlob(function (blob) {
+            if (!blob) { reject(new Error('The browser could not compress this photo.')); return; }
+            if (blob.size <= PLAYER_PHOTO_COMPRESSED_LIMIT) {
+              resolve(new File([blob], 'player-' + playerId + '.jpg', {type:'image/jpeg', lastModified:Date.now()}));
+              return;
+            }
+            if (index >= qualities.length - 1) {
+              reject(new Error('This photo could not be compressed below the 2 MB storage limit.'));
+              return;
+            }
+            encode(index + 1);
+          }, 'image/jpeg', qualities[index]);
+        }
+        encode(0);
+      };
+      image.onerror = function () {
+        URL.revokeObjectURL(sourceUrl);
+        reject(new Error('The selected image is not a supported or readable photo.'));
+      };
+      image.src = sourceUrl;
+    });
+  }
+  function playerPhotoToken() {
+    return window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() :
+      Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+  }
+  function uploadPlayerPhoto() {
+    if (playerPhotoBusy) return;
+    var player = selectedPlayerPhotoRow();
+    var file = node('pPhotoFile').files && node('pPhotoFile').files[0];
+    if (!player) { playerPhotoMessage('Choose a player record first.', true); return; }
+    if (!file) { playerPhotoMessage('Choose a player photo first.', true); return; }
+    if (['image/jpeg','image/png','image/webp'].indexOf(file.type) === -1 || file.size > PLAYER_PHOTO_SOURCE_LIMIT) {
+      playerPhotoMessage('Choose a JPG, PNG or WebP photo no larger than 12 MB.', true); return;
+    }
+    playerPhotoBusy = true;
+    node('pPhotoUpload').disabled = true;
+    playerPhotoMessage('Checking your account and preparing the photo…', false);
+    var uploadedPath = null;
+    db.auth.getUser().then(function (auth) {
+      if (!auth.data || !auth.data.user) throw new Error('Your session has expired. Sign in again.');
+      return db.from('user_profiles').select('system_role,status').eq('id', auth.data.user.id).maybeSingle()
+        .then(function (profile) {
+          var p = profile.data || {};
+          if (profile.error || String(p.status).toLowerCase() !== 'active' ||
+              ['SUPER_ADMIN','DEVELOPER'].indexOf(String(p.system_role).toUpperCase()) === -1) {
+            throw new Error('Only an active Super Admin or Developer can upload player portraits.');
+          }
+          playerPhotoMessage('Compressing and uploading the portrait…', false);
+          return compressPlayerPhoto(file, player.id).then(function (compressed) {
+            var path = 'squad/' + auth.data.user.id + '/' + player.id + '-' + Date.now() + '-' + playerPhotoToken() + '.jpg';
+            return db.storage.from('member-photos').upload(path, compressed, {
+              cacheControl:'31536000', upsert:false, contentType:'image/jpeg'
+            }).then(function (up) {
+              if (up.error) throw up.error;
+              uploadedPath = up.data.path;
+              var publicUrl = db.storage.from('member-photos').getPublicUrl(uploadedPath).data.publicUrl;
+              return db.from('club_squad').update({photo_url:publicUrl}).eq('id', Number(player.id)).select('id').maybeSingle()
+                .then(function (saved) {
+                  if (saved.error || !saved.data) {
+                    var reason = saved.error || new Error('The player record was not updated. Check your player permissions and try again.');
+                    return db.storage.from('member-photos').remove([uploadedPath]).then(function () {
+                      uploadedPath = null;
+                      throw reason;
+                    }, function () {
+                      uploadedPath = null;
+                      throw reason;
+                    });
+                  }
+                  uploadedPath = null;
+                  return publicUrl;
+                });
+            });
+          });
+        });
+    }).then(function (publicUrl) {
+      player.photo_url = publicUrl;
+      node('pPhotoFile').value = '';
+      node('pPhotoFileInfo').textContent = 'Portrait saved. Select another photo to replace it.';
+      releasePlayerPhotoPreview();
+      showSelectedPlayerPhoto();
+      playerPhotoMessage('Player photo uploaded and saved successfully. The public player directory and profile will use the new portrait.', false);
+    }).catch(function (e) {
+      if (uploadedPath) {
+        return db.storage.from('member-photos').remove([uploadedPath]).catch(function () {}).then(function () {
+          playerPhotoMessage(e.message || 'Player photo upload failed.', true);
+        });
+      }
+      playerPhotoMessage(e.message || 'Player photo upload failed.', true);
+    }).finally(function () {
+      playerPhotoBusy = false;
+      node('pPhotoUpload').disabled = !(selectedPlayerPhotoRow() && node('pPhotoFile').files && node('pPhotoFile').files[0]);
+    });
+  }
+
   function loadHistory() {
     if (!node('fciHistory')) return;
     db.from('player_import_batches').select('id, imported_at, source_label, competition_count, row_count, inserted_count, updated_count').order('imported_at', {ascending:false}).limit(10)
