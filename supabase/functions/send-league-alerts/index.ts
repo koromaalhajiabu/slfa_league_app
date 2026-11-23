@@ -1,6 +1,6 @@
-// Sends league alerts (fixtures, kick-offs, full time, news) to every subscribed device.
-// Reads the league_alerts queue, which the database fills. Public subscribers included.
+// Sends club-targeted league alerts with category preferences and per-device retry safety.
 const enc = new TextEncoder();
+const MAX_ATTEMPTS = 5;
 
 function b64uToBytes(s: string): Uint8Array {
   let b = s.replace(/-/g, '+').replace(/_/g, '/');
@@ -56,54 +56,118 @@ async function encryptForSubscriber(plaintext: string, p256dh: string, authSecre
 
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const h = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' };
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !serviceKey) return new Response('Server configuration is incomplete', { status: 500 });
 
+  const h = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' };
   const keyRes = await fetch(`${supabaseUrl}/rest/v1/push_vapid_keys?id=eq.1&select=public_key,private_key`, { headers: h });
-  const keys = keyRes.ok ? await keyRes.json() : [];
+  if (!keyRes.ok) return new Response('Could not load push keys', { status: 500 });
+  const keys = await keyRes.json();
   const vapid = keys[0];
   if (!vapid) return new Response('Push keys are not set', { status: 500 });
 
-  const qRes = await fetch(`${supabaseUrl}/rest/v1/league_alerts?sent_at=is.null&attempts=lt.5&select=id,title,body,url,attempts,club_names,target_endpoints&order=created_at.asc&limit=10`, { headers: h });
+  const qRes = await fetch(`${supabaseUrl}/rest/v1/league_alerts?delivery_status=eq.PENDING&attempts=lt.${MAX_ATTEMPTS}&select=id,title,body,url,attempts,club_names,target_endpoints,alert_type,delivery_status&order=created_at.asc&limit=10`, { headers: h });
   if (!qRes.ok) return new Response('Could not read the alerts queue', { status: 500 });
-  const alerts: Array<{ id: number; title: string; body: string; url: string; attempts: number; club_names: string[] | null; target_endpoints: string[] | null }> = await qRes.json();
+  const alerts: Array<{ id: number; title: string; body: string; url: string; attempts: number; club_names: string[] | null; target_endpoints: string[] | null; alert_type: string }> = await qRes.json();
+
+  const sRes = await fetch(`${supabaseUrl}/rest/v1/push_subscriptions?select=endpoint,p256dh,auth,club_names,alert_types&limit=5000`, { headers: h });
+  if (!sRes.ok) return new Response('Could not read push subscriptions', { status: 500 });
+  const subs: Array<{ endpoint: string; p256dh: string; auth: string; club_names: string[] | null; alert_types: string[] | null }> = await sRes.json();
 
   let pushed = 0;
+  let failed = 0;
+  let noRecipients = 0;
+
   for (const a of alerts) {
-    const sRes = await fetch(`${supabaseUrl}/rest/v1/push_subscriptions?select=endpoint,p256dh,auth,club_names&limit=5000`, { headers: h });
-    const subs: Array<{ endpoint: string; p256dh: string; auth: string; club_names: string[] | null }> = sRes.ok ? await sRes.json() : [];
-    let lastError: string | null = null;
+    const dRes = await fetch(`${supabaseUrl}/rest/v1/league_alert_deliveries?alert_id=eq.${a.id}&select=endpoint,outcome&limit=5000`, { headers: h });
+    if (!dRes.ok) return new Response(`Could not load delivery receipts for alert ${a.id}`, { status: 500 });
+    const prior: Array<{ endpoint: string; outcome: string }> = await dRes.json();
+    const completed = new Set(prior.map((x) => x.endpoint));
+    let alertFailures: string[] = [];
+    let attempted = 0;
+
     for (const sub of subs) {
-      // A selected-match reminder goes only to the exact device endpoints that requested it.
       if (a.target_endpoints && !a.target_endpoints.includes(sub.endpoint)) continue;
-      // Club alerts go only to phones that follow one of the clubs named in the alert.
-      // Null on either side means all clubs.
       if (a.club_names && sub.club_names && !sub.club_names.some((c) => a.club_names!.includes(c))) continue;
+      const categories = sub.alert_types || ['FIXTURES','KICKOFF','GOALS','CARDS','FULL_TIME','NEWS','ANNOUNCEMENTS','MATCH_UPDATES'];
+      if (!categories.includes(a.alert_type || 'ANNOUNCEMENTS')) continue;
+      if (completed.has(sub.endpoint)) continue;
+      attempted++;
+
       try {
-        const body = await encryptForSubscriber(JSON.stringify({ title: a.title, body: a.body, url: a.url }), sub.p256dh, sub.auth);
+        const body = await encryptForSubscriber(JSON.stringify({ title: a.title, body: a.body, url: a.url || '/' }), sub.p256dh, sub.auth);
         const authz = await vapidAuthorization(sub.endpoint, vapid.public_key, vapid.private_key, 'mailto:koromaalhajiabu0@gmail.com');
         const pRes = await fetch(sub.endpoint, {
           method: 'POST',
           headers: { TTL: '86400', 'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream', Authorization: authz },
           body,
         });
+
         if (pRes.status === 404 || pRes.status === 410) {
+          const receipt = await fetch(`${supabaseUrl}/rest/v1/league_alert_deliveries?on_conflict=alert_id,endpoint`, {
+            method: 'POST',
+            headers: { ...h, Prefer: 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({ alert_id: a.id, endpoint: sub.endpoint, outcome: 'EXPIRED', last_error: 'Subscription endpoint expired.' }),
+          });
+          if (!receipt.ok) throw new Error(`Expired endpoint receipt failed: ${receipt.status}`);
+          completed.add(sub.endpoint);
           await fetch(`${supabaseUrl}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, { method: 'DELETE', headers: h });
         } else if (pRes.ok) {
+          const receipt = await fetch(`${supabaseUrl}/rest/v1/league_alert_deliveries?on_conflict=alert_id,endpoint`, {
+            method: 'POST',
+            headers: { ...h, Prefer: 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({ alert_id: a.id, endpoint: sub.endpoint, outcome: 'DELIVERED', last_error: null }),
+          });
+          if (!receipt.ok) throw new Error(`Delivery receipt failed: ${receipt.status}`);
+          completed.add(sub.endpoint);
           pushed++;
         } else {
-          lastError = `Push ${pRes.status}`;
+          alertFailures.push(`Push ${pRes.status} for one subscriber`);
         }
       } catch (e) {
-        lastError = String(e).slice(0, 300);
+        alertFailures.push(String(e).slice(0, 240));
       }
     }
-    await fetch(`${supabaseUrl}/rest/v1/league_alerts?id=eq.${a.id}`, {
+
+    const totalDelivered = prior.filter((x) => x.outcome === 'DELIVERED').length +
+      (await fetch(`${supabaseUrl}/rest/v1/league_alert_deliveries?alert_id=eq.${a.id}&outcome=eq.DELIVERED&select=endpoint&limit=5000`, { headers: h }).then(async r => r.ok ? (await r.json()).length : 0));
+
+    const attempts = a.attempts + (alertFailures.length ? 1 : 0);
+    let deliveryStatus: string;
+    let sentAt: string | null = null;
+    let failedAt: string | null = null;
+
+    if (alertFailures.length) {
+      deliveryStatus = attempts >= MAX_ATTEMPTS ? 'FAILED' : 'PENDING';
+      if (deliveryStatus === 'FAILED') failedAt = new Date().toISOString();
+      failed++;
+    } else if (totalDelivered > 0) {
+      deliveryStatus = 'SENT';
+      sentAt = new Date().toISOString();
+    } else {
+      deliveryStatus = 'NO_RECIPIENTS';
+      sentAt = new Date().toISOString();
+      noRecipients++;
+    }
+
+    const patch = await fetch(`${supabaseUrl}/rest/v1/league_alerts?id=eq.${a.id}`, {
       method: 'PATCH',
       headers: { ...h, Prefer: 'return=minimal' },
-      body: JSON.stringify({ sent_at: new Date().toISOString(), attempts: a.attempts + 1, last_error: lastError }),
+      body: JSON.stringify({
+        delivery_status: deliveryStatus,
+        sent_at: sentAt,
+        failed_at: failedAt,
+        attempts,
+        delivered_count: totalDelivered,
+        last_attempt_at: new Date().toISOString(),
+        last_error: alertFailures.length ? alertFailures.slice(0, 4).join('; ').slice(0, 1000) : null,
+      }),
     });
+    if (!patch.ok) return new Response(`Could not update alert ${a.id}`, { status: 500 });
   }
-  return new Response(JSON.stringify({ alerts: alerts.length, pushed }), { headers: { 'Content-Type': 'application/json' } });
+
+  return new Response(JSON.stringify({ alerts: alerts.length, pushed, failed, noRecipients }), {
+    headers: { 'Content-Type': 'application/json' },
+  });
 });
