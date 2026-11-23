@@ -361,7 +361,7 @@
   }
 
   function renderArchive() {
-    var box = $('[data-rr-section="archive"]');
+    var box = host.querySelector('[data-rr-section="archive"]');
     if (!box) return;
     var season = seasonById(archiveSeasonChoice);
     var selected = filterMatchesFor(archiveSeasonChoice, archiveLeagueChoice);
