@@ -284,11 +284,14 @@
       '<label for="lvMatch">Match</label><select id="lvMatch"><option value="">Loading matches…</option></select>' +
       '<p class="muted">The referee starts, pauses, times and ends the match.</p>' +
       '<div id="lvPanel" class="hidden"><p class="muted">Goals and cards are recorded by the assigned referees and the match commissioner.</p></div>' +
-      '<h2 class="rt">Assign match official</h2><p class="muted">Appoint a referee or Match Commissioner to a specific fixture. Select the duty separately for each appointment.</p>' +
-      '<label for="asMatch">Match</label><select id="asMatch"><option value="">Loading…</option></select>' +
-      '<label for="asRef">Match official</label><select id="asRef"><option value="">Loading referees…</option></select>' +
-      '<label for="asRole">Role at the match</label><select id="asRole"><option value="MAIN">Main referee</option><option value="ASSISTANT">Assistant referee</option><option value="MATCH_COMMISSIONER">Match commissioner</option></select>' +
-      '<div class="btns"><button class="primary" id="asSave">Assign</button></div>' +
+      '<section class="match-officials-admin" aria-labelledby="matchOfficialsHeading"><h2 class="rt" id="matchOfficialsHeading">Match Officials Management</h2><p class="muted">Super Admin only. Appoint main referees, assistant referees and Match Commissioners to fixtures. Change or cancel appointments with a recorded reason. Cancelled appointments remain in the history.</p>' +
+      '<label for="asAssignment">Existing active appointment (optional)</label><select id="asAssignment"><option value="">Create a new appointment…</option></select>' +
+      '<label for="asMatch">Fixture</label><select id="asMatch"><option value="">Loading fixtures…</option></select>' +
+      '<label for="asRole">Official duty</label><select id="asRole"><option value="MAIN">Main referee</option><option value="ASSISTANT">Assistant referee</option><option value="MATCH_COMMISSIONER">Match Commissioner</option></select>' +
+      '<label for="asRef">Staff member</label><select id="asRef"><option value="">Choose a duty first…</option></select>' +
+      '<label for="asReason">Change / cancellation reason</label><textarea id="asReason" rows="2" maxlength="500" placeholder="Required when changing or cancelling an existing appointment"></textarea>' +
+      '<div class="btns"><button class="primary" id="asSave" type="button">Save appointment</button><button class="secondary" id="asCancel" type="button" disabled>Cancel appointment</button><button class="secondary" id="asClear" type="button">Clear</button></div>' +
+      '<div class="status" id="asStatus" role="status"></div><h3 class="rt">Appointment register</h3><div id="asAssignmentList" class="muted" aria-live="polite">Loading appointments…</div></section>' +
       '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<h2 class="rt">Published media</h2><div id="publishedMediaList" class="muted">Loading…</div>' +
@@ -369,7 +372,7 @@
     });
     loadStatusOptions();
     wireLive();
-    loadAssignOptions();
+    wireOfficialAssignments();
     loadPendingResults();
     loadPendingComments();
     loadFanReports();
@@ -387,13 +390,7 @@
         loadSeasonAdmin();
       });
     });
-    $('asSave').addEventListener('click', function () {
-      var m = $('asMatch').value, r = $('asRef').value, role = $('asRole').value;
-      if (!m || !r) { msg('Choose a match and a match official.'); return; }
-      db.auth.getUser().then(function (u) {
-        return db.from('match_referee_assignments').insert([{ match_id: Number(m), referee_user_id: r, assigned_by: u.data.user.id, official_role: role, assignment_status: 'ACTIVE' }]);
-      }).then(function (res) { msg(res.error ? res.error.message : 'Official assigned.'); });
-    });
+
   }
 
   function wireCompetitionRulesAdmin() {
@@ -455,15 +452,119 @@
     load();
   }
 
+  var officialMatches = [], officialProfiles = [], officialAssignments = [];
+  function officialDutyOptions() {
+    var role = $('asRole').value;
+    var people = officialProfiles.filter(function (u) {
+      var title = String(u.official_title || '').trim().toLowerCase();
+      return role === 'MATCH_COMMISSIONER' ? title === 'match commissioner' : title !== 'match commissioner';
+    });
+    $('asRef').innerHTML = '<option value="">Choose a staff member…</option>' + people.map(function (u) {
+      return '<option value="' + esc(u.id) + '">' + esc(u.full_name || u.email) + (u.official_title ? ' (' + esc(u.official_title) + ')' : '') + '</option>';
+    }).join('') || '<option value="">No eligible active staff accounts found</option>';
+  }
+  function renderOfficialAssignments() {
+    var active = officialAssignments.filter(function (x) { return x.assignment_status === 'ACTIVE'; });
+    var cancelled = officialAssignments.filter(function (x) { return x.assignment_status === 'CANCELLED'; });
+    $('asAssignment').innerHTML = '<option value="">Create a new appointment…</option>' + active.map(function (x) {
+      var m = officialMatches.filter(function (v) { return String(v.id) === String(x.match_id); })[0] || {};
+      var u = officialProfiles.filter(function (v) { return String(v.id) === String(x.referee_user_id); })[0] || {};
+      return '<option value="' + esc(x.id) + '">' + esc(m.home_team || 'Fixture') + ' v ' + esc(m.away_team || '') + ' · ' + esc(x.official_role.replace(/_/g,' ')) + ' · ' + esc(u.full_name || u.email || 'Staff account') + '</option>';
+    }).join('');
+    var markup = active.map(function (x) {
+      var m = officialMatches.filter(function (v) { return String(v.id) === String(x.match_id); })[0] || {};
+      var u = officialProfiles.filter(function (v) { return String(v.id) === String(x.referee_user_id); })[0] || {};
+      return '<article class="post"><strong>' + esc(m.home_team || 'Fixture') + ' v ' + esc(m.away_team || '') + '</strong><div class="muted">' +
+        esc(x.official_role.replace(/_/g,' ')) + ' · ' + esc(u.full_name || u.email || 'Staff account') + ' · Active</div>' +
+        '<div class="btns"><button type="button" class="secondary" data-as-edit="' + esc(x.id) + '">Edit appointment</button><button type="button" class="secondary" data-as-cancel="' + esc(x.id) + '">Cancel appointment</button></div></article>';
+    }).join('');
+    if (cancelled.length) markup += '<h4>Cancelled appointment history</h4>' + cancelled.map(function (x) {
+      var m = officialMatches.filter(function (v) { return String(v.id) === String(x.match_id); })[0] || {};
+      var u = officialProfiles.filter(function (v) { return String(v.id) === String(x.referee_user_id); })[0] || {};
+      return '<article class="post"><strong>' + esc(m.home_team || 'Fixture') + ' v ' + esc(m.away_team || '') + '</strong><div class="muted">' +
+        esc(x.official_role.replace(/_/g,' ')) + ' · ' + esc(u.full_name || u.email || 'Staff account') + ' · Cancelled</div><p>' + esc(x.change_reason || 'No reason recorded') + '</p></article>';
+    }).join('');
+    $('asAssignmentList').innerHTML = markup || 'No match officials have been appointed yet.';
+  }
   function loadAssignOptions() {
-    db.from('matches').select('id, home_team, away_team, match_date').order('match_date', { ascending: false }).limit(60).then(function (r) {
-      $('asMatch').innerHTML = '<option value="">Choose a match…</option>' + (r.data || []).map(function (m) {
-        return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + '</option>'; }).join('');
+    Promise.all([
+      db.from('matches').select('id, home_team, away_team, match_date').order('match_date', { ascending: false }).limit(500),
+      db.from('user_profiles').select('id, full_name, email, official_title').eq('system_role', 'REFEREE').eq('status', 'Active').order('full_name'),
+      db.from('match_referee_assignments').select('id,match_id,referee_user_id,official_role,assignment_status,assigned_at,change_reason').order('assigned_at', { ascending: false }).limit(500)
+    ]).then(function (all) {
+      if (all[0].error || all[1].error || all[2].error) {
+        $('asStatus').textContent = 'Appointments could not be loaded: ' + ((all[0].error || all[1].error || all[2].error).message || 'Unknown error');
+        return;
+      }
+      officialMatches = all[0].data || [];
+      officialProfiles = all[1].data || [];
+      officialAssignments = all[2].data || [];
+      var currentMatch = $('asMatch').value;
+      $('asMatch').innerHTML = '<option value="">Choose a fixture…</option>' + officialMatches.map(function (m) {
+        return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + ' · ' + esc(new Date(m.match_date).toLocaleDateString()) + '</option>';
+      }).join('');
+      if (currentMatch) $('asMatch').value = currentMatch;
+      officialDutyOptions();
+      renderOfficialAssignments();
     });
-    db.from('user_profiles').select('id, full_name, email, official_title').eq('system_role', 'REFEREE').then(function (r) {
-      $('asRef').innerHTML = '<option value="">Choose a referee…</option>' + (r.data || []).map(function (u) {
-        return '<option value="' + esc(u.id) + '">' + esc(u.full_name || u.email) + (u.official_title ? ' (' + esc(u.official_title) + ')' : '') + '</option>'; }).join('') || '<option value="">No referees yet</option>';
+  }
+  function wireOfficialAssignments() {
+    if (!$('asSave') || $('asSave').dataset.wired) return;
+    $('asSave').dataset.wired = '1';
+    function status(s) { $('asStatus').textContent = s || ''; }
+    function clear() {
+      $('asAssignment').value = ''; $('asMatch').value = ''; $('asReason').value = '';
+      $('asCancel').disabled = true; $('asSave').textContent = 'Save appointment';
+      officialDutyOptions(); status('Select a fixture and duty to create an appointment.');
+    }
+    function choose(id) {
+      var row = officialAssignments.filter(function (x) { return String(x.id) === String(id) && x.assignment_status === 'ACTIVE'; })[0];
+      if (!row) { clear(); return; }
+      $('asAssignment').value = String(row.id); $('asMatch').value = String(row.match_id);
+      $('asRole').value = row.official_role; officialDutyOptions(); $('asRef').value = row.referee_user_id;
+      $('asReason').value = ''; $('asCancel').disabled = false;
+      $('asSave').textContent = 'Save changes'; status('Editing an active appointment. Enter a reason before saving changes.');
+    }
+    $('asRole').addEventListener('change', function () { officialDutyOptions(); });
+    $('asAssignment').addEventListener('change', function () { choose(this.value); });
+    $('asAssignmentList').addEventListener('click', function (e) {
+      var edit = e.target.closest('[data-as-edit]'), cancel = e.target.closest('[data-as-cancel]');
+      if (edit) { choose(edit.getAttribute('data-as-edit')); $('asAssignment').scrollIntoView({behavior:'smooth',block:'center'}); }
+      if (cancel) { choose(cancel.getAttribute('data-as-cancel')); $('asCancel').click(); }
     });
+    $('asClear').addEventListener('click', clear);
+    $('asSave').addEventListener('click', function () {
+      var matchId = $('asMatch').value, officialId = $('asRef').value, role = $('asRole').value;
+      var assignmentId = $('asAssignment').value, reason = $('asReason').value.trim();
+      if (!matchId || !officialId) { status('Choose a fixture and an eligible staff member.'); return; }
+      if (assignmentId && reason.length < 5) { status('Enter a change reason of at least 5 characters.'); return; }
+      db.auth.getUser().then(function (u) {
+        if (!u.data || !u.data.user) throw new Error('Your session has expired. Sign in again.');
+        var payload = { match_id:Number(matchId), referee_user_id:officialId, official_role:role, assignment_status:'ACTIVE' };
+        if (assignmentId) {
+          payload.change_reason = reason;
+          return db.from('match_referee_assignments').update(payload).eq('id', assignmentId).select('id').single();
+        }
+        payload.assigned_by = u.data.user.id;
+        return db.from('match_referee_assignments').insert([payload]).select('id').single();
+      }).then(function (r) {
+        if (r && r.error) throw r.error;
+        status(assignmentId ? 'Appointment updated.' : 'Official appointed to the fixture.');
+        clear(); loadAssignOptions();
+      }).catch(function (e) { status('Appointment was not saved: ' + (e.message || 'Check the fixture and existing appointments.')); });
+    });
+    $('asCancel').addEventListener('click', function () {
+      var id = $('asAssignment').value, reason = $('asReason').value.trim();
+      if (!id) { status('Select an active appointment first.'); return; }
+      if (reason.length < 5) { status('Enter a cancellation reason of at least 5 characters.'); return; }
+      if (!window.confirm('Cancel this match-official appointment? The history will be retained.')) return;
+      db.from('match_referee_assignments').update({ assignment_status:'CANCELLED', change_reason:reason }).eq('id', id).then(function (r) {
+        if (r.error) { status('Cancellation failed: ' + r.error.message); return; }
+        status('Appointment cancelled. The record remains in the history.');
+        clear(); loadAssignOptions();
+      });
+    });
+    loadAssignOptions();
   }
 
   function loadPendingResults() {
