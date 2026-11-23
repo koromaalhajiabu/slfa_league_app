@@ -220,7 +220,7 @@
       '<div class="btns"><button class="primary" id="clubProfileSave" type="button">Save club profile</button><button class="secondary" id="clubProfileReset" type="button">Clear selection</button></div>' +
       '<div class="status" id="clubProfileStatus" role="status"></div>' +
       '<h3 class="rt">Add a club</h3>' +
-      '<label for="clName">Club name</label><input id="clName" type="text">'
+      '<label for="clName">Club name</label><input id="clName" type="text">' +
       '<label for="clLeague">League</label><select id="clLeague"><option value="">Loading leagues…</option></select>' +
       input('clLogo', 'Logo link (optional)', 'url') +
       '<div class="btns"><button class="primary" id="clAdd">Add club</button></div>' +
