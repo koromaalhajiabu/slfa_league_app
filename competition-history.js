@@ -83,8 +83,15 @@
     var c = clubs.filter(function (x) { return String(x.club_name || '').trim().toLowerCase() === key; })[0];
     return c && c.league_id != null ? String(c.league_id) : '';
   }
+  function clubLeagueIdById(id) {
+    if (id == null) return '';
+    var c = clubs.filter(function (x) { return String(x.id) === String(id); })[0];
+    return c && c.league_id != null ? String(c.league_id) : '';
+  }
   function matchLeagueId(match) {
     if (match.league_id != null) return String(match.league_id);
+    var homeById = clubLeagueIdById(match.home_club_id), awayById = clubLeagueIdById(match.away_club_id);
+    if (homeById && homeById === awayById) return homeById;
     var home = clubLeagueId(match.home_team), away = clubLeagueId(match.away_team);
     return home && home === away ? home : '';
   }
@@ -107,7 +114,7 @@
   }
   function optionsForLeagues(selected) {
     return '<option value="">All competitions</option>' + leagues.map(function (l) {
-      return '<option value="' + esc(l.id) + '"' + (String(selected) === String(l.id) ? ' selected' : '') + '>' + esc(l.name) + '</option>';
+      return '<option value="' + esc(l.id) + '"' + (String(selected) === String(l.id) ? ' selected' : '') + '>' + esc(l.name) + (l.is_active ? '' : ' · Archived') + '</option>';
     }).join('');
   }
   function optionsForSeasons(selected, includeAll) {
@@ -187,7 +194,7 @@
     });
     coreLoading = Promise.all([
       db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date', { ascending: false }),
-      db.from('leagues').select('id,name,competition_type,gender_category,description,sort_order,is_active').eq('is_active', true).order('sort_order', { ascending: true }),
+      db.from('leagues').select('id,name,competition_type,gender_category,description,sort_order,is_active').order('sort_order', { ascending: true }),
       db.from('competition_rules').select('id,season_id,competition_name,points_win,points_draw,points_loss,use_head_to_head,tiebreaker_order,knockout_extra_time,knockout_penalties,updated_at').order('updated_at', { ascending: false }),
       db.from('league_clubs').select('id,league_id,club_name,is_active').eq('is_active', true).order('club_name', { ascending: true }),
       db.from('league_standings').select('league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos', { ascending: true }),
@@ -234,7 +241,7 @@
     if (matchesLoaded) return Promise.resolve();
     if (matchesLoading) return matchesLoading;
     matchesLoading = Promise.all([
-      pageThrough('matches', 'id,league_id,season_id,match_date,venue,match_status,home_team,away_team,home_score,away_score'),
+      pageThrough('matches', 'id,league_id,season_id,home_club_id,away_club_id,match_date,venue,match_status,home_team,away_team,home_score,away_score'),
       pageThrough('match_events', 'id,match_id,event_type,team_name,player_name,assist_player_name,minute,published_at', function (q) {
         return q.eq('event_type', 'GOAL').not('published_at', 'is', null);
       })
