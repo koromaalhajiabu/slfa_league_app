@@ -206,17 +206,6 @@
       '<button class="secondary" data-export="suspensions">Suspensions (CSV)</button>' +
       '<button class="primary" data-export="full_backup">Full backup (JSON)</button></div>' +
       '<div id="exportMsg" class="muted" role="status"></div>' +
-      '<section class="hist-standings-admin" aria-labelledby="rrAdminHeading">' +
-      '<h2 class="rt" id="rrAdminHeading">Records and Rules · Official content editor</h2>' +
-      '<p class="muted">Super Admin only. Maintain published competition points and tie-break settings. Enter only rules confirmed by the Association.</p>' +
-      '<label for="rrRuleSelect">Existing rule profile</label><select id="rrRuleSelect"><option value="">Create a new rule profile…</option></select>' +
-      '<label for="rrRuleName">Competition name</label><input id="rrRuleName" type="text" maxlength="120" placeholder="e.g. Leone Rock Premier League">' +
-      '<label for="rrRuleSeason">Season</label><select id="rrRuleSeason"><option value="">No season assigned</option></select>' +
-      '<div class="sa-metric-grid"><div><label for="rrWin">Win points</label><input id="rrWin" type="number" min="0" max="20" value="3"></div><div><label for="rrDraw">Draw points</label><input id="rrDraw" type="number" min="0" max="20" value="1"></div><div><label for="rrLoss">Loss points</label><input id="rrLoss" type="number" min="0" max="20" value="0"></div></div>' +
-      '<label for="rrTieOrder">Tie-break order (comma-separated)</label><input id="rrTieOrder" type="text" value="HEAD_TO_HEAD,GOAL_DIFFERENCE,GOALS_FOR">' +
-      '<label><input id="rrHeadToHead" type="checkbox" checked> Use head-to-head</label><label><input id="rrExtraTime" type="checkbox" checked> Knockout extra time enabled</label><label><input id="rrPenalties" type="checkbox" checked> Knockout penalties enabled</label>' +
-      '<div class="btns"><button type="button" class="primary" id="rrRuleSave">Save and publish rule profile</button><button type="button" class="secondary" id="rrRuleNew">New profile</button><button type="button" class="secondary" id="rrRuleDelete">Delete selected profile</button></div>' +
-      '<div class="status" id="rrRuleMsg" role="status"></div><div id="rrRuleList" class="muted">Loading rule profiles…</div></section>' +
        '<h2 class="rt">Clubs</h2>' +
       '<label for="clName">Club name</label><input id="clName" type="text">' +
       '<label for="clLeague">League</label><select id="clLeague"><option value="">Loading leagues…</option></select>' +
