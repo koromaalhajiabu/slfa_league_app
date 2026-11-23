@@ -1117,7 +1117,11 @@
         payload.status_set_by = null;
       }
       $('miSave').disabled = true; note('Saving match information…');
-      db.from('matches').update(payload).eq('id', Number(id)).select('id').maybeSingle().then(function(r) {
+      db.auth.getUser().then(function(u) {
+        if (!u.data || !u.data.user) throw new Error('Your session has expired. Sign in again.');
+        if (payload.status_set_at) payload.status_set_by = u.data.user.id;
+        return db.from('matches').update(payload).eq('id', Number(id)).select('id').maybeSingle();
+      }).then(function(r) {
         $('miSave').disabled = false;
         if (r.error) { note('Save failed: ' + r.error.message); return; }
         if (!r.data) { note('No fixture was updated. Check your Super Admin access.'); return; }
