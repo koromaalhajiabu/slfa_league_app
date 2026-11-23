@@ -327,6 +327,8 @@
     });
 
     loadLeagueOptions();
+    var competitionPanel = $('superAdminCompetitionAdmin');
+    if (competitionPanel) box().insertBefore(competitionPanel, box().firstChild);
     wireCompetitionAdmin();
     wireCupAdmin();
     loadSuperAdminOverview();
