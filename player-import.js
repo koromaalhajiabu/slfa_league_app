@@ -420,6 +420,6 @@
   }
   window.slfaRenderRole = function (profile) {
     originalRender(profile);
-    if (String(profile && profile.system_role || '').toUpperCase() === 'SUPER_ADMIN') renderImportCentre();
+    if (['SUPER_ADMIN','DEVELOPER'].indexOf(String(profile && profile.system_role || '').toUpperCase()) !== -1) renderImportCentre();
   };
 })();
