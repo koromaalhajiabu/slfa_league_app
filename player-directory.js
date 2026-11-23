@@ -24,12 +24,29 @@
     local.forEach(function (id) { favouritePlayerIds[id] = true; });
     return db.auth.getUser().then(function (u) {
       if (!u.data || !u.data.user) return;
-      return db.from('user_favorite_players').select('player_id')
-        .eq('user_id', u.data.user.id).then(function (r) {
-          if (r.error) return;
-          favouritePlayerIds = {};
-          (r.data || []).forEach(function (x) { favouritePlayerIds[String(x.player_id)] = true; });
-        });
+      var userId = u.data.user.id;
+      var localRows = local.map(function (id) {
+        var numericId = Number(id);
+        return Number.isSafeInteger(numericId) && numericId > 0
+          ? { user_id: userId, player_id: numericId } : null;
+      }).filter(Boolean);
+      var syncLocal = localRows.length
+        ? db.from('user_favorite_players').upsert(localRows, {
+            onConflict: 'user_id,player_id', ignoreDuplicates: true
+          })
+        : Promise.resolve({ error: null });
+      return syncLocal.then(function (saved) {
+        if (saved.error) return;
+        if (localRows.length) {
+          try { localStorage.removeItem('slfa_fav_players'); } catch (e) {}
+        }
+        return db.from('user_favorite_players').select('player_id')
+          .eq('user_id', userId).then(function (r) {
+            if (r.error) return;
+            favouritePlayerIds = {};
+            (r.data || []).forEach(function (x) { favouritePlayerIds[String(x.player_id)] = true; });
+          });
+      });
     }).catch(function () {});
   }
   function toggleFavouritePlayer(playerId) {
