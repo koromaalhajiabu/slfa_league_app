@@ -196,3 +196,9 @@
 .slfa-lp-leader em{color:var(--accent2);font-size:9px;font-style:normal}
 @media(max-width:520px){.slfa-lp-home-away{grid-template-columns:1fr 1fr}.slfa-lp-home-away article:last-child{grid-column:1/-1}.slfa-lp-club-leaders{grid-template-columns:1fr}.slfa-lp-squad-tools{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.slfa-lp-profile .slfa-lp-hero:after{display:none}}
+
+/* Official competition profile details */
+.slfa-lp-profile-meta{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.slfa-lp-profile-meta span{display:flex;flex-direction:column;gap:3px;min-width:120px;color:var(--ink);font-size:11px}
+.slfa-lp-profile-meta b{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.slfa-lp-profile-meta p{flex-basis:100%;margin:4px 0 0;color:var(--ink);font-size:11px;line-height:1.6;white-space:pre-line}
