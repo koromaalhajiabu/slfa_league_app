@@ -250,6 +250,12 @@
         ? '<img class="slfa-lp-competition-logo" src="league-logos/leone-rock-premier-league.jpg" alt="Leone Rock Premier League logo" loading="lazy">'
         : '<span class="slfa-lp-hero-mark">SLFA</span>')) + '</div>' +
       '<div class="slfa-lp-detail-actions"><button type="button" id="slfaLpAll">‹ All competitions</button><span>Public information</span></div>' +
+      '<section class="slfa-lp-profile-meta" aria-label="Official competition details">' +
+      (lg.season_id ? '<span><b>Season</b>' + esc((seasons.find(function(s){return String(s.id)===String(lg.season_id);})||{}).name || 'Season assigned') + '</span>' : '') +
+      (lg.start_date ? '<span><b>Starts</b>' + esc(dateLabel(lg.start_date)) + '</span>' : '') +
+      (lg.end_date ? '<span><b>Ends</b>' + esc(dateLabel(lg.end_date)) + '</span>' : '') +
+      (lg.venue ? '<span><b>Primary venue</b>' + esc(lg.venue) + '</span>' : '') +
+      (lg.format_details ? '<p><b>Competition format</b>' + esc(lg.format_details) + '</p>' : '') + '</section>' +
       '<div class="slfa-lp-kpis">' + kpi(teamRows.length,'Participating clubs') + kpi(played.length,'Matches completed') +
       kpi(goals,'Goals recorded') + kpi(next.length,'Upcoming fixtures') + '</div>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>PARTICIPATING TEAMS</span><h4>Clubs in this competition</h4></div><small>' + teamRows.length + ' clubs</small></div>' +
@@ -472,7 +478,7 @@
     loading = true;
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-loading">Loading public competition information…</div></section>';
     Promise.all([
-      db.from('leagues').select('id,name,competition_type,gender_category,description,logo_url,sort_order').eq('is_active',true).order('sort_order'),
+      db.from('leagues').select('id,name,competition_type,gender_category,description,logo_url,sort_order,season_id,start_date,end_date,venue,format_details').eq('is_active',true).order('sort_order'),
       db.from('league_clubs').select('id,league_id,club_name,logo_url,stadium,city,founded_year,about').eq('is_active',true).order('club_name'),
       db.from('matches').select('id,league_id,season_id,match_date,venue,match_status,home_team,away_team,home_score,away_score').order('match_date',{ascending:false}).limit(1000),
       db.from('league_standings').select('league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos',{ascending:true}),
