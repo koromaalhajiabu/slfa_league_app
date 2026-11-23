@@ -10,7 +10,7 @@
     reloading = true;
     location.reload();
   });
-  navigator.serviceWorker.register('sw.js?v=229').then(function (reg) {
+  navigator.serviceWorker.register('sw.js?v=230').then(function (reg) {
     function check() { reg.update().catch(function () {}); }
     setInterval(check, 5 * 60 * 1000);
     document.addEventListener('visibilitychange', function () {
