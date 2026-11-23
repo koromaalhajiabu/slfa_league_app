@@ -1036,13 +1036,21 @@
       $('coType').value = 'LEAGUE';
       $('coGender').value = 'OPEN';
       $('coDescription').value = '';
+      $('coSeason').value = '';
+      $('coStartDate').value = '';
+      $('coEndDate').value = '';
+      $('coVenue').value = '';
+      $('coFormatDetails').value = '';
       $('coLogo').value = '';
       $('coSort').value = '10';
       $('coActive').checked = true;
       $('coSave').textContent = 'Save competition';
     }
     function load() {
-      db.from('leagues').select('id,name,competition_type,gender_category,description,logo_url,sort_order,is_active').order('sort_order').then(function (r) {
+      Promise.all([db.from('leagues').select('id,name,competition_type,gender_category,description,logo_url,sort_order,is_active,season_id,start_date,end_date,venue,format_details').order('sort_order'),db.from('seasons').select('id,name,start_date,end_date').order('start_date',{ascending:false})]).then(function (all) {
+        var r=all[0], seasonsResult=all[1];
+        if (seasonsResult.error) { msg('Season list could not be loaded: '+seasonsResult.error.message); return; }
+        $('coSeason').innerHTML='<option value="">No season assigned</option>'+(seasonsResult.data||[]).map(function(s){return '<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>';}).join('');
         if (r.error) { msg('Competition list could not be loaded: ' + r.error.message); return; }
         rows = r.data || [];
         edit.innerHTML = '<option value="">Create a new competition</option>' + rows.map(function (x) {
@@ -1060,6 +1068,11 @@
       $('coType').value = row.competition_type || 'LEAGUE';
       $('coGender').value = row.gender_category || 'OPEN';
       $('coDescription').value = row.description || '';
+      $('coSeason').value = row.season_id == null ? '' : String(row.season_id);
+      $('coStartDate').value = row.start_date || '';
+      $('coEndDate').value = row.end_date || '';
+      $('coVenue').value = row.venue || '';
+      $('coFormatDetails').value = row.format_details || '';
       $('coLogo').value = row.logo_url || '';
       $('coSort').value = row.sort_order == null ? 10 : row.sort_order;
       $('coActive').checked = !!row.is_active;
@@ -1071,6 +1084,8 @@
       var sort = parseInt($('coSort').value, 10);
       if (name.length < 3) { msg('Enter a competition name of at least 3 characters.'); return; }
       if (!Number.isInteger(sort) || sort < 0) { msg('Display order must be a whole number of zero or more.'); return; }
+      var start=$('coStartDate').value, end=$('coEndDate').value;
+      if(start && end && end<start){msg('Competition end date cannot be earlier than its start date.');return;}
       var selected = edit.value ? Number(edit.value) : null;
       $('coSave').disabled = true;
       db.rpc('admin_upsert_competition', {
@@ -1081,7 +1096,12 @@
         p_description: $('coDescription').value.trim() || null,
         p_logo_url: $('coLogo').value.trim() || null,
         p_sort_order: sort,
-        p_is_active: $('coActive').checked
+        p_is_active: $('coActive').checked,
+        p_season_id: $('coSeason').value ? Number($('coSeason').value) : null,
+        p_start_date: start || null,
+        p_end_date: end || null,
+        p_venue: $('coVenue').value.trim() || null,
+        p_format_details: $('coFormatDetails').value.trim() || null
       }).then(function (r) {
         $('coSave').disabled = false;
         if (r.error) { msg('Could not save competition: ' + r.error.message); return; }
