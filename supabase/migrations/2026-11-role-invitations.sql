@@ -19,7 +19,7 @@ declare v_email text := lower(btrim(coalesce(p_email, ''))); v_id uuid; v_club u
 begin
   if app_role() <> 'DEVELOPER' then raise exception 'Only the Technical Director can assign roles.'; end if;
   if v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then raise exception 'Enter a valid email address.'; end if;
-  if p_role not in ('SUPER_ADMIN','FINANCE_OFFICER','CLUB_ADMIN','REFEREE','STAFF','PLAYER','MEDIA_OFFICER','VIEWER') then
+  if p_role not in ('SUPER_ADMIN','CLUB_ADMIN','REFEREE','STAFF','PLAYER','MEDIA_OFFICER','VIEWER') then
     raise exception 'That role cannot be assigned here.';
   end if;
   if p_role = 'CLUB_ADMIN' and p_club is null then raise exception 'Choose the club for this Club Manager.'; end if;
