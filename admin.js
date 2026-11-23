@@ -625,7 +625,7 @@
 
   // Fan comments wait here until approved. Approved comments appear on the match details.
   // Usage counts from the privacy-light event log (Super Admins and Developers only)
-  var usageLabels = { app_open: 'App opened', tab_matches: 'Matches tab', tab_table: 'Table tab', tab_teams: 'Teams tab', tab_players: 'Players tab', tab_news: 'News tab', tab_videos: 'Videos tab', tab_predict: 'Predict tab', language_en: 'English chosen', language_fr: 'French chosen', language_kri: 'Krio chosen', theme_light: 'Light mode on', theme_dark: 'Dark mode on', favourite_club: 'Favourite club changed', match_details: 'Match details opened', prediction: 'Predictions sent', fan_comment: 'Fan comments sent', fan_report: 'Problem reports sent' };
+  var usageLabels = { app_open: 'App opened', tab_matches: 'Matches tab', tab_table: 'Table tab', tab_teams: 'Teams tab', tab_players: 'Players tab', tab_news: 'News tab', tab_videos: 'Videos tab', tab_predict: 'Predict tab', tab_records-rules: 'Records & Rules tab', language_en: 'English chosen', language_fr: 'French chosen', language_kri: 'Krio chosen', theme_light: 'Light mode on', theme_dark: 'Dark mode on', favourite_club: 'Favourite club changed', match_details: 'Match details opened', prediction: 'Predictions sent', fan_comment: 'Fan comments sent', fan_report: 'Problem reports sent' };
   function loadUsage() {
     var box = $('usageCounts'); if (!box) return;
     db.rpc('analytics_summary', { p_days: 30 }).then(function (r) {
