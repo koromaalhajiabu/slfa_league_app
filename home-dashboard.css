@@ -48,3 +48,30 @@
 .slfa-home-fixture small{display:block;margin-top:4px;color:#c8e8d5;font-size:9px;line-height:1.4}
 .slfa-home-fixture-empty{padding:8px 12px}
 @media(max-width:390px){.slfa-home-upcoming-head{align-items:flex-start;flex-direction:column}.slfa-home-upcoming-head button{width:100%}}
+
+
+/* Personalised supporter dashboard and match reminders */
+.slfa-home-remind{flex:0 0 auto;align-self:center;padding:8px 10px;border:1px solid rgba(170,255,210,.34);border-radius:10px;background:rgba(255,255,255,.08);color:#f4fff8;font-size:9px;font-weight:800;cursor:pointer}
+.slfa-home-remind[aria-pressed=true]{border-color:rgba(115,230,173,.65);background:rgba(16,139,76,.28)}
+.slfa-home-remind:disabled{opacity:.55;cursor:wait}
+.slfa-supporter-dashboard{display:grid;gap:12px;padding:15px;border:1px solid rgba(125,241,184,.24);border-radius:19px;background:linear-gradient(145deg,rgba(10,47,60,.88),rgba(5,27,48,.95));box-shadow:0 14px 34px rgba(0,0,0,.2)}
+.slfa-supporter-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.slfa-supporter-head>div{display:grid;gap:4px}
+.slfa-supporter-head span{color:#aeeac6;font-size:8px;font-weight:900;letter-spacing:.16em}
+.slfa-supporter-head strong{color:#f4fff8;font-size:15px}
+.slfa-supporter-head small{color:#c5e4d2;font-size:8px}
+.slfa-supporter-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.slfa-supporter-groups section,.slfa-supporter-fixtures{min-width:0;padding:11px;border:1px solid rgba(154,235,190,.14);border-radius:13px;background:rgba(255,255,255,.035)}
+.slfa-supporter-dashboard h4{margin:0 0 8px;color:#d8f6e3;font-size:10px;font-weight:850}
+.slfa-follow-list{display:flex;flex-wrap:wrap;gap:6px}
+.slfa-follow-chip{max-width:100%;padding:6px 8px;border:1px solid rgba(145,233,185,.2);border-radius:999px;background:rgba(21,132,75,.16);color:#effff5;font-size:9px;overflow-wrap:anywhere}
+.slfa-supporter-empty,.slfa-supporter-hint,.slfa-supporter-loading{margin:0;color:#c4dfcf;font-size:9px;line-height:1.55}
+.slfa-supporter-fixtures{display:grid;gap:8px}
+.slfa-supporter-match{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:8px 0;border-top:1px solid rgba(154,235,190,.12)}
+.slfa-supporter-match:first-of-type{border-top:0}
+.slfa-supporter-match span{display:grid;gap:4px;min-width:0}
+.slfa-supporter-match strong{color:#f4fff8;font-size:10px;overflow-wrap:anywhere}
+.slfa-supporter-match small{color:#c5dfd0;font-size:8px}
+.slfa-supporter-match button{flex:0 0 auto;padding:7px 9px;border:1px solid rgba(170,255,210,.34);border-radius:9px;background:rgba(255,255,255,.08);color:#f4fff8;font-size:8px;font-weight:800}
+.slfa-supporter-hint{padding-top:2px;color:#aeeac6}
+@media(max-width:520px){.slfa-supporter-groups{grid-template-columns:1fr}.slfa-supporter-match{align-items:flex-start}.slfa-home-fixture{display:flex;align-items:center;justify-content:space-between;gap:10px}.slfa-home-remind{max-width:118px;white-space:normal}}

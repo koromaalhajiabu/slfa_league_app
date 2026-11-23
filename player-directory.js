@@ -2,14 +2,78 @@
 (function () {
   var cfg = window.SLFA_CONFIG;
   if (!cfg || !window.supabase) return;
-  var db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
-    auth: { persistSession: false, autoRefreshToken: false }
+  var db = window.slfaDb || window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
+    auth: { persistSession: true, autoRefreshToken: true }
   });
   var root = document.getElementById('playerDirectory');
   if (!root) return;
   var clubs = [], players = [], currentLeague = '';
   var search = '', clubFilter = '', positionFilter = '';
   var compareIds = [];
+  var favouritePlayerIds = {};
+  function localPlayerFavourites() {
+    try { return JSON.parse(localStorage.getItem('slfa_fav_players') || '[]').map(String); }
+    catch (e) { return []; }
+  }
+  function saveLocalPlayerFavourites(ids) {
+    try { localStorage.setItem('slfa_fav_players', JSON.stringify(ids.map(String))); } catch (e) {}
+  }
+  function loadPlayerFavourites() {
+    var local = localPlayerFavourites();
+    favouritePlayerIds = {};
+    local.forEach(function (id) { favouritePlayerIds[id] = true; });
+    return db.auth.getUser().then(function (u) {
+      if (!u.data || !u.data.user) return;
+      var userId = u.data.user.id;
+      var localRows = local.map(function (id) {
+        var numericId = Number(id);
+        return Number.isSafeInteger(numericId) && numericId > 0
+          ? { user_id: userId, player_id: numericId } : null;
+      }).filter(Boolean);
+      var syncLocal = localRows.length
+        ? db.from('user_favorite_players').upsert(localRows, {
+            onConflict: 'user_id,player_id', ignoreDuplicates: true
+          })
+        : Promise.resolve({ error: null });
+      return syncLocal.then(function (saved) {
+        if (saved.error) return;
+        if (localRows.length) {
+          try { localStorage.removeItem('slfa_fav_players'); } catch (e) {}
+        }
+        return db.from('user_favorite_players').select('player_id')
+          .eq('user_id', userId).then(function (r) {
+            if (r.error) return;
+            favouritePlayerIds = {};
+            (r.data || []).forEach(function (x) { favouritePlayerIds[String(x.player_id)] = true; });
+          });
+      });
+    }).catch(function () {});
+  }
+  function toggleFavouritePlayer(playerId) {
+    var id = String(playerId), wasOn = !!favouritePlayerIds[id];
+    db.auth.getUser().then(function (u) {
+      if (!u.data || !u.data.user) {
+        var ids = localPlayerFavourites();
+        ids = wasOn ? ids.filter(function (x) { return String(x) !== id; }) : ids.concat([id]);
+        saveLocalPlayerFavourites(ids);
+        return loadPlayerFavourites().then(render);
+      }
+      var q = wasOn
+        ? db.from('user_favorite_players').delete().eq('user_id', u.data.user.id).eq('player_id', id)
+        : db.from('user_favorite_players').insert({ user_id: u.data.user.id, player_id: id });
+      return q.then(function (r) {
+        if (r.error) {
+          var status = root.querySelector('.pd-favourite-status');
+          if (status) status.textContent = 'Could not update followed players: ' + r.error.message;
+          return;
+        }
+        return loadPlayerFavourites().then(render);
+      });
+    }).catch(function () {
+      var status = root.querySelector('.pd-favourite-status');
+      if (status) status.textContent = 'Player follows are temporarily unavailable.';
+    });
+  }
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
     return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
   }); }
@@ -41,6 +105,7 @@
       '<label><span>POSITION</span><select id="pdPosition"><option value="">All positions</option>' + positions.map(function(p){return '<option value="' + esc(p) + '"' + (normal(positionFilter) === normal(p) ? ' selected' : '') + '>' + esc(p) + '</option>';}).join('') + '</select></label>' +
       '<button type="button" class="pd-reset" id="pdReset">Reset</button></div>' +
       '<div class="pd-result-bar"><strong>' + list.length + '</strong><span>players found</span><small>' + (currentLeague ? 'Selected competition' : 'All active competitions') + '</small></div>' +
+      '<p class="pd-favourite-status" aria-live="polite">' + Object.keys(favouritePlayerIds).length + ' followed players · ' + (db.auth ? 'Follow players to add them to your supporter dashboard.' : '') + '</p>' +
       (compareIds.length ? '<section class="pd-compare-panel"><div class="pd-compare-head"><div><span>PLAYER INTELLIGENCE</span><strong>Player comparison</strong></div><button type="button" id="pdCompareClear">Clear selection</button></div><p class="pd-compare-selected">' +
         compareIds.map(function(id){var p=players.find(function(x){return String(x.id)===String(id);});return p?esc(p.player_name)+' · '+esc(p.club_name):'';}).filter(Boolean).join(' vs ') +
         '</p><button type="button" class="pd-compare-run" id="pdCompareRun" '+(compareIds.length===2?'':'disabled')+'>Compare selected players</button><div id="pdCompareResult" aria-live="polite"></div></section>' : '') +
@@ -50,7 +115,9 @@
         if(String(playerClubLogo).toLowerCase().indexOf('slfa-logo')!==-1)playerClubLogo='';
         return '<article class="pd-card player-profile-trigger" tabindex="0" data-profile-player="' + esc(p.player_name) + '" data-profile-id="' + esc(p.id) + '" data-profile-club="' + esc(p.club_name) + '" data-profile-club-logo="' + esc(playerClubLogo) + '" data-profile-photo="' + esc(p.photo_url || '') + '" data-profile-position="' + esc(p.position || '') + '" data-profile-jersey="' + esc(p.jersey_number || '') + '">' +
           portrait(p.photo_url,p.player_name) + '<div class="pd-card-info"><strong>' + esc(p.player_name) + '</strong><span>' + esc(p.club_name) + '</span><small>' + (p.position ? esc(p.position) : 'Position not listed') + '</small></div>' +
-          (p.jersey_number ? '<b class="pd-shirt">#' + esc(p.jersey_number) + '</b>' : '') + '<button type="button" class="pd-compare-toggle" data-compare-player="' + esc(p.id) + '" aria-pressed="' + compareIds.some(function(id){return String(id)===String(p.id);}) + '">' +
+          (p.jersey_number ? '<b class="pd-shirt">#' + esc(p.jersey_number) + '</b>' : '') +
+          '<button type="button" class="pd-favourite-toggle" data-favourite-player="' + esc(p.id) + '" aria-pressed="' + (!!favouritePlayerIds[String(p.id)]) + '" aria-label="' + (favouritePlayerIds[String(p.id)] ? 'Unfollow ' : 'Follow ') + esc(p.player_name) + '">' + (favouritePlayerIds[String(p.id)] ? '★ Following' : '☆ Follow') + '</button>' +
+          '<button type="button" class="pd-compare-toggle" data-compare-player="' + esc(p.id) + '" aria-pressed="' + compareIds.some(function(id){return String(id)===String(p.id);}) + '">' +
           (compareIds.some(function(id){return String(id)===String(p.id);}) ? 'Selected' : 'Compare') + '</button><span class="pd-open">VIEW PROFILE ↗</span></article>';
       }).join('') + '</div>' : '<div class="pd-empty"><span>⚽</span><strong>No players match your search</strong><p>Try another name, club or position, or reset the filters.</p></div>');
     var input = root.querySelector('#pdSearch');
@@ -87,6 +154,12 @@
     }).catch(function(){out.innerHTML='<p class="pd-compare-loading">Comparison data is temporarily unavailable.</p>';});
   }
   root.addEventListener('click',function(e){
+    var favourite=e.target.closest&&e.target.closest('[data-favourite-player]');
+    if(favourite){
+      e.preventDefault();e.stopPropagation();
+      toggleFavouritePlayer(favourite.getAttribute('data-favourite-player'));
+      return;
+    }
     var toggle=e.target.closest&&e.target.closest('[data-compare-player]');
     if(!toggle)return;
     e.preventDefault();e.stopPropagation();
@@ -103,7 +176,7 @@
         if (res.error) throw res.error;
         var allClubs = res.data || [];
         clubs = currentLeague ? allClubs.filter(function(c){return String(c.league_id || '') === currentLeague;}) : allClubs;
-        if (!clubs.length) { players=[]; render(); return null; }
+        if (!clubs.length) { players=[]; return loadPlayerFavourites().then(render).then(function(){return null;}); }
         return db.from('seasons').select('id').eq('is_current', true).maybeSingle().then(function(seasonRes) {
           var squadQuery = db.from('club_squad').select('id, player_name, position, photo_url, jersey_number, club_id, season_id')
             .in('club_id', clubs.map(function(c){return c.id;}))
@@ -119,7 +192,7 @@
         players = (res.data || []).filter(function(p){return p.player_name && clubMap[String(p.club_id)];}).map(function(p){
           p.club_name=clubMap[String(p.club_id)]; return p;
         });
-        render();
+        return loadPlayerFavourites().then(render);
       }).catch(function(){
         root.innerHTML = '<div class="pd-empty"><strong>Player directory unavailable</strong><p>We could not load the public squad records. Please refresh and try again.</p><button type="button" id="pdRetry">Retry</button></div>';
         var retry=root.querySelector('#pdRetry'); if(retry) retry.addEventListener('click',load);
@@ -129,6 +202,7 @@
     currentLeague=String(e.detail && e.detail.leagueId || '');
     clubFilter='';load();
   });
+  db.auth.onAuthStateChange(function () { loadPlayerFavourites().then(render); });
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch(e) {}
   load();
 })();

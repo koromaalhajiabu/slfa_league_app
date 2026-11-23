@@ -15,6 +15,71 @@
   function featured(list){var active=list.filter(live).sort(function(a,b){return new Date(b.match_date)-new Date(a.match_date);});if(active.length)return {match:active[0],kind:'LIVE'};var next=list.filter(upcoming).sort(function(a,b){return new Date(a.match_date)-new Date(b.match_date);});if(next.length)return {match:next[0],kind:'UP NEXT'};var recent=list.filter(done).sort(function(a,b){return new Date(b.match_date)-new Date(a.match_date);});if(recent.length)return {match:recent[0],kind:'LATEST RESULT'};return null;}
   function icsEscape(value){return String(value||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');}
   function icsDate(value){return new Date(value).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z');}
+  function localReminderIds(){try{return JSON.parse(localStorage.getItem('slfa_match_reminders')||'{}');}catch(e){return {};}}
+  function saveReminderIds(value){try{localStorage.setItem('slfa_match_reminders',JSON.stringify(value));}catch(e){}}
+  function setMatchReminder(matchId,button){
+    var reminderIds=localReminderIds(),key=String(matchId),enabled=!reminderIds[key];
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+      var note=document.getElementById('alertStatus');if(note)note.textContent='Match reminders need push alerts. Use a browser that supports notifications.';
+      return;
+    }
+    button.disabled=true;
+    navigator.serviceWorker.ready.then(function(reg){return reg.pushManager.getSubscription();}).then(function(sub){
+      if(!sub){
+        var note=document.getElementById('alertStatus');if(note)note.textContent='Tap Get alerts first, allow notifications, then set your match reminder.';
+        button.disabled=false;return;
+      }
+      return db.rpc('set_push_match_reminder',{p_endpoint:sub.endpoint,p_match_id:Number(matchId),p_enabled:enabled}).then(function(res){
+        if(res.error)throw res.error;
+        if(enabled)reminderIds[key]=true;else delete reminderIds[key];
+        saveReminderIds(reminderIds);
+        button.textContent=enabled?'Reminder set · Remove':'Remind me';
+        button.setAttribute('aria-pressed',String(enabled));
+        var note=document.getElementById('alertStatus');if(note)note.textContent=res.data|| (enabled?'Your one-hour match reminder is set.':'Your match reminder has been removed.');
+      });
+    }).catch(function(){
+      var note=document.getElementById('alertStatus');if(note)note.textContent='Could not save this match reminder. Check that Get alerts is enabled.';
+    }).finally(function(){button.disabled=false;});
+  }
+  function loadSupporterDashboard(){
+    var box=host.querySelector('#slfaSupporterDashboard');if(!box)return;
+    box.innerHTML='<div class="slfa-supporter-loading">Loading your followed clubs and players…</div>';
+    db.auth.getUser().then(function(u){
+      if(u.data&&u.data.user){
+        return Promise.all([
+          db.from('user_favorite_clubs').select('club_id, league_clubs(club_name)').eq('user_id',u.data.user.id),
+          db.from('user_favorite_players').select('player_id, club_squad(player_name)').eq('user_id',u.data.user.id)
+        ]).then(function(all){
+          if(all.some(function(r){return r.error;}))throw new Error('Supporter preferences unavailable');
+          var followedClubs=(all[0].data||[]).map(function(x){return x.league_clubs&&x.league_clubs.club_name;}).filter(Boolean);
+          var followedPlayers=(all[1].data||[]).map(function(x){return x.club_squad&&x.club_squad.player_name;}).filter(Boolean);
+          renderSupporterDashboard(box,followedClubs,followedPlayers,true);
+        });
+      }
+      var localClubs=[];
+      try{localClubs=JSON.parse(localStorage.getItem('slfa_fav_clubs')||'[]').map(function(x){return x.name;}).filter(Boolean);}catch(e){}
+      var localPlayers=[];try{localPlayers=JSON.parse(localStorage.getItem('slfa_fav_players')||'[]').map(String);}catch(e){}
+      if(!localPlayers.length){renderSupporterDashboard(box,localClubs,[],false,0);return;}
+      db.from('club_squad').select('id, player_name').in('id',localPlayers).then(function(r){
+        var names=r.error?[]:(r.data||[]).map(function(x){return x.player_name;}).filter(Boolean);
+        renderSupporterDashboard(box,localClubs,names,false,names.length||localPlayers.length);
+      });
+    }).catch(function(){
+      box.innerHTML='<p class="slfa-supporter-empty">Your supporter preferences are temporarily unavailable.</p>';
+    });
+  }
+  function renderSupporterDashboard(box,followedClubs,followedPlayers,signedIn,localPlayerCount){
+    var clubMarkup=followedClubs.length?followedClubs.map(function(n){return '<span class="slfa-follow-chip">'+esc(n)+'</span>';}).join(''):'<span class="slfa-supporter-empty">No clubs followed yet. Use the star beside a club in Teams.</span>';
+    var playerMarkup=followedPlayers.length?followedPlayers.map(function(n){return '<span class="slfa-follow-chip">'+esc(n)+'</span>';}).join(''):(localPlayerCount?'<span class="slfa-follow-chip">'+localPlayerCount+' player'+(localPlayerCount===1?'':'s')+' followed on this device</span>':'<span class="slfa-supporter-empty">No players followed yet. Use Follow in the Players directory.</span>');
+    var upcomingMatches=rows.filter(upcoming).filter(function(m){return followedClubs.indexOf(m.home_team)!==-1||followedClubs.indexOf(m.away_team)!==-1;}).sort(function(a,b){return new Date(a.match_date)-new Date(b.match_date);}).slice(0,3);
+    var matches=upcomingMatches.length?upcomingMatches.map(function(m){var reminderOn=!!localReminderIds()[String(m.id)];return '<div class="slfa-supporter-match"><span><strong>'+esc(m.home_team)+' v '+esc(m.away_team)+'</strong><small>'+esc(dateText(m.match_date))+'</small></span><button type="button" data-slfa-remind="'+esc(m.id)+'" aria-pressed="'+reminderOn+'">'+(reminderOn?'Reminder set · Remove':'Remind me')+'</button></div>';}).join(''):'<p class="slfa-supporter-empty">Upcoming fixtures involving your followed clubs will appear here.</p>';
+    box.innerHTML='<div class="slfa-supporter-head"><div><span>YOUR FOOTBALL FEED</span><strong>Supporter dashboard</strong></div><small>'+(signedIn?'Synced to your account':'Saved on this device')+'</small></div>'+
+      '<div class="slfa-supporter-groups"><section><h4>Favourite clubs</h4><div class="slfa-follow-list">'+clubMarkup+'</div></section>'+
+      '<section><h4>Favourite players</h4><div class="slfa-follow-list">'+playerMarkup+'</div></section></div>'+
+      '<section class="slfa-supporter-fixtures"><h4>Upcoming matches for your clubs</h4>'+matches+'</section>'+
+      (!signedIn?'<p class="slfa-supporter-hint">Sign in through Admin to sync favourite clubs and players across devices.</p>':'');
+    box.querySelectorAll('[data-slfa-remind]').forEach(function(b){b.addEventListener('click',function(){setMatchReminder(b.getAttribute('data-slfa-remind'),b);});});
+  }
   function exportCalendar(items){
     if(!items.length){return;}
     var stamp=icsDate(new Date()),lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SLFA//League App//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
@@ -38,11 +103,14 @@
     if(pick){var m=pick.match,tag=pick.kind==='LIVE'?'<span class="slfa-home-live">LIVE'+(m.match_minute?' · '+esc(m.match_minute):'')+'</span>':'<strong>'+esc(pick.kind)+'</strong>';var score=done(m)||live(m)?'<div class="slfa-home-score">'+esc(m.home_score==null?'0':m.home_score)+' – '+esc(m.away_score==null?'0':m.away_score)+'</div>':'<div class="slfa-home-vs">VS</div>';var lg=leagues.find(function(x){return String(x.id)===String(m.league_id);});matchHtml='<div class="slfa-home-feature-head"><strong>'+esc(lg?lg.name:label)+'</strong>'+tag+'</div><div class="slfa-home-match"><div class="slfa-home-side">'+crest(m.home_team)+'<strong>'+esc(m.home_team)+'</strong></div>'+score+'<div class="slfa-home-side">'+crest(m.away_team)+'<strong>'+esc(m.away_team)+'</strong></div></div><div class="slfa-home-meta"><span>◷ '+esc(dateText(m.match_date))+'</span><span>⌖ '+esc(m.venue||'Venue to be confirmed')+'</span></div>';}
     else matchHtml='<div class="slfa-home-empty">'+(lastError?'Match information is temporarily unavailable. Please try again when connected.':'No match has been published for this competition yet.')+'</div>';
     var upcomingHtml=upcomingRows.length?upcomingRows.map(function(m){
-      return '<article class="slfa-home-fixture"><div><strong>'+esc(m.home_team)+' <span>vs</span> '+esc(m.away_team)+'</strong><small>'+esc(dateText(m.match_date))+' · '+esc(m.venue||'Venue to be confirmed')+'</small></div></article>';
+      var reminderOn=!!localReminderIds()[String(m.id)];
+      return '<article class="slfa-home-fixture"><div><strong>'+esc(m.home_team)+' <span>vs</span> '+esc(m.away_team)+'</strong><small>'+esc(dateText(m.match_date))+' · '+esc(m.venue||'Venue to be confirmed')+'</small></div><button type="button" class="slfa-home-remind" data-slfa-remind="'+esc(m.id)+'" aria-pressed="'+reminderOn+'">'+(reminderOn?'Reminder set · Remove':'Remind me')+'</button></article>';
     }).join(''):'<p class="slfa-home-empty slfa-home-fixture-empty">No upcoming fixtures have been published.</p>';
-    host.innerHTML='<div class="slfa-home-topline"><span>FOOTBALL AT A GLANCE</span><small>'+esc(label)+'</small></div><section class="slfa-home-feature" aria-label="Featured match">'+matchHtml+'</section><div class="slfa-home-stats"><div class="slfa-home-stat"><strong>'+clubCount+'</strong><span>Clubs</span></div><div class="slfa-home-stat"><strong>'+played+'</strong><span>Completed matches</span></div><div class="slfa-home-stat"><strong>'+next+'</strong><span>Upcoming fixtures</span></div></div><section class="slfa-home-upcoming"><div class="slfa-home-upcoming-head"><div><span>YOUR FIXTURE PLANNER</span><strong>Coming up</strong></div><button type="button" data-slfa-calendar>＋ Add to calendar</button></div>'+upcomingHtml+'</section>';
+    host.innerHTML='<div class="slfa-home-topline"><span>FOOTBALL AT A GLANCE</span><small>'+esc(label)+'</small></div><section class="slfa-home-feature" aria-label="Featured match">'+matchHtml+'</section><div class="slfa-home-stats"><div class="slfa-home-stat"><strong>'+clubCount+'</strong><span>Clubs</span></div><div class="slfa-home-stat"><strong>'+played+'</strong><span>Completed matches</span></div><div class="slfa-home-stat"><strong>'+next+'</strong><span>Upcoming fixtures</span></div></div><section class="slfa-home-upcoming"><div class="slfa-home-upcoming-head"><div><span>YOUR FIXTURE PLANNER</span><strong>Coming up</strong></div><button type="button" data-slfa-calendar>＋ Add to calendar</button></div>'+upcomingHtml+'</section><section class="slfa-supporter-dashboard" id="slfaSupporterDashboard" aria-label="Personalised supporter dashboard"><div class="slfa-supporter-loading">Loading your supporter dashboard…</div></section>';
     var calendarButton=host.querySelector('[data-slfa-calendar]');
     if(calendarButton)calendarButton.addEventListener('click',function(){exportCalendar(list.filter(upcoming).sort(function(a,b){return new Date(a.match_date)-new Date(b.match_date);}));});
+    host.querySelectorAll('[data-slfa-remind]').forEach(function(b){b.addEventListener('click',function(){setMatchReminder(b.getAttribute('data-slfa-remind'),b);});});
+    loadSupporterDashboard();
   }
   function load(){
     Promise.all([
@@ -54,5 +122,6 @@
   var switcher=document.getElementById('leagueSwitch');
   if(switcher)switcher.addEventListener('click',function(){window.setTimeout(render,80);});
   if(db.channel)db.channel('slfa-home-dashboard').on('postgres_changes',{event:'*',schema:'public',table:'matches'},load).on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},load).subscribe();
+  if(db.auth)db.auth.onAuthStateChange(function(){window.setTimeout(loadSupporterDashboard,0);});
   load();
 })();
