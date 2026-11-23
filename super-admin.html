@@ -89,6 +89,18 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
   <section id="portalArea" class="card" hidden>
     <div class="row"><span id="whoName"></span><span class="muted" id="whoRole"></span></div>
     <div id="signedIn"><div id="roleTools"></div></div>
+    <section class="hist-standings-admin" id="recordsRulesEditor" aria-labelledby="rrAdminHeading">
+      <h2 class="rt" id="rrAdminHeading">Records and Rules · Official content editor</h2>
+      <p class="muted">Super Admin only. Maintain published competition points and tie-break settings. Enter only rules confirmed by the Association.</p>
+      <label for="rrRuleSelect">Existing rule profile</label><select id="rrRuleSelect"><option value="">Create a new rule profile…</option></select>
+      <label for="rrRuleName">Competition name</label><input id="rrRuleName" type="text" maxlength="120" placeholder="e.g. Leone Rock Premier League">
+      <label for="rrRuleSeason">Season</label><select id="rrRuleSeason"><option value="">No season assigned</option></select>
+      <div class="sa-metric-grid"><div><label for="rrWin">Win points</label><input id="rrWin" type="number" min="0" max="20" value="3"></div><div><label for="rrDraw">Draw points</label><input id="rrDraw" type="number" min="0" max="20" value="1"></div><div><label for="rrLoss">Loss points</label><input id="rrLoss" type="number" min="0" max="20" value="0"></div></div>
+      <label for="rrTieOrder">Tie-break order (comma-separated)</label><input id="rrTieOrder" type="text" value="HEAD_TO_HEAD,GOAL_DIFFERENCE,GOALS_FOR">
+      <label><input id="rrHeadToHead" type="checkbox" checked> Use head-to-head</label><label><input id="rrExtraTime" type="checkbox" checked> Knockout extra time enabled</label><label><input id="rrPenalties" type="checkbox" checked> Knockout penalties enabled</label>
+      <div class="btns"><button type="button" class="primary" id="rrRuleSave">Save and publish rule profile</button><button type="button" class="secondary" id="rrRuleNew">New profile</button><button type="button" class="secondary" id="rrRuleDelete">Delete selected profile</button></div>
+      <div class="status" id="rrRuleMsg" role="status"></div><div id="rrRuleList" class="muted">Loading rule profiles…</div>
+    </section>
     <section id="superAdminCompetitionAdmin" class="card" aria-labelledby="superAdminCompetitionHeading">
       <h2 class="rt" id="superAdminCompetitionHeading">Competition directory management</h2>
       <p class="muted">Create and maintain public competitions, including the FA Cup and other authorised tournaments. Published competitions appear in the public League Centre and competition directory.</p>
@@ -127,7 +139,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
 <script src="config.js"></script>
 <script src="sw-update.js"></script>
 <script src="portal.js"></script>
-<script src="admin.js?v=13"></script>
+<script src="admin.js?v=14"></script>
 <script src="publications-admin.js?v=2"></script>
 <script src="match-commissioner-review.js?v=1"></script>
 <script src="player-import.js?v=3"></script>
