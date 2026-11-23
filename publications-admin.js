@@ -55,8 +55,8 @@
   function mount() {
     if (mounted || !activeProfile || !root.isConnected) return;
     var role = String(activeProfile.system_role || '').toUpperCase();
-    if (['MEDIA_OFFICER','SUPER_ADMIN','DEVELOPER'].indexOf(role) === -1) return;
-    reviewer = role === 'SUPER_ADMIN' || role === 'DEVELOPER';
+    if (['MEDIA_OFFICER','SUPER_ADMIN'].indexOf(role) === -1) return;
+    reviewer = role === 'SUPER_ADMIN';
     panel = document.createElement('section');
     panel.className = 'card slfa-pub-admin';
     panel.id = 'slfaPublicationsAdmin';
@@ -81,7 +81,7 @@
       '<p class="spa-file-help">Only PDF files are accepted. Drafts and submissions are stored privately until approval.</p>' +
       '<div class="spa-actions"><button type="button" class="secondary" id="slfaPubDraft">Save draft</button><button type="button" class="primary" id="slfaPubSubmit">Submit for approval</button></div>' +
       '<p id="slfaPubStatus" class="spa-status" role="status" aria-live="polite"></p></div>' +
-      (reviewer ? '<div class="spa-review"><h3>Review queue</h3><p class="spa-muted">Review submitted documents. A different Super Admin or Developer must approve a document than the person who created it.</p><div id="slfaPubQueue" class="spa-doc-list">Loading submissions…</div></div>' : '') +
+      (reviewer ? '<div class="spa-review"><h3>Review queue</h3><p class="spa-muted">Review submitted documents. A different Super Admin must approve a document than the person who created it.</p><div id="slfaPubQueue" class="spa-doc-list">Loading submissions…</div></div>' : '') +
       '<div class="spa-library"><div class="spa-library-head"><div><h3>' + (reviewer ? 'All publications' : 'My publications') + '</h3><p class="spa-muted">' + (reviewer ? 'All drafts, submissions, published records and archived documents.' : 'Your drafts and submissions, including reviewer feedback.') + '</p></div><button type="button" class="secondary" id="slfaPubRefresh">Refresh</button></div>' +
       '<div id="slfaPubLibrary" class="spa-doc-list">Loading publications…</div></div>';
     root.appendChild(panel);
