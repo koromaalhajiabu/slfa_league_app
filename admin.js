@@ -272,6 +272,14 @@
       '<label for="msStatus">Status</label><select id="msStatus"><option value="SCHEDULED">Scheduled</option><option value="POSTPONED">Postponed</option><option value="RESCHEDULED">Rescheduled</option><option value="CANCELLED">Cancelled</option></select>' +
       input('msReason', 'Reason (optional)') +
       '<div class="btns"><button class="primary" id="msSave">Save status</button></div>' +
+      '<section class="match-information-admin" aria-labelledby="matchInformationHeading"><h2 class="rt" id="matchInformationHeading">Match Information Management</h2><p class="muted">Edit published fixture details. This editor does not change scores, match events or referee submissions. Give an official reason when postponing, rescheduling or cancelling a match.</p>' +
+      '<label for="miMatch">Select fixture to edit</label><select id="miMatch"><option value="">Loading fixtures…</option></select>' +
+      '<label for="miLeague">Competition</label><select id="miLeague"><option value="">Choose competition…</option></select>' +
+      '<label for="miSeason">Season</label><select id="miSeason"><option value="">Choose season…</option></select>' +
+      input('miHome', 'Home team') + input('miAway', 'Away team') + input('miDate', 'Kick-off date and time', 'datetime-local') + input('miVenue', 'Match venue') +
+      '<label for="miStatus">Fixture status</label><select id="miStatus"><option value="SCHEDULED">Scheduled</option><option value="POSTPONED">Postponed</option><option value="RESCHEDULED">Rescheduled</option><option value="CANCELLED">Cancelled</option></select>' +
+      '<label for="miReason">Official reason / status note</label><textarea id="miReason" rows="3" maxlength="1000" placeholder="Required for postponement, rescheduling or cancellation"></textarea>' +
+      '<div class="btns"><button class="primary" id="miSave" type="button">Save match information</button><button class="secondary" id="miReset" type="button">Clear selection</button></div><div class="status" id="miStatusMsg" role="status"></div></section>' +
       '<h2 class="rt">Live match</h2>' +
       '<label for="lvMatch">Match</label><select id="lvMatch"><option value="">Loading matches…</option></select>' +
       '<p class="muted">The referee starts, pauses, times and ends the match.</p>' +
@@ -347,6 +355,7 @@
     loadSuperAdminOverview();
     $('saRefreshOverview').onclick=loadSuperAdminOverview;
     wireClubs();
+    wireMatchInformationAdmin();
     loadReview();
     loadClubProfileReview();
     loadSquadReview();
@@ -1032,6 +1041,91 @@
           return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + (m.home_score != null ? ' (' + m.home_score + ' – ' + m.away_score + ')' : '') + '</option>';
         }).join('');
       });
+  }
+
+  function wireMatchInformationAdmin() {
+    var select = $('miMatch'), status = $('miStatusMsg'), matches = [], leagues = [], seasons = [];
+    if (!select || !$('miSave')) return;
+    function note(s) { if (status) status.textContent = s || ''; }
+    function toLocalDate(value) {
+      if (!value) return '';
+      var d = new Date(value);
+      if (isNaN(d.getTime())) return '';
+      var pad = function(n) { return String(n).padStart(2, '0'); };
+      return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+    function clear() {
+      select.value = ''; $('miLeague').value = ''; $('miSeason').value = '';
+      $('miHome').value = ''; $('miAway').value = ''; $('miDate').value = '';
+      $('miVenue').value = ''; $('miStatus').value = 'SCHEDULED'; $('miReason').value = '';
+      note('Select a fixture to edit its official information.');
+    }
+    function load() {
+      Promise.all([
+        db.from('matches').select('id,match_date,home_team,away_team,venue,match_status,status_reason,season_id,league_id,home_score,away_score').order('match_date',{ascending:false}).limit(500),
+        db.from('leagues').select('id,name,is_active').order('sort_order'),
+        db.from('seasons').select('id,name,start_date,end_date').order('start_date',{ascending:false})
+      ]).then(function(all) {
+        if (all[0].error) { note('Fixtures could not be loaded: ' + all[0].error.message); return; }
+        if (all[1].error) { note('Competitions could not be loaded: ' + all[1].error.message); return; }
+        if (all[2].error) { note('Seasons could not be loaded: ' + all[2].error.message); return; }
+        matches = all[0].data || []; leagues = all[1].data || []; seasons = all[2].data || [];
+        $('miLeague').innerHTML = '<option value="">No competition assigned</option>' + leagues.map(function(l) {
+          return '<option value="' + esc(l.id) + '">' + esc(l.name) + (l.is_active ? '' : ' · archived') + '</option>';
+        }).join('');
+        $('miSeason').innerHTML = '<option value="">No season assigned</option>' + seasons.map(function(s) {
+          return '<option value="' + esc(s.id) + '">' + esc(s.name) + '</option>';
+        }).join('');
+        select.innerHTML = '<option value="">Choose a fixture…</option>' + matches.map(function(m) {
+          return '<option value="' + esc(m.id) + '">' + esc(m.home_team || 'TBC') + ' v ' + esc(m.away_team || 'TBC') + ' · ' + esc(m.match_date ? new Date(m.match_date).toLocaleString() : 'Date not set') + ' · ' + esc(m.match_status) + '</option>';
+        }).join('');
+        note(matches.length + ' fixture(s) loaded.');
+      }).catch(function(e) { note('Could not load fixtures: ' + (e.message || 'Unknown error')); });
+    }
+    function choose(id) {
+      var m = matches.filter(function(x) { return String(x.id) === String(id); })[0];
+      if (!m) { clear(); return; }
+      $('miLeague').value = m.league_id == null ? '' : String(m.league_id);
+      $('miSeason').value = m.season_id == null ? '' : String(m.season_id);
+      $('miHome').value = m.home_team || ''; $('miAway').value = m.away_team || '';
+      $('miDate').value = toLocalDate(m.match_date); $('miVenue').value = m.venue || '';
+      $('miStatus').value = ['SCHEDULED','POSTPONED','RESCHEDULED','CANCELLED'].indexOf(String(m.match_status).toUpperCase()) >= 0 ? String(m.match_status).toUpperCase() : 'SCHEDULED';
+      $('miReason').value = m.status_reason || '';
+      note('Editing fixture #' + m.id + '. Score and match events are protected from this editor.');
+    }
+    select.addEventListener('change', function() { choose(this.value); });
+    $('miReset').addEventListener('click', clear);
+    $('miSave').addEventListener('click', function() {
+      var id = select.value, home = $('miHome').value.trim(), away = $('miAway').value.trim();
+      var date = $('miDate').value, nextStatus = $('miStatus').value, reason = $('miReason').value.trim();
+      if (!id) { note('Select a fixture first.'); return; }
+      if (!home || !away || !date || isNaN(new Date(date).getTime())) { note('Enter both teams and a valid kick-off date and time.'); return; }
+      if (home.toLowerCase() === away.toLowerCase()) { note('Home and away teams must be different.'); return; }
+      if (['POSTPONED','RESCHEDULED','CANCELLED'].indexOf(nextStatus) >= 0 && reason.length < 5) {
+        note('Enter an official reason of at least 5 characters for this status.'); return;
+      }
+      var previous = matches.filter(function(x) { return String(x.id) === String(id); })[0];
+      var payload = {
+        league_id: $('miLeague').value ? Number($('miLeague').value) : null,
+        season_id: $('miSeason').value ? Number($('miSeason').value) : null,
+        home_team: home, away_team: away, match_date: new Date(date).toISOString(),
+        venue: $('miVenue').value.trim() || null, match_status: nextStatus,
+        status_reason: reason || null
+      };
+      if (!previous || String(previous.match_status).toUpperCase() !== nextStatus || ['POSTPONED','RESCHEDULED','CANCELLED'].indexOf(nextStatus) >= 0) {
+        payload.status_set_at = new Date().toISOString();
+        payload.status_set_by = null;
+      }
+      $('miSave').disabled = true; note('Saving match information…');
+      db.from('matches').update(payload).eq('id', Number(id)).select('id').maybeSingle().then(function(r) {
+        $('miSave').disabled = false;
+        if (r.error) { note('Save failed: ' + r.error.message); return; }
+        if (!r.data) { note('No fixture was updated. Check your Super Admin access.'); return; }
+        note('Match information saved. Scores and referee event records were not changed.');
+        loadStatusOptions(); loadAssignOptions(); loadMatchesForResult(); load();
+      }).catch(function(e) { $('miSave').disabled = false; note('Save failed: ' + (e.message || 'Unknown error')); });
+    });
+    load();
   }
 
   function loadStatusOptions() {
