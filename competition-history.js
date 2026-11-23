@@ -317,13 +317,14 @@
     });
   }
   function ruleForSeason(seasonId) {
-    return rules.filter(function (r) { return String(r.season_id || '') === String(seasonId || ''); })[0] || rules[0] || null;
+    return rules.filter(function (r) { return String(r.season_id || '') === String(seasonId || ''); })[0] || null;
   }
   function calculatedTable(rows, seasonId) {
     var config = ruleForSeason(seasonId);
-    var win = config ? number(config.points_win) : 3;
-    var draw = config ? number(config.points_draw) : 1;
-    var loss = config ? number(config.points_loss) : 0;
+    if (!config) return [];
+    var win = number(config.points_win);
+    var draw = number(config.points_draw);
+    var loss = number(config.points_loss);
     var table = {};
     rows.filter(isFinished).forEach(function (m) {
       var h = String(m.home_team || 'Home team'), a = String(m.away_team || 'Away team');
@@ -407,8 +408,11 @@
         tables += renderTable(derived, l.name, 'Calculated from final scores',
           'Derived from published full-time scores because no manually saved final table is present. Exact tied positions should be checked against the approved competition tie-break rules.');
       } else {
-        tables += '<section class="rr-table-block"><div class="rr-table-head"><h3>' + esc(l.name) + '</h3><span>' + (season.is_current ? 'Current season' : 'Past season') + '</span></div>' +
-          empty(season.is_current ? 'The current table has not received a completed match record yet.' : 'No final table or completed match records have been published for this past season.') + '</section>';
+        var hasResults = filterMatchesFor(archiveSeasonChoice, String(l.id)).some(isFinished);
+        var reason = hasResults
+          ? 'Completed results exist, but this season has no saved final table or season-specific points profile. A table cannot be calculated safely yet.'
+          : (season.is_current ? 'The current table has not received a completed match record yet.' : 'No final table or completed match records have been published for this past season.');
+        tables += '<section class="rr-table-block"><div class="rr-table-head"><h3>' + esc(l.name) + '</h3><span>' + (season.is_current ? 'Current season' : 'Past season') + '</span></div>' + empty(reason) + '</section>';
       }
     });
     if (!competitionsForTable.length) tables = '<p class="rr-muted">No league-table competition is selected. Cup competitions are shown through their match and bracket records, not a league table.</p>';
@@ -426,6 +430,7 @@
       '<div class="rr-archive-status">' + (season ? (season.is_current ? '<span class="rr-status-current">Current season</span>' : '<span class="rr-status-past">Past season</span>') : '<span class="rr-status-past">All seasons</span>') +
       '<span>' + esc(competitionLabel) + '</span>' +
       (finalTableCount ? '<span>' + finalTableCount + ' table' + (finalTableCount === 1 ? '' : 's') + ' published</span>' : '<span>No stored final table for this selection</span>') + '</div>' +
+      (seasons.filter(function (s) { return !s.is_current; }).length ? '' : '<p class="rr-source-warning">No past seasons have been created in the database yet. The archive currently has only the active season; older seasons will appear once their records are added.</p>') +
       '<section class="rr-archive-block"><h3>League tables</h3>' + (tables || empty('No league table is available for this selection.')) + '</section>' +
       '<div class="rr-archive-columns"><section class="rr-archive-block"><h3>Latest completed results</h3>' +
       (recent.length ? recent.map(matchRow).join('') : empty('No completed match results have been published for this season yet.')) +
