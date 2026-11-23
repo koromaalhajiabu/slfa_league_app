@@ -183,7 +183,7 @@
     var thisRequest = ++requestNo;
     Promise.all(rows.map(function (d) {
       return db.storage.from('slfa-publications')
-        .createSignedUrl(d.storage_path, 86400, { download: d.file_name })
+        .createSignedUrl(d.storage_path, 3600, { download: d.file_name })
         .then(function (result) {
           return { id: String(d.id), url: result.error ? '' : result.data && result.data.signedUrl || '' };
         }).catch(function () { return { id: String(d.id), url: '' }; });
