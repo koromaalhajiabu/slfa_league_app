@@ -130,8 +130,9 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const totalDelivered = prior.filter((x) => x.outcome === 'DELIVERED').length +
-      (await fetch(`${supabaseUrl}/rest/v1/league_alert_deliveries?alert_id=eq.${a.id}&outcome=eq.DELIVERED&select=endpoint&limit=5000`, { headers: h }).then(async r => r.ok ? (await r.json()).length : 0));
+    const currentReceipts = await fetch(`${supabaseUrl}/rest/v1/league_alert_deliveries?alert_id=eq.${a.id}&outcome=eq.DELIVERED&select=endpoint&limit=5000`, { headers: h });
+    if (!currentReceipts.ok) return new Response(`Could not count delivery receipts for alert ${a.id}`, { status: 500 });
+    const totalDelivered = (await currentReceipts.json()).length;
 
     const attempts = a.attempts + (alertFailures.length ? 1 : 0);
     let deliveryStatus: string;
