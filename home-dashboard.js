@@ -48,7 +48,7 @@
       if(u.data&&u.data.user){
         return Promise.all([
           db.from('user_favorite_clubs').select('club_id, league_clubs(club_name)').eq('user_id',u.data.user.id),
-          db.from('user_favorite_players').select('player_id, club_squad(player_name, club_id, league_clubs(club_name))').eq('user_id',u.data.user.id)
+          db.from('user_favorite_players').select('player_id, club_squad(player_name)').eq('user_id',u.data.user.id)
         ]).then(function(all){
           if(all.some(function(r){return r.error;}))throw new Error('Supporter preferences unavailable');
           var followedClubs=(all[0].data||[]).map(function(x){return x.league_clubs&&x.league_clubs.club_name;}).filter(Boolean);
