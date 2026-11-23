@@ -58,9 +58,12 @@
       }
       var localClubs=[];
       try{localClubs=JSON.parse(localStorage.getItem('slfa_fav_clubs')||'[]').map(function(x){return x.name;}).filter(Boolean);}catch(e){}
-      var localPlayers=localStorage.getItem('slfa_fav_players');
-      var playerCount=0;try{playerCount=JSON.parse(localPlayers||'[]').length;}catch(e){}
-      renderSupporterDashboard(box,localClubs,[],false,playerCount);
+      var localPlayers=[];try{localPlayers=JSON.parse(localStorage.getItem('slfa_fav_players')||'[]').map(String);}catch(e){}
+      if(!localPlayers.length){renderSupporterDashboard(box,localClubs,[],false,0);return;}
+      db.from('club_squad').select('id, player_name').in('id',localPlayers).then(function(r){
+        var names=r.error?[]:(r.data||[]).map(function(x){return x.player_name;}).filter(Boolean);
+        renderSupporterDashboard(box,localClubs,names,false,names.length||localPlayers.length);
+      });
     }).catch(function(){
       box.innerHTML='<p class="slfa-supporter-empty">Your supporter preferences are temporarily unavailable.</p>';
     });
