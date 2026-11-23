@@ -206,8 +206,21 @@
       '<button class="secondary" data-export="suspensions">Suspensions (CSV)</button>' +
       '<button class="primary" data-export="full_backup">Full backup (JSON)</button></div>' +
       '<div id="exportMsg" class="muted" role="status"></div>' +
-       '<h2 class="rt">Clubs</h2>' +
-      '<label for="clName">Club name</label><input id="clName" type="text">' +
+       '<h2 class="rt">Club Information Management</h2>' +
+      '<p class="muted">Super Admin only. Maintain official club profiles shown on public club pages. Use approved club information and official crest links.</p>' +
+      '<label for="clubProfileSelect">Select club to edit</label><select id="clubProfileSelect"><option value="">Loading clubs…</option></select>' +
+      '<label for="clubProfileName">Official club name</label><input id="clubProfileName" type="text" maxlength="160">' +
+      '<label for="clubProfileLeague">Competition</label><select id="clubProfileLeague"><option value="">No competition</option></select>' +
+      '<label for="clubProfileLogo">Official club crest URL</label><input id="clubProfileLogo" type="url" maxlength="1000" placeholder="Paste the verified official crest URL">' +
+      '<label for="clubProfileGround">Home ground / stadium</label><input id="clubProfileGround" type="text" maxlength="160">' +
+      '<label for="clubProfileCity">Club city / district</label><input id="clubProfileCity" type="text" maxlength="120">' +
+      '<label for="clubProfileFounded">Year founded</label><input id="clubProfileFounded" type="number" min="1850" max="2100">' +
+      '<label for="clubProfileAbout">Official club description</label><textarea id="clubProfileAbout" rows="4" maxlength="1500" placeholder="Enter approved club history and profile details"></textarea>' +
+      '<label class="terms-row"><input id="clubProfileActive" type="checkbox" checked> <span>Show club in public competition pages</span></label>' +
+      '<div class="btns"><button class="primary" id="clubProfileSave" type="button">Save club profile</button><button class="secondary" id="clubProfileReset" type="button">Clear selection</button></div>' +
+      '<div class="status" id="clubProfileStatus" role="status"></div>' +
+      '<h3 class="rt">Add a club</h3>' +
+      '<label for="clName">Club name</label><input id="clName" type="text">'
       '<label for="clLeague">League</label><select id="clLeague"><option value="">Loading leagues…</option></select>' +
       input('clLogo', 'Logo link (optional)', 'url') +
       '<div class="btns"><button class="primary" id="clAdd">Add club</button></div>' +
@@ -1213,6 +1226,75 @@
       });
     });
     loadClubAdmin();
+    wireClubProfileEditor();
+  }
+  function wireClubProfileEditor() {
+    var select = $('clubProfileSelect'), status = $('clubProfileStatus'), clubs = [];
+    if (!select || !$('clubProfileSave')) return;
+    function note(s) { if (status) status.textContent = s || ''; }
+    function clear() {
+      select.value = ''; $('clubProfileName').value = ''; $('clubProfileLeague').value = '';
+      $('clubProfileLogo').value = ''; $('clubProfileGround').value = ''; $('clubProfileCity').value = '';
+      $('clubProfileFounded').value = ''; $('clubProfileAbout').value = ''; $('clubProfileActive').checked = true;
+      note('Select a club to edit its official profile.');
+    }
+    function load() {
+      Promise.all([
+        db.from('league_clubs').select('id,club_name,league_id,logo_url,stadium,city,founded_year,about,is_active').order('club_name'),
+        db.from('leagues').select('id,name').order('sort_order')
+      ]).then(function(all) {
+        if (all[0].error) { note('Club profiles could not be loaded: ' + all[0].error.message); return; }
+        if (all[1].error) { note('Competitions could not be loaded: ' + all[1].error.message); return; }
+        clubs = all[0].data || [];
+        select.innerHTML = '<option value="">Choose a club…</option>' + clubs.map(function(c) {
+          return '<option value="' + esc(c.id) + '">' + esc(c.club_name) + (c.is_active ? '' : ' · unpublished') + '</option>';
+        }).join('');
+        $('clubProfileLeague').innerHTML = '<option value="">No competition</option>' + (all[1].data || []).map(function(l) {
+          return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>';
+        }).join('');
+        note(clubs.length + ' club profile(s) available.');
+      }).catch(function(e) { note(e.message || 'Club profiles could not be loaded.'); });
+    }
+    select.addEventListener('change', function() {
+      var c = clubs.find(function(x) { return String(x.id) === String(select.value); });
+      if (!c) { clear(); return; }
+      $('clubProfileName').value = c.club_name || '';
+      $('clubProfileLeague').value = c.league_id == null ? '' : String(c.league_id);
+      $('clubProfileLogo').value = c.logo_url || '';
+      $('clubProfileGround').value = c.stadium || '';
+      $('clubProfileCity').value = c.city || '';
+      $('clubProfileFounded').value = c.founded_year == null ? '' : String(c.founded_year);
+      $('clubProfileAbout').value = c.about || '';
+      $('clubProfileActive').checked = !!c.is_active;
+      note('Editing ' + c.club_name + '.');
+    });
+    $('clubProfileReset').addEventListener('click', clear);
+    $('clubProfileSave').addEventListener('click', function() {
+      var id = select.value, name = $('clubProfileName').value.trim();
+      var foundedRaw = $('clubProfileFounded').value.trim();
+      var founded = foundedRaw ? Number(foundedRaw) : null;
+      if (!id) { note('Select a club first.'); return; }
+      if (name.length < 2) { note('Enter the official club name.'); return; }
+      if (founded !== null && (!Number.isInteger(founded) || founded < 1850 || founded > 2100)) { note('Enter a valid founding year between 1850 and 2100.'); return; }
+      var payload = {
+        club_name: name,
+        league_id: $('clubProfileLeague').value ? Number($('clubProfileLeague').value) : null,
+        logo_url: $('clubProfileLogo').value.trim() || null,
+        stadium: $('clubProfileGround').value.trim() || null,
+        city: $('clubProfileCity').value.trim() || null,
+        founded_year: founded,
+        about: $('clubProfileAbout').value.trim() || null,
+        is_active: $('clubProfileActive').checked
+      };
+      var button = $('clubProfileSave'); button.disabled = true; note('Saving official club profile…');
+      db.from('league_clubs').update(payload).eq('id', id).then(function(res) {
+        button.disabled = false;
+        if (res.error) { note('Save failed: ' + res.error.message); return; }
+        note('Club profile saved. Public club pages will show the updated information.');
+        load(); loadClubAdmin();
+      }).catch(function(e) { button.disabled = false; note(e.message || 'Club profile save failed.'); });
+    });
+    load();
   }
   function loadClubAdmin() {
     Promise.all([
