@@ -206,6 +206,17 @@
       '<button class="secondary" data-export="suspensions">Suspensions (CSV)</button>' +
       '<button class="primary" data-export="full_backup">Full backup (JSON)</button></div>' +
       '<div id="exportMsg" class="muted" role="status"></div>' +
+      '<section class="hist-standings-admin" aria-labelledby="rrAdminHeading">' +
+      '<h2 class="rt" id="rrAdminHeading">Records and Rules · Official content editor</h2>' +
+      '<p class="muted">Super Admin only. Maintain published competition points and tie-break settings. Enter only rules confirmed by the Association.</p>' +
+      '<label for="rrRuleSelect">Existing rule profile</label><select id="rrRuleSelect"><option value="">Create a new rule profile…</option></select>' +
+      '<label for="rrRuleName">Competition name</label><input id="rrRuleName" type="text" maxlength="120" placeholder="e.g. Leone Rock Premier League">' +
+      '<label for="rrRuleSeason">Season</label><select id="rrRuleSeason"><option value="">No season assigned</option></select>' +
+      '<div class="sa-metric-grid"><div><label for="rrWin">Win points</label><input id="rrWin" type="number" min="0" max="20" value="3"></div><div><label for="rrDraw">Draw points</label><input id="rrDraw" type="number" min="0" max="20" value="1"></div><div><label for="rrLoss">Loss points</label><input id="rrLoss" type="number" min="0" max="20" value="0"></div></div>' +
+      '<label for="rrTieOrder">Tie-break order (comma-separated)</label><input id="rrTieOrder" type="text" value="HEAD_TO_HEAD,GOAL_DIFFERENCE,GOALS_FOR">' +
+      '<label><input id="rrHeadToHead" type="checkbox" checked> Use head-to-head</label><label><input id="rrExtraTime" type="checkbox" checked> Knockout extra time enabled</label><label><input id="rrPenalties" type="checkbox" checked> Knockout penalties enabled</label>' +
+      '<div class="btns"><button type="button" class="primary" id="rrRuleSave">Save and publish rule profile</button><button type="button" class="secondary" id="rrRuleNew">New profile</button><button type="button" class="secondary" id="rrRuleDelete">Delete selected profile</button></div>' +
+      '<div class="status" id="rrRuleMsg" role="status"></div><div id="rrRuleList" class="muted">Loading rule profiles…</div></section>' +
        '<h2 class="rt">Clubs</h2>' +
       '<label for="clName">Club name</label><input id="clName" type="text">' +
       '<label for="clLeague">League</label><select id="clLeague"><option value="">Loading leagues…</option></select>' +
@@ -354,6 +365,7 @@
     wireImport();
     wireHistoricalStandings();
     if ($('resSeason')) $('resSeason').addEventListener('change', loadMatchesForResult);
+    wireCompetitionRulesAdmin();
     if ($('seasonAdd')) $('seasonAdd').addEventListener('click', function () {
       db.rpc('create_season', { p_name: $('seasonName').value.trim(), p_start: $('seasonStart').value, p_end: $('seasonEnd').value }).then(function (res) {
         if (res.error) { msg(res.error.message); return; }
@@ -369,6 +381,65 @@
         return db.from('match_referee_assignments').insert([{ match_id: Number(m), referee_user_id: r, assigned_by: u.data.user.id, official_role: role, assignment_status: 'ACTIVE' }]);
       }).then(function (res) { msg(res.error ? res.error.message : 'Official assigned.'); });
     });
+  }
+
+  function wireCompetitionRulesAdmin() {
+    var selected = '', rules = [];
+    function status(s) { $('rrRuleMsg').textContent = s || ''; }
+    function reset() {
+      selected = ''; $('rrRuleSelect').value = ''; $('rrRuleName').value = ''; $('rrRuleSeason').value = '';
+      $('rrWin').value = 3; $('rrDraw').value = 1; $('rrLoss').value = 0;
+      $('rrTieOrder').value = 'HEAD_TO_HEAD,GOAL_DIFFERENCE,GOALS_FOR';
+      $('rrHeadToHead').checked = true; $('rrExtraTime').checked = true; $('rrPenalties').checked = true;
+      $('rrRuleSave').textContent = 'Save and publish rule profile';
+      status('New profile. Confirm official settings before publishing.');
+    }
+    function load() {
+      Promise.all([
+        db.from('competition_rules').select('id,season_id,competition_name,points_win,points_draw,points_loss,use_head_to_head,tiebreaker_order,knockout_extra_time,knockout_penalties,updated_at').order('updated_at',{ascending:false}),
+        db.from('seasons').select('id,name').order('start_date',{ascending:false})
+      ]).then(function (res) {
+        if(res[0].error) throw res[0].error; if(res[1].error) throw res[1].error;
+        rules=res[0].data||[];
+        $('rrRuleSeason').innerHTML='<option value="">No season assigned</option>'+(res[1].data||[]).map(function(s){return '<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>';}).join('');
+        $('rrRuleSelect').innerHTML='<option value="">Create a new rule profile…</option>'+rules.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.competition_name)+' · '+esc(r.id)+'</option>';}).join('');
+        $('rrRuleList').innerHTML=rules.length?rules.map(function(r){return '<div class="post"><strong>'+esc(r.competition_name)+'</strong><div class="muted">Season: '+esc(r.season_id||'Unassigned')+' · Points: '+esc(r.points_win)+'/'+esc(r.points_draw)+'/'+esc(r.points_loss)+' · Updated: '+esc(r.updated_at||'Unknown')+'</div></div>';}).join(''):'No rule profiles have been created.';
+      }).catch(function(e){status('Could not load rule profiles: '+(e.message||'Unknown error'));});
+    }
+    function choose(id) {
+      var r=rules.filter(function(x){return String(x.id)===String(id);})[0];
+      if(!r){reset();return;} selected=String(r.id);
+      $('rrRuleName').value=r.competition_name||''; $('rrRuleSeason').value=r.season_id==null?'':String(r.season_id);
+      $('rrWin').value=r.points_win; $('rrDraw').value=r.points_draw; $('rrLoss').value=r.points_loss;
+      $('rrTieOrder').value=Array.isArray(r.tiebreaker_order)?r.tiebreaker_order.join(','):'';
+      $('rrHeadToHead').checked=!!r.use_head_to_head; $('rrExtraTime').checked=!!r.knockout_extra_time; $('rrPenalties').checked=!!r.knockout_penalties;
+      $('rrRuleSave').textContent='Update and publish rule profile'; status('Editing selected profile. Changes appear in the public Records and Rules panel.');
+    }
+    $('rrRuleSelect').addEventListener('change',function(){choose(this.value);});
+    $('rrRuleNew').addEventListener('click',reset);
+    $('rrRuleSave').addEventListener('click',function(){
+      var name=$('rrRuleName').value.trim(), win=Number($('rrWin').value), draw=Number($('rrDraw').value), loss=Number($('rrLoss').value);
+      var order=$('rrTieOrder').value.split(',').map(function(x){return x.trim().toUpperCase();}).filter(Boolean);
+      var allowed=['HEAD_TO_HEAD','GOAL_DIFFERENCE','GOALS_FOR','FAIR_PLAY','DRAW'];
+      if(!name){status('Enter the official competition name.');return;}
+      if(![win,draw,loss].every(function(x){return Number.isInteger(x)&&x>=0&&x<=20;})){status('Points must be whole numbers from 0 to 20.');return;}
+      if(!order.length||order.some(function(x){return allowed.indexOf(x)===-1;})||new Set(order).size!==order.length){status('Enter a valid, non-duplicated tie-break order.');return;}
+      var payload={competition_name:name,season_id:$('rrRuleSeason').value?Number($('rrRuleSeason').value):null,points_win:win,points_draw:draw,points_loss:loss,use_head_to_head:$('rrHeadToHead').checked,tiebreaker_order:order,knockout_extra_time:$('rrExtraTime').checked,knockout_penalties:$('rrPenalties').checked,updated_at:new Date().toISOString()};
+      if(selected)payload.id=Number(selected);
+      $('rrRuleSave').disabled=true;
+      db.from('competition_rules').upsert(payload).select('id').single().then(function(r){
+        $('rrRuleSave').disabled=false;if(r.error){status('Save failed: '+r.error.message);return;}
+        status('Rule profile saved and published.');load();
+      }).catch(function(e){$('rrRuleSave').disabled=false;status('Save failed: '+(e.message||'Unknown error'));});
+    });
+    $('rrRuleDelete').addEventListener('click',function(){
+      if(!selected){status('Select an existing profile first.');return;}
+      if(!window.confirm('Delete this competition rule profile?'))return;
+      db.from('competition_rules').delete().eq('id',Number(selected)).then(function(r){
+        if(r.error){status('Delete failed: '+r.error.message);return;}status('Rule profile deleted.');reset();load();
+      });
+    });
+    load();
   }
 
   function loadAssignOptions() {
