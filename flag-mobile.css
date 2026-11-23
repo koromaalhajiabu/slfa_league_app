@@ -813,3 +813,13 @@ html body #matchList .slfa-mc-share {
   color:#e6f1ff !important;
   box-shadow:none !important;
 }
+
+
+/* Do not show the empty hero alert-status placeholder as a stray outlined bar. */
+#public #alertStatus:empty {
+  display:none !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+}
