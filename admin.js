@@ -457,11 +457,11 @@
     var role = $('asRole').value;
     var people = officialProfiles.filter(function (u) {
       var title = String(u.official_title || '').trim().toLowerCase();
-      return role === 'MATCH_COMMISSIONER' ? title === 'match commissioner' : title !== 'match commissioner';
+      return String(u.status || '').toLowerCase() === 'active' && (role === 'MATCH_COMMISSIONER' ? title === 'match commissioner' : title !== 'match commissioner');
     });
     $('asRef').innerHTML = '<option value="">Choose a staff member…</option>' + people.map(function (u) {
       return '<option value="' + esc(u.id) + '">' + esc(u.full_name || u.email) + (u.official_title ? ' (' + esc(u.official_title) + ')' : '') + '</option>';
-    }).join('') || '<option value="">No eligible active staff accounts found</option>';
+    }).join('') + (people.length ? '' : '<option value="">No eligible active staff accounts found</option>');
   }
   function renderOfficialAssignments() {
     var active = officialAssignments.filter(function (x) { return x.assignment_status === 'ACTIVE'; });
@@ -489,7 +489,7 @@
   function loadAssignOptions() {
     Promise.all([
       db.from('matches').select('id, home_team, away_team, match_date').order('match_date', { ascending: false }).limit(500),
-      db.from('user_profiles').select('id, full_name, email, official_title').eq('system_role', 'REFEREE').eq('status', 'Active').order('full_name'),
+      db.from('user_profiles').select('id, full_name, email, official_title, status').eq('system_role', 'REFEREE').order('full_name'),
       db.from('match_referee_assignments').select('id,match_id,referee_user_id,official_role,assignment_status,assigned_at,change_reason').order('assigned_at', { ascending: false }).limit(500)
     ]).then(function (all) {
       if (all[0].error || all[1].error || all[2].error) {
@@ -530,7 +530,7 @@
     $('asAssignmentList').addEventListener('click', function (e) {
       var edit = e.target.closest('[data-as-edit]'), cancel = e.target.closest('[data-as-cancel]');
       if (edit) { choose(edit.getAttribute('data-as-edit')); $('asAssignment').scrollIntoView({behavior:'smooth',block:'center'}); }
-      if (cancel) { choose(cancel.getAttribute('data-as-cancel')); $('asCancel').click(); }
+      if (cancel) { choose(cancel.getAttribute('data-as-cancel')); status('Enter a cancellation reason, then select Cancel appointment.'); $('asReason').focus(); }
     });
     $('asClear').addEventListener('click', clear);
     $('asSave').addEventListener('click', function () {
