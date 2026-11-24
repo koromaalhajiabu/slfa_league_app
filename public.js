@@ -779,7 +779,6 @@
   var CAT_LABEL = { NEWS: 'News', PRESS_RELEASE: 'Press release', MATCH_REPORT: 'Match report', ANNOUNCEMENT: 'Announcement', FIXTURE: 'Fixture', RESULT: 'Result', PHOTO: 'Photo story' };
   var newsRows = [];
   function loadNews() {
-    loadPolls();
     var news = db.from('media_posts').select('id, category, title, body, image_url, video_url, published_at, status, league_id')
       .eq('status', 'PUBLISHED');
     if (currentLeague) news = news.or('league_id.is.null,league_id.eq.' + currentLeague);
@@ -843,119 +842,6 @@
           '<h3>' + esc(v.title) + '</h3>' +
           '<a class="btnlink" href="' + esc(v.video_url) + '" target="_blank" rel="noopener">Watch</a></article>';
       }).join('') : empty('No videos yet.'));
-    });
-  }
-
-  // Match predictions: one prediction per browser per match, until kick-off. Leaderboard from finished matches.
-  function loadPredict() {
-    var box = $('predictList'); if (!box) return;
-    // Do not redraw while a fan is typing a prediction
-    if (box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
-    var savedName = ''; try { savedName = localStorage.getItem('slfa_fan_name') || ''; } catch (e) {}
-    var saved = {}; try { saved = JSON.parse(localStorage.getItem('slfa_predictions') || '{}'); } catch (e) {}
-    Promise.all([
-      db.from('matches').select('id, home_team, away_team, match_date, league_id').in('match_status', ['SCHEDULED', 'RESCHEDULED']).gte('match_date', new Date().toISOString()).order('match_date', { ascending: true }).limit(30),
-      db.rpc('prediction_leaderboard', { p_league_id: currentLeague ? Number(currentLeague) : null })
-    ]).then(function (all) {
-      var matches = (all[0].data || []).filter(function (m) { return !currentLeague || String(m.league_id) === currentLeague; });
-      var board = all[1].data || [];
-      var cards = matches.map(function (m) {
-        var s = saved[m.id] || {};
-        return '<article class="match pred" data-pred="' + esc(m.id) + '"><div class="meta">' + esc(fmt(m.match_date)) + ' · predictions close at kick-off</div>' +
-          '<div class="teams"><span>' + esc(m.home_team) + '</span>' +
-          '<span class="predIn"><input type="number" min="0" max="20" inputmode="numeric" value="' + esc(s.h != null ? s.h : '') + '" data-ph="' + esc(m.id) + '" aria-label="' + esc(m.home_team) + ' goals"> – ' +
-          '<input type="number" min="0" max="20" inputmode="numeric" value="' + esc(s.a != null ? s.a : '') + '" data-pa="' + esc(m.id) + '" aria-label="' + esc(m.away_team) + ' goals"></span>' +
-          '<span>' + esc(m.away_team) + '</span></div>' +
-          '<div class="btns"><button class="small" data-predict="' + esc(m.id) + '">' + (s.h != null ? 'Change prediction' : 'Save prediction') + '</button>' +
-          (s.h != null ? '<span class="muted">Your prediction: ' + esc(s.h) + '–' + esc(s.a) + '</span>' : '') + '</div></article>';
-      }).join('');
-      var rows = board.length ? '<table class="table lb"><thead><tr><th>#</th><th>Fan</th><th>Points</th><th>Exact</th><th>Right result</th></tr></thead><tbody>' +
-        board.map(function (r, i) {
-          return '<tr><td>' + (i + 1) + '</td><td class="club">' + esc(r.fan_name) + '</td><td class="pts">' + esc(r.points) + '</td><td>' + esc(r.exact_hits) + '</td><td>' + esc(r.right_results) + '</td></tr>';
-        }).join('') + '</tbody></table>' : empty('The leaderboard will appear after the first finished match.');
-      box.innerHTML = '<h3 class="sub">Predict the score</h3>' +
-        '<label for="fanName">Your name (shown on the leaderboard)</label><input id="fanName" type="text" maxlength="30" value="' + esc(savedName) + '" autocomplete="nickname">' +
-        '<p class="muted">Right result scores 1 point. Exact score scores 3 points.</p>' +
-        (cards || empty('No matches open for predictions right now.')) +
-        '<h3 class="sub">Leaderboard</h3>' + rows +
-        '<p class="status" id="predMsg" role="status"></p>';
-      box.querySelectorAll('[data-predict]').forEach(function (b) {
-        b.addEventListener('click', function () { submitPrediction(b.dataset.predict); });
-      });
-    });
-  }
-  function submitPrediction(matchId) {
-    var name = ($('fanName').value || '').trim(), msgEl = $('predMsg');
-    var h = document.querySelector('[data-ph="' + matchId + '"]').value, a = document.querySelector('[data-pa="' + matchId + '"]').value;
-    if (name.length < 2) { msgEl.textContent = 'Enter your name (at least 2 letters).'; return; }
-    if (h === '' || a === '') { msgEl.textContent = 'Enter a score for both teams.'; return; }
-    var key = voterKey();
-    if (!key) { msgEl.textContent = 'Predictions need your browser to store a small code. Turn off private browsing and try again.'; return; }
-    window.slfaTrack('prediction');
-    db.rpc('submit_prediction', { p_match_id: Number(matchId), p_fan_name: name, p_home: Number(h), p_away: Number(a), p_voter_key: key }).then(function (res) {
-      if (res.error) { msgEl.textContent = res.error.message; return; }
-      try {
-        localStorage.setItem('slfa_fan_name', name);
-        var saved = JSON.parse(localStorage.getItem('slfa_predictions') || '{}'); saved[matchId] = { h: Number(h), a: Number(a) };
-        localStorage.setItem('slfa_predictions', JSON.stringify(saved));
-      } catch (e) {}
-      loadPredict();
-    });
-  }
-
-  // Fan polls: one vote per browser, enforced in the database
-  var VOTER_KEY = 'slfa_voter_key', VOTES_KEY = 'slfa_votes';
-  function voterKey() {
-    try {
-      var k = localStorage.getItem(VOTER_KEY);
-      if (!k) {
-        k = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-        localStorage.setItem(VOTER_KEY, k);
-      }
-      return k;
-    } catch (e) { return null; }
-  }
-  function getVoted() { try { return JSON.parse(localStorage.getItem(VOTES_KEY) || '{}'); } catch (e) { return {}; } }
-  function setVoted(pollId, optionId) { try { var v = getVoted(); v[pollId] = optionId; localStorage.setItem(VOTES_KEY, JSON.stringify(v)); } catch (e) {} }
-  function loadPolls() {
-    var box = $('pollList'); if (!box) return;
-    db.from('polls').select('id, question, is_open, poll_options(id, label, sort_order)').order('created_at', { ascending: false }).limit(5)
-      .then(function (r) {
-        var polls = r.data || [];
-        if (r.error || !polls.length) { box.innerHTML = ''; return; }
-        box.innerHTML = polls.map(function (p) {
-          return '<div class="news poll"><div class="meta">Fan poll · ' + (p.is_open ? 'Open' : 'Closed') + '</div><h3>' + esc(p.question) + '</h3><div data-poll-body="' + esc(p.id) + '"></div></div>';
-        }).join('');
-        polls.forEach(renderPoll);
-      });
-  }
-  function renderPoll(p) {
-    var body = document.querySelector('[data-poll-body="' + p.id + '"]'); if (!body) return;
-    var opts = (p.poll_options || []).slice().sort(function (a, b) { return a.sort_order - b.sort_order; });
-    if (!p.is_open || getVoted()[p.id]) { showResults(p, opts, body); return; }
-    body.innerHTML = opts.map(function (o) { return '<button class="small" data-vote="' + esc(o.id) + '">' + esc(o.label) + '</button> '; }).join('');
-    body.querySelectorAll('[data-vote]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var key = voterKey();
-        if (!key) { body.insertAdjacentHTML('beforeend', '<p class="muted">Voting needs your browser to store a small code. Turn off private browsing and try again.</p>'); return; }
-        db.rpc('cast_poll_vote', { p_poll_id: p.id, p_option_id: Number(b.dataset.vote), p_voter_key: key }).then(function (res) {
-          if (res.error && !/already voted/i.test(res.error.message)) {
-            body.insertAdjacentHTML('beforeend', '<p class="muted">' + esc(res.error.message) + '</p>'); return;
-          }
-          setVoted(p.id, Number(b.dataset.vote));
-          showResults(p, opts, body);
-        });
-      });
-    });
-  }
-  function showResults(p, opts, body) {
-    db.rpc('poll_results', { p_poll_id: p.id }).then(function (r) {
-      var counts = {}, total = 0;
-      (r.data || []).forEach(function (x) { counts[x.option_id] = Number(x.votes); total += Number(x.votes); });
-      body.innerHTML = opts.map(function (o) {
-        var n = counts[o.id] || 0, pct = total ? Math.round(n * 100 / total) : 0;
-        return '<div class="poll-row"><span>' + esc(o.label) + '</span><span class="muted">' + pct + '% (' + n + ')</span><div class="poll-bar"><span style="width:' + pct + '%"></span></div></div>';
-      }).join('') + '<p class="muted">' + total + ' vote' + (total === 1 ? '' : 's') + (p.is_open ? '' : ' · poll closed') + '</p>';
     });
   }
 
@@ -1155,7 +1041,7 @@
         if(area)area.hidden=true;return;
       }
       if(appFreezeBanner){appFreezeBanner.remove();appFreezeBanner=null;}if(area)area.hidden=false;
-      Promise.all([loadLeagueData(), loadSeasonData()]).then(function(){loadMatches();loadLive();loadMatchDay();loadTable();loadTeams();loadPlayers();loadNews();loadVideos();loadPredict();loadPauseBanner();});
+      Promise.all([loadLeagueData(), loadSeasonData()]).then(function(){loadMatches();loadLive();loadMatchDay();loadTable();loadTeams();loadPlayers();loadNews();loadVideos();loadPauseBanner();});
     });
   }
 
