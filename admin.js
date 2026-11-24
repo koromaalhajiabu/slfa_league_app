@@ -262,11 +262,6 @@
       '<div class="btns"><button type="button" class="secondary" id="histLoad">Load table</button><button type="button" class="secondary" id="histAddRow">Add club row</button><button type="button" class="primary" id="histSave">Save manual table</button></div>' +
       '<div class="status" id="histManualMsg" role="status"></div>' +
       '</section>' +
-      '<h2 class="rt">Enter a result</h2>' +
-      '<label for="resSeason">Season of the match</label><select id="resSeason"><option value="">Loading seasons…</option></select>' +
-      '<label for="resMatch">Match</label><select id="resMatch"><option value="">Loading matches…</option></select>' +
-      '<div class="scores"><input id="resHome" type="number" min="0" placeholder="Home"><span>–</span><input id="resAway" type="number" min="0" placeholder="Away"></div>' +
-      '<div class="btns"><button class="primary" id="resSave">Record result</button><button class="secondary" id="resChange">Change confirmed result</button><button class="secondary" id="resReverse">Reverse result</button></div>' +
       '<h2 class="rt">Match status</h2>' +
       '<label for="msMatch">Match</label><select id="msMatch"><option value="">Loading matches…</option></select>' +
       '<label for="msStatus">Status</label><select id="msStatus"><option value="SCHEDULED">Scheduled</option><option value="POSTPONED">Postponed</option><option value="RESCHEDULED">Rescheduled</option><option value="CANCELLED">Cancelled</option></select>' +
@@ -292,7 +287,6 @@
       '<label for="asReason">Change / cancellation reason</label><textarea id="asReason" rows="2" maxlength="500" placeholder="Required when changing or cancelling an existing appointment"></textarea>' +
       '<div class="btns"><button class="primary" id="asSave" type="button">Save appointment</button><button class="secondary" id="asCancel" type="button" disabled>Cancel appointment</button><button class="secondary" id="asClear" type="button">Clear</button></div>' +
       '<div class="status" id="asStatus" role="status"></div><h3 class="rt">Appointment register</h3><div id="asAssignmentList" class="muted" aria-live="polite">Loading appointments…</div></section>' +
-      '<h2 class="rt">Final scores awaiting approval</h2><div id="pendingResults" class="muted">Loading…</div>' +
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<h2 class="rt">Published media</h2><div id="publishedMediaList" class="muted">Loading…</div>' +
       '<h2 class="rt">Media engagement · last 30 days</h2><div id="mediaAnalytics" class="muted">Loading…</div>' +
@@ -304,9 +298,6 @@
       '<div id="auditList" class="muted" aria-live="polite">Loading…</div>' +
       '<div id="usagePanel"><h2 class="rt">App usage, last 30 days</h2><div id="usageCounts" class="muted">Loading…</div></div>' +
       '<h2 class="rt">Problems reported by fans</h2><div id="fanReports" class="muted">Loading…</div>' +
-      '<h2 class="rt">Club profile changes awaiting approval</h2><div id="clubProfileReview" class="muted">Loading…</div>' +
-      '<h2 class="rt">Player registrations awaiting approval</h2><div id="squadReview" class="muted">Loading…</div>' +
-      '<h2 class="rt">Transfer requests awaiting approval</h2><div id="transferReview" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
     $('fxSave').addEventListener('click', function () {
@@ -318,51 +309,20 @@
         return db.from('matches').insert([{ home_team: h, away_team: a, match_date: new Date(d).toISOString(), venue: v || null, season_id: s.data ? s.data.id : null, league_id: Number($('fxLeague').value), home_score: null, away_score: null, match_status: 'SCHEDULED' }]);
       }).then(function (r) {
         if (r.error) { msg(r.error.message); return; }
-        msg('Fixture added.'); $('fxHome').value = ''; $('fxAway').value = ''; $('fxVenue').value = ''; loadMatchesForResult();
+        msg('Fixture added.'); $('fxHome').value = ''; $('fxAway').value = ''; $('fxVenue').value = ''; 
       });
     });
 
-    loadMatchesForResult();
-    $('resChange').addEventListener('click', function () {
-      var id = $('resMatch').value, h = parseInt($('resHome').value, 10), a = parseInt($('resAway').value, 10);
-      if (!id || isNaN(h) || isNaN(a)) { msg('Choose a match and enter both scores.'); return; }
-      var reason = askReason('Reason for changing this result (required, logged):'); if (!reason) return;
-      db.rpc('change_match_result', { p_match_id: Number(id), p_home: h, p_away: a, p_reason: reason }).then(function (r) {
-        msg(r.error ? r.error.message : 'Result changed and logged.'); loadMatchesForResult();
-      });
-    });
-    $('resReverse').addEventListener('click', function () {
-      var id = $('resMatch').value; if (!id) { msg('Choose a match.'); return; }
-      var reason = askReason('Reason for reversing this result (required, logged):'); if (!reason) return;
-      if (!confirm('Reverse this result? The match goes back to half time and the referee can submit again.')) return;
-      db.rpc('reverse_match_result', { p_match_id: Number(id), p_reason: reason }).then(function (r) {
-        msg(r.error ? r.error.message : 'Result reversed and logged.'); loadMatchesForResult();
-      });
-    });
-    $('resSave').addEventListener('click', function () {
-      var id = $('resMatch').value, h = parseInt($('resHome').value, 10), a = parseInt($('resAway').value, 10);
-      if (!id || isNaN(h) || isNaN(a)) { msg('Choose a match and enter both scores.'); return; }
-      db.rpc('record_match_result', { p_match_id: Number(id), p_home: h, p_away: a }).then(function (r) {
-        if (r.error) { msg(r.error.message); return; }
-        return setMatch(id, { match_status: 'FT', match_minute: null }).then(function () {
-          msg('Result recorded and the table updated.'); $('resHome').value = ''; $('resAway').value = ''; loadMatchesForResult();
-        });
-      });
-    });
-
+    
     loadLeagueOptions();
     var competitionPanel = $('superAdminCompetitionAdmin');
     if (competitionPanel) box().insertBefore(competitionPanel, box().firstChild);
     wireCompetitionAdmin();
-    wireCupAdmin();
     loadSuperAdminOverview();
     $('saRefreshOverview').onclick=loadSuperAdminOverview;
     wireClubs();
     wireMatchInformationAdmin();
     loadReview();
-    loadClubProfileReview();
-    loadSquadReview();
-    loadTransferReview();
     $('msSave').addEventListener('click', function () {
       var id = $('msMatch').value, st = $('msStatus').value, reason = $('msReason').value.trim();
       if (!id) { msg('Choose a match.'); return; }
@@ -373,14 +333,12 @@
     loadStatusOptions();
     wireLive();
     wireOfficialAssignments();
-    loadPendingResults();
     loadPendingComments();
     loadFanReports();
     loadSeasonAdmin();
     loadAuditLog();
     wireImport();
     wireHistoricalStandings();
-    if ($('resSeason')) $('resSeason').addEventListener('change', loadMatchesForResult);
     wireCompetitionRulesAdmin();
     if ($('seasonAdd')) $('seasonAdd').addEventListener('click', function () {
       db.rpc('create_season', { p_name: $('seasonName').value.trim(), p_start: $('seasonStart').value, p_end: $('seasonEnd').value }).then(function (res) {
@@ -567,34 +525,10 @@
     loadAssignOptions();
   }
 
-  function loadPendingResults() {
-    db.from('match_results').select('id, home_team, away_team, home_goals, away_goals, recorded_by').eq('status', 'PENDING').order('id', { ascending: true })
-      .then(function (r) {
-        var rows = r.data || [];
-        $('pendingResults').innerHTML = rows.length ? rows.map(function (x) {
-          return '<div class="post"><strong>' + esc(x.home_team) + ' ' + x.home_goals + ' – ' + x.away_goals + ' ' + esc(x.away_team) + '</strong>' +
-            '<div class="btns"><button class="primary" data-approve="' + x.id + '">Approve</button><button class="secondary" data-reject="' + x.id + '">Reject</button></div></div>';
-        }).join('') : 'No final scores waiting.';
-        document.querySelectorAll('[data-approve]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            db.rpc('approve_match_result', { p_result_id: Number(b.dataset.approve) }).then(function (res) {
-              msg(res.error ? res.error.message : 'Approved. The table is updated.'); loadPendingResults(); loadMatchesForResult(); });
-          });
-        });
-        document.querySelectorAll('[data-reject]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            if (!confirm('Reject this score? The referee will need to send it again.')) return;
-            db.from('match_results').delete().eq('id', Number(b.dataset.reject)).then(function (res) {
-              msg(res.error ? res.error.message : 'Rejected.'); loadPendingResults(); });
-          });
-        });
-      });
-  }
-
   // Problems fans report from match details. Staff mark each one resolved once it is checked.
   // Bulk import of matches from a CSV file. Checks every row first; only valid rows are imported.
   var impRows = [];
-  var IMP_HEADERS = ['season', 'league', 'date', 'time', 'home_team', 'away_team', 'home_score', 'away_score', 'status', 'venue'];
+  var IMP_HEADERS = ['season', 'league', 'date', 'time', 'home_team', 'away_team', 'venue'];
   function parseCsv(text) {
     var rows = [], row = [], cell = '', q = false;
     for (var i = 0; i < text.length; i++) {
@@ -612,7 +546,7 @@
     return rows.filter(function (r) { return r.some(function (x) { return String(x).trim() !== ''; }); });
   }
   function impTemplate() {
-    var sample = ['2025/26', 'Leone Rock Premier League', '2026-01-10', '15:00', 'Bo Rangers', 'Mighty Blackpool', '2', '1', 'FT', 'National Stadium'];
+    var sample = ['2025/26', 'Leone Rock Premier League', '2026-01-10', '15:00', 'Bo Rangers', 'Mighty Blackpool', 'National Stadium'];
     var csv = IMP_HEADERS.join(',') + '\n' + sample.map(function (x) { return /[",]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(',') + '\n';
     var blob = new Blob([csv], { type: 'text/csv' });
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'slfa-matches-template.csv';
@@ -630,6 +564,7 @@
       var table = parseCsv(String(reader.result || ''));
       if (table.length < 2) { box.textContent = 'The file needs a header row and at least one match.'; return; }
       var head = table[0].map(function (h) { return h.trim().toLowerCase(); });
+      if (head.indexOf('home_score') !== -1 || head.indexOf('away_score') !== -1 || head.indexOf('status') !== -1) { box.textContent = 'This importer schedules fixtures only. Remove score and status columns; official final scores are submitted by the assigned referee.'; return; }
       var missing = ['season', 'league', 'date', 'home_team', 'away_team'].filter(function (h) { return head.indexOf(h) < 0; });
       if (missing.length) { box.textContent = 'Missing column: ' + missing.join(', ') + '.'; return; }
       Promise.all([
@@ -658,18 +593,12 @@
           if (!home) bad.push('home club "' + g.home_team + '" is not in the club list');
           if (!away) bad.push('away club "' + g.away_team + '" is not in the club list');
           if (home && away && home === away) bad.push('home and away clubs are the same');
-          var hs = g.home_score === '' ? null : Number(g.home_score), as = g.away_score === '' ? null : Number(g.away_score);
-          if ((hs !== null && (!Number.isInteger(hs) || hs < 0)) || (as !== null && (!Number.isInteger(as) || as < 0))) bad.push('scores must be whole numbers');
-          var status = (g.status || '').toUpperCase() || (hs !== null && as !== null ? 'FT' : 'SCHEDULED');
-          if (status !== 'FT' && status !== 'SCHEDULED') bad.push('status must be FT or SCHEDULED');
-          if (status === 'FT' && (hs === null || as === null)) bad.push('a finished match needs both scores');
-          if (status === 'SCHEDULED' && (hs !== null || as !== null)) bad.push('a scheduled match cannot have scores');
           if (bad.length) { problems.push('Row ' + line + ': ' + bad.join('; ')); return; }
           var key = [seasonId, leagueId, home.toLowerCase(), away.toLowerCase(), g.date].join('|');
           if (existing[key] || seen[key]) { skipped += 1; return; }
           seen[key] = true;
           ok.push({ home_team: home, away_team: away, match_date: g.date + 'T' + time + ':00Z', venue: g.venue || null,
-            season_id: seasonId, league_id: leagueId, home_score: status === 'FT' ? hs : null, away_score: status === 'FT' ? as : null, match_status: status });
+            season_id: seasonId, league_id: leagueId, home_score: null, away_score: null, match_status: 'SCHEDULED' });
         });
         impRows = ok;
         var html = '<p><strong>' + ok.length + ' ready to import</strong>' + (skipped ? ', ' + skipped + ' already in the app and skipped' : '') + (problems.length ? ', ' + problems.length + ' with problems that need fixing first' : '') + '.</p>';
@@ -688,7 +617,7 @@
       if (i >= total) {
         $('impPreview').textContent = 'Imported ' + done + ' of ' + total + ' matches' + (failed ? '. ' + failed + ' could not be saved.' : '.');
         msg('Import finished. Check the results in the admin list.');
-        loadMatchesForResult();
+        
         return;
       }
       var chunk = impRows.slice(i, i + 50); i += 50;
@@ -896,9 +825,9 @@
       seasonCache = r.data || [];
       var current = seasonCache.filter(function (x) { return x.is_current; })[0] || null;
       var opts = seasonCache.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.name) + (x.is_current ? ' (current)' : '') + '</option>'; }).join('');
-      ['fxSeason', 'resSeason'].forEach(function (id) {
+      ['fxSeason'].forEach(function (id) {
         var el = $(id); if (!el) return;
-        el.innerHTML = (id === 'resSeason' ? '<option value="">All seasons</option>' : '<option value="">Choose a season…</option>') + opts;
+        el.innerHTML = '<option value="">Choose a season…</option>' + opts;
         if (current) el.value = String(current.id);
       });
       var histSeason = $('histSeason');
@@ -922,12 +851,12 @@
             if (!window.confirm('Make this the current season? The live table will be recalculated from it.')) return;
             db.rpc('set_current_season', { p_season_id: Number(b.dataset.seasonCurrent) }).then(function (res) {
               msg(res.error ? res.error.message : 'Current season changed. The live table has been recalculated.');
-              loadSeasonAdmin(); loadMatchesForResult();
+              loadSeasonAdmin(); 
             });
           });
         });
       }
-      loadMatchesForResult();
+      
     });
   }
   // Historical final tables are stored separately from the automatically calculated live table.
@@ -1133,17 +1062,6 @@
     });
   }
 
-  function loadMatchesForResult() {
-    db.from('matches').select('id, match_date, season_id, home_team, away_team, home_score').order('match_date', { ascending: false }).limit(500)
-      .then(function (r) {
-        var chosen = $('resSeason') ? $('resSeason').value : '';
-        var rows = (r.data || []).filter(function (m) { return !chosen || seasonOfMatch(m) === chosen; }).slice(0, 120);
-        $('resMatch').innerHTML = '<option value="">Choose a match…</option>' + rows.map(function (m) {
-          return '<option value="' + esc(m.id) + '">' + esc(m.home_team) + ' v ' + esc(m.away_team) + (m.home_score != null ? ' (' + m.home_score + ' – ' + m.away_score + ')' : '') + '</option>';
-        }).join('');
-      });
-  }
-
   function wireMatchInformationAdmin() {
     var select = $('miMatch'), status = $('miStatusMsg'), matches = [], leagues = [], seasons = [];
     if (!select || !$('miSave')) return;
@@ -1227,7 +1145,7 @@
         if (r.error) { note('Save failed: ' + r.error.message); return; }
         if (!r.data) { note('No fixture was updated. Check your Super Admin access.'); return; }
         note('Match information saved. Scores and referee event records were not changed.');
-        loadStatusOptions(); loadAssignOptions(); loadMatchesForResult(); load();
+        loadStatusOptions(); loadAssignOptions();  load();
       }).catch(function(e) { $('miSave').disabled = false; note('Save failed: ' + (e.message || 'Unknown error')); });
     });
     load();
@@ -1330,70 +1248,6 @@
       });
     });
     load();
-  }
-
-  function wireCupAdmin() {
-    var edit=$('cupTieEdit'); if(!edit||!$('cupTieSave')) return;
-    var ties=[], matches=[];
-    function status(t){$('cupTieMsg').textContent=t;}
-    function reset(){edit.value='';$('cupRound').value='';$('cupTieNumber').value='1';$('cupNextTie').value='';$('cupNextSlot').value='HOME';$('cupTieSave').textContent='Save cup tie';}
-    function loadTies(){
-      db.from('cup_ties').select('id,competition_id,season_id,match_id,round_name,tie_number,next_tie_id,next_slot,winner_team,advanced_at,matches(home_team,away_team,match_status,home_score,away_score)').order('competition_id').order('round_name').order('tie_number').then(function(r){
-        if(r.error){status('Cup bracket is not ready yet. Run the knockout cup SQL migration first.');return;}
-        ties=r.data||[];
-        edit.innerHTML='<option value="">Create a new tie</option>'+ties.map(function(t){var m=t.matches||{};return '<option value="'+esc(t.id)+'">'+esc(t.round_name)+' · Tie '+esc(t.tie_number)+' · '+esc(m.home_team||'TBC')+' v '+esc(m.away_team||'TBC')+'</option>';}).join('');
-        $('cupNextTie').innerHTML='<option value="">No next tie / Final</option>'+ties.map(function(t){return '<option value="'+esc(t.id)+'">'+esc(t.round_name)+' · Tie '+esc(t.tie_number)+'</option>';}).join('');
-        $('cupTieList').innerHTML=ties.length?ties.map(function(t){
-          var m=t.matches||{},done=m.home_score!=null&&m.away_score!=null;
-          var options='<option value="">Choose winner…</option>'+[m.home_team,m.away_team].filter(Boolean).map(function(n){return '<option value="'+esc(n)+'" '+(t.winner_team===n?'selected':'')+'>'+esc(n)+'</option>';}).join('');
-          return '<div class="post"><strong>'+esc(t.round_name)+' · Tie '+esc(t.tie_number)+'</strong><div class="muted">'+esc(m.home_team||'TBC')+' '+(done?esc(m.home_score)+'–'+esc(m.away_score):'v')+' '+esc(m.away_team||'TBC')+' · '+esc(m.match_status||'Scheduled')+'</div>'+
-            (t.winner_team?'<p>Winner: '+esc(t.winner_team)+(t.advanced_at?' · advanced':'')+'</p>':'')+
-            '<label>Official winner</label><select data-cup-winner="'+esc(t.id)+'">'+options+'</select><div class="btns"><button type="button" class="small" data-cup-advance="'+esc(t.id)+'">Confirm winner and advance</button></div></div>';
-        }).join(''):'No cup ties have been configured yet.';
-        $('cupTieList').querySelectorAll('[data-cup-advance]').forEach(function(b){b.addEventListener('click',function(){
-          var id=b.getAttribute('data-cup-advance'),sel=$('cupTieList').querySelector('[data-cup-winner="'+id+'"]'),winner=sel&&sel.value;
-          if(!winner){status('Choose the officially confirmed winner first.');return;}
-          if(!confirm('Advance '+winner+' to the next round? This updates the linked next-round fixture.'))return;
-          b.disabled=true;db.rpc('admin_advance_cup_tie',{p_tie_id:Number(id),p_winner_team:winner}).then(function(x){b.disabled=false;if(x.error){status(x.error.message);return;}status('Winner confirmed and advanced.');loadTies();});
-        });});
-      });
-    }
-    function loadCupMatches(){
-      var comp=$('cupCompetition').value,season=$('cupSeason').value;
-      $('cupMatch').innerHTML='<option value="">Loading fixtures…</option>';
-      if(!comp){$('cupMatch').innerHTML='<option value="">Choose a cup first…</option>';return;}
-      db.from('matches').select('id,home_team,away_team,match_date,season_id').eq('league_id',Number(comp)).order('match_date').limit(500).then(function(r){
-        matches=r.data||[];
-        if(season)matches=matches.filter(function(m){return String(m.season_id||'')===String(season);});
-        $('cupMatch').innerHTML='<option value="">Choose a fixture…</option>'+matches.map(function(m){return '<option value="'+esc(m.id)+'">'+esc(m.home_team)+' v '+esc(m.away_team)+' · '+esc(new Date(m.match_date).toLocaleDateString())+'</option>';}).join('');
-      });
-    }
-    db.from('leagues').select('id,name').eq('is_active',true).eq('competition_type','CUP').order('sort_order').then(function(r){
-      $('cupCompetition').innerHTML='<option value="">Choose cup…</option>'+(r.data||[]).map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>';}).join('');
-    });
-    db.from('seasons').select('id,name,is_current').order('start_date',{ascending:false}).then(function(r){
-      $('cupSeason').innerHTML='<option value="">All seasons / no season</option>'+(r.data||[]).map(function(x){return '<option value="'+esc(x.id)+'" '+(x.is_current?'selected':'')+'>'+esc(x.name)+'</option>';}).join('');
-    });
-    $('cupCompetition').addEventListener('change',loadCupMatches);
-    $('cupSeason').addEventListener('change',loadCupMatches);
-    edit.addEventListener('change',function(){
-      var t=ties.find(function(x){return String(x.id)===String(edit.value);});if(!t){reset();return;}
-      $('cupCompetition').value=String(t.competition_id);$('cupSeason').value=t.season_id?String(t.season_id):'';
-      loadCupMatches();window.setTimeout(function(){$('cupMatch').value=String(t.match_id);},250);
-      $('cupRound').value=t.round_name;$('cupTieNumber').value=t.tie_number;
-      $('cupNextTie').value=t.next_tie_id?String(t.next_tie_id):'';$('cupNextSlot').value=t.next_slot||'HOME';$('cupTieSave').textContent='Update cup tie';
-    });
-    $('cupTieNew').addEventListener('click',reset);
-    $('cupTieSave').addEventListener('click',function(){
-      var comp=$('cupCompetition').value,match=$('cupMatch').value,round=$('cupRound').value.trim(),num=parseInt($('cupTieNumber').value,10);
-      if(!comp||!match||round.length<2||!Number.isInteger(num)||num<1){status('Choose the cup and fixture, then enter a round name and tie number.');return;}
-      var selected=edit.value?Number(edit.value):null,next=$('cupNextTie').value?Number($('cupNextTie').value):null;
-      $('cupTieSave').disabled=true;
-      db.rpc('admin_save_cup_tie',{p_id:selected,p_competition_id:Number(comp),p_season_id:$('cupSeason').value?Number($('cupSeason').value):null,p_match_id:Number(match),p_round_name:round,p_tie_number:num,p_next_tie_id:next,p_next_slot:next?$('cupNextSlot').value:null}).then(function(r){
-        $('cupTieSave').disabled=false;if(r.error){status(r.error.message);return;}status('Cup tie saved.');reset();loadTies();
-      });
-    });
-    loadTies();
   }
 
   function loadLeagueOptions() {
@@ -1520,44 +1374,6 @@
   }
 
   // ---------- CLUB PROFILE CHANGE REVIEW: SUPER ADMIN ----------
-  function loadClubProfileReview() {
-    Promise.all([
-      db.from('club_profile_change_requests').select('id, club_id, submitted_by_name, proposed_profile, submitted_at, status').eq('status', 'SUBMITTED').order('submitted_at', { ascending: true }),
-      db.from('league_clubs').select('id, club_name')
-    ]).then(function (all) {
-      if (all[0].error) { $('clubProfileReview').textContent = all[0].error.message; return; }
-      var rows = all[0].data || [], clubs = {};
-      (all[1].data || []).forEach(function (c) { clubs[String(c.id)] = c.club_name; });
-      $('clubProfileReview').innerHTML = rows.length ? rows.map(function (x) {
-        var p = x.proposed_profile || {};
-        return '<div class="post"><div class="muted">Submitted by ' + esc(x.submitted_by_name || 'Club Manager') + ' · ' + esc(new Date(x.submitted_at).toLocaleString()) + '</div>' +
-          '<strong>' + esc(clubs[String(x.club_id)] || 'Club') + '</strong>' +
-          '<p>Home ground: ' + esc(p.stadium || 'Not provided') + '<br>City: ' + esc(p.city || 'Not provided') +
-          '<br>Year founded: ' + esc(p.founded_year || 'Not provided') + '</p><p>' + esc(p.about || 'No description provided') + '</p>' +
-          '<label for="cprNote' + esc(x.id) + '">Review note (optional)</label><textarea id="cprNote' + esc(x.id) + '" rows="2" placeholder="Reason or guidance for the club"></textarea>' +
-          '<div class="btns"><button class="primary" data-club-profile-approve="' + esc(x.id) + '">Approve & publish</button>' +
-          '<button class="secondary" data-club-profile-return="' + esc(x.id) + '">Return for changes</button></div></div>';
-      }).join('') : 'No club profile changes are waiting for approval.';
-      document.querySelectorAll('[data-club-profile-approve]').forEach(function (b) {
-        b.addEventListener('click', function () { reviewClubProfile(b.dataset.clubProfileApprove, 'APPROVE'); });
-      });
-      document.querySelectorAll('[data-club-profile-return]').forEach(function (b) {
-        b.addEventListener('click', function () { reviewClubProfile(b.dataset.clubProfileReturn, 'RETURN'); });
-      });
-    });
-  }
-  function reviewClubProfile(id, decision) {
-    var note = ($('cprNote' + id) || {}).value || '';
-    if (decision === 'RETURN' && !note.trim()) { msg('Add a short reason before returning the profile.'); return; }
-    var label = decision === 'APPROVE' ? 'Approve and publish this club profile?' : 'Return this profile to the Club Manager?';
-    if (!confirm(label)) return;
-    db.rpc('review_club_profile_change', { p_request_id: Number(id), p_decision: decision, p_note: note.trim() || null }).then(function (r) {
-      if (r.error) { msg(r.error.message); return; }
-      msg(decision === 'APPROVE' ? 'Club profile approved and published.' : 'Profile returned to the Club Manager.');
-      loadClubProfileReview();
-    });
-  }
-
   function loadReview(){
     var host=$('reviewList');if(!host)return;
     db.from('media_posts').select('id,title,category,body,image_url,video_url,gallery_urls,media_type,interviewee,media_metadata,created_by_name,submitted_at').eq('status','SUBMITTED').order('submitted_at',{ascending:true}).then(function(r){
@@ -1601,8 +1417,7 @@
   function developer(p) {
     devUser=p;
     box().innerHTML =
-      '<section class="dev-overview" id="developerOverview"><h2 class="rt">Platform overview</h2><p class="muted">Live database totals and public app activity. Counts are loaded from the connected database.</p><div class="dev-metric-grid">'+[['devMetricAccounts','Accounts'],['devMetricMatches','Fixtures'],['devMetricClubs','Clubs'],['devMetricReports','Fan reports'],['devMetricNews','Media posts']].map(function(x){return '<article class="dev-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="dev-activity"><strong>Last 30 days · public app activity</strong><div id="devMetricActivity" class="muted">Loading activity…</div></div><button class="secondary" type="button" id="devRefreshOverview">Refresh overview</button><div class="status" id="devOverviewStatus" role="status"></div></section>'+
-      '<h2 class="rt">League operations</h2><div id="leagueState" class="muted">Checking…</div><div class="btns"><button class="secondary" id="pauseBtn">Pause league</button><button class="primary" id="resumeBtn">Resume league</button></div>'+
+      '<section class="dev-overview" id="developerOverview"><h2 class="rt">Platform overview</h2><p class="muted">Live database totals and public app activity. Counts are loaded from the connected database.</p><div class="dev-metric-grid">'+[['devMetricAccounts','Accounts'],['devMetricMatches','Fixtures'],['devMetricClubs','Clubs'],['devMetricResults','Results'],['devMetricNews','Media posts']].map(function(x){return '<article class="dev-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="dev-activity"><strong>Last 30 days · public app activity</strong><div id="devMetricActivity" class="muted">Loading activity…</div></div><button class="secondary" type="button" id="devRefreshOverview">Refresh overview</button><div class="status" id="devOverviewStatus" role="status"></div></section>'+
       '<h2 class="rt">Whole application</h2><div id="appState" class="muted">Checking…</div><div class="btns"><button class="secondary" id="freezeAppBtn">Freeze entire app</button><button class="primary" id="unfreezeAppBtn">Unfreeze entire app</button></div>'+
       '<h2 class="rt">Assign a role</h2><p class="muted">Full name, email (unique account ID), and a round photo selected from your phone gallery.</p>'+
       '<label for="ivName">Full name</label><input id="ivName" type="text" autocomplete="name">'+input('ivEmail','Email address','email')+
@@ -1612,12 +1427,9 @@
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
       '<h2 class="rt">All accounts and roles</h2><p class="muted">Change roles, suspend, restore or delete accounts. Actions are logged automatically.</p><div id="roleList" class="muted">Loading…</div>'+
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
-    wireCompetitionAdmin();
-    wireCupAdmin();
     loadDeveloperOverview();
     $('devRefreshOverview').onclick=loadDeveloperOverview;
-    loadLeagueState();loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();
-    $('pauseBtn').onclick=function(){setPause(true);};$('resumeBtn').onclick=function(){setPause(false);};
+    loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();
     $('freezeAppBtn').onclick=function(){setAppFreeze(true);};$('unfreezeAppBtn').onclick=function(){setAppFreeze(false);};
     $('ivPhoto').onchange=function(){var f=this.files&&this.files[0];if(!f){$('ivPhotoPreview').textContent='No photo selected.';return;}if(['image/jpeg','image/png','image/webp'].indexOf(f.type)===-1||f.size>4*1024*1024){this.value='';msg('Choose a JPG, PNG or WebP photo no larger than 4 MB.');return;}var u=URL.createObjectURL(f);$('ivPhotoPreview').innerHTML='<img src="'+u+'" alt="Profile preview" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #16834a">';};
   }
@@ -1649,7 +1461,7 @@
       ['devMetricAccounts','user_profiles','*'],
       ['devMetricMatches','matches','*'],
       ['devMetricClubs','league_clubs','*'],
-      ['devMetricReports','fan_reports','*'],
+      ['devMetricResults','match_results','*'],
       ['devMetricNews','media_posts','*']
     ];
     var status=$('devOverviewStatus');
@@ -1701,26 +1513,9 @@
       document.querySelectorAll('[data-cancel]').forEach(function(b){b.onclick=function(){db.from('role_invitations').delete().eq('email',b.dataset.cancel).then(function(x){msg(x.error?x.error.message:'Cancelled.');loadInvites();});};});
     });
   }
-  function loadLeagueState(){db.from('system_pause').select('paused').eq('id',1).maybeSingle().then(function(r){if(r.error){$('leagueState').textContent=r.error.message;return;}var v=!!(r.data&&r.data.paused);$('leagueState').innerHTML=v?'<strong style="color:#b7791f">Paused.</strong> League operations are stopped.':'<strong style="color:#16834a">Running.</strong> League operations are active.';});}
-  function setPause(v){db.rpc('set_system_pause',{p_paused:v}).then(function(r){msg(r.error?r.error.message:(v?'League paused.':'League resumed.'));loadLeagueState();});}
   function loadAppState(){db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(r){if(r.error){$('appState').textContent=r.error.message;return;}var v=!!(r.data&&r.data.app_frozen);$('appState').innerHTML=v?'<strong style="color:#b91c1c">Entire app frozen.</strong>':'<strong style="color:#16834a">Application available.</strong>';});}
   function setAppFreeze(v){db.rpc('set_application_freeze',{p_frozen:v}).then(function(r){msg(r.error?r.error.message:(v?'Entire app frozen.':'Application unfrozen.'));loadAppState();});}
   function currentRoleKey(u){var r=String(u.system_role).toUpperCase();return r==='REFEREE'&&u.official_title==='Match Commissioner'?'MATCH_COMMISSIONER':r;}
-  function startManagedAccountSession(userId, button){
-    if(!confirm('Open this account in a separate, audited session? Your Developer session will remain signed in here. Actions in the new tab will be recorded under the selected account.')) return;
-    var target=window.open('about:blank','_blank');
-    if(!target){alert('Allow pop-ups for this site, then try again.');return;}
-    button.disabled=true;button.textContent='Preparing secure session…';
-    db.functions.invoke('developer-login-as-user',{body:{target_user_id:userId}}).then(function(result){
-      if(result.error||!result.data||!result.data.token_hash||!result.data.portal){
-        target.close();alert((result.data&&result.data.error)||(result.error&&result.error.message)||'Could not start the account session.');return;
-      }
-      var url=new URL(result.data.portal,location.href);
-      url.hash='slfa-login-as='+encodeURIComponent(result.data.token_hash);
-      target.location.replace(url.href);
-    }).catch(function(error){target.close();alert(error&&error.message?error.message:'Could not start the account session.');})
-    .finally(function(){button.disabled=false;button.textContent='Login as User';});
-  }
   function loadAccountsDev(p){
     db.from('user_profiles').select('id,full_name,email,photo_url,system_role,status,official_title').order('email').limit(500).then(function(r){
       if(r.error){$('roleList').textContent=r.error.message;return;}var rows=r.data||[];
@@ -1729,11 +1524,10 @@
         var opts=(waiting?'<option value="NONE" selected>Waiting for a role</option>':'')+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'"'+(currentRoleKey(u)===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('');
         var pic=u.photo_url?'<img src="'+esc(u.photo_url)+'" alt="" style="width:50px;height:50px;border-radius:50%;object-fit:cover;margin-right:10px">':'';
         return '<div class="post"><div style="display:flex;align-items:center">'+pic+'<div><strong>'+esc(u.full_name||u.email)+(me?' (you)':'')+'</strong><div class="muted">'+esc(u.email)+' · '+esc(u.status)+' · '+esc(u.system_role||'NONE')+'</div></div></div>'+
-          (dev?'<div class="muted">Developer account · protected</div>':'<label>Role</label><select data-role-for="'+esc(u.id)+'">'+opts+'</select>'+'<div class="btns"><button class="small" data-apply="'+esc(u.id)+'">Apply role</button>'+(me?'':'<button class="small '+(active?'danger':'')+'" data-status="'+esc(u.id)+'" data-next="'+(active?'Suspended':'Active')+'">'+(active?'Suspend':'Restore')+'</button><button class="small danger" data-delete="'+esc(u.id)+'">Delete account</button>')+(dev||!active||me?'':'<button class="small secondary" data-login-as-account="'+esc(u.id)+'">Login as User</button>')+'</div>')+'</div>';
+          (dev?'<div class="muted">Developer account · protected</div>':'<label>Role</label><select data-role-for="'+esc(u.id)+'">'+opts+'</select>'+'<div class="btns"><button class="small" data-apply="'+esc(u.id)+'">Apply role</button>'+(me?'':'<button class="small '+(active?'danger':'')+'" data-status="'+esc(u.id)+'" data-next="'+(active?'Suspended':'Active')+'">'+(active?'Suspend':'Restore')+'</button><button class="small danger" data-delete="'+esc(u.id)+'">Delete account</button>')+'</div>')+'</div>';
       }).join(''):'No accounts yet.';
       document.querySelectorAll('[data-apply]').forEach(function(b){b.onclick=function(){var id=b.dataset.apply,el=document.querySelector('[data-role-for="'+id+'"]');if(!el)return;db.rpc('set_user_role',{p_user:id,p_role:el.value}).then(function(x){msg(x.error?x.error.message:'Role updated.');loadAccountsDev(p);loadRoleLog();});};});
       document.querySelectorAll('[data-status]').forEach(function(b){b.onclick=function(){var st=b.dataset.next;db.rpc('set_account_status',{p_user:b.dataset.status,p_status:st}).then(function(x){msg(x.error?x.error.message:(st==='Active'?'Account restored.':'Account suspended.'));loadAccountsDev(p);});};});
-      document.querySelectorAll('[data-login-as-account]').forEach(function(b){b.onclick=function(){startManagedAccountSession(b.dataset.loginAsAccount,b);};});
       document.querySelectorAll('[data-delete]').forEach(function(b){b.onclick=function(){if(!confirm('Permanently delete this account? This cannot be undone.'))return;db.rpc('delete_user_account',{p_user:b.dataset.delete}).then(function(x){msg(x.error?x.error.message:'Account deleted.');loadAccountsDev(p);});};});
     });
   }
@@ -2190,13 +1984,9 @@
       input('npPOTM','Player of the match') +
       '<label for="npManagerComments">Manager comments</label><textarea id="npManagerComments" rows="2"></textarea>' +
       '<label for="npAnalysis">Post-match analysis</label><textarea id="npAnalysis" rows="3"></textarea></section>' +
-      '<p class="muted">All posts are reviewed by a Super Admin or Developer before appearing in the public Media Centre. Save a draft or submit it for approval.</p>' +
+      '<p class="muted">Submitted posts are reviewed by a Super Admin before appearing in the public Media Centre. Save a draft or submit it for approval.</p>' +
       '<div class="btns"><button class="secondary" id="npDraft">Save draft</button><button class="primary" id="npSubmit">Submit for approval</button></div>' +
       '<h2 class="rt">My posts</h2><div id="myPosts" class="muted">Loading…</div>' +
-      '<h2 class="rt">Fan poll</h2>' +
-      input('pqQ', 'Question') + input('pqO1', 'Option 1') + input('pqO2', 'Option 2') + input('pqO3', 'Option 3 (optional)') + input('pqO4', 'Option 4 (optional)') +
-      '<div class="btns"><button class="primary" id="pqSave">Publish poll</button></div>' +
-      '<div id="pollList" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
     function save(status) {
@@ -2264,46 +2054,11 @@
         return '<option value="' + esc(m.id) + '" data-title="' + esc(t) + '" data-league="' + esc(m.league_id || '') + '">' + esc(m.home_team) + ' ' + esc(m.home_score) + '–' + esc(m.away_score) + ' ' + esc(m.away_team) + ' · ' + esc(new Date(m.match_date).toLocaleDateString()) + '</option>';
       }).join('');
     });
-    $('pqSave').addEventListener('click', savePoll);
     db.from('leagues').select('id, name').eq('is_active', true).order('sort_order').then(function (r) {
       $('npLeague').innerHTML = '<option value="">All leagues (general)</option>' + (r.data || []).map(function (l) {
         return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>'; }).join('');
     });
     loadMine();
-    loadPolls();
-  }
-  function savePoll() {
-    var q = $('pqQ').value.trim();
-    var opts = ['pqO1', 'pqO2', 'pqO3', 'pqO4'].map(function (x) { return $(x).value.trim(); }).filter(Boolean);
-    if (!q) { msg('Write the poll question.'); return; }
-    if (opts.length < 2) { msg('Give at least two options.'); return; }
-    db.auth.getUser().then(function (u) {
-      return db.from('polls').insert({ question: q, created_by: u.data.user.id }).select('id').single();
-    }).then(function (r) {
-      if (r.error) throw r.error;
-      return db.from('poll_options').insert(opts.map(function (label, i) { return { poll_id: r.data.id, label: label, sort_order: i }; }));
-    }).then(function (r) {
-      if (r.error) throw r.error;
-      msg('Poll published.');
-      ['pqQ', 'pqO1', 'pqO2', 'pqO3', 'pqO4'].forEach(function (x) { $(x).value = ''; });
-      loadPolls();
-    }).catch(function (e) { msg((e && e.message) || 'Could not create the poll.'); });
-  }
-  function loadPolls() {
-    db.from('polls').select('id, question, is_open').order('created_at', { ascending: false }).limit(20).then(function (r) {
-      var rows = r.data || [];
-      $('pollList').innerHTML = rows.length ? rows.map(function (x) {
-        return '<div class="post"><strong>' + esc(x.question) + '</strong><div class="muted">' + (x.is_open ? 'Open for votes' : 'Closed') + '</div>' +
-          '<div class="btns"><button class="small" data-poll-toggle="' + esc(x.id) + '" data-next="' + (x.is_open ? 'false' : 'true') + '">' + (x.is_open ? 'Close poll' : 'Reopen poll') + '</button></div></div>';
-      }).join('') : 'No polls yet.';
-      document.querySelectorAll('[data-poll-toggle]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          db.from('polls').update({ is_open: b.dataset.next === 'true' }).eq('id', b.dataset.pollToggle).then(function (res) {
-            msg(res.error ? res.error.message : 'Poll updated.'); loadPolls();
-          });
-        });
-      });
-    });
   }
   function loadMine() {
     db.auth.getUser().then(function (u) {
@@ -2328,13 +2083,10 @@
   // LIVE ADMIN: lists update when a result, news post, event or assignment changes
   var adminTimer = null;
   function refreshAdmin() {
-    if ($('pendingResults')) loadPendingResults();
     if ($('pendingComments')) loadPendingComments();
     if ($('usageCounts')) loadUsage();
     if ($('fanReports')) loadFanReports();
     if ($('reviewList')) loadReview();
-    if ($('squadReview')) loadSquadReview();
-    if ($('transferReview')) loadTransferReview();
     if ($('myPosts')) loadMine();
     if ($('rfMatch') && $('rfMatch').value) loadRefMatch($('rfMatch').value);
     if ($('lvMatch') && $('lvMatch').value) loadLiveMatch($('lvMatch').value);
