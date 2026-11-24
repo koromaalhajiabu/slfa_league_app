@@ -114,7 +114,7 @@ CREATE OR REPLACE FUNCTION public.admin_player_reports()
 AS $function$
 begin
   if app_role() <> 'SUPER_ADMIN' then
-    raise exception 'Only the Super Admin or Developer can review player reports.';
+    raise exception 'Only the Super Admin can review player reports.';
   end if;
   return query
     select r.id, r.player_name, r.club_id, r.category, r.description, r.status, r.club_response,
@@ -255,7 +255,7 @@ BEGIN
        AND lower(coalesce(status, '')) = 'active';
 
     IF coalesce(v_role, '') <> 'SUPER_ADMIN' THEN
-      RAISE EXCEPTION 'Only an active Super Admin or Developer can publish league news. Submit the post for approval.'
+      RAISE EXCEPTION 'Only an active Super Admin can publish league news. Submit the post for approval.'
         USING ERRCODE = '42501';
     END IF;
   END IF;
@@ -273,7 +273,7 @@ CREATE OR REPLACE FUNCTION public.match_audit_entries(p_match_id text DEFAULT NU
 AS $function$
 begin
   if app_role() <> 'SUPER_ADMIN' then
-    raise exception 'Only the Super Admin and Developer can view the match audit trail.';
+    raise exception 'Only the Super Admin can view the match audit trail.';
   end if;
   return query
     select l.id, l.occurred_at, l.actor_name, l.actor_role, l.table_name, l.action, l.record_id, l.match_id, l.reason, l.old_data, l.new_data
@@ -292,7 +292,7 @@ CREATE OR REPLACE FUNCTION public.match_audit_trail(p_match_id text DEFAULT NULL
 AS $function$
 begin
   if app_role() <> 'SUPER_ADMIN' then
-    raise exception 'Only the Super Admin and Developer can view the match audit trail.';
+    raise exception 'Only the Super Admin can view the match audit trail.';
   end if;
   return query
     select l.occurred_at, l.actor_name, l.actor_role, l.table_name, l.action, l.record_id, l.match_id, l.reason, l.old_data, l.new_data
@@ -483,7 +483,7 @@ declare
 begin
   caller_role := public.app_role();
   if caller_role <> 'DEVELOPER' then
-    raise exception 'Only the Developer or Super Admin can change account status.';
+    raise exception 'Only the Developer can change account status.';
   end if;
   if p_status not in ('Active', 'Suspended') then
     raise exception 'Status must be Active or Suspended.';
