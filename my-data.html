@@ -36,7 +36,7 @@
 <main>
   <a href="privacy.html">← Privacy notice</a>
   <h1>My fan data</h1>
-  <p class="muted">This page shows the match comments, problem reports, predictions and poll votes sent from this browser. Your browser keeps a small code to link them to you. Nobody else can see this page's contents unless they use this device. Clearing the app's site data removes the code, and the records then cannot be found again from this device.</p>
+  <p class="muted">This page provides access to match comments, problem reports and historic supporter entries previously submitted from this browser. Predictions and polls are no longer available in the current public app. Your browser keeps a small code to link them to you. Nobody else can see this page's contents unless they use this device. Clearing the app's site data removes the code, and the records then cannot be found again from this device.</p>
 
   <div class="card" id="summary">
     <p id="loading" class="muted">Looking for your records…</p>
@@ -44,8 +44,8 @@
     <div class="counts" id="counts" hidden>
       <div class="count"><strong id="cReports">0</strong>Problem reports</div>
       <div class="count"><strong id="cComments">0</strong>Comments</div>
-      <div class="count"><strong id="cPredictions">0</strong>Predictions</div>
-      <div class="count"><strong id="cVotes">0</strong>Poll votes</div>
+      <div class="count"><strong id="cPredictions">0</strong>Historic predictions</div>
+      <div class="count"><strong id="cVotes">0</strong>Historic poll votes</div>
     </div>
     <p class="status" id="status" role="status" aria-live="polite"></p>
   </div>
@@ -58,7 +58,7 @@
 
   <h2>Delete my data</h2>
   <div class="card">
-    <p class="muted">Deleting is permanent. Deleting problem reports also removes them from the league's review list. Comments and predictions that are already published will disappear from the app.</p>
+    <p class="muted">Deleting is permanent. Deleting problem reports also removes them from the review list. Historic entries may already have been removed from the public interface.</p>
     <label class="opt"><input type="checkbox" value="reports" class="kind"> Problem reports</label>
     <label class="opt"><input type="checkbox" value="comments" class="kind"> Comments</label>
     <label class="opt"><input type="checkbox" value="predictions" class="kind"> Predictions</label>
