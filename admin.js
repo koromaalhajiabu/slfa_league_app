@@ -1131,7 +1131,8 @@
         season_id: $('miSeason').value ? Number($('miSeason').value) : null,
         home_team: home, away_team: away, match_date: new Date(date).toISOString(),
         venue: $('miVenue').value.trim() || null, match_status: nextStatus,
-        status_reason: reason || null
+        status_reason: reason || null,
+        change_reason: (reason || 'Fixture information updated by Super Admin') + ' · ' + new Date().toISOString()
       };
       if (!previous || String(previous.match_status).toUpperCase() !== nextStatus || ['POSTPONED','RESCHEDULED','CANCELLED'].indexOf(nextStatus) >= 0) {
         payload.status_set_at = new Date().toISOString();
@@ -1732,10 +1733,7 @@
         var m = r.data;
         if (!m) { msg('Match details are unavailable. Open the match while connected before using offline mode.'); return; }
         var hg = goalsFor(m.home_team), ag = goalsFor(m.away_team);
-        if (!confirm('Submit ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + ' as the final score for approval? This also marks the match as full time.')) return;
-        var finish = setMatch(id, { match_status: 'FT', match_minute: null }).then(function (r) {
-          return r.error ? r.error.message : '';
-        }, function () { return 'Full time could not be set. Set it again when you are back online.'; });
+        if (!confirm('Submit ' + m.home_team + ' ' + hg + ' – ' + ag + ' ' + m.away_team + ' as the official final score? The system will confirm and publish it.')) return;
         return db.auth.getUser().then(function (u) {
           if (!u.data || !u.data.user) throw new Error('Sign in again before submitting the final score.');
           var submission = {
@@ -1744,10 +1742,12 @@
           };
           return queueAndSyncRefereeResult(submission).then(function (res) {
             if (res.error && !res.queued) { msg(res.error.message); return; }
-            var text = res.queued ? 'Final score saved on this phone. It will sync automatically when internet returns.' :
-              'Final score confirmed and published.';
-            finish.then(function (e) { msg(e || text); });
-            if (!res.queued) loadRefMatch(id);
+            if (res.queued) {
+              msg('Final score saved on this phone. It will sync automatically when internet returns.');
+            } else {
+              msg('Final score confirmed and published.');
+              loadRefMatch(id);
+            }
           });
         });
       }).catch(function (err) { msg(err.message || 'Could not submit the final score.'); });
@@ -1780,8 +1780,12 @@
   }
   // Every status or minute change stamps status_set_at, so the public clock can count on from it
   function setMatch(id, fields) {
-    if (fields && (fields.match_status !== undefined || fields.match_minute !== undefined) && fields.status_set_at === undefined) {
-      fields = Object.assign({}, fields, { status_set_at: new Date().toISOString() });
+    if (fields && (fields.match_status !== undefined || fields.match_minute !== undefined)) {
+      var stamp = new Date().toISOString();
+      fields = Object.assign({}, fields, {
+        status_set_at: fields.status_set_at === undefined ? stamp : fields.status_set_at,
+        change_reason: fields.change_reason || ('Match status or clock updated through authorised official controls at ' + stamp)
+      });
     }
     return db.from('matches').update(fields).eq('id', id);
   }
