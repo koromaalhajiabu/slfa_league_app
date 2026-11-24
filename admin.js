@@ -272,7 +272,7 @@
       '<label for="miLeague">Competition</label><select id="miLeague"><option value="">Choose competition…</option></select>' +
       '<label for="miSeason">Season</label><select id="miSeason"><option value="">Choose season…</option></select>' +
       input('miHome', 'Home team') + input('miAway', 'Away team') + input('miDate', 'Kick-off date and time', 'datetime-local') + input('miVenue', 'Match venue') +
-      '<label for="miStatus">Fixture status</label><select id="miStatus"><option value="SCHEDULED">Scheduled</option><option value="POSTPONED">Postponed</option><option value="RESCHEDULED">Rescheduled</option><option value="CANCELLED">Cancelled</option></select>' +
+      '<label for="miStatus">Fixture status</label><select id="miStatus"><option value="SCHEDULED">Scheduled</option><option value="POSTPONED">Postponed</option><option value="RESCHEDULED">Rescheduled</option><option value="CANCELLED">Cancelled</option><option value="LIVE" disabled>Live · referee controlled</option><option value="HT" disabled>Half Time · referee controlled</option><option value="FT" disabled>Full Time · referee controlled</option></select>' +
       '<label for="miReason">Official reason / status note</label><textarea id="miReason" rows="3" maxlength="1000" placeholder="Required for postponement, rescheduling or cancellation"></textarea>' +
       '<div class="btns"><button class="primary" id="miSave" type="button">Save match information</button><button class="secondary" id="miReset" type="button">Clear selection</button></div><div class="status" id="miStatusMsg" role="status"></div></section>' +
       '<h2 class="rt">Live match</h2>' +
@@ -1076,7 +1076,7 @@
     function clear() {
       select.value = ''; $('miLeague').value = ''; $('miSeason').value = '';
       $('miHome').value = ''; $('miAway').value = ''; $('miDate').value = '';
-      $('miVenue').value = ''; $('miStatus').value = 'SCHEDULED'; $('miReason').value = '';
+      $('miVenue').value = ''; $('miStatus').disabled = false; $('miStatus').value = 'SCHEDULED'; $('miReason').value = '';
       note('Select a fixture to edit its official information.');
     }
     function load() {
@@ -1108,7 +1108,9 @@
       $('miSeason').value = m.season_id == null ? '' : String(m.season_id);
       $('miHome').value = m.home_team || ''; $('miAway').value = m.away_team || '';
       $('miDate').value = toLocalDate(m.match_date); $('miVenue').value = m.venue || '';
-      $('miStatus').value = ['SCHEDULED','POSTPONED','RESCHEDULED','CANCELLED'].indexOf(String(m.match_status).toUpperCase()) >= 0 ? String(m.match_status).toUpperCase() : 'SCHEDULED';
+      var currentStatus = String(m.match_status || 'SCHEDULED').toUpperCase();
+      $('miStatus').value = ['SCHEDULED','POSTPONED','RESCHEDULED','CANCELLED','LIVE','HT','FT'].indexOf(currentStatus) >= 0 ? currentStatus : 'SCHEDULED';
+      $('miStatus').disabled = ['LIVE','HT','FT'].indexOf(currentStatus) >= 0;
       $('miReason').value = m.status_reason || '';
       note('Editing fixture #' + m.id + '. Score and match events are protected from this editor.');
     }
