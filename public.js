@@ -1014,19 +1014,6 @@
       });
   }
 
-  // Freeze banner: shown to everyone while the league is frozen
-  function loadPauseBanner() {
-    db.from('system_pause').select('paused, reason').eq('id', 1).maybeSingle().then(function (res) {
-      var el = $('pauseBanner');
-      if (!el) return;
-      var st = res.data;
-      el.hidden = !(st && st.paused);
-      el.textContent = st && st.paused
-        ? 'The league is frozen for now. Results and fixtures cannot change until it is resumed.' + (st.reason ? ' Reason: ' + st.reason : '')
-        : '';
-    });
-  }
-
   var appFreezeBanner = null;
   function refreshAll() {
     db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(fr){
@@ -1041,7 +1028,7 @@
         if(area)area.hidden=true;return;
       }
       if(appFreezeBanner){appFreezeBanner.remove();appFreezeBanner=null;}if(area)area.hidden=false;
-      Promise.all([loadLeagueData(), loadSeasonData()]).then(function(){loadMatches();loadLive();loadMatchDay();loadTable();loadTeams();loadPlayers();loadNews();loadVideos();loadPauseBanner();});
+      Promise.all([loadLeagueData(), loadSeasonData()]).then(function(){loadMatches();loadLive();loadMatchDay();loadTable();loadTeams();loadPlayers();loadNews();loadVideos();});
     });
   }
 
@@ -1059,7 +1046,7 @@
   }
   function subscribeLive() {
     var ch = db.channel('public-league');
-    ['matches', 'match_events', 'league_standings', 'league_clubs', 'club_squad', 'top_scorers', 'top_assists', 'clean_sheets', 'media_posts', 'system_pause','application_control'].forEach(function (t) {
+    ['matches', 'match_events', 'league_standings', 'league_clubs', 'club_squad', 'top_scorers', 'top_assists', 'clean_sheets', 'media_posts', 'application_control'].forEach(function (t) {
       ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, scheduleRefresh);
     });
     ch.subscribe();

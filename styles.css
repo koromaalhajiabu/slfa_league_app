@@ -36,8 +36,6 @@ button.small { padding:6px 11px; border-radius:8px; border:1px solid var(--line)
 button.danger { border-color:var(--danger); color:var(--danger); }
 .status { font-size:12px; color:var(--muted); margin-top:10px; min-height:16px; }
 .hidden { display:none !important; }
-.pause-banner { margin:14px 0 0; padding:12px 16px; border-radius:16px; background:linear-gradient(135deg,rgba(224,71,76,.22),rgba(224,71,76,.08)); border:1px solid rgba(224,71,76,.45); color:#ffd7d4; font-size:13.5px; line-height:1.5; }
-.pause-banner[hidden] { display:none; }
 .install-wrap { position:relative; }
 .install-btn { border:0; border-radius:999px; padding:8px 14px; background:linear-gradient(135deg,#1eb53a,#0072c6); color:#fff; font-size:12px; font-weight:500; letter-spacing:.04em; cursor:pointer; box-shadow:0 8px 20px -10px rgba(0,114,198,.8); }
 .install-hint { position:absolute; right:0; top:calc(100% + 8px); width:min(280px, 80vw); padding:12px 14px; border-radius:14px; background:rgba(7,27,48,.96); border:1px solid rgba(30,181,58,.35); font-size:12.5px; line-height:1.5; color:#e8f0f8; z-index:40; }
@@ -203,11 +201,6 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
 .league-name { font-family:Georgia,"Times New Roman",serif; font-weight:500; font-size:16px; color:var(--accent); margin:16px 0 6px; }
 .league-row td { font-weight:600; color:var(--accent2); padding-top:14px; }
 
-/* Fan polls */
-.poll-row { display:grid; grid-template-columns:1fr auto; gap:4px 10px; margin:8px 0; }
-.poll-bar { grid-column:1 / -1; height:8px; border-radius:6px; background:var(--line); overflow:hidden; }
-.poll-bar span { display:block; height:100%; background:var(--accent); }
-
 /* Match-day touch screen (referee): high contrast, large tap targets */
 .touchpad { background:#000; color:#fff; padding:14px; border-radius:16px; border:2px solid #fff; margin:14px 0; }
 .touchpad .tp-score { font-size:24px; font-weight:800; text-align:center; margin-bottom:8px; }
@@ -252,7 +245,6 @@ button.secondary, button.small { border-radius:12px; transition:background .2s e
 .leagueSwitch .chip.on { background:var(--accent); color:#fff; border-color:var(--accent); }
 
 /* Predictions and videos */
-.pred .predIn input { width:64px; min-height:44px; font-size:20px; text-align:center; }
 .btnlink { display:inline-block; min-height:44px; line-height:44px; padding:0 16px; border-radius:12px; border:1px solid var(--line); color:var(--accent); text-decoration:none; font-weight:600; }
 .lb td.pts { font-weight:700; }
 

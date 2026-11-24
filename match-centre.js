@@ -222,9 +222,7 @@
           (meetings.length?'<div class="slfa-mc-h2h-recent">'+meetings.slice(0,3).map(function(m){return '<p>'+esc(dateText(m.match_date))+' · '+esc(m.home_team)+' '+esc(m.home_score)+'–'+esc(m.away_score)+' '+esc(m.away_team)+'</p>';}).join('')+'</div>':'')+'</section>';
       }
       if(lu.length||ev.length) html+='<div class="slfa-mc-print-row"><button type="button" class="secondary" data-print-match="'+esc(String(id))+'">Print match sheet</button></div>';
-      box.innerHTML=(html||'<p class="slfa-mc-no-events">No additional match details have been published.</p>')+'<div class="slfa-mc-comments"></div><div class="slfa-mc-report"></div>';
-      loadComments(id,box.querySelector('.slfa-mc-comments'));
-      renderReport(id,box.querySelector('.slfa-mc-report'));
+      box.innerHTML=(html||'<p class="slfa-mc-no-events">No additional match details have been published.</p>');
     }).catch(function(){box.innerHTML='<p class="slfa-mc-no-events">Match details are temporarily unavailable.</p>';});
   }
   // Printable match sheet: built from the same published data as the match page, printed from a hidden frame (A4).
@@ -280,64 +278,6 @@
     var b = e.target.closest && e.target.closest('[data-print-match]');
     if (b) printMatchSheet(b.getAttribute('data-print-match'));
   });
-  function voterKey(){try{var k=localStorage.getItem('slfa_voter_key');if(!k){k=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);localStorage.setItem('slfa_voter_key',k);}return k;}catch(e){return null;}}
-  function fanName(){try{return localStorage.getItem('slfa_fan_name')||'';}catch(e){return '';}}
-  // Report a wrong score, a wrong player or another problem. Reports go to SLFA staff.
-  function renderReport(matchId,box){
-    if(!box)return;
-    box.innerHTML='<details class="slfa-mc-report-box"><summary>Report a problem</summary>'+
-      '<form class="slfa-mc-comment-form" novalidate><label>What is wrong?<select name="type"><option value="WRONG_SCORE">Wrong score</option><option value="WRONG_PLAYER">Wrong or missing player</option><option value="OTHER">Something else</option></select></label>'+
-      '<label>Tell us more<textarea name="message" maxlength="500" rows="3" placeholder="What should we check?"></textarea></label>'+
-      '<button type="submit" class="slfa-mc-comment-send">Send report</button><p class="status" role="status"></p></form></details>';
-    var form=box.querySelector('form'),msg=form.querySelector('.status');
-    form.addEventListener('submit',function(e){
-      e.preventDefault();
-      var message=form.message.value.trim();
-      if(message.length<5){msg.textContent='Describe the problem in at least 5 characters.';return;}
-      var key=voterKey();if(!key){msg.textContent='Reports need your browser to store a small code. Turn off private browsing and try again.';return;}
-      var btn=form.querySelector('button');btn.disabled=true;msg.textContent='Sending…';
-      if (window.slfaTrack) window.slfaTrack('fan_report');
-      db.rpc('submit_fan_report',{p_match_id:Number(matchId),p_type:form.type.value,p_message:message,p_voter_key:key}).then(function(r){
-        btn.disabled=false;
-        if(r.error){msg.textContent=r.error.message;return;}
-        form.message.value='';
-        msg.textContent='Thank you. SLFA staff will look at this.';
-      });
-    });
-  }
-  // Fan comments: only approved comments are shown. New ones wait for moderator approval.
-  function loadComments(matchId,box){
-    if(!box)return;
-    db.from('match_comments').select('id,fan_name,body,created_at').eq('match_id',String(matchId)).eq('status','APPROVED').order('created_at',{ascending:false}).limit(30)
-    .then(function(res){
-      var rows=res.error?null:(res.data||[]);
-      var list=rows===null?'<p class="slfa-mc-no-events">Comments are temporarily unavailable.</p>':
-        rows.length?rows.map(function(c){return '<div class="slfa-mc-comment"><strong>'+esc(c.fan_name)+'</strong><small>'+esc(dateText(c.created_at))+'</small><p>'+esc(c.body)+'</p></div>';}).join(''):
-        '<p class="slfa-mc-no-events">No comments yet.</p>';
-      box.innerHTML='<h4>Fan comments</h4>'+
-        '<form class="slfa-mc-comment-form" novalidate><label>Your name<input name="fan" maxlength="30" value="'+esc(fanName())+'" autocomplete="nickname"></label>'+
-        '<label>Comment<textarea name="body" maxlength="280" rows="2" placeholder="Say something about this match"></textarea></label>'+
-        '<button type="submit" class="slfa-mc-comment-send">Send for approval</button><p class="status" role="status"></p></form>'+
-        '<p class="slfa-mc-comment-note">Comments appear here after an admin approves them.</p>'+list;
-      var form=box.querySelector('form'),msg=form.querySelector('.status');
-      form.addEventListener('submit',function(e){
-        e.preventDefault();
-        var name=form.fan.value.trim(),body=form.body.value.trim();
-        if(name.length<2){msg.textContent='Enter your name (at least 2 letters).';return;}
-        if(!body){msg.textContent='Write a comment first.';return;}
-        var key=voterKey();if(!key){msg.textContent='Comments need your browser to store a small code. Turn off private browsing and try again.';return;}
-        var btn=form.querySelector('button');btn.disabled=true;msg.textContent='Sending…';
-        if (window.slfaTrack) window.slfaTrack('fan_comment');
-        db.rpc('submit_match_comment',{p_match_id:Number(matchId),p_fan_name:name,p_body:body,p_voter_key:key}).then(function(r){
-          btn.disabled=false;
-          if(r.error){msg.textContent=r.error.message;return;}
-          try{localStorage.setItem('slfa_fan_name',name);}catch(x){}
-          form.body.value='';
-          msg.textContent='Thank you. Your comment will appear once it is approved.';
-        });
-      });
-    });
-  }
   function fetchData() {
     var request = Promise.all([
       db.from('matches').select('id,match_date,venue,match_status,match_minute,status_set_at,league_id,season_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(500),

@@ -198,7 +198,7 @@
 
   function superAdmin(p) {
     box().innerHTML =
-      '<section class="sa-command-centre"><h2 class="rt">Super Admin Command Centre</h2><p class="muted">Live operational overview from the connected SLFA database. These are record totals, not performance estimates.</p><div class="sa-metric-grid">'+[['saMetricCompetitions','Competitions'],['saMetricSeasons','Seasons'],['saMetricMatches','Fixtures and results'],['saMetricClubs','Clubs'],['saMetricPlayers','Squad records'],['saMetricReports','Fan reports']].map(function(x){return '<article class="sa-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="muted" id="saOverviewStatus" role="status">Loading operational totals…</div><button class="secondary" type="button" id="saRefreshOverview">Refresh overview</button></section>' +
+      '<section class="sa-command-centre"><h2 class="rt">Super Admin Command Centre</h2><p class="muted">Live operational overview from the connected SLFA database. These are record totals, not performance estimates.</p><div class="sa-metric-grid">'+[['saMetricCompetitions','Competitions'],['saMetricSeasons','Seasons'],['saMetricMatches','Fixtures and results'],['saMetricClubs','Clubs'],['saMetricPlayers','Squad records']].map(function(x){return '<article class="sa-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="muted" id="saOverviewStatus" role="status">Loading operational totals…</div><button class="secondary" type="button" id="saRefreshOverview">Refresh overview</button></section>' +
       '<h2 class="rt">Downloads</h2>' +
       '<p class="muted">Super Admin only. Each download is recorded in the export log.</p>' +
       '<div class="btns"><button class="secondary" data-export="matches">Matches and results (CSV)</button>' +
@@ -290,14 +290,12 @@
       '<h2 class="rt">News awaiting approval</h2><div id="reviewList" class="muted">Loading…</div>' +
       '<h2 class="rt">Published media</h2><div id="publishedMediaList" class="muted">Loading…</div>' +
       '<h2 class="rt">Media engagement · last 30 days</h2><div id="mediaAnalytics" class="muted">Loading…</div>' +
-      '<h2 class="rt">Fan comments awaiting approval</h2><div id="pendingComments" class="muted">Loading…</div>' +
       '<h2 class="rt">Audit log</h2>' +
       '<p class="muted">Recent changes across the app, newest first. Read only.</p>' +
       '<label for="auDays">Show</label><select id="auDays"><option value="30">Last 30 days</option><option value="90" selected>Last 90 days</option><option value="365">Last year</option></select>' +
       '<label for="auArea">Area</label><select id="auArea"><option value="">All areas</option></select>' +
       '<div id="auditList" class="muted" aria-live="polite">Loading…</div>' +
       '<div id="usagePanel"><h2 class="rt">App usage, last 30 days</h2><div id="usageCounts" class="muted">Loading…</div></div>' +
-      '<h2 class="rt">Problems reported by fans</h2><div id="fanReports" class="muted">Loading…</div>' +
       '<div class="status" id="roleMsg"></div>';
 
     $('fxSave').addEventListener('click', function () {
@@ -333,8 +331,6 @@
     loadStatusOptions();
     wireLive();
     wireOfficialAssignments();
-    loadPendingComments();
-    loadFanReports();
     loadSeasonAdmin();
     loadAuditLog();
     wireImport();
@@ -714,32 +710,8 @@
     });
   }
 
-  function loadFanReports() {
-    var box = $('fanReports'); if (!box) return;
-    var labels = { WRONG_SCORE: 'Wrong score', WRONG_PLAYER: 'Wrong or missing player', OTHER: 'Something else' };
-    db.from('fan_reports').select('id, report_type, message, created_at, matches(home_team, away_team)').eq('status', 'OPEN').order('created_at', { ascending: true }).limit(100)
-      .then(function (r) {
-        if (r.error) { box.textContent = 'Reports could not be loaded.'; return; }
-        var rows = r.data || [];
-        box.innerHTML = rows.length ? rows.map(function (x) {
-          var m = x.matches || {};
-          return '<div class="post"><strong>' + esc(labels[x.report_type] || x.report_type) + '</strong>' +
-            (m.home_team ? ' · ' + esc(m.home_team) + ' v ' + esc(m.away_team) : '') +
-            '<p>' + esc(x.message) + '</p>' +
-            '<div class="btns"><button class="primary" data-report-resolve="' + x.id + '">Mark resolved</button></div></div>';
-        }).join('') : 'No open reports.';
-        box.querySelectorAll('[data-report-resolve]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            db.from('fan_reports').update({ status: 'RESOLVED', resolved_at: new Date().toISOString() }).eq('id', Number(b.dataset.reportResolve)).then(function (res) {
-              msg(res.error ? res.error.message : 'Report marked resolved.'); loadFanReports(); });
-          });
-        });
-      });
-  }
-
-  // Fan comments wait here until approved. Approved comments appear on the match details.
   // Usage counts from the privacy-light event log (Super Admins and Developers only)
-  var usageLabels = { app_open: 'App opened', tab_matches: 'Matches tab', tab_table: 'Table tab', tab_teams: 'Teams tab', tab_players: 'Players tab', tab_news: 'News tab', tab_videos: 'Videos tab', tab_predict: 'Predict tab', 'tab_records-rules': 'Records & Rules tab', 'tab_publications': 'Publications tab', language_en: 'English chosen', language_fr: 'French chosen', language_kri: 'Krio chosen', theme_light: 'Light mode on', theme_dark: 'Dark mode on', favourite_club: 'Favourite club changed', match_details: 'Match details opened', prediction: 'Predictions sent', fan_comment: 'Fan comments sent', fan_report: 'Problem reports sent' };
+  var usageLabels = { app_open: 'App opened', tab_matches: 'Matches tab', tab_table: 'Table tab', tab_teams: 'Teams tab', tab_players: 'Players tab', tab_news: 'News tab', tab_videos: 'Videos tab', 'tab_records-rules': 'Records & Rules tab', 'tab_publications': 'Publications tab', language_en: 'English chosen', language_fr: 'French chosen', language_kri: 'Krio chosen', theme_light: 'Light mode on', theme_dark: 'Dark mode on', favourite_club: 'Favourite club changed', match_details: 'Match details opened' };
   function loadUsage() {
     var box = $('usageCounts'); if (!box) return;
     db.rpc('analytics_summary', { p_days: 30 }).then(function (r) {
@@ -752,34 +724,6 @@
         : 'No usage recorded yet.';
     });
   }
-  function loadPendingComments() {
-    var box = $('pendingComments'); if (!box) return;
-    db.from('match_comments').select('id, fan_name, body, created_at, matches(home_team, away_team)').eq('status', 'PENDING').order('created_at', { ascending: true }).limit(100)
-      .then(function (r) {
-        if (r.error) { box.textContent = 'Comments could not be loaded.'; return; }
-        var rows = r.data || [];
-        box.innerHTML = rows.length ? rows.map(function (x) {
-          var m = x.matches || {};
-          return '<div class="post"><strong>' + esc(x.fan_name) + '</strong> on ' + esc(m.home_team || '') + ' v ' + esc(m.away_team || '') +
-            '<p>' + esc(x.body) + '</p>' +
-            '<div class="btns"><button class="primary" data-comment-approve="' + x.id + '">Approve</button><button class="secondary" data-comment-reject="' + x.id + '">Reject</button></div></div>';
-        }).join('') : 'No comments waiting.';
-        box.querySelectorAll('[data-comment-approve]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            db.from('match_comments').update({ status: 'APPROVED', reviewed_at: new Date().toISOString() }).eq('id', Number(b.dataset.commentApprove)).then(function (res) {
-              msg(res.error ? res.error.message : 'Comment approved.'); loadPendingComments(); });
-          });
-        });
-        box.querySelectorAll('[data-comment-reject]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            if (!confirm('Reject this comment? It will not be shown.')) return;
-            db.from('match_comments').update({ status: 'REJECTED', reviewed_at: new Date().toISOString() }).eq('id', Number(b.dataset.commentReject)).then(function (res) {
-              msg(res.error ? res.error.message : 'Comment rejected.'); loadPendingComments(); });
-          });
-        });
-      });
-  }
-
   // Live match: start, record events, end (end saves the score to the table)
   var liveMatch = null;
   function wireLive() {
@@ -1443,8 +1387,7 @@
       ['saMetricSeasons','seasons'],
       ['saMetricMatches','matches'],
       ['saMetricClubs','league_clubs'],
-      ['saMetricPlayers','club_squad'],
-      ['saMetricReports','fan_reports']
+      ['saMetricPlayers','club_squad']
     ];
     var status=$('saOverviewStatus');
     if(status)status.textContent='Refreshing live operational totals…';
@@ -2088,9 +2031,7 @@
   // LIVE ADMIN: lists update when a result, news post, event or assignment changes
   var adminTimer = null;
   function refreshAdmin() {
-    if ($('pendingComments')) loadPendingComments();
     if ($('usageCounts')) loadUsage();
-    if ($('fanReports')) loadFanReports();
     if ($('reviewList')) loadReview();
     if ($('myPosts')) loadMine();
     if ($('rfMatch') && $('rfMatch').value) loadRefMatch($('rfMatch').value);
