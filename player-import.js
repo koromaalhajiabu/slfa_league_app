@@ -356,8 +356,8 @@
         .then(function (profile) {
           var p = profile.data || {};
           if (profile.error || String(p.status).toLowerCase() !== 'active' ||
-              ['SUPER_ADMIN','DEVELOPER'].indexOf(String(p.system_role).toUpperCase()) === -1) {
-            throw new Error('Only an active Super Admin or Developer can upload player portraits.');
+              String(p.system_role).toUpperCase() !== 'SUPER_ADMIN') {
+            throw new Error('Only an active Super Admin can upload player portraits.');
           }
           playerPhotoMessage('Compressing and uploading the portrait…', false);
           return compressPlayerPhoto(file, player.id).then(function (compressed) {
