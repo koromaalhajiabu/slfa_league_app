@@ -178,7 +178,7 @@
     }).catch(function (e) { message('Import failed: ' + (e.message || 'Unexpected error.'), true); node('fciImport').disabled = false; });
   }
   // Player portraits are stored in the existing public member-photos bucket.
-  // The database Storage policies restrict writes to active Super Admin / Developer accounts.
+  // The database Storage policies restrict player portrait writes to active Super Admin accounts.
   var playerPhotoRows = [], playerPhotoPreviewUrl = null, playerPhotoBusy = false;
   var PLAYER_PHOTO_COMPRESSED_LIMIT = 1800 * 1024;
   var PLAYER_PHOTO_SOURCE_LIMIT = 12 * 1024 * 1024;
