@@ -1419,7 +1419,7 @@
   function developer(p) {
     devUser=p;
     box().innerHTML =
-      '<section class="dev-overview" id="developerOverview"><h2 class="rt">Platform overview</h2><p class="muted">Live database totals and public app activity. Counts are loaded from the connected database.</p><div class="dev-metric-grid">'+[['devMetricAccounts','Accounts'],['devMetricMatches','Fixtures'],['devMetricClubs','Clubs'],['devMetricResults','Results'],['devMetricNews','Media posts']].map(function(x){return '<article class="dev-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="dev-activity"><strong>Last 30 days · public app activity</strong><div id="devMetricActivity" class="muted">Loading activity…</div></div><button class="secondary" type="button" id="devRefreshOverview">Refresh overview</button><div class="status" id="devOverviewStatus" role="status"></div></section>'+
+      '<section class="dev-overview" id="developerOverview"><h2 class="rt">Platform overview</h2><p class="muted">Live database totals and public app activity. Counts are loaded from the connected database.</p><div class="dev-metric-grid">'+[['devMetricAccounts','Accounts'],['devMetricMatches','Fixtures'],['devMetricClubs','Clubs'],['devMetricResults','Confirmed results']].map(function(x){return '<article class="dev-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="dev-activity"><strong>Last 30 days · public app activity</strong><div id="devMetricActivity" class="muted">Loading activity…</div></div><button class="secondary" type="button" id="devRefreshOverview">Refresh overview</button><div class="status" id="devOverviewStatus" role="status"></div></section>'+
       '<h2 class="rt">Whole application</h2><div id="appState" class="muted">Checking…</div><div class="btns"><button class="secondary" id="freezeAppBtn">Freeze entire app</button><button class="primary" id="unfreezeAppBtn">Unfreeze entire app</button></div>'+
       '<h2 class="rt">Assign a role</h2><p class="muted">Full name, email (unique account ID), and a round photo selected from your phone gallery.</p>'+
       '<label for="ivName">Full name</label><input id="ivName" type="text" autocomplete="name">'+input('ivEmail','Email address','email')+
@@ -1464,7 +1464,6 @@
       ['devMetricMatches','matches','*'],
       ['devMetricClubs','league_clubs','*'],
       ['devMetricResults','match_results','*'],
-      ['devMetricNews','media_posts','*']
     ];
     var status=$('devOverviewStatus');
     if(status)status.textContent='Refreshing live totals…';
