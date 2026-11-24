@@ -1,12 +1,33 @@
 # SLFA League App
 
-Public league app for the Sierra Leone Football Association, with three panels:
-the public viewers panel (default), the league administrators panel, and the developer panel.
+A public-facing Sierra Leone football league information platform developed by **Koroma Leone Tech**.
 
-Developed by Koroma Leone Tech. Connected to the SLFA demonstration Supabase project.
-Settings are in `config.js`. Only the publishable key is used in the browser.
+The application is intended to support the Leone Rock Premier League and the Marampa Mines Women’s Premier League. It publishes competition information, club profiles, fixtures, confirmed results, match events, match reports, standings, player statistics, disciplinary information, news and media.
 
+The SLFA League App is a public information product. It does not replace FIFA Connect or the SLFA’s existing football administration systems. Any FIFA Connect player data is supplied as an authorised export file and imported by authorised SLFA personnel; the app does not connect to or modify FIFA Connect.
 
-## Digital Publications Centre
+## Responsibilities and access
 
-The public viewer has a Digital Publications tab for approved competition regulations, circulars, notices and season reports. Staff author and review controls are documented in [DIGITAL-PUBLICATIONS-GUIDE.md](DIGITAL-PUBLICATIONS-GUIDE.md).
+- **Public users:** View published competition and match information.
+- **Super Admin:** Maintain official competition and season information, club profiles, fixtures, match officials, records and rules; review authorised publications; and use the player import and player-photo tools.
+- **Main Referee:** Control the assigned match clock and submit, correct or reverse the official final result through the referee result workflow.
+- **Assistant Referees:** Record match events for fixtures to which they are actively assigned. They do not submit or change the final result.
+- **Match Commissioner:** Complete and submit match-day inspection reports and supporting evidence for assigned fixtures. This role cannot control the match, submit results, record cards, select Man of the Match or administer suspensions.
+- **Media Officer:** Prepare news and publication drafts. Publication approval remains with the Super Admin.
+- **Disciplinary Officer:** Maintain disciplinary decisions and suspension records within the assigned permissions.
+- **Developer — Koroma Leone Tech:** Manage technical platform administration, staff roles and accounts, and application maintenance/freeze controls. The Developer role is not a football administration role and does not submit results, manage league content, approve publications or import player records.
+
+The database enforces the role boundaries. Official match results are written through the referee-only result functions; direct authenticated writes to the result table and score columns are disabled. Match events require an active on-field referee appointment.
+
+## Public and staff interfaces
+
+- Public app: https://koromaalhajiabu.github.io/slfa_league_app/
+- Staff workspaces: Developer, Super Admin, Referee, Match Commissioner, Media Officer and Disciplinary Officer.
+- Public Digital Publications Centre: published competition regulations, circulars, notices and reports only.
+- Referee score and event queues support local save-and-sync when connectivity is unavailable.
+
+## Configuration
+
+Project settings are in `config.js`. The browser uses the Supabase publishable key only; no service-role key belongs in the public repository.
+
+Developed by **Koroma Leone Tech**.
