@@ -1500,24 +1500,27 @@
   function loadInvites(){
     db.from('role_invitations')
       .select('email,full_name,system_role,invited_at,email_delivery_status,email_sent_at,email_delivery_error,invitation_status')
-      .eq('invitation_status','PENDING')
+      .in('invitation_status',['PENDING','ACCOUNT_CREATED'])
       .order('invited_at',{ascending:false})
       .then(function(r){
         if(r.error){$('ivList').textContent=r.error.message;return;}
         var rows=r.data||[];
         $('ivList').innerHTML=rows.length?rows.map(function(x){
           var delivery=String(x.email_delivery_status||'NOT_SENT').toUpperCase();
+          var accountState=String(x.invitation_status||'PENDING')==='ACCOUNT_CREATED'
+            ? 'Account created · awaiting email verification'
+            : 'Waiting for account creation';
           var state=delivery==='SENT'
             ? 'Invitation email sent'+(x.email_sent_at?' · '+new Date(x.email_sent_at).toLocaleString():'')
             : delivery==='FAILED'?'Email delivery failed'+(x.email_delivery_error?' · '+x.email_delivery_error:'')
             : 'Invitation email not sent yet';
           var sendButton=delivery==='SENT'
-            ? '<span class="muted">Email sent · use Forgot password if the link expires</span>'
+            ? '<span class="muted">Email sent · use Forgot password if its link expires</span>'
             : '<button class="small" type="button" data-send-invite="'+esc(x.email)+'">'+(delivery==='FAILED'?'Retry invitation email':'Send invitation email')+'</button>';
           return '<div class="post"><strong>'+esc(x.full_name||x.email)+'</strong>'+
-            '<div class="muted">'+esc(x.email)+' · '+esc(x.system_role)+' · '+esc(state)+'</div>'+
-            sendButton+' <button class="small danger" type="button" data-cancel="'+esc(x.email)+'">Cancel</button></div>';
-        }).join(''):'No pending role invitations.';
+            '<div class="muted">'+esc(x.email)+' · '+esc(x.system_role)+' · '+esc(accountState)+' · '+esc(state)+'</div>'+
+            sendButton+' <button class="small danger" type="button" data-cancel="'+esc(x.email)+'">Cancel invitation</button></div>';
+        }).join(''):'No pending staff activations.';
         document.querySelectorAll('[data-send-invite]').forEach(function(b){
           b.onclick=function(){
             var email=b.dataset.sendInvite;b.disabled=true;b.textContent='Sending…';
@@ -1531,9 +1534,21 @@
         });
         document.querySelectorAll('[data-cancel]').forEach(function(b){
           b.onclick=function(){
+            var email=b.dataset.cancel;
+            if(!confirm('Cancel this staff invitation? Any account already created for it will also be suspended.'))return;
             db.from('role_invitations').update({invitation_status:'CANCELLED'})
-              .eq('email',b.dataset.cancel).eq('invitation_status','PENDING')
-              .then(function(x){msg(x.error?x.error.message:'Invitation cancelled.');loadInvites();});
+              .eq('email',email).in('invitation_status',['PENDING','ACCOUNT_CREATED'])
+              .then(function(x){
+                if(x.error){msg(x.error.message);return;}
+                return db.from('user_profiles').select('id,status').eq('email',email).maybeSingle().then(function(p){
+                  if(p.error)throw p.error;
+                  if(p.data&&String(p.data.status).toLowerCase()==='active')
+                    return db.rpc('set_account_status',{p_user:p.data.id,p_status:'Suspended'});
+                });
+              }).then(function(x){
+                msg(x&&x.error?x.error.message:'Invitation cancelled. Any pre-created account has been suspended.');
+                loadInvites();if(devUser)loadAccountsDev(devUser);
+              }).catch(function(error){msg('Could not complete cancellation: '+(error.message||'Unknown error.'));});
           };
         });
       });
