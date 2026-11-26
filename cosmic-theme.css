@@ -731,3 +731,156 @@ html[data-sky-phase="night"] #slfa-sky-atmosphere .slfa-bird-flock {
   }
   #slfa-sky-atmosphere .slfa-bird svg { animation:none!important; }
 }
+
+
+/* SLFA 2026 — visible flight layer and universal dark-panel contrast */
+
+/* Birds live in a separate foreground layer. The sky background itself stays behind the interface. */
+#slfa-bird-flight-layer {
+  position:fixed; inset:0; z-index:16; overflow:hidden;
+  pointer-events:none; contain:layout paint;
+}
+#slfa-bird-flight-layer .slfa-bird-flock {
+  display:none; position:absolute; align-items:center; width:max-content;
+  height:48px; gap:clamp(3px,.7vw,10px);
+  opacity:0; pointer-events:none; will-change:transform;
+  color:rgba(5,24,43,.94);
+  filter:drop-shadow(0 2px 2px rgba(255,255,255,.62)) drop-shadow(0 0 5px rgba(255,255,255,.26));
+}
+#slfa-bird-flight-layer .slfa-bird {
+  display:block; flex:0 0 auto; width:clamp(25px,3vw,43px); height:auto;
+}
+#slfa-bird-flight-layer .slfa-bird svg {
+  display:block; width:100%; height:auto; overflow:visible;
+  transform-origin:50% 55%;
+  animation:slfaBirdWingGlide 1.65s ease-in-out infinite alternate;
+}
+#slfa-bird-flight-layer .slfa-bird:nth-child(2) svg { animation-delay:-.35s; }
+#slfa-bird-flight-layer .slfa-bird:nth-child(3) svg { animation-delay:-.7s; }
+#slfa-bird-flight-layer .slfa-bird:nth-child(4) svg { animation-delay:-1.1s; }
+#slfa-bird-flight-layer .slfa-bird:nth-child(5) svg { animation-delay:-.55s; }
+#slfa-bird-flight-layer .slfa-bird:nth-child(6) svg { animation-delay:-1.35s; }
+
+html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock,
+html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock,
+html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock {
+  display:flex!important; opacity:1!important; visibility:visible!important;
+}
+html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock { color:rgba(25,30,49,.96); }
+html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock { color:rgba(7,36,57,.94); }
+html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock { color:rgba(28,18,46,.98); }
+#slfa-bird-flight-layer .slfa-bird-flock-a {
+  top:16vh; left:-44vw; animation:slfaBirdFlightA 34s linear -11s infinite;
+}
+#slfa-bird-flight-layer .slfa-bird-flock-b {
+  top:27vh; left:-51vw; animation:slfaBirdFlightB 43s linear -29s infinite;
+}
+#slfa-bird-flight-layer .slfa-bird-flock-c {
+  top:9vh; left:-58vw; animation:slfaBirdFlightC 51s linear -41s infinite;
+}
+html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock-a { top:17vh; }
+html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock-b { top:29vh; }
+html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock-a { top:14vh; }
+html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock-b { top:25vh; }
+html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock-a { top:18vh; }
+html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock-b { top:31vh; }
+html[data-sky-phase="night"] #slfa-bird-flight-layer .slfa-bird-flock {
+  display:none!important; visibility:hidden!important; animation:none!important;
+}
+
+/* Dark mode cards now have a distinct slate-glass surface rather than near-black transparent fills. */
+html:not([data-theme="light"]) {
+  --slfa-text:#f5f8ff;
+  --slfa-muted:#c6d8ec;
+  --slfa-surface:#142f4c;
+  --slfa-surface-2:#1b3d5d;
+  --slfa-border:rgba(157,198,234,.34);
+}
+html:not([data-theme="light"]) body :is(
+  .card,.view,.post,.team,.match,.admin-body,.portal .card,.slfa-staff-panel,
+  .slfa-mc-card,.slfa-mc-detail,.slfa-lp-panel,.slfa-lp-kpi,.slfa-home-stat,
+  .slfa-home-feature,.slfa-home-dashboard,.ps-summary-card,.ps-panel,.news-card,
+  .news-controls,.news,.detail,.fixture-planner-panel,.sa-command-centre,
+  .sa-metric,.hist-standings-admin,.dev-overview,.dev-metric,.dev-activity,
+  .mc-panel,.mc-match-summary,.portal-manual-section,.slfa-lp-league-card,
+  .slfa-cup-bracket-panel,.slfa-lp-performance-panel,.slfa-lp-squad-panel,
+  .slfa-lp-club-leaders-panel,.slfa-lp-announcements-panel,.terms-row,
+  .pm-review-card,.pm-published-row,.my-club-card,.slfa-mc-heading,
+  .slfa-mc-lineups>div,.slfa-mc-comment,.slfa-mc-report-box
+) {
+  background-color:#142f4c!important;
+  background-image:linear-gradient(145deg,rgba(29,61,92,.98),rgba(17,40,66,.98))!important;
+  color:#f5f8ff!important;
+  border-color:rgba(157,198,234,.34)!important;
+  box-shadow:0 16px 40px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+html:not([data-theme="light"]) body :is(
+  .sa-metric,.dev-metric,.dev-activity,.mc-panel,.mc-match-summary,
+  .slfa-mc-detail,.slfa-mc-comment,.slfa-mc-report-box,.slfa-cup-bracket-panel,
+  .slfa-lp-performance-panel,.slfa-lp-squad-panel,.slfa-lp-club-leaders-panel,
+  .slfa-lp-announcements-panel,.portal-manual-section
+) {
+  background-color:#1a3b5c!important;
+  background-image:linear-gradient(145deg,rgba(32,67,100,.98),rgba(22,47,75,.98))!important;
+}
+html:not([data-theme="light"]) body :is(
+  .card,.view,.post,.team,.match,.admin-body,.portal .card,.slfa-staff-panel,
+  .slfa-mc-card,.slfa-mc-detail,.slfa-lp-panel,.slfa-lp-kpi,.slfa-home-stat,
+  .slfa-home-feature,.slfa-home-dashboard,.ps-summary-card,.ps-panel,.news-card,
+  .news-controls,.news,.detail,.fixture-planner-panel,.sa-command-centre,
+  .sa-metric,.hist-standings-admin,.dev-overview,.dev-metric,.dev-activity,
+  .mc-panel,.mc-match-summary,.portal-manual-section,.slfa-lp-league-card,
+  .slfa-cup-bracket-panel,.slfa-lp-performance-panel,.slfa-lp-squad-panel,
+  .slfa-lp-club-leaders-panel,.slfa-lp-announcements-panel,.terms-row,
+  .pm-review-card,.pm-published-row,.my-club-card
+) :is(p,li,label,legend,small,.muted,.description,.help-text,.status,.eyebrow,.kicker,dt,dd,figcaption) {
+  color:#d8e6f6!important;
+  -webkit-text-fill-color:#d8e6f6!important;
+}
+html:not([data-theme="light"]) body :is(
+  .card,.view,.post,.team,.match,.admin-body,.portal .card,.slfa-staff-panel,
+  .slfa-mc-card,.slfa-lp-panel,.slfa-lp-kpi,.slfa-home-stat,.slfa-home-feature,
+  .slfa-home-dashboard,.ps-summary-card,.ps-panel,.news-card,.news-controls,
+  .news,.detail,.fixture-planner-panel,.sa-command-centre,.sa-metric,
+  .hist-standings-admin,.dev-overview,.dev-metric,.dev-activity,.mc-panel,
+  .mc-match-summary,.portal-manual-section,.slfa-lp-league-card,.terms-row,
+  .pm-review-card,.pm-published-row,.my-club-card
+) :is(h1,h2,h3,h4,h5,h6,summary,th) {
+  color:#f7fbff!important;
+  -webkit-text-fill-color:#f7fbff!important;
+}
+html:not([data-theme="light"]) body :is(input,select,textarea) {
+  background:#102944!important; color:#f7fbff!important;
+  border-color:rgba(157,198,234,.42)!important; color-scheme:dark;
+}
+html:not([data-theme="light"]) body :is(input,select,textarea)::placeholder { color:#afc3d9!important; }
+html:not([data-theme="light"]) body :is(button.secondary,.secondary,.tabs button,details.admin>summary) {
+  background:linear-gradient(145deg,#1c3d5d,#142f4b)!important;
+  color:#eff7ff!important; border-color:rgba(157,198,234,.38)!important;
+}
+html:not([data-theme="light"]) body :is(a,.link) { color:#91ceff!important; }
+html:not([data-theme="light"]) body :is(.muted,.meta,.description,.help-text) { color:#bfd1e5!important; }
+
+/* Preserve status colours and interactive status indicators above the universal panel text treatment. */
+html:not([data-theme="light"]) body :is(.status-badge,.badge,.chip,.slfa-mc-status,.slfa-form-W,.slfa-form-D,.slfa-form-L) {
+  -webkit-text-fill-color:currentColor;
+}
+html:not([data-theme="light"]) body .topbar,
+html:not([data-theme="light"]) body .portal-head { z-index:30!important; }
+
+@media(max-width:620px) {
+  #slfa-bird-flight-layer .slfa-bird { width:clamp(23px,6vw,32px); }
+  #slfa-bird-flight-layer .slfa-bird-flock { gap:4px; }
+  #slfa-bird-flight-layer .slfa-bird-flock-c { display:flex!important; }
+}
+@media(prefers-reduced-motion:reduce) {
+  html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock,
+  html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock,
+  html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock {
+    display:flex!important; opacity:1!important; visibility:visible!important;
+    animation-duration:110s!important; animation-iteration-count:infinite!important;
+  }
+  #slfa-bird-flight-layer .slfa-bird svg {
+    animation-duration:6s!important; animation-iteration-count:infinite!important;
+  }
+}
