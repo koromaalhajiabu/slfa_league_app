@@ -1,11 +1,11 @@
 -- Secure, atomic fixture import. It links each row to its active home/away club IDs.
 -- A transaction-scoped advisory lock prevents two concurrent imports from creating the
--- same club-vs-club fixture on the same local calendar date.
+-- same club-vs-club fixture on the same local calendar date. This runs as INVOKER and
+-- relies on the existing authenticated Super Admin matches INSERT RLS policy.
 
 CREATE OR REPLACE FUNCTION public.admin_import_fixtures(p_rows jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
- SECURITY DEFINER
  SET search_path TO ''
 AS $function$
 declare
