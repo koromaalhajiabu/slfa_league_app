@@ -905,3 +905,212 @@ html:not([data-theme="light"]) body :is(
   color:#d9e8f8!important;
   -webkit-text-fill-color:#d9e8f8!important;
 }
+
+
+/* SLFA 2026 — reliable sky birds and complete light dashboard surfaces */
+
+/* Root-level flight lane: above page panels, below top navigation and admin popovers. */
+#slfa-bird-flight-layer {
+  position:fixed!important;
+  inset:0!important;
+  z-index:990!important;
+  display:block!important;
+  overflow:hidden!important;
+  width:100vw!important;
+  height:100vh!important;
+  height:100dvh!important;
+  pointer-events:none!important;
+  contain:none!important;
+  isolation:isolate;
+}
+#slfa-bird-flight-layer .slfa-bird-flock {
+  position:absolute!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  height:48px!important;
+  width:max-content!important;
+  gap:clamp(4px,1vw,12px)!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  color:#14233d!important;
+  filter:drop-shadow(0 1px 1px rgba(255,255,255,.9)) drop-shadow(0 0 7px rgba(255,255,255,.46))!important;
+}
+#slfa-bird-flight-layer .slfa-bird {
+  display:block!important;
+  flex:0 0 auto!important;
+  width:clamp(27px,3.4vw,46px)!important;
+  height:28px!important;
+}
+#slfa-bird-flight-layer .slfa-bird svg {
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  overflow:visible!important;
+}
+#slfa-bird-flight-layer .slfa-bird svg path {
+  stroke:currentColor!important;
+  stroke-width:4.2!important;
+}
+html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock,
+html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock,
+html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock {
+  display:flex!important;
+  visibility:visible!important;
+  opacity:.96!important;
+}
+html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock { color:#25304a!important; }
+html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock { color:#102e49!important; }
+html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock { color:#2c1d42!important; }
+#slfa-bird-flight-layer .slfa-bird-flock-a {
+  top:118px!important;
+  left:-35vw!important;
+  animation:slfaBirdFlightA 34s linear -8s infinite!important;
+}
+#slfa-bird-flight-layer .slfa-bird-flock-b {
+  top:178px!important;
+  left:-42vw!important;
+  animation:slfaBirdFlightB 43s linear -25s infinite!important;
+}
+#slfa-bird-flight-layer .slfa-bird-flock-c {
+  top:82px!important;
+  left:-50vw!important;
+  animation:slfaBirdFlightC 51s linear -39s infinite!important;
+}
+html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock-a { top:132px!important; }
+html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock-b { top:207px!important; }
+html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock-a { top:112px!important; }
+html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock-b { top:175px!important; }
+html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock-a { top:140px!important; }
+html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock-b { top:220px!important; }
+html[data-sky-phase="night"] #slfa-bird-flight-layer .slfa-bird-flock {
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  animation:none!important;
+}
+html[data-sky-phase="dawn"] body .topbar,
+html[data-sky-phase="afternoon"] body .topbar,
+html[data-sky-phase="dusk"] body .topbar,
+html[data-sky-phase="night"] body .topbar,
+html[data-sky-phase="dawn"] body .portal-head,
+html[data-sky-phase="afternoon"] body .portal-head,
+html[data-sky-phase="dusk"] body .portal-head,
+html[data-sky-phase="night"] body .portal-head {
+  position:relative!important;
+  z-index:1000!important;
+}
+
+/* Complete light treatment for the home dashboard and its nested supporter panels. */
+html[data-theme="light"] body #homeDashboard .slfa-home-feature,
+html[data-theme="light"] body #homeDashboard .slfa-home-stat,
+html[data-theme="light"] body #homeDashboard .slfa-home-shortcut,
+html[data-theme="light"] body #homeDashboard .slfa-home-upcoming,
+html[data-theme="light"] body #homeDashboard .slfa-supporter-dashboard {
+  background:#fff!important;
+  background-image:linear-gradient(145deg,#ffffff 0%,#f1f7fd 100%)!important;
+  color:#142b43!important;
+  border:1px solid #ccdae8!important;
+  box-shadow:0 10px 28px rgba(20,55,88,.09)!important;
+}
+html[data-theme="light"] body #homeDashboard .slfa-supporter-groups section,
+html[data-theme="light"] body #homeDashboard .slfa-supporter-fixtures,
+html[data-theme="light"] body #homeDashboard .slfa-home-fixture {
+  background:#f6f9fd!important;
+  background-image:none!important;
+  color:#172f49!important;
+  border-color:#d5e0eb!important;
+  box-shadow:none!important;
+}
+html[data-theme="light"] body #homeDashboard .slfa-supporter-dashboard :is(
+  h1,h2,h3,h4,h5,h6,p,span,strong,small,label,li,div
+),
+html[data-theme="light"] body #homeDashboard .slfa-home-upcoming :is(
+  h1,h2,h3,h4,h5,h6,p,span,strong,small,label,li,div
+) {
+  color:#19334e!important;
+  -webkit-text-fill-color:#19334e!important;
+  text-shadow:none!important;
+}
+html[data-theme="light"] body #homeDashboard .slfa-supporter-head span,
+html[data-theme="light"] body #homeDashboard .slfa-home-upcoming-head>div span,
+html[data-theme="light"] body #homeDashboard .slfa-home-topline span,
+html[data-theme="light"] body #homeDashboard .slfa-home-topline small {
+  color:#17639b!important;
+  -webkit-text-fill-color:#17639b!important;
+}
+html[data-theme="light"] body #homeDashboard .slfa-supporter-match {
+  border-color:#d7e2ed!important;
+}
+html[data-theme="light"] body #homeDashboard .slfa-follow-chip {
+  background:#e8f2fb!important;
+  color:#17476d!important;
+  border-color:#c9dceb!important;
+  -webkit-text-fill-color:#17476d!important;
+}
+html[data-theme="light"] body #homeDashboard .slfa-supporter-match button,
+html[data-theme="light"] body #homeDashboard .slfa-home-upcoming-head button,
+html[data-theme="light"] body #homeDashboard .slfa-home-feature-foot button {
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  background:linear-gradient(120deg,#075fa8,#1686c8)!important;
+  border:1px solid #075fa8!important;
+}
+html[data-theme="light"] body #homeDashboard .slfa-home-feature :is(.slfa-home-feature-head strong,.slfa-home-side strong,.slfa-home-score) {
+  color:#173957!important;
+  -webkit-text-fill-color:#173957!important;
+}
+html[data-theme="light"] body #homeDashboard .slfa-home-feature :is(.slfa-home-meta,.slfa-home-vs,.slfa-home-empty) {
+  color:#405a73!important;
+  -webkit-text-fill-color:#405a73!important;
+}
+
+/* Light-mode surfaces for newer operational panels across all staff and public screens. */
+html[data-theme="light"] body :is(
+  .slfa-supporter-dashboard,.slfa-home-upcoming,.slfa-home-shortcut,
+  .mc-panel,.mc-match-summary,.mc-metrics article,.mc-evidence,
+  .mc-evidence-item,.mc-history-item,.portal-manual-section,
+  .sa-command-centre,.sa-metric,.hist-standings-admin,
+  .dev-overview,.dev-metric,.dev-activity,.slfa-cup-bracket-panel,
+  .slfa-lp-performance-panel,.slfa-lp-squad-panel,.slfa-lp-club-leaders-panel,
+  .slfa-lp-announcements-panel,.slfa-lp-league-card,.pm-review-card,
+  .pm-published-row,.slfa-mc-summary-stat,.slfa-mc-print-row
+) {
+  background:#fff!important;
+  background-image:linear-gradient(145deg,#fff,#f2f7fc)!important;
+  color:#18324c!important;
+  border-color:#d1deea!important;
+  box-shadow:0 8px 24px rgba(24,55,85,.08)!important;
+}
+html[data-theme="light"] body :is(
+  .slfa-supporter-dashboard,.slfa-home-upcoming,.mc-panel,.mc-match-summary,
+  .mc-metrics article,.mc-evidence,.mc-evidence-item,.mc-history-item,
+  .portal-manual-section,.sa-command-centre,.sa-metric,.hist-standings-admin,
+  .dev-overview,.dev-metric,.dev-activity,.slfa-cup-bracket-panel,
+  .slfa-lp-performance-panel,.slfa-lp-squad-panel,.slfa-lp-club-leaders-panel,
+  .slfa-lp-announcements-panel,.slfa-lp-league-card,.pm-review-card,
+  .pm-published-row
+) :is(h1,h2,h3,h4,h5,h6,p,span,strong,small,label,li,summary,dt,dd) {
+  color:#18324c!important;
+  -webkit-text-fill-color:#18324c!important;
+  text-shadow:none!important;
+}
+html[data-theme="light"] body :is(.mc-panel,.mc-evidence,.portal-manual-section,.sa-metric,.dev-metric) :is(input,select,textarea) {
+  background:#fff!important;
+  color:#18324c!important;
+  border-color:#bdcddd!important;
+  -webkit-text-fill-color:#18324c!important;
+}
+html[data-theme="light"] body :is(.mc-panel,.portal-manual-section) :is(small,.muted,.description,.help-text) {
+  color:#526a82!important;
+  -webkit-text-fill-color:#526a82!important;
+}
+
+/* Accessibility: user preference slows birds but does not erase the visible flock. */
+@media(prefers-reduced-motion:reduce) {
+  #slfa-bird-flight-layer .slfa-bird-flock-a { animation-duration:150s!important; }
+  #slfa-bird-flight-layer .slfa-bird-flock-b { animation-duration:180s!important; }
+  #slfa-bird-flight-layer .slfa-bird-flock-c { animation-duration:210s!important; }
+  #slfa-bird-flight-layer .slfa-bird svg { animation:none!important; }
+}
