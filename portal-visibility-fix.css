@@ -140,3 +140,30 @@ html:not([data-theme="light"]) body main :is(input, select, textarea) {
   background: #0b1b30 !important;
   border-color: rgba(164, 196, 226, .32) !important;
 }
+
+/* Full-width sections are also panels on the public and staff dashboards. */
+#slfa-bird-flight-layer { z-index: 900 !important; }
+#slfa-bird-flight-layer .slfa-bird { width: var(--bird-size, 60px) !important; }
+
+html[data-theme="light"] body main > section:not(.hero) {
+  color: #19334c !important;
+  background: linear-gradient(145deg, #ffffff 0%, #f6faff 100%) !important;
+  border-color: #d7e4ef !important;
+  box-shadow: 0 10px 26px rgba(20,49,75,.09) !important;
+}
+html[data-theme="light"] body main > section:not(.hero) *:not(button):not(input):not(select):not(textarea):not(svg):not(path) {
+  color: #19334c !important;
+  -webkit-text-fill-color: #19334c !important;
+  text-shadow: none !important;
+}
+html:not([data-theme="light"]) body main > section:not(.hero) {
+  color: #f2f7ff !important;
+  background: linear-gradient(145deg, #172d47 0%, #10223a 100%) !important;
+  border-color: rgba(164,196,226,.24) !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,.22) !important;
+}
+html:not([data-theme="light"]) body main > section:not(.hero) *:not(button):not(input):not(select):not(textarea):not(svg):not(path) {
+  color: #edf4ff !important;
+  -webkit-text-fill-color: #edf4ff !important;
+  text-shadow: none !important;
+}
