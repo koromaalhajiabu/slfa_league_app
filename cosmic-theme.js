@@ -16,6 +16,7 @@
   var GLOBAL_CACHE_KEY = 'slfa_global_appearance_v1';
   var CONFIG_KEY = 'appearance_config';
   var DEFAULT_ACCENT = '#62d7ff';
+  var SKY_TIME_ZONE = 'Africa/Freetown';
   var db = null;
   var current = { palette: 'night-sky', custom_accent: DEFAULT_ACCENT };
   var saving = false;
@@ -245,35 +246,74 @@
     }
     document.body.insertBefore(layer, document.body.firstChild);
   }
+  function freetownClock(date) {
+    try {
+      var parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: SKY_TIME_ZONE,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23'
+      }).formatToParts(date);
+      var clock = {};
+      parts.forEach(function (part) {
+        if (part.type === 'hour' || part.type === 'minute' || part.type === 'second') {
+          clock[part.type] = Number(part.value);
+        }
+      });
+      return { hour: clock.hour || 0, minute: clock.minute || 0, second: clock.second || 0 };
+    } catch (e) {
+      return { hour: date.getUTCHours(), minute: date.getUTCMinutes(), second: date.getUTCSeconds() };
+    }
+  }
   function skyPhaseAt(date) {
-    var hour = date.getHours() + date.getMinutes() / 60;
+    var clock = freetownClock(date);
+    var hour = clock.hour + clock.minute / 60 + clock.second / 3600;
     if (hour >= 5 && hour < 9) return 'dawn';
     if (hour >= 9 && hour < 17) return 'afternoon';
     if (hour >= 17 && hour < 19.5) return 'dusk';
     return 'night';
   }
   function applySkyCycle() {
-    var phase = skyPhaseAt(new Date());
+    var now = new Date();
+    var clock = freetownClock(now);
+    var phase = skyPhaseAt(now);
     var root = document.documentElement;
-    if (root.getAttribute('data-sky-phase') !== phase) {
-      root.setAttribute('data-sky-phase', phase);
-      root.setAttribute('data-sky-mode', 'automatic');
-      var labels = { dawn:'Dawn', afternoon:'Afternoon', dusk:'Dusk', night:'Night Sky' };
-      root.setAttribute('data-sky-label', labels[phase]);
-      updateThemeColour();
-      var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta && root.getAttribute('data-theme') !== 'light') {
-        var colours = { dawn:'#d98d86', afternoon:'#1676b8', dusk:'#75466f', night:'#020817' };
-        meta.setAttribute('content', colours[phase]);
-      }
+    var changed = root.getAttribute('data-sky-phase') !== phase;
+    var labels = { dawn:'Dawn', afternoon:'Afternoon', dusk:'Dusk', night:'Night Sky' };
+    var colours = { dawn:'#b97878', afternoon:'#1676b8', dusk:'#75466f', night:'#071326' };
+    var pad = function (v) { return String(v).padStart(2, '0'); };
+
+    root.setAttribute('data-sky-phase', phase);
+    root.setAttribute('data-sky-mode', 'automatic');
+    root.setAttribute('data-sky-label', labels[phase]);
+    root.setAttribute('data-sky-timezone', SKY_TIME_ZONE);
+    root.setAttribute('data-sky-local-time', pad(clock.hour) + ':' + pad(clock.minute));
+
+    if (changed) {
+      root.setAttribute('data-sky-transition', 'active');
+      window.setTimeout(function () {
+        root.setAttribute('data-sky-transition', 'settled');
+      }, 2200);
     }
+
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', colours[phase]);
   }
   function addSkyAtmosphere() {
     if (!document.body || document.getElementById('slfa-sky-atmosphere')) return;
     var layer = document.createElement('div');
     layer.id = 'slfa-sky-atmosphere';
     layer.setAttribute('aria-hidden', 'true');
-    layer.innerHTML = '<span class="slfa-sky-sun"></span><span class="slfa-sky-horizon"></span><span class="slfa-sky-cloud slfa-sky-cloud-a"></span><span class="slfa-sky-cloud slfa-sky-cloud-b"></span>';
+    layer.innerHTML =
+      '<span class="slfa-sky-glow"></span>' +
+      '<span class="slfa-sky-sun"></span>' +
+      '<span class="slfa-sky-moon"></span>' +
+      '<span class="slfa-sky-horizon"></span>' +
+      '<span class="slfa-sky-cloud slfa-sky-cloud-a"></span>' +
+      '<span class="slfa-sky-cloud slfa-sky-cloud-b"></span>' +
+      '<span class="slfa-sky-cloud slfa-sky-cloud-c"></span>' +
+      '<span class="slfa-sky-light-beam"></span>';
     document.body.insertBefore(layer, document.body.firstChild);
   }
   function init() {
@@ -283,10 +323,10 @@
     try { cached = JSON.parse(safeGet(GLOBAL_CACHE_KEY) || 'null'); } catch (e) {}
     var cachedConfig = configFromValue(cached);
     applyPreset(cachedConfig ? cachedConfig.palette : 'night-sky', cachedConfig ? cachedConfig.custom_accent : DEFAULT_ACCENT);
-    applySkyCycle();
     addSkyAtmosphere();
+    applySkyCycle();
     addStars();
-    window.setInterval(applySkyCycle, 60000);
+    window.setInterval(applySkyCycle, 15000);
 
     // All viewers receive the same palette from the database. Local storage is only an offline fallback.
     loadGlobalTheme();
