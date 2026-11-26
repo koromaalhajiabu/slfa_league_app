@@ -322,7 +322,7 @@
     var flightLayer = document.createElement('div');
     flightLayer.id = 'slfa-bird-flight-layer';
     flightLayer.setAttribute('aria-hidden', 'true');
-    var assetUrl = new URL('bird-flight.gif?v=1', document.baseURI).href;
+    var assetUrl = new URL('bird-flight.gif?v=2', document.baseURI).href;
 
     function makeBird(size, index, offset) {
       var bird = document.createElement('img');
