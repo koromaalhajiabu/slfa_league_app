@@ -210,13 +210,15 @@
     var homeState=sheetState(homeSheet,'Home'),awayState=sheetState(awaySheet,'Away');
     var reportRows=records.filter(function(r){return r.report_type==='MATCH_RECORD';});
     var acknowledged=reportRows.some(function(r){return r.official_role==='MAIN'&&r.status==='ACKNOWLEDGED';});
-    if(!mainRecord)issues.push(ageHours>1.5?'Main Referee match record is overdue.':'Main Referee match record has not been filed.');
-    if(mainRecord&&mainRecord.status==='RETURNED')issues.push('Main Referee match record was returned.');
-    if(mainRecord&&mainRecord.ocr_status!=='NOT_RUN'&&!mainRecord.ocr_verified_at)issues.push('Main Referee OCR text has not been human-verified.');
-    if(mainRecord&&mainRecord.ocr_verified_at&&!String(mainRecord.ocr_verified_text||'').trim())issues.push('OCR is marked verified but verified text is empty.');
-    if(mainRecord&&mainRecord.status!=='ACKNOWLEDGED')issues.push('Main Referee match record is not yet acknowledged by Super Admin.');
-    if(!mc||mc.report_status==='DRAFT')issues.push(ageHours>1.5?'Match Commissioner report is overdue.':'Match Commissioner report has not been submitted.');
-    if(mc&&mc.report_status!=='REVIEWED')issues.push('Match Commissioner report is awaiting Super Admin review.');
+    if(!future&&!cancelled(m)){
+      if(!mainRecord)issues.push(ageHours>1.5?'Main Referee match record is overdue.':'Main Referee match record has not been filed.');
+      if(mainRecord&&mainRecord.status==='RETURNED')issues.push('Main Referee match record was returned.');
+      if(mainRecord&&mainRecord.ocr_status!=='NOT_RUN'&&!mainRecord.ocr_verified_at)issues.push('Main Referee OCR text has not been human-verified.');
+      if(mainRecord&&mainRecord.ocr_verified_at&&!String(mainRecord.ocr_verified_text||'').trim())issues.push('OCR is marked verified but verified text is empty.');
+      if(mainRecord&&mainRecord.status!=='ACKNOWLEDGED')issues.push('Main Referee match record is not yet acknowledged by Super Admin.');
+      if(!mc||mc.report_status==='DRAFT')issues.push(ageHours>1.5?'Match Commissioner report is overdue.':'Match Commissioner report has not been submitted.');
+      if(mc&&mc.report_status!=='REVIEWED')issues.push('Match Commissioner report is awaiting Super Admin review.');
+    }
     if(mainRecord&&hasScore(m)&&mainRecord.observed_home_score!=null&&mainRecord.observed_away_score!=null){
       if(Number(mainRecord.observed_home_score)!==Number(m.home_score)||Number(mainRecord.observed_away_score)!==Number(m.away_score))
         discrepancies.push('Referee photographed score '+mainRecord.observed_home_score+'–'+mainRecord.observed_away_score+' differs from official fixture score '+m.home_score+'–'+m.away_score+'.');
@@ -234,10 +236,10 @@
       });
     }
     var publishedEvents=events.filter(function(e){return !e.published_at;});
-    if(publishedEvents.length)issues.push(publishedEvents.length+' match event(s) are not published.');
+    if(!future&&publishedEvents.length)issues.push(publishedEvents.length+' match event(s) are not published.');
     var closed=!cancelled(m)&&hasScore(m)&&homeState==='APPROVED'&&awayState==='APPROVED'&&
       mainRecord&&mainRecord.status==='ACKNOWLEDGED'&&mainRecord.ocr_verified_at&&mc&&mc.report_status==='REVIEWED'&&
-      !discrepancies.length;
+      !issues.length&&!discrepancies.length;
     var state;
     if(cancelled(m))state=upper(m.match_status).replace(/_/g,' ');
     else if(live(m))state='In progress';
@@ -245,12 +247,15 @@
     else if(future){
       if(issues.some(function(x){return /Main Referee|Assistant Referees|Match Commissioner|Kick-off|Venue/.test(x);}))state='Awaiting preparation';
       else if(homeState!=='APPROVED'||awayState!=='APPROVED')state='Awaiting team sheets';
+      else if(issues.length)state='Under review';
       else state='Ready for match';
     }else if(closed)state='Closed';
     else if(!hasScore(m))state='Awaiting final result';
     else if(!mainRecord||mainRecord.status==='RETURNED')state='Awaiting referee report';
+    else if(mainRecord.status!=='ACKNOWLEDGED'||!mainRecord.ocr_verified_at)state='Under review';
     else if(!mc||mc.report_status==='DRAFT')state='Awaiting commissioner report';
-    else state='Under review';
+    else if(mc.report_status!=='REVIEWED'||issues.length)state='Under review';
+    else state='Closed';
     return {state,issues:issues.concat(discrepancies),discrepancies:discrepancies,
       homeSheet:homeSheet,awaySheet:awaySheet,homeState:homeState,awayState:awayState,
       officials:ops,mainRecord:mainRecord,commissioner:mc,records:records,sheets:sheets,
