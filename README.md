@@ -24,6 +24,7 @@ The database enforces the role boundaries. Official match results are written th
 - Public app: https://koromaalhajiabu.github.io/slfa_league_app/
 - Staff workspaces: Developer, Super Admin, Referee, Match Commissioner, Media Officer and Disciplinary Officer.
 - Public Digital Publications Centre: published competition regulations, circulars, notices and reports only.
+- **Super Admin Matchday Operations & Compliance Board:** read-only fixture-readiness checks for official appointments and venues, team-sheet filing, post-match result/report follow-ups, result-amendment history and CSV export. These checks are operational prompts, not official SLFA regulations.
 - Referee score and event queues support local save-and-sync when connectivity is unavailable.
 
 ## Configuration
