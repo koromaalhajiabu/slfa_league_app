@@ -156,7 +156,7 @@
       current.sheets.forEach(function(s){playerIds=playerIds.concat(s.starting_player_ids||[],s.substitute_player_ids||[]);});
       current.lineups.forEach(function(x){playerIds.push(x.player_id);});
       playerIds=Array.from(new Set(playerIds.filter(Boolean)));
-      if(playerIds.length)optional.push(db.from('club_squad').select('id,player_name,jersey_number,position,club_id,season_id').in('id',playerIds).then(function(r){if(r.error)throw r.error;(r.data||[]).forEach(function(p){current.players[String(p.id)]=p;});}));
+      if(playerIds.length)optional.push(db.from('club_squad').select('id,player_name,jersey_number,position,club_id,season_id,status,registration_status').in('id',playerIds).then(function(r){if(r.error)throw r.error;(r.data||[]).forEach(function(p){current.players[String(p.id)]=p;});}));
       var optionalResults=await Promise.allSettled(optional);
       optionalResults.forEach(function(x){if(x.status==='rejected')failures.push('people lookup: '+(x.reason&&x.reason.message||'unavailable'));});
       lastLoad=new Date();render(failures);
@@ -198,7 +198,7 @@
       if(subs.length>9)issues.push(label+' approved sheet has more than 9 substitutes.');
       if(starters.some(function(id){return subs.map(String).indexOf(String(id))>=0;}))issues.push(label+' sheet repeats a player as starter and substitute.');
       var ids=starters.concat(subs);
-      var unregistered=ids.filter(function(id){var p=current.players[String(id)];return !p||String(p.club_id)!==String(s.club_id);});
+      var unregistered=ids.filter(function(id){var p=current.players[String(id)];return !p||String(p.club_id)!==String(s.club_id)||p.status!=='Active'||p.registration_status!=='Approved'||(m.season_id!=null&&p.season_id!=null&&String(p.season_id)!==String(m.season_id));});
       if(unregistered.length)issues.push(label+' sheet contains a player not verified against the current registered squad.');
       var published=lineups.filter(function(l){return String(l.club_id)===String(s.club_id);});
       var publishedIds=published.map(function(l){return String(l.player_id);}).sort();
@@ -217,7 +217,7 @@
     if(mainRecord&&mainRecord.status!=='ACKNOWLEDGED')issues.push('Main Referee match record is not yet acknowledged by Super Admin.');
     if(!mc||mc.report_status==='DRAFT')issues.push(ageHours>1.5?'Match Commissioner report is overdue.':'Match Commissioner report has not been submitted.');
     if(mc&&mc.report_status!=='REVIEWED')issues.push('Match Commissioner report is awaiting Super Admin review.');
-    if(mainRecord&&hasScore(m)){
+    if(mainRecord&&hasScore(m)&&mainRecord.observed_home_score!=null&&mainRecord.observed_away_score!=null){
       if(Number(mainRecord.observed_home_score)!==Number(m.home_score)||Number(mainRecord.observed_away_score)!==Number(m.away_score))
         discrepancies.push('Referee photographed score '+mainRecord.observed_home_score+'–'+mainRecord.observed_away_score+' differs from official fixture score '+m.home_score+'–'+m.away_score+'.');
     }
