@@ -41,7 +41,7 @@
     if($(ROOT))return;
     style();
     var panel=document.createElement('section');panel.id=ROOT;
-    panel.innerHTML='<span class="tso-kicker">SLFA · CLUB OPERATIONS</span><h2>Electronic Team Sheet Submission</h2><p>Prepare and send your official starting XI and substitutes for each upcoming fixture. The sheet is sent directly to the Super Admin for review.</p><div class="tso-note">Only active, approved players registered to your club for the fixture season can be selected. Submit before the deadline: team sheets close 20 minutes before kick-off. An approved team sheet is locked; contact the Super Admin if a correction is required.</div><div id="tsoStatus" class="muted" role="status">Loading your club and fixtures…</div><div id="tsoApp"></div>';
+    panel.innerHTML='<span class="tso-kicker">SLFA · CLUB OPERATIONS</span><h2>Club Representative · Team Sheet Portal</h2><p>Submit your club’s official starting XI and substitutes electronically for each upcoming fixture. Your submission is registered in the SLFA match team-sheet table and sent directly to the Super Admin for approval.</p><div class="tso-note">Only active, approved players registered to your club for the fixture season can be selected. Submit before the deadline: team sheets close 20 minutes before kick-off. An approved team sheet is locked; contact the Super Admin if a correction is required.</div><div id="tsoStatus" class="muted" role="status">Loading your club and fixtures…</div><div id="tsoApp"></div>';
     tools.insertAdjacentElement('afterend',panel);load();
   }
   async function load(){
