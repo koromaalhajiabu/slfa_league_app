@@ -1,4 +1,6 @@
--- Secure, atomic fixture import. It links every fixture to its active home/away club IDs.
+-- Secure, atomic fixture import. It links each row to its active home/away club IDs.
+-- A transaction-scoped advisory lock prevents two concurrent imports from creating the
+-- same club-vs-club fixture on the same local calendar date.
 
 CREATE OR REPLACE FUNCTION public.admin_import_fixtures(p_rows jsonb)
  RETURNS jsonb
@@ -114,6 +116,8 @@ begin
       raise exception 'The import contains the same fixture more than once.';
     end if;
     v_seen := array_append(v_seen,v_key);
+
+    perform pg_advisory_xact_lock(hashtextextended(v_key, 0));
 
     if exists (
       select 1
