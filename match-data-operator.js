@@ -50,7 +50,7 @@
     if($(ROOT))return;
     addStyle();
     var panel=document.createElement('section');panel.id=ROOT;
-    panel.innerHTML='<span class="mdo-kicker">SLFA · MATCHDAY LIVE DESK</span><h2>Live Match Event Operator</h2><p>Record goals, cards and substitutions while the referee manages the match itself.</p><div class="mdo-note"><strong>Role boundary:</strong> You can record events only for fixtures assigned to you. You cannot start, pause or end matches, change the match clock, submit final scores or change results. The Main Referee retains those responsibilities. You may reverse only an event you personally entered, while the match is live, by giving an audit reason.</div><div id="mdoStatus" class="mdo-status" role="status" aria-live="polite">Loading your appointments…</div><div id="mdoApp"></div>';
+    panel.innerHTML='<span class="mdo-kicker">SLFA · MATCHDAY LIVE DESK</span><h2>Live Match Event Operator</h2><p>Record goals, cards and substitutions while the referee manages the match itself.</p><div class="mdo-note"><strong>Role boundary:</strong> You can record events only for fixtures assigned to you. Every player and assist is checked against the approved match line-up before the database accepts it. You cannot start, pause or end matches, change the match clock, submit final scores or change results. The Main Referee retains those responsibilities. You may reverse only an event you personally entered, while the match is live, by giving an audit reason.</div><div id="mdoStatus" class="mdo-status" role="status" aria-live="polite">Loading your appointments…</div><div id="mdoApp"></div>';
     tools.appendChild(panel);loadAssignments();
   }
   async function loadAssignments(){
