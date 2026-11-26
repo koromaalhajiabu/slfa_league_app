@@ -333,7 +333,7 @@
       bird.setAttribute('decoding', 'async');
       bird.setAttribute('loading', 'eager');
       bird.draggable = false;
-      bird.style.width = size + 'px';
+      bird.style.setProperty('--bird-size', size + 'px');
       bird.style.marginLeft = index ? '-11px' : '0';
       bird.style.transform = 'translateY(' + offset + 'px)';
       return bird;
