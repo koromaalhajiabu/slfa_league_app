@@ -1,0 +1,142 @@
+/* SLFA 2026 — final panel contrast and true-bird foreground layer */
+#slfa-bird-flight-layer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  isolation: isolate !important;
+}
+#slfa-bird-flight-layer .slfa-bird-flock {
+  position: absolute !important;
+  display: none;
+  align-items: center;
+  width: max-content;
+  height: auto;
+  gap: 0;
+  opacity: .96;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform;
+  filter: drop-shadow(0 2px 4px rgba(7,18,35,.32));
+}
+#slfa-bird-flight-layer .slfa-bird {
+  display: block !important;
+  flex: 0 0 auto;
+  height: auto !important;
+  max-width: none !important;
+  object-fit: contain;
+  border: 0 !important;
+  background: transparent !important;
+  filter: drop-shadow(0 1px 2px rgba(10,20,30,.28));
+}
+#slfa-bird-flight-layer .slfa-bird-flock-a {
+  top: 15vh;
+  left: -45vw;
+  animation: slfaBirdFlightA 34s linear -9s infinite;
+}
+#slfa-bird-flight-layer .slfa-bird-flock-b {
+  top: 26vh;
+  left: -52vw;
+  animation: slfaBirdFlightB 43s linear -28s infinite;
+}
+#slfa-bird-flight-layer .slfa-bird-flock-c {
+  top: 9vh;
+  left: -60vw;
+  animation: slfaBirdFlightC 51s linear -40s infinite;
+}
+html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock,
+html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock,
+html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock {
+  display: flex !important;
+  visibility: visible !important;
+}
+html[data-sky-phase="night"] #slfa-bird-flight-layer .slfa-bird-flock {
+  display: none !important;
+  visibility: hidden !important;
+  animation: none !important;
+}
+@media (max-width: 600px) {
+  #slfa-bird-flight-layer .slfa-bird-flock-a { top: 14vh; }
+  #slfa-bird-flight-layer .slfa-bird-flock-b { top: 25vh; }
+  #slfa-bird-flight-layer .slfa-bird-flock-c { top: 8vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #slfa-bird-flight-layer .slfa-bird-flock {
+    animation-duration: 90s !important;
+  }
+}
+
+/* Day/light appearance: prevent pale cards with inherited white text. */
+html[data-theme="light"] body {
+  color: #19334c !important;
+}
+html[data-theme="light"] body :is(.topbar, .portal-head, .portal-header) :is(h1, h2, h3, p, a, span) {
+  color: #19334c !important;
+  -webkit-text-fill-color: #19334c !important;
+  text-shadow: none !important;
+}
+html[data-theme="light"] body main :not(.hero):not(.hero *) :not(button):not(input):not(select):not(textarea):not(svg):not(path) {
+  color: #19334c !important;
+  -webkit-text-fill-color: #19334c !important;
+  text-shadow: none !important;
+}
+html[data-theme="light"] body main :is(
+  .card, .view, .panel, article, section[role="tabpanel"],
+  main > section:not(.hero), [class*="panel"], [class*="card"]
+) {
+  color: #19334c !important;
+  background: linear-gradient(145deg, #ffffff 0%, #f6faff 100%) !important;
+  background-color: #ffffff !important;
+  background-image: linear-gradient(145deg, #ffffff 0%, #f6faff 100%) !important;
+  border-color: #d7e4ef !important;
+  box-shadow: 0 10px 26px rgba(20, 49, 75, .09) !important;
+}
+html[data-theme="light"] body main :is(
+  .card, .view, .panel, article, section[role="tabpanel"],
+  main > section:not(.hero), [class*="panel"], [class*="card"]
+) *:not(button):not(input):not(select):not(textarea):not(svg):not(path) {
+  color: #19334c !important;
+  -webkit-text-fill-color: #19334c !important;
+  text-shadow: none !important;
+}
+html[data-theme="light"] body main :is(input, select, textarea) {
+  color: #17324d !important;
+  -webkit-text-fill-color: #17324d !important;
+  background: #ffffff !important;
+  border-color: #cbd9e7 !important;
+}
+html[data-theme="light"] body :is(.tabs, .tab-bar, [role="tablist"]) button {
+  color: #17324d !important;
+  -webkit-text-fill-color: #17324d !important;
+}
+html[data-theme="light"] body :is(.tabs, .tab-bar, [role="tablist"]) :is(button.active, button[aria-selected="true"], button.is-active) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Dark appearance: every dashboard card gets a defined surface and readable copy. */
+html:not([data-theme="light"]) body main :is(
+  .card, .view, .panel, article, section[role="tabpanel"],
+  main > section:not(.hero), [class*="panel"], [class*="card"]
+) {
+  color: #f2f7ff !important;
+  background: linear-gradient(145deg, #172d47 0%, #10223a 100%) !important;
+  background-color: #122641 !important;
+  border-color: rgba(164, 196, 226, .24) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .22) !important;
+}
+html:not([data-theme="light"]) body main :is(
+  .card, .view, .panel, article, section[role="tabpanel"],
+  main > section:not(.hero), [class*="panel"], [class*="card"]
+) *:not(button):not(input):not(select):not(textarea):not(svg):not(path) {
+  color: #edf4ff !important;
+  -webkit-text-fill-color: #edf4ff !important;
+  text-shadow: none !important;
+}
+html:not([data-theme="light"]) body main :is(input, select, textarea) {
+  color: #f2f7ff !important;
+  -webkit-text-fill-color: #f2f7ff !important;
+  background: #0b1b30 !important;
+  border-color: rgba(164, 196, 226, .32) !important;
+}
