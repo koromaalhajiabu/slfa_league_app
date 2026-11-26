@@ -46,7 +46,7 @@
     var title = document.querySelector('[data-official-title]');
     var officialTitle = title ? String(title.getAttribute('data-official-title') || '').toLowerCase() : '';
     return text.indexOf('SUPER ADMIN') >= 0 || text.indexOf('REFEREE') >= 0 ||
-      text.indexOf('TEAM OFFICIAL') >= 0 || text.indexOf('MATCH COMMISSIONER') >= 0 ||
+      text.indexOf('TEAM OFFICIAL') >= 0 || text.indexOf('MATCH COMMISSIONER') >= 0 || text.indexOf('MATCH DATA OPERATOR') >= 0 ||
       officialTitle === 'match commissioner';
   }
   function ensurePanel() {
