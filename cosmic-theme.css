@@ -380,3 +380,62 @@ html[data-sky-phase="dusk"] .sub { color:var(--slfa-accent)!important; }
   #slfa-sky-atmosphere .slfa-sky-sun,#slfa-sky-atmosphere .slfa-sky-cloud { animation:none!important; }
   #slfa-sky-atmosphere { transition:none!important; }
 }
+
+
+/* Sky-cycle priority fix: keep the time-of-day appearance visible even when
+   the app's legacy light appearance preference is active. */
+html[data-sky-phase="dawn"][data-theme="light"] body,
+html[data-sky-phase="afternoon"][data-theme="light"] body,
+html[data-sky-phase="dusk"][data-theme="light"] body {
+  background:var(--slfa-page-bg)!important;
+  background-image:var(--slfa-page-bg)!important;
+  background-attachment:fixed!important;
+  color:#f6f8ff!important;
+}
+html[data-sky-phase="dawn"][data-theme="light"] body .topbar,
+html[data-sky-phase="afternoon"][data-theme="light"] body .topbar,
+html[data-sky-phase="dusk"][data-theme="light"] body .topbar,
+html[data-sky-phase="dawn"][data-theme="light"] body .hero,
+html[data-sky-phase="afternoon"][data-theme="light"] body .hero,
+html[data-sky-phase="dusk"][data-theme="light"] body .hero,
+html[data-sky-phase="dawn"][data-theme="light"] body .card,
+html[data-sky-phase="afternoon"][data-theme="light"] body .card,
+html[data-sky-phase="dusk"][data-theme="light"] body .card,
+html[data-sky-phase="dawn"][data-theme="light"] body .view,
+html[data-sky-phase="afternoon"][data-theme="light"] body .view,
+html[data-sky-phase="dusk"][data-theme="light"] body .view,
+html[data-sky-phase="dawn"][data-theme="light"] body .slfa-home-dashboard,
+html[data-sky-phase="afternoon"][data-theme="light"] body .slfa-home-dashboard,
+html[data-sky-phase="dusk"][data-theme="light"] body .slfa-home-dashboard {
+  background:var(--slfa-panel-bg)!important;
+  background-image:var(--slfa-panel-bg)!important;
+  color:#f6f8ff!important;
+  border-color:var(--slfa-line)!important;
+  box-shadow:0 18px 46px rgba(7,17,35,.28),0 0 26px var(--slfa-glow)!important;
+}
+html[data-sky-phase="dawn"][data-theme="light"] body .hero,
+html[data-sky-phase="afternoon"][data-theme="light"] body .hero,
+html[data-sky-phase="dusk"][data-theme="light"] body .hero {
+  background:var(--slfa-hero-bg)!important;
+  background-image:var(--slfa-hero-bg)!important;
+}
+html[data-sky-phase="dawn"][data-theme="light"] body main :not(button):not(input):not(select):not(textarea),
+html[data-sky-phase="afternoon"][data-theme="light"] body main :not(button):not(input):not(select):not(textarea),
+html[data-sky-phase="dusk"][data-theme="light"] body main :not(button):not(input):not(select):not(textarea) {
+  color:inherit;
+}
+html[data-sky-phase="dawn"][data-theme="light"] body .hero .title,
+html[data-sky-phase="afternoon"][data-theme="light"] body .hero .title,
+html[data-sky-phase="dusk"][data-theme="light"] body .hero .title,
+html[data-sky-phase="dawn"][data-theme="light"] body .topbar h1,
+html[data-sky-phase="afternoon"][data-theme="light"] body .topbar h1,
+html[data-sky-phase="dusk"][data-theme="light"] body .topbar h1,
+html[data-sky-phase="dawn"][data-theme="light"] body .topbar p,
+html[data-sky-phase="afternoon"][data-theme="light"] body .topbar p,
+html[data-sky-phase="dusk"][data-theme="light"] body .topbar p {
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+}
+html[data-sky-phase="dawn"][data-theme="light"] #slfa-sky-atmosphere,
+html[data-sky-phase="afternoon"][data-theme="light"] #slfa-sky-atmosphere,
+html[data-sky-phase="dusk"][data-theme="light"] #slfa-sky-atmosphere { opacity:1!important; }
