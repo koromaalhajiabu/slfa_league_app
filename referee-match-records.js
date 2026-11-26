@@ -85,7 +85,7 @@
       if (ar.error) throw ar.error;
       assignments = ar.data || [];
       if (assignments.length) {
-        var ids = Array.from(new Set(assignments.map(function (a) { return a.match_id; }));
+        var ids = Array.from(new Set(assignments.map(function (a) { return a.match_id; })));
         var mr = await db.from('matches')
           .select('id,match_date,new_match_date,home_team,away_team,venue,match_status,home_score,away_score')
           .in('id', ids).order('match_date', { ascending:false });
