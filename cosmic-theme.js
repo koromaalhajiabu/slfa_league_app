@@ -313,8 +313,7 @@
       '<span class="slfa-sky-cloud slfa-sky-cloud-a"></span>' +
       '<span class="slfa-sky-cloud slfa-sky-cloud-b"></span>' +
       '<span class="slfa-sky-cloud slfa-sky-cloud-c"></span>' +
-      '<span class="slfa-sky-light-beam"></span>' +
-
+      '<span class="slfa-sky-light-beam"></span>';
     document.body.insertBefore(layer, document.body.firstChild);
   }
 
