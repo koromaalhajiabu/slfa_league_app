@@ -601,3 +601,94 @@ html[data-theme="light"][data-sky-phase] body .hero .kicker { color:#fff!importa
   html { scroll-behavior:auto; }
   body,#slfa-sky-atmosphere,#slfa-sky-atmosphere * { transition:none!important; animation:none!important; }
 }
+
+
+/* SLFA 2026 — living sky bird migration */
+#slfa-sky-atmosphere .slfa-bird-flock {
+  display:none; position:absolute; z-index:2; align-items:center;
+  gap:clamp(2px,.55vw,8px); width:max-content; height:42px;
+  color:rgba(13,31,52,.66); opacity:0; pointer-events:none;
+  filter:drop-shadow(0 2px 3px rgba(255,255,255,.12));
+  will-change:transform;
+}
+#slfa-sky-atmosphere .slfa-bird {
+  display:block; flex:0 0 auto; width:clamp(18px,2.35vw,34px); height:auto;
+}
+#slfa-sky-atmosphere .slfa-bird svg {
+  display:block; width:100%; height:auto; overflow:visible; fill:currentColor;
+  transform-origin:50% 50%;
+  animation:slfaBirdWingGlide 1.9s ease-in-out infinite alternate;
+}
+#slfa-sky-atmosphere .slfa-bird:nth-child(2) svg { animation-delay:-.45s; }
+#slfa-sky-atmosphere .slfa-bird:nth-child(3) svg { animation-delay:-.9s; }
+#slfa-sky-atmosphere .slfa-bird:nth-child(4) svg { animation-delay:-1.25s; }
+#slfa-sky-atmosphere .slfa-bird:nth-child(5) svg { animation-delay:-.7s; }
+#slfa-sky-atmosphere .slfa-bird.b1 { transform:translateY(4px) scale(.78) rotate(-7deg); }
+#slfa-sky-atmosphere .slfa-bird.b2 { transform:translateY(-3px) scale(.9) rotate(4deg); }
+#slfa-sky-atmosphere .slfa-bird.b3 { transform:translateY(2px) scale(1.05); }
+#slfa-sky-atmosphere .slfa-bird.b4 { transform:translateY(-5px) scale(.82) rotate(-4deg); }
+#slfa-sky-atmosphere .slfa-bird.b5 { transform:translateY(1px) scale(.72) rotate(6deg); }
+
+html[data-sky-phase="dawn"] #slfa-sky-atmosphere .slfa-bird-flock,
+html[data-sky-phase="afternoon"] #slfa-sky-atmosphere .slfa-bird-flock,
+html[data-sky-phase="dusk"] #slfa-sky-atmosphere .slfa-bird-flock {
+  display:flex; opacity:1;
+}
+html[data-sky-phase="dawn"] #slfa-sky-atmosphere .slfa-bird-flock {
+  color:rgba(24,37,57,.70);
+}
+html[data-sky-phase="afternoon"] #slfa-sky-atmosphere .slfa-bird-flock {
+  color:rgba(13,41,61,.58);
+}
+html[data-sky-phase="dusk"] #slfa-sky-atmosphere .slfa-bird-flock {
+  color:rgba(27,22,53,.82);
+}
+#slfa-sky-atmosphere .slfa-bird-flock-a {
+  top:17%; left:-30vw; animation:slfaBirdFlightA 48s linear -17s infinite;
+}
+#slfa-sky-atmosphere .slfa-bird-flock-b {
+  top:31%; left:-34vw; transform:scale(.76);
+  animation:slfaBirdFlightB 62s linear -39s infinite;
+}
+#slfa-sky-atmosphere .slfa-bird-flock-c {
+  top:10%; left:-38vw; transform:scale(.62);
+  animation:slfaBirdFlightC 74s linear -51s infinite;
+}
+html[data-sky-phase="dawn"] #slfa-sky-atmosphere .slfa-bird-flock-a { top:20%; }
+html[data-sky-phase="dawn"] #slfa-sky-atmosphere .slfa-bird-flock-b { top:35%; }
+html[data-sky-phase="afternoon"] #slfa-sky-atmosphere .slfa-bird-flock-a { top:15%; }
+html[data-sky-phase="afternoon"] #slfa-sky-atmosphere .slfa-bird-flock-b { top:29%; }
+html[data-sky-phase="dusk"] #slfa-sky-atmosphere .slfa-bird-flock-a { top:22%; }
+html[data-sky-phase="dusk"] #slfa-sky-atmosphere .slfa-bird-flock-b { top:37%; }
+html[data-sky-phase="night"] #slfa-sky-atmosphere .slfa-bird-flock { display:none; }
+
+@keyframes slfaBirdWingGlide {
+  from { transform:scaleY(.82) rotate(-2deg); }
+  to { transform:scaleY(1.08) rotate(2deg); }
+}
+@keyframes slfaBirdFlightA {
+  0% { transform:translate3d(-8vw,0,0) rotate(-2deg); }
+  28% { transform:translate3d(38vw,-18px,0) rotate(1deg); }
+  62% { transform:translate3d(92vw,5px,0) rotate(-1deg); }
+  100% { transform:translate3d(158vw,-13px,0) rotate(2deg); }
+}
+@keyframes slfaBirdFlightB {
+  0% { transform:translate3d(-4vw,0,0) scale(.76) rotate(2deg); }
+  34% { transform:translate3d(52vw,13px,0) scale(.76) rotate(-1deg); }
+  70% { transform:translate3d(112vw,-17px,0) scale(.76) rotate(1deg); }
+  100% { transform:translate3d(168vw,0,0) scale(.76) rotate(-2deg); }
+}
+@keyframes slfaBirdFlightC {
+  0% { transform:translate3d(-10vw,0,0) scale(.62); }
+  45% { transform:translate3d(68vw,-24px,0) scale(.62); }
+  100% { transform:translate3d(174vw,-4px,0) scale(.62); }
+}
+@media(max-width:620px) {
+  #slfa-sky-atmosphere .slfa-bird-flock { gap:3px; height:30px; }
+  #slfa-sky-atmosphere .slfa-bird { width:clamp(15px,4vw,23px); }
+  #slfa-sky-atmosphere .slfa-bird-flock-c { display:none!important; }
+}
+@media(prefers-reduced-motion:reduce) {
+  #slfa-sky-atmosphere .slfa-bird-flock { display:none!important; animation:none!important; }
+  #slfa-sky-atmosphere .slfa-bird svg { animation:none!important; }
+}
