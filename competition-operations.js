@@ -189,7 +189,7 @@
     if(ops.assistants.length<2)issues.push('Assistant Referees appointed: '+ops.assistants.length+'/2.');
     if(ops.commissioners.length===0)issues.push('Match Commissioner is not appointed.');
     if(ops.commissioners.length>1)issues.push('More than one active Match Commissioner appointment exists.');
-    if(future&&ops.dataOperators.length===0)issues.push('Live Match Data Operator is not appointed.');
+    if(!cancelled(m)&&(future||live(m))&&ops.dataOperators.length===0)issues.push('Live Match Data Operator is not appointed.');
     if(ops.dataOperators.length>1)issues.push('More than one active Live Match Data Operator appointment exists.');
     var sheetState=function(s,label){
       if(!s){issues.push(label+' team sheet is missing.');return 'MISSING';}
@@ -324,10 +324,10 @@
     status.textContent=current.matches.length?'Command Centre loaded. Inspect exceptions and open a match dossier for supporting records.':'No match records currently exist in this database. Add real association fixtures and assignments to begin operational checks.';
   }
   function exportCSV(){
-    var rows=rowsForWindow(),headers=['Match ID','Kick-off Freetown','Competition','Home team','Away team','Venue','Match status','Official score','Command state','Main referees','Assistant referees','Match Commissioners','Home sheet status','Away sheet status','Main referee record','OCR human verified','Commissioner report','Compliance flags'];
+    var rows=rowsForWindow(),headers=['Match ID','Kick-off Freetown','Competition','Home team','Away team','Venue','Match status','Official score','Command state','Main referees','Assistant referees','Match Commissioners','Live Match Data Operators','Home sheet status','Away sheet status','Main referee record','OCR human verified','Commissioner report','Compliance flags'];
     var lines=[headers].concat(rows.map(function(x){
       var m=x.match,o=x.ops,l=current.leagues.find(function(q){return String(q.id)===String(m.league_id);});
-      return [m.id,fmt(matchTime(m)),l?l.name:'',m.home_team,m.away_team,m.venue,m.match_status,hasScore(m)?m.home_score+'-'+m.away_score:'',o.state,o.officials.mains.length,o.officials.assistants.length,o.officials.commissioners.length,o.homeState,o.awayState,o.mainRecord?o.mainRecord.status:'MISSING',!!(o.mainRecord&&o.mainRecord.ocr_verified_at),o.commissioner?o.commissioner.report_status:'MISSING',o.issues.join(' | ')];
+      return [m.id,fmt(matchTime(m)),l?l.name:'',m.home_team,m.away_team,m.venue,m.match_status,hasScore(m)?m.home_score+'-'+m.away_score:'',o.state,o.officials.mains.length,o.officials.assistants.length,o.officials.commissioners.length,o.officials.dataOperators.length,o.homeState,o.awayState,o.mainRecord?o.mainRecord.status:'MISSING',!!(o.mainRecord&&o.mainRecord.ocr_verified_at),o.commissioner?o.commissioner.report_status:'MISSING',o.issues.join(' | ')];
     }));
     var csv=lines.map(function(r){return r.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
     var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
@@ -372,8 +372,8 @@
     }catch(e){try{popup.close();}catch(_){}window.alert('Dossier could not be prepared: '+(e.message||'Check report and evidence access.'));}
   }
   function exportCSV(){
-    var rows=rowsForWindow(),headers=['Match ID','Kick-off Freetown','Competition','Home team','Away team','Venue','Match status','Official score','Command state','Main referees','Assistant referees','Match Commissioners','Home sheet status','Away sheet status','Referee record','OCR verified','Commissioner report','Compliance flags'];
-    var lines=[headers].concat(rows.map(function(x){var m=x.match,o=x.ops,l=current.leagues.find(function(q){return String(q.id)===String(m.league_id);});return [m.id,fmt(matchTime(m)),l?l.name:'',m.home_team,m.away_team,m.venue,m.match_status,hasScore(m)?m.home_score+'-'+m.away_score:'',o.state,o.officials.mains.length,o.officials.assistants.length,o.officials.commissioners.length,o.homeState,o.awayState,o.mainRecord?o.mainRecord.status:'MISSING',!!(o.mainRecord&&o.mainRecord.ocr_verified_at),o.commissioner?o.commissioner.report_status:'MISSING',o.issues.join('; ')];}));
+    var rows=rowsForWindow(),headers=['Match ID','Kick-off Freetown','Competition','Home team','Away team','Venue','Match status','Official score','Command state','Main referees','Assistant referees','Match Commissioners','Live Match Data Operators','Home sheet status','Away sheet status','Referee record','OCR verified','Commissioner report','Compliance flags'];
+    var lines=[headers].concat(rows.map(function(x){var m=x.match,o=x.ops,l=current.leagues.find(function(q){return String(q.id)===String(m.league_id);});return [m.id,fmt(matchTime(m)),l?l.name:'',m.home_team,m.away_team,m.venue,m.match_status,hasScore(m)?m.home_score+'-'+m.away_score:'',o.state,o.officials.mains.length,o.officials.assistants.length,o.officials.commissioners.length,o.officials.dataOperators.length,o.homeState,o.awayState,o.mainRecord?o.mainRecord.status:'MISSING',!!(o.mainRecord&&o.mainRecord.ocr_verified_at),o.commissioner?o.commissioner.report_status:'MISSING',o.issues.join('; ')];}));
     var csv=lines.map(function(r){return r.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
     var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download='slfa-matchday-command-board-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();
