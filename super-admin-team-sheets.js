@@ -82,7 +82,11 @@
       (rows.length?rows.map(function(x){
         var m=matches[String(x.match_id)]||{},c=clubs[String(x.club_id)]||{},u=profiles[String(x.submitted_by)]||{};
         var starters=names(x.starting_player_ids),subs=names(x.substitute_player_ids);
-        return '<article class="tsa-card"><div class="tsa-top"><div><strong>'+esc(x.reference_code||'Team Sheet')+' · '+esc(c.club_name||'Club')+'</strong><p>'+esc((m.home_team||'Home')+' v '+(m.away_team||'Away'))+'<br>'+esc(fmt(m.new_match_date||m.match_date))+' · '+esc(m.venue||'Venue not listed')+'</p><p>Submitted by: '+esc(u.full_name||u.email||'Team Official')+' · '+esc(fmt(x.submitted_at))+'</p></div><span class="tsa-pill">'+esc(x.status)+'</span></div><div class="tsa-data"><div><strong>Starting XI ('+starters.length+')</strong><ul>'+starters.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div><div><strong>Substitutes ('+subs.length+')</strong><ul>'+subs.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div></div>'+(x.review_notes?'<p><strong>Previous review:</strong> '+esc(x.review_notes)+'</p>':'')+'<div class="tsa-actions"><button type="button" class="alt" data-tsa-pdf="'+esc(x.id)+'">Print / Save PDF</button></div><label for="tsaState_'+esc(x.id)+'">Review decision</label><select id="tsaState_'+esc(x.id)+'"><option value="SUBMITTED" '+(x.status==='SUBMITTED'?'selected':'')+'>Awaiting review</option><option value="APPROVED" '+(x.status==='APPROVED'?'selected':'')+'>Approve and lock</option><option value="RETURNED" '+(x.status==='RETURNED'?'selected':'')+'>Return for correction</option></select><textarea id="tsaNote_'+esc(x.id)+'" maxlength="2000" placeholder="Review notes or correction instructions">'+esc(x.review_notes||'')+'</textarea><button type="button" data-tsa-save="'+esc(x.id)+'">Save review decision</button></article>';
+        var decision=(x.status==='SUBMITTED'?'<option value="" selected>Choose decision…</option>':'')+
+          '<option value="APPROVED" '+(x.status==='APPROVED'?'selected':'')+'>Approve and publish to matchday</option>'+
+          '<option value="RETURNED" '+(x.status==='RETURNED'?'selected':'')+'>Return for correction</option>';
+        var locked=x.status==='APPROVED';
+        return '<article class="tsa-card"><div class="tsa-top"><div><strong>'+esc(x.reference_code||'Team Sheet')+' · '+esc(c.club_name||'Club')+'</strong><p>'+esc((m.home_team||'Home')+' v '+(m.away_team||'Away'))+'<br>'+esc(fmt(m.new_match_date||m.match_date))+' · '+esc(m.venue||'Venue not listed')+'</p><p>Submitted by: '+esc(u.full_name||u.email||'Team Official')+' · '+esc(fmt(x.submitted_at))+'</p></div><span class="tsa-pill">'+esc(x.status)+'</span></div><div class="tsa-data"><div><strong>Starting XI ('+starters.length+')</strong><ul>'+starters.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div><div><strong>Substitutes ('+subs.length+')</strong><ul>'+subs.map(function(v){return '<li>'+esc(v)+'</li>';}).join('')+'</ul></div></div>'+(x.review_notes?'<p><strong>Previous review:</strong> '+esc(x.review_notes)+'</p>':'')+'<div class="tsa-actions"><button type="button" class="alt" data-tsa-pdf="'+esc(x.id)+'">Print / Save PDF</button></div><label for="tsaState_'+esc(x.id)+'">Review decision</label><select id="tsaState_'+esc(x.id)+'" '+(locked?'disabled':'')+'>'+decision+'</select><textarea id="tsaNote_'+esc(x.id)+'" maxlength="2000" placeholder="Review notes or correction instructions">'+esc(x.review_notes||'')+'</textarea><button type="button" data-tsa-save="'+esc(x.id)+'" '+(locked?'disabled':'')+'>Save review decision</button></article>';
       }).join(''):'<div class="tsa-empty">No electronic team sheets received yet.</div>');
   }
   async function click(e){
@@ -92,13 +96,9 @@
   }
   async function review(id){
     var row=rows.find(function(x){return String(x.id)===String(id);});if(!row)return;
-    var state=$('tsaState_'+id),note=$('tsaNote_'+id);if(!state)return;
+    var state=$('tsaState_'+id),note=$('tsaNote_'+id);if(!state||!state.value){window.alert('Choose Approve or Return for correction.');return;}
     if(state.value==='RETURNED'&&!(note&&note.value.trim())){window.alert('Add a correction note before returning the team sheet.');return;}
-    var u=await db.auth.getUser();var r=await db.from('match_team_sheets').update({
-      status:state.value,review_notes:(note&&note.value.trim())||null,
-      reviewed_by:u.data&&u.data.user?u.data.user.id:null,
-      reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()
-    }).eq('id',row.id).select('id').single();
+    var r=await db.rpc('review_match_team_sheet',{p_sheet_id:Number(row.id),p_status:state.value,p_review_notes:(note&&note.value.trim())||null});
     if(r.error){window.alert('Review decision could not be saved: '+r.error.message);return;}
     await load();
   }
