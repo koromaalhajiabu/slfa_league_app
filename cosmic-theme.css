@@ -692,3 +692,42 @@ html[data-sky-phase="night"] #slfa-sky-atmosphere .slfa-bird-flock { display:non
   #slfa-sky-atmosphere .slfa-bird-flock { display:none!important; animation:none!important; }
   #slfa-sky-atmosphere .slfa-bird svg { animation:none!important; }
 }
+
+
+/* SLFA 2026 — bird visibility fallback */
+#slfa-sky-atmosphere .slfa-bird-flock {
+  color:rgba(8,24,43,.94)!important;
+  filter:drop-shadow(0 2px 2px rgba(255,255,255,.34)) drop-shadow(0 0 5px rgba(255,255,255,.18));
+}
+#slfa-sky-atmosphere .slfa-bird {
+  width:clamp(23px,2.8vw,39px);
+}
+html[data-sky-phase="dawn"] #slfa-sky-atmosphere .slfa-bird-flock,
+html[data-sky-phase="afternoon"] #slfa-sky-atmosphere .slfa-bird-flock,
+html[data-sky-phase="dusk"] #slfa-sky-atmosphere .slfa-bird-flock {
+  display:flex!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+html[data-sky-phase="dawn"] #slfa-sky-atmosphere .slfa-bird-flock { color:rgba(24,30,48,.94)!important; }
+html[data-sky-phase="afternoon"] #slfa-sky-atmosphere .slfa-bird-flock { color:rgba(10,35,54,.88)!important; }
+html[data-sky-phase="dusk"] #slfa-sky-atmosphere .slfa-bird-flock { color:rgba(27,18,48,.96)!important; }
+html[data-sky-phase="night"] #slfa-sky-atmosphere .slfa-bird-flock {
+  display:none!important;
+  visibility:hidden!important;
+}
+@media(max-width:620px) {
+  #slfa-sky-atmosphere .slfa-bird { width:clamp(20px,5vw,29px); }
+  #slfa-sky-atmosphere .slfa-bird-flock-c { display:flex!important; }
+}
+@media(prefers-reduced-motion:reduce) {
+  html[data-sky-phase="dawn"] #slfa-sky-atmosphere .slfa-bird-flock,
+  html[data-sky-phase="afternoon"] #slfa-sky-atmosphere .slfa-bird-flock,
+  html[data-sky-phase="dusk"] #slfa-sky-atmosphere .slfa-bird-flock {
+    display:flex!important;
+    opacity:1!important;
+    visibility:visible!important;
+    animation:none!important;
+  }
+  #slfa-sky-atmosphere .slfa-bird svg { animation:none!important; }
+}
