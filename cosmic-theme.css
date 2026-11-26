@@ -283,3 +283,100 @@ html[data-theme="light"] .match {
   #slfaAccentColor { flex:0 0 29px; }
   #slfaThemePublish { flex:0 0 auto; }
 }
+
+
+/* Automatic 2026 sky-cycle appearances. Night Sky remains the original cosmic view. */
+#slfa-sky-atmosphere {
+  position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
+  opacity:0; transition:opacity 1.8s ease;
+}
+html[data-sky-phase="dawn"] #slfa-sky-atmosphere,
+html[data-sky-phase="afternoon"] #slfa-sky-atmosphere,
+html[data-sky-phase="dusk"] #slfa-sky-atmosphere { opacity:1; }
+#slfa-sky-atmosphere .slfa-sky-sun {
+  position:absolute; width:clamp(150px,25vw,330px); aspect-ratio:1; border-radius:50%;
+  top:clamp(42px,9vh,110px); right:clamp(8%,13vw,22%);
+  background:radial-gradient(circle,rgba(255,255,235,.92) 0 7%,rgba(255,237,190,.45) 28%,rgba(255,220,170,.12) 56%,transparent 72%);
+  filter:blur(2px); transform:translateZ(0); animation:slfaSunDrift 28s ease-in-out infinite alternate;
+}
+#slfa-sky-atmosphere .slfa-sky-horizon {
+  position:absolute; inset:auto -10% -20% -10%; height:48%;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.18),transparent 66%);
+}
+#slfa-sky-atmosphere .slfa-sky-cloud {
+  position:absolute; width:clamp(180px,30vw,390px); height:72px; border-radius:100%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.20),rgba(255,255,255,.07) 48%,transparent 72%);
+  filter:blur(13px); animation:slfaCloudDrift 54s linear infinite;
+}
+#slfa-sky-atmosphere .slfa-sky-cloud-a { top:23%; left:-18%; }
+#slfa-sky-atmosphere .slfa-sky-cloud-b { top:39%; right:-22%; animation-delay:-26s; animation-duration:68s; }
+html[data-sky-phase="dawn"] {
+  --slfa-page-bg:radial-gradient(ellipse at 78% 9%,rgba(255,211,184,.72),transparent 36%),linear-gradient(165deg,#496c91 0%,#a77e91 42%,#e2a98e 74%,#203d5a 100%);
+  --slfa-panel-bg:linear-gradient(145deg,rgba(20,39,61,.91),rgba(17,29,49,.95));
+  --slfa-hero-bg:linear-gradient(115deg,#263e5c 0%,#875b70 54%,#c47d69 100%);
+  --slfa-accent:#ffd2ae; --slfa-accent-2:#a9e4ed; --slfa-line:rgba(255,218,193,.28); --slfa-glow:rgba(255,177,147,.22);
+  --slfa-button-bg:linear-gradient(120deg,#a85f68,#d58d73 56%,#477f9e);
+}
+html[data-sky-phase="afternoon"] {
+  --slfa-page-bg:radial-gradient(ellipse at 78% 7%,rgba(255,244,190,.58),transparent 29%),linear-gradient(165deg,#347eb2 0%,#438eb8 38%,#6ba5bb 70%,#244d6b 100%);
+  --slfa-panel-bg:linear-gradient(145deg,rgba(12,42,65,.91),rgba(8,29,50,.95));
+  --slfa-hero-bg:linear-gradient(115deg,#075b62 0%,#117e91 52%,#2474a7 100%);
+  --slfa-accent:#b9f3e4; --slfa-accent-2:#ffe5a6; --slfa-line:rgba(190,239,239,.27); --slfa-glow:rgba(107,218,220,.2);
+  --slfa-button-bg:linear-gradient(120deg,#087e78,#16a6a0 55%,#267eb5);
+}
+html[data-sky-phase="dusk"] {
+  --slfa-page-bg:radial-gradient(ellipse at 78% 12%,rgba(255,183,126,.62),transparent 31%),linear-gradient(165deg,#493d69 0%,#925b70 42%,#c77c65 70%,#202d4c 100%);
+  --slfa-panel-bg:linear-gradient(145deg,rgba(30,31,58,.92),rgba(18,22,45,.96));
+  --slfa-hero-bg:linear-gradient(115deg,#332d58 0%,#8a4e66 54%,#c2785d 100%);
+  --slfa-accent:#ffd0a1; --slfa-accent-2:#d7b8ff; --slfa-line:rgba(255,194,157,.27); --slfa-glow:rgba(244,142,112,.22);
+  --slfa-button-bg:linear-gradient(120deg,#854b70,#c06c68 56%,#5c669c);
+}
+html[data-sky-phase="dawn"] #slfa-cosmos,
+html[data-sky-phase="afternoon"] #slfa-cosmos,
+html[data-sky-phase="dusk"] #slfa-cosmos { opacity:0; transition:opacity 1.5s ease; }
+html[data-sky-phase="night"] #slfa-cosmos { opacity:.76; transition:opacity 1.5s ease; }
+html[data-sky-phase="dawn"] body,
+html[data-sky-phase="afternoon"] body,
+html[data-sky-phase="dusk"] body { background:var(--slfa-page-bg)!important; background-attachment:fixed!important; }
+html[data-sky-phase="dawn"] .hero,
+html[data-sky-phase="afternoon"] .hero,
+html[data-sky-phase="dusk"] .hero { background:var(--slfa-hero-bg)!important; border-color:var(--slfa-line)!important; }
+html[data-sky-phase="dawn"] .card,
+html[data-sky-phase="dawn"] .view.card,
+html[data-sky-phase="dawn"] .slfa-home-dashboard,
+html[data-sky-phase="dawn"] .ps-panel,
+html[data-sky-phase="dawn"] .news-controls,
+html[data-sky-phase="afternoon"] .card,
+html[data-sky-phase="afternoon"] .view.card,
+html[data-sky-phase="afternoon"] .slfa-home-dashboard,
+html[data-sky-phase="afternoon"] .ps-panel,
+html[data-sky-phase="afternoon"] .news-controls,
+html[data-sky-phase="dusk"] .card,
+html[data-sky-phase="dusk"] .view.card,
+html[data-sky-phase="dusk"] .slfa-home-dashboard,
+html[data-sky-phase="dusk"] .ps-panel,
+html[data-sky-phase="dusk"] .news-controls {
+  background:var(--slfa-panel-bg)!important; border-color:var(--slfa-line)!important;
+  box-shadow:0 18px 46px rgba(7,17,35,.25),0 0 26px var(--slfa-glow)!important;
+}
+html[data-sky-phase="dawn"] .topbar,
+html[data-sky-phase="afternoon"] .topbar,
+html[data-sky-phase="dusk"] .topbar,
+html[data-sky-phase="dawn"] .portal-head,
+html[data-sky-phase="afternoon"] .portal-head,
+html[data-sky-phase="dusk"] .portal-head {
+  background:rgba(12,27,47,.78)!important; border-bottom-color:var(--slfa-line)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(150%); backdrop-filter:blur(22px) saturate(150%);
+}
+html[data-sky-phase="dawn"] .kicker,
+html[data-sky-phase="afternoon"] .kicker,
+html[data-sky-phase="dusk"] .kicker,
+html[data-sky-phase="dawn"] .sub,
+html[data-sky-phase="afternoon"] .sub,
+html[data-sky-phase="dusk"] .sub { color:var(--slfa-accent)!important; }
+@keyframes slfaSunDrift { from{transform:translate3d(0,5px,0) scale(.96)} to{transform:translate3d(-22px,-8px,0) scale(1.04)} }
+@keyframes slfaCloudDrift { from{transform:translateX(-12vw)} to{transform:translateX(115vw)} }
+@media(prefers-reduced-motion:reduce) {
+  #slfa-sky-atmosphere .slfa-sky-sun,#slfa-sky-atmosphere .slfa-sky-cloud { animation:none!important; }
+  #slfa-sky-atmosphere { transition:none!important; }
+}
