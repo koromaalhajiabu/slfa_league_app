@@ -15,7 +15,7 @@
     });
   }
   function safeUrl(value) {
-    var allowed = ['super-admin.html','referee.html','team-official.html'];
+    var allowed = ['super-admin.html','referee.html','team-official.html','match-data-operator.html'];
     return allowed.indexOf(String(value || '')) >= 0 ? String(value) : 'super-admin.html';
   }
   function addStyle() {
