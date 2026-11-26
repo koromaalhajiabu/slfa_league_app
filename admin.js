@@ -1553,7 +1553,7 @@
   }
   function loadInvites(){
     db.from('role_invitations')
-      .select('email,full_name,system_role,invited_at,email_delivery_status,email_sent_at,email_delivery_error,invitation_status')
+      .select('email,full_name,system_role,official_title,invited_at,email_delivery_status,email_sent_at,email_delivery_error,invitation_status')
       .in('invitation_status',['PENDING','ACCOUNT_CREATED'])
       .order('invited_at',{ascending:false})
       .then(function(r){
@@ -1572,7 +1572,7 @@
             ? '<span class="muted">Email sent · use Forgot password if its link expires</span>'
             : '<button class="small" type="button" data-send-invite="'+esc(x.email)+'">'+(delivery==='FAILED'?'Retry invitation email':'Send invitation email')+'</button>';
           return '<div class="post"><strong>'+esc(x.full_name||x.email)+'</strong>'+
-            '<div class="muted">'+esc(x.email)+' · '+esc(x.system_role)+' · '+esc(accountState)+' · '+esc(state)+'</div>'+
+            '<div class="muted">'+esc(x.email)+' · '+esc(x.official_title||x.system_role)+' · '+esc(accountState)+' · '+esc(state)+'</div>'+
             sendButton+' <button class="small danger" type="button" data-cancel="'+esc(x.email)+'">Cancel invitation</button></div>';
         }).join(''):'No pending staff activations.';
         document.querySelectorAll('[data-send-invite]').forEach(function(b){
