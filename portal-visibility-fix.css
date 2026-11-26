@@ -252,3 +252,77 @@ html[data-sky-phase="night"] #slfa-sky-atmosphere .slfa-sky-sun::before {
   html[data-sky-phase="dusk"] #slfa-sky-atmosphere .slfa-sky-sun { top: 29vh !important; left: 12% !important; }
 }
 body .topbar, body .portal-head { z-index: 12 !important; }
+
+
+/* Continuous local daylight: the sun climbs and brightens from 05:00 to noon,
+   then lowers and warms toward sunset at 19:30 in Africa/Freetown. */
+#slfa-sky-atmosphere::before {
+  background:
+    radial-gradient(ellipse at var(--slfa-sun-left, 48%) var(--slfa-sun-top, 17vh),
+      rgba(255,248,214,calc(var(--slfa-daylight-strength, .45) * .52)) 0%,
+      rgba(255,213,166,calc(var(--slfa-daylight-strength, .45) * .32)) 24%,
+      rgba(255,177,136,calc(var(--slfa-daylight-strength, .45) * .12)) 46%,
+      transparent 69%),
+    radial-gradient(ellipse at 12% 35%,rgba(196,225,255,.12),transparent 34%) !important;
+  opacity: 1 !important;
+  transition: opacity 2s ease, background 2s ease;
+}
+#slfa-sky-atmosphere .slfa-sky-glow {
+  left: var(--slfa-sun-left, 48%) !important;
+  right: auto !important;
+  top: var(--slfa-sun-top, 17vh) !important;
+  width: clamp(300px, 58vw, 780px) !important;
+  opacity: var(--slfa-sun-energy, .75) !important;
+  transform: translate(-38%, -36%) !important;
+  background: radial-gradient(circle,
+    rgba(255,255,238,calc(var(--slfa-sun-energy, .75) * .56)) 0%,
+    rgba(255,220,164,calc(var(--slfa-sun-energy, .75) * .34)) 28%,
+    rgba(255,177,132,calc(var(--slfa-sun-energy, .75) * .18)) 48%,
+    transparent 72%) !important;
+  filter: blur(9px) !important;
+}
+#slfa-sky-atmosphere .slfa-sky-sun {
+  left: var(--slfa-sun-left, 48%) !important;
+  right: auto !important;
+  top: var(--slfa-sun-top, 17vh) !important;
+  width: clamp(120px, 17vw, 238px) !important;
+  opacity: 1 !important;
+  transform: scale(var(--slfa-sun-scale, 1)) !important;
+  transition: left 12s linear, top 12s linear, transform 3s ease, box-shadow 3s ease, filter 3s ease;
+  background: radial-gradient(circle at 34% 29%,
+    #ffffff 0%, #fffef0 12%, #fff2b9 34%, #ffd184 59%, #ffad72 80%, #f47e65 100%) !important;
+  box-shadow:
+    0 0 22px rgba(255,255,239,.98),
+    0 0 56px rgba(255,235,171,.94),
+    0 0 112px rgba(255,204,130,.86),
+    0 0 178px rgba(255,169,119,.66),
+    0 0 260px rgba(255,145,108,.42) !important;
+  filter: brightness(calc(1.18 + var(--slfa-sun-energy, .75) * .44)) saturate(1.28) !important;
+}
+#slfa-sky-atmosphere .slfa-sky-sun::before {
+  inset: -118% !important;
+  background: radial-gradient(circle,
+    rgba(255,255,240,calc(var(--slfa-sun-halo, .7) * .66)) 0 13%,
+    rgba(255,230,174,calc(var(--slfa-sun-halo, .7) * .54)) 28%,
+    rgba(255,189,137,calc(var(--slfa-sun-mid-glow, .5) * .60)) 48%,
+    rgba(255,161,123,calc(var(--slfa-sun-mid-glow, .5) * .24)) 63%,
+    transparent 78%) !important;
+  opacity: 1 !important;
+  filter: blur(16px) !important;
+  animation: slfaSunHaloPulse 4.8s ease-in-out infinite alternate !important;
+}
+#slfa-sky-atmosphere .slfa-sky-horizon {
+  background: radial-gradient(ellipse at 50% 0%,
+    rgba(255,245,215,calc(var(--slfa-daylight-strength, .45) * .38)),
+    transparent 70%) !important;
+  transition: background 3s ease;
+}
+html[data-sky-phase="night"] #slfa-sky-atmosphere .slfa-sky-glow,
+html[data-sky-phase="night"] #slfa-sky-atmosphere .slfa-sky-sun,
+html[data-sky-phase="night"] #slfa-sky-atmosphere .slfa-sky-sun::before {
+  opacity: 0 !important;
+  animation: none !important;
+}
+@media(max-width:620px) {
+  #slfa-sky-atmosphere .slfa-sky-sun { width: clamp(112px, 31vw, 158px) !important; }
+}

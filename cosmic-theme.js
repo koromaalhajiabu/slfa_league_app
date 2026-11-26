@@ -274,6 +274,29 @@
     if (hour >= 17 && hour < 19.5) return 'dusk';
     return 'night';
   }
+  function applySunlight(clock, root) {
+    // Visual sunrise-to-sunset curve for Freetown local time; no weather data is assumed.
+    var minutes = clock.hour * 60 + clock.minute + clock.second / 60;
+    var sunrise = 5 * 60;
+    var sunset = 19 * 60 + 30;
+    var progress = Math.max(0, Math.min(1, (minutes - sunrise) / (sunset - sunrise)));
+    var altitude = Math.max(0, Math.sin(Math.PI * progress));
+    var energy = 0.48 + 0.52 * Math.pow(altitude, 0.72);
+    var daylight = 0.12 + 0.82 * Math.pow(altitude, 0.82);
+    var left = 6 + progress * 82;
+    var top = 38 - altitude * 29;
+    var scale = 0.90 + energy * 0.34;
+    var halo = 0.22 + energy * 0.62;
+    var midGlow = 0.15 + energy * 0.48;
+    root.style.setProperty('--slfa-sun-left', left.toFixed(2) + '%');
+    root.style.setProperty('--slfa-sun-top', top.toFixed(2) + 'vh');
+    root.style.setProperty('--slfa-sun-scale', scale.toFixed(3));
+    root.style.setProperty('--slfa-sun-energy', energy.toFixed(3));
+    root.style.setProperty('--slfa-sun-halo', halo.toFixed(3));
+    root.style.setProperty('--slfa-sun-mid-glow', midGlow.toFixed(3));
+    root.style.setProperty('--slfa-daylight-strength', daylight.toFixed(3));
+    root.setAttribute('data-sun-progress', Math.round(progress * 100));
+  }
   function applySkyCycle() {
     var now = new Date();
     var clock = freetownClock(now);
@@ -289,6 +312,7 @@
     root.setAttribute('data-sky-label', labels[phase]);
     root.setAttribute('data-sky-timezone', SKY_TIME_ZONE);
     root.setAttribute('data-sky-local-time', pad(clock.hour) + ':' + pad(clock.minute));
+    applySunlight(clock, root);
 
     if (changed) {
       root.setAttribute('data-sky-transition', 'active');
