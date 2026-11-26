@@ -1456,26 +1456,87 @@
     });
   }
   function updateInviteClubVisibility(){if($('ivClubWrap'))$('ivClubWrap').hidden=$('ivRole').value!=='TEAM_OFFICIAL';}
+  function sendRoleInvitation(email){
+    return db.functions.invoke('send-staff-invitation',{body:{email:email}})
+      .then(function(r){
+        if(r.error)throw r.error;
+        var data=r.data||{};
+        if(data.error)throw new Error(data.error);
+        return data;
+      });
+  }
   function saveInvite(){
     var name=$('ivName').value.trim(),email=$('ivEmail').value.trim().toLowerCase(),role=$('ivRole').value,file=$('ivPhoto').files&&$('ivPhoto').files[0];
     var club=role==='TEAM_OFFICIAL'?($('ivClub').value||null):null;
     if(!name||!email){msg('Enter the full name and email address.');return;}
     if(role==='TEAM_OFFICIAL'&&!club){msg('Choose the club the Team Official represents.');return;}
-    msg('Saving role invitation…');
+    var save=$('ivSave');if(save)save.disabled=true;
+    msg('Saving role and preparing the secure invitation…');
     uploadDevPhoto(email,file).then(function(photo){
       return db.rpc('invite_user',{p_email:email,p_role:role,p_club:club,p_full_name:name,p_photo_url:photo});
     }).then(function(r){
-      if(r.error){msg(r.error.message);return;}msg(r.data||'Role assignment saved.');
-      $('ivName').value='';$('ivEmail').value='';$('ivPhoto').value='';$('ivPhotoPreview').textContent='No photo selected.';if($('ivClub'))$('ivClub').value='';
+      if(r.error)throw r.error;
+      var savedMessage=r.data||'Role assignment saved.';
+      return db.from('role_invitations').select('email').eq('email',email).eq('invitation_status','PENDING').maybeSingle()
+        .then(function(check){
+          if(check.error)throw check.error;
+          if(!check.data){msg(savedMessage);return;}
+          msg('Role saved. Sending the invitation email…');
+          return sendRoleInvitation(email).then(function(result){
+            msg(result.message||'Invitation email sent.');
+          }).catch(function(error){
+            msg('The role is saved, but the invitation email could not be sent. The pending invitation is still available for retry. '+
+              (error.message||'Check Supabase Auth email settings.'));
+          });
+        });
+    }).then(function(){
+      $('ivName').value='';$('ivEmail').value='';$('ivPhoto').value='';
+      $('ivPhotoPreview').textContent='No photo selected.';
+      if($('ivClub'))$('ivClub').value='';
       loadInvites();loadRoleLog();if(devUser)loadAccountsDev(devUser);
-    }).catch(function(err){msg(err.message||'Photo upload failed.');});
+    }).catch(function(err){msg(err.message||'Could not save this invitation.');})
+      .finally(function(){if(save)save.disabled=false;});
   }
   function loadInvites(){
-    db.from('role_invitations').select('email,full_name,system_role,invited_at').order('invited_at',{ascending:false}).then(function(r){
-      if(r.error){$('ivList').textContent=r.error.message;return;}var rows=r.data||[];
-      $('ivList').innerHTML=rows.length?rows.map(function(x){return '<div class="post"><strong>'+esc(x.full_name||x.email)+'</strong><div class="muted">'+esc(x.email)+' · '+esc(x.system_role)+' · waiting for sign-up</div><button class="small danger" data-cancel="'+esc(x.email)+'">Cancel</button></div>';}).join(''):'No pending role assignments.';
-      document.querySelectorAll('[data-cancel]').forEach(function(b){b.onclick=function(){db.from('role_invitations').delete().eq('email',b.dataset.cancel).then(function(x){msg(x.error?x.error.message:'Cancelled.');loadInvites();});};});
-    });
+    db.from('role_invitations')
+      .select('email,full_name,system_role,invited_at,email_delivery_status,email_sent_at,email_delivery_error,invitation_status')
+      .eq('invitation_status','PENDING')
+      .order('invited_at',{ascending:false})
+      .then(function(r){
+        if(r.error){$('ivList').textContent=r.error.message;return;}
+        var rows=r.data||[];
+        $('ivList').innerHTML=rows.length?rows.map(function(x){
+          var delivery=String(x.email_delivery_status||'NOT_SENT').toUpperCase();
+          var state=delivery==='SENT'
+            ? 'Invitation email sent'+(x.email_sent_at?' · '+new Date(x.email_sent_at).toLocaleString():'')
+            : delivery==='FAILED'?'Email delivery failed'+(x.email_delivery_error?' · '+x.email_delivery_error:'')
+            : 'Invitation email not sent yet';
+          var sendButton=delivery==='SENT'
+            ? '<span class="muted">Email sent · use Forgot password if the link expires</span>'
+            : '<button class="small" type="button" data-send-invite="'+esc(x.email)+'">'+(delivery==='FAILED'?'Retry invitation email':'Send invitation email')+'</button>';
+          return '<div class="post"><strong>'+esc(x.full_name||x.email)+'</strong>'+
+            '<div class="muted">'+esc(x.email)+' · '+esc(x.system_role)+' · '+esc(state)+'</div>'+
+            sendButton+' <button class="small danger" type="button" data-cancel="'+esc(x.email)+'">Cancel</button></div>';
+        }).join(''):'No pending role invitations.';
+        document.querySelectorAll('[data-send-invite]').forEach(function(b){
+          b.onclick=function(){
+            var email=b.dataset.sendInvite;b.disabled=true;b.textContent='Sending…';
+            sendRoleInvitation(email).then(function(result){
+              msg(result.message||'Invitation email sent.');loadInvites();
+            }).catch(function(error){
+              msg('Invitation email was not sent: '+(error.message||'Check Supabase Auth email settings.'));
+              loadInvites();
+            });
+          };
+        });
+        document.querySelectorAll('[data-cancel]').forEach(function(b){
+          b.onclick=function(){
+            db.from('role_invitations').update({invitation_status:'CANCELLED'})
+              .eq('email',b.dataset.cancel).eq('invitation_status','PENDING')
+              .then(function(x){msg(x.error?x.error.message:'Invitation cancelled.');loadInvites();});
+          };
+        });
+      });
   }
   function loadAppState(){db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(r){if(r.error){$('appState').textContent=r.error.message;return;}var v=!!(r.data&&r.data.app_frozen);$('appState').innerHTML=v?'<strong style="color:#b91c1c">Entire app frozen.</strong>':'<strong style="color:#16834a">Application available.</strong>';});}
   function setAppFreeze(v){db.rpc('set_application_freeze',{p_frozen:v}).then(function(r){msg(r.error?r.error.message:(v?'Entire app frozen.':'Application unfrozen.'));loadAppState();});}
