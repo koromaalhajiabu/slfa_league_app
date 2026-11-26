@@ -154,6 +154,7 @@
     else if (role === 'DISCIPLINARY_OFFICER') out = disciplinary(p);
     else if (role === 'REFEREE' && String(p.official_title || '').trim().toLowerCase() === 'match commissioner' && typeof window.slfaRenderMatchCommissioner === 'function') out = window.slfaRenderMatchCommissioner(p);
     else if (role === 'REFEREE') out = referee(p);
+    else if (role === 'MATCH_DATA_OPERATOR' && typeof window.slfaRenderMatchDataOperator === 'function') out = window.slfaRenderMatchDataOperator(p);
     else if (role === 'DEVELOPER') out = developer(p);
     accountPrivacy();
     return out;
@@ -279,10 +280,10 @@
       '<label for="lvMatch">Match</label><select id="lvMatch"><option value="">Loading matches…</option></select>' +
       '<p class="muted">The referee starts, pauses, times and ends the match.</p>' +
       '<div id="lvPanel" class="hidden"><p class="muted">Goals and cards are recorded by the assigned referees and the match commissioner.</p></div>' +
-      '<section class="match-officials-admin" aria-labelledby="matchOfficialsHeading"><h2 class="rt" id="matchOfficialsHeading">Match Officials Management</h2><p class="muted">Super Admin only. Appoint main referees, assistant referees and Match Commissioners to fixtures. Change or cancel appointments with a recorded reason. Cancelled appointments remain in the history.</p>' +
+      '<section class="match-officials-admin" aria-labelledby="matchOfficialsHeading"><h2 class="rt" id="matchOfficialsHeading">Match Officials Management</h2><p class="muted">Super Admin only. Appoint Main and Assistant Referees, Match Commissioners and one Live Match Data Operator to each fixture. The Data Operator records live goals, cards and substitutions; the Main Referee alone controls the match clock and official result. Changes and cancellations are logged.</p>' +
       '<label for="asAssignment">Existing active appointment (optional)</label><select id="asAssignment"><option value="">Create a new appointment…</option></select>' +
       '<label for="asMatch">Fixture</label><select id="asMatch"><option value="">Loading fixtures…</option></select>' +
-      '<label for="asRole">Official duty</label><select id="asRole"><option value="MAIN">Main referee</option><option value="ASSISTANT">Assistant referee</option><option value="MATCH_COMMISSIONER">Match Commissioner</option></select>' +
+      '<label for="asRole">Official duty</label><select id="asRole"><option value="MAIN">Main referee</option><option value="ASSISTANT">Assistant referee</option><option value="MATCH_COMMISSIONER">Match Commissioner</option><option value="DATA_OPERATOR">Live Match Data Operator</option></select>' +
       '<label for="asRef">Staff member</label><select id="asRef"><option value="">Choose a duty first…</option></select>' +
       '<label for="asReason">Change / cancellation reason</label><textarea id="asReason" rows="2" maxlength="500" placeholder="Required when changing or cancelling an existing appointment"></textarea>' +
       '<div class="btns"><button class="primary" id="asSave" type="button">Save appointment</button><button class="secondary" id="asCancel" type="button" disabled>Cancel appointment</button><button class="secondary" id="asClear" type="button">Clear</button></div>' +
@@ -411,7 +412,11 @@
     var role = $('asRole').value;
     var people = officialProfiles.filter(function (u) {
       var title = String(u.official_title || '').trim().toLowerCase();
-      return String(u.status || '').toLowerCase() === 'active' && (role === 'MATCH_COMMISSIONER' ? title === 'match commissioner' : title !== 'match commissioner');
+      var systemRole = String(u.system_role || '').toUpperCase();
+      if (String(u.status || '').toLowerCase() !== 'active') return false;
+      if (role === 'MATCH_COMMISSIONER') return systemRole === 'REFEREE' && title === 'match commissioner';
+      if (role === 'DATA_OPERATOR') return systemRole === 'MATCH_DATA_OPERATOR';
+      return systemRole === 'REFEREE' && title !== 'match commissioner';
     });
     $('asRef').innerHTML = '<option value="">Choose a staff member…</option>' + people.map(function (u) {
       return '<option value="' + esc(u.id) + '">' + esc(u.full_name || u.email) + (u.official_title ? ' (' + esc(u.official_title) + ')' : '') + '</option>';
@@ -443,7 +448,7 @@
   function loadAssignOptions() {
     Promise.all([
       db.from('matches').select('id, home_team, away_team, match_date').order('match_date', { ascending: false }).limit(500),
-      db.from('user_profiles').select('id, full_name, email, official_title, status').eq('system_role', 'REFEREE').order('full_name'),
+      db.from('user_profiles').select('id, full_name, email, official_title, status, system_role').in('system_role', ['REFEREE','MATCH_DATA_OPERATOR']).order('full_name'),
       db.from('match_referee_assignments').select('id,match_id,referee_user_id,official_role,assignment_status,assigned_at,change_reason').order('assigned_at', { ascending: false }).limit(500)
     ]).then(function (all) {
       if (all[0].error || all[1].error || all[2].error) {
@@ -1360,17 +1365,18 @@
 
   // ---------- DEVELOPER PANEL ----------
   var devUser = null;
-  var ROLE_OPTIONS = [['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],['TEAM_OFFICIAL','Team Official'],['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer'],['SUPER_ADMIN','Super Admin / League Admin']];
+  var ROLE_OPTIONS = [['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],['TEAM_OFFICIAL','Team Official / Club Representative'],['MATCH_DATA_OPERATOR','Match Data Operator'],['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer'],['SUPER_ADMIN','Super Admin / League Admin']];
   function developer(p) {
     devUser=p;
     box().innerHTML =
       '<section class="dev-overview" id="developerOverview"><h2 class="rt">Platform overview</h2><p class="muted">Live database totals and public app activity. Counts are loaded from the connected database.</p><div class="dev-metric-grid">'+[['devMetricAccounts','Accounts'],['devMetricMatches','Fixtures'],['devMetricClubs','Clubs'],['devMetricResults','Confirmed results']].map(function(x){return '<article class="dev-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="dev-activity"><strong>Last 30 days · public app activity</strong><div id="devMetricActivity" class="muted">Loading activity…</div></div><button class="secondary" type="button" id="devRefreshOverview">Refresh overview</button><div class="status" id="devOverviewStatus" role="status"></div></section>'+
       '<h2 class="rt">Whole application</h2><div id="appState" class="muted">Checking…</div><div class="btns"><button class="secondary" id="freezeAppBtn">Freeze entire app</button><button class="primary" id="unfreezeAppBtn">Unfreeze entire app</button></div>'+
-      '<h2 class="rt">Assign a role</h2><p class="muted">Full name, email (unique account ID), and a round photo selected from your phone gallery.</p>'+
+      '<h2 class="rt">Assign a role</h2><p class="muted">Create staff invitations. For a Team Official / Club Representative, select the club they represent so their team-sheet portal is ready as soon as they register.</p>'+
       '<label for="ivName">Full name</label><input id="ivName" type="text" autocomplete="name">'+input('ivEmail','Email address','email')+
       '<label for="ivPhoto">Round profile photo</label><input id="ivPhoto" type="file" accept="image/jpeg,image/png,image/webp"><div id="ivPhotoPreview" class="muted">No photo selected.</div>'+
       '<label for="ivRole">Role</label><select id="ivRole">'+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join('')+'</select>'+
-      '<div class="btns"><button class="primary" id="ivSave">Save role</button></div>'+
+      '<div id="ivClubWrap" hidden><label for="ivClub">Club represented</label><select id="ivClub"><option value="">Loading active clubs…</option></select></div>'+
+      '<div class="btns"><button class="primary" id="ivSave">Save invitation</button></div>'+
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
       '<h2 class="rt">All accounts and roles</h2><p class="muted">Change roles, suspend, restore or delete accounts. Actions are logged automatically.</p><div id="roleList" class="muted">Loading…</div>'+
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
@@ -1438,16 +1444,29 @@
       if(r.error)throw r.error;return db.storage.from('developer-profiles').getPublicUrl(path).data.publicUrl;
     });
   }
-  function loadInviteForm(){ $('ivSave').onclick=saveInvite; loadInvites(); }
+  function loadInviteForm(){
+    $('ivSave').onclick=saveInvite;$('ivRole').addEventListener('change',updateInviteClubVisibility);
+    loadInviteClubs();loadInvites();updateInviteClubVisibility();
+  }
+  function loadInviteClubs(){
+    db.from('league_clubs').select('id,club_name').eq('is_active',true).order('club_name').then(function(r){
+      var el=$('ivClub');if(!el)return;
+      if(r.error){el.innerHTML='<option value="">Club list unavailable</option>';msg('Could not load clubs for the Team Official invitation: '+r.error.message);return;}
+      el.innerHTML='<option value="">Choose the club…</option>'+(r.data||[]).map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.club_name)+'</option>';}).join('');
+    });
+  }
+  function updateInviteClubVisibility(){if($('ivClubWrap'))$('ivClubWrap').hidden=$('ivRole').value!=='TEAM_OFFICIAL';}
   function saveInvite(){
     var name=$('ivName').value.trim(),email=$('ivEmail').value.trim().toLowerCase(),role=$('ivRole').value,file=$('ivPhoto').files&&$('ivPhoto').files[0];
+    var club=role==='TEAM_OFFICIAL'?($('ivClub').value||null):null;
     if(!name||!email){msg('Enter the full name and email address.');return;}
-    msg('Saving role assignment…');
+    if(role==='TEAM_OFFICIAL'&&!club){msg('Choose the club the Team Official represents.');return;}
+    msg('Saving role invitation…');
     uploadDevPhoto(email,file).then(function(photo){
-      return db.rpc('invite_user',{p_email:email,p_role:role,p_club:null,p_full_name:name,p_photo_url:photo});
+      return db.rpc('invite_user',{p_email:email,p_role:role,p_club:club,p_full_name:name,p_photo_url:photo});
     }).then(function(r){
       if(r.error){msg(r.error.message);return;}msg(r.data||'Role assignment saved.');
-      $('ivName').value='';$('ivEmail').value='';$('ivPhoto').value='';$('ivPhotoPreview').textContent='No photo selected.';
+      $('ivName').value='';$('ivEmail').value='';$('ivPhoto').value='';$('ivPhotoPreview').textContent='No photo selected.';if($('ivClub'))$('ivClub').value='';
       loadInvites();loadRoleLog();if(devUser)loadAccountsDev(devUser);
     }).catch(function(err){msg(err.message||'Photo upload failed.');});
   }
