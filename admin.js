@@ -1365,7 +1365,7 @@
 
   // ---------- DEVELOPER PANEL ----------
   var devUser = null;
-  var ROLE_OPTIONS = [['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],['TEAM_OFFICIAL','Team Official / Club Representative'],['MATCH_DATA_OPERATOR','Match Data Operator'],['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer'],['SUPER_ADMIN','Super Admin / League Admin']];
+  var ROLE_OPTIONS = [['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],['TEAM_OFFICIAL','Team Official / Club Representative'],['MATCH_DATA_OPERATOR','Match Data Operator'],['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer'],['SUPER_ADMIN','Super Admin']];
   function developer(p) {
     devUser=p;
     box().innerHTML =
