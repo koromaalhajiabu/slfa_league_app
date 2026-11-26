@@ -245,6 +245,37 @@
     }
     document.body.insertBefore(layer, document.body.firstChild);
   }
+  function skyPhaseAt(date) {
+    var hour = date.getHours() + date.getMinutes() / 60;
+    if (hour >= 5 && hour < 9) return 'dawn';
+    if (hour >= 9 && hour < 17) return 'afternoon';
+    if (hour >= 17 && hour < 19.5) return 'dusk';
+    return 'night';
+  }
+  function applySkyCycle() {
+    var phase = skyPhaseAt(new Date());
+    var root = document.documentElement;
+    if (root.getAttribute('data-sky-phase') !== phase) {
+      root.setAttribute('data-sky-phase', phase);
+      root.setAttribute('data-sky-mode', 'automatic');
+      var labels = { dawn:'Dawn', afternoon:'Afternoon', dusk:'Dusk', night:'Night Sky' };
+      root.setAttribute('data-sky-label', labels[phase]);
+      updateThemeColour();
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta && root.getAttribute('data-theme') !== 'light') {
+        var colours = { dawn:'#d98d86', afternoon:'#1676b8', dusk:'#75466f', night:'#020817' };
+        meta.setAttribute('content', colours[phase]);
+      }
+    }
+  }
+  function addSkyAtmosphere() {
+    if (!document.body || document.getElementById('slfa-sky-atmosphere')) return;
+    var layer = document.createElement('div');
+    layer.id = 'slfa-sky-atmosphere';
+    layer.setAttribute('aria-hidden', 'true');
+    layer.innerHTML = '<span class="slfa-sky-sun"></span><span class="slfa-sky-horizon"></span><span class="slfa-sky-cloud slfa-sky-cloud-a"></span><span class="slfa-sky-cloud slfa-sky-cloud-b"></span>';
+    document.body.insertBefore(layer, document.body.firstChild);
+  }
   function init() {
     if (!document.body) return;
     db = getDb();
@@ -252,7 +283,10 @@
     try { cached = JSON.parse(safeGet(GLOBAL_CACHE_KEY) || 'null'); } catch (e) {}
     var cachedConfig = configFromValue(cached);
     applyPreset(cachedConfig ? cachedConfig.palette : 'night-sky', cachedConfig ? cachedConfig.custom_accent : DEFAULT_ACCENT);
+    applySkyCycle();
+    addSkyAtmosphere();
     addStars();
+    window.setInterval(applySkyCycle, 60000);
 
     // All viewers receive the same palette from the database. Local storage is only an offline fallback.
     loadGlobalTheme();
@@ -281,7 +315,7 @@
     document.addEventListener('visibilitychange', function () {
       var layer = document.getElementById('slfa-cosmos');
       if (layer) layer.style.animationPlayState = document.hidden ? 'paused' : 'running';
-      if (!document.hidden) loadGlobalTheme();
+      if (!document.hidden) { applySkyCycle(); loadGlobalTheme(); }
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
