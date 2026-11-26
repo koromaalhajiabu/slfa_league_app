@@ -322,38 +322,38 @@
     var flightLayer = document.createElement('div');
     flightLayer.id = 'slfa-bird-flight-layer';
     flightLayer.setAttribute('aria-hidden', 'true');
+    var assetUrl = new URL('bird-flight.gif?v=1', document.baseURI).href;
 
-    function makeBird(className) {
-      var bird = document.createElement('span');
-      bird.className = 'slfa-bird ' + className;
-      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('viewBox', '0 0 42 24');
-      svg.setAttribute('focusable', 'false');
-      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', 'M2 14 C8 5 14 6 21 15 C28 6 34 5 40 14');
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', 'currentColor');
-      path.setAttribute('stroke-width', '3.8');
-      path.setAttribute('stroke-linecap', 'round');
-      path.setAttribute('stroke-linejoin', 'round');
-      svg.appendChild(path);
-      bird.appendChild(svg);
+    function makeBird(size, index, offset) {
+      var bird = document.createElement('img');
+      bird.className = 'slfa-bird slfa-real-bird bird-' + index;
+      bird.src = assetUrl;
+      bird.alt = '';
+      bird.setAttribute('aria-hidden', 'true');
+      bird.setAttribute('decoding', 'async');
+      bird.setAttribute('loading', 'eager');
+      bird.draggable = false;
+      bird.style.width = size + 'px';
+      bird.style.marginLeft = index ? '-11px' : '0';
+      bird.style.transform = 'translateY(' + offset + 'px)';
       return bird;
     }
 
     [
-      { name: 'a', count: 6 },
-      { name: 'b', count: 5 },
-      { name: 'c', count: 6 }
+      { name: 'a', sizes: [74, 62, 70, 58, 68], offsets: [0, -8, 5, -11, 2] },
+      { name: 'b', sizes: [66, 54, 60, 52], offsets: [3, -7, 4, -5] },
+      { name: 'c', sizes: [56, 46, 52], offsets: [0, -6, 3] }
     ].forEach(function (group) {
       var flock = document.createElement('span');
       flock.className = 'slfa-bird-flock slfa-bird-flock-' + group.name;
-      for (var i = 0; i < group.count; i++) {
-        flock.appendChild(makeBird('b' + ((i % 5) + 1)));
-      }
+      group.sizes.forEach(function (size, index) {
+        flock.appendChild(makeBird(size, index, group.offsets[index]));
+      });
       flightLayer.appendChild(flock);
     });
-    document.documentElement.appendChild(flightLayer);
+
+    // Keep the bird layer above dashboard panels, with no pointer interception.
+    document.body.appendChild(flightLayer);
   }
   function init() {
     if (!document.body) return;
