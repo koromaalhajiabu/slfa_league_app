@@ -167,3 +167,88 @@ html:not([data-theme="light"]) body main > section:not(.hero) *:not(button):not(
   -webkit-text-fill-color: #edf4ff !important;
   text-shadow: none !important;
 }
+
+
+/* SKY BACKGROUND DEPTH: birds fly behind the dashboard, never over its controls. */
+#slfa-sky-atmosphere { z-index: 0 !important; }
+#slfa-bird-flight-layer {
+  position: fixed !important; inset: 0 !important; z-index: 2 !important;
+  pointer-events: none !important; overflow: hidden !important;
+}
+body > .topbar, body > .portal-head, body > header.topbar, body > header.portal-head {
+  position: relative !important; z-index: 12 !important;
+}
+body > main, body > .portal, body > .app-legal, body main, body .portal {
+  position: relative !important; z-index: 6 !important;
+}
+#slfa-bird-flight-layer .slfa-bird {
+  width: var(--bird-size, 60px) !important; height: auto !important;
+  object-fit: contain !important; background: transparent !important;
+}
+
+/* Glass panels allow the flock to remain visible behind content without reducing text contrast. */
+html[data-theme="light"] body main :is(
+  .card, .view, .panel, article, section[role="tabpanel"],
+  main > section:not(.hero), [class*="panel"], [class*="card"]
+) {
+  background: linear-gradient(145deg, rgba(255,255,255,.79), rgba(244,249,255,.74)) !important;
+  background-color: rgba(255,255,255,.76) !important;
+  -webkit-backdrop-filter: blur(13px) saturate(138%) !important;
+  backdrop-filter: blur(13px) saturate(138%) !important;
+}
+html:not([data-theme="light"]) body main :is(
+  .card, .view, .panel, article, section[role="tabpanel"],
+  main > section:not(.hero), [class*="panel"], [class*="card"]
+) {
+  background: linear-gradient(145deg, rgba(23,45,71,.84), rgba(16,34,58,.79)) !important;
+  background-color: rgba(16,34,58,.82) !important;
+  -webkit-backdrop-filter: blur(13px) saturate(132%) !important;
+  backdrop-filter: blur(13px) saturate(132%) !important;
+}
+
+/* Stronger, sun-like disc with a radiant halo for every daytime phase. */
+#slfa-sky-atmosphere .slfa-sky-sun {
+  width: clamp(112px, 16vw, 226px) !important;
+  opacity: 1 !important; z-index: 5 !important;
+  background: radial-gradient(circle at 34% 29%,
+    #ffffff 0%, #fffef0 13%, #fff2bd 36%, #ffd38e 61%, #ffad78 82%, #f58c70 100%) !important;
+  box-shadow:
+    0 0 18px rgba(255,250,222,.98),
+    0 0 46px rgba(255,230,164,.88),
+    0 0 92px rgba(255,195,126,.68),
+    0 0 154px rgba(255,166,116,.48),
+    0 0 230px rgba(255,147,111,.28) !important;
+  filter: saturate(1.18) brightness(1.12) !important;
+}
+#slfa-sky-atmosphere .slfa-sky-sun::before {
+  content: ""; position: absolute; inset: -92%; border-radius: 50%;
+  z-index: -1; pointer-events: none;
+  background: radial-gradient(circle,
+    rgba(255,255,238,.54) 0 15%, rgba(255,221,164,.38) 29%,
+    rgba(255,179,132,.20) 49%, rgba(255,157,121,.08) 63%, transparent 74%);
+  filter: blur(17px); animation: slfaSunHaloPulse 5.8s ease-in-out infinite alternate;
+}
+@keyframes slfaSunHaloPulse {
+  from { opacity: .68; transform: scale(.94); }
+  to { opacity: 1; transform: scale(1.08); }
+}
+html[data-sky-phase="dawn"] #slfa-sky-atmosphere .slfa-sky-sun {
+  top: 29vh !important; right: 18% !important; transform: scale(1.02) !important;
+}
+html[data-sky-phase="afternoon"] #slfa-sky-atmosphere .slfa-sky-sun {
+  top: 7vh !important; right: 13% !important; transform: scale(1.12) !important;
+}
+html[data-sky-phase="dusk"] #slfa-sky-atmosphere .slfa-sky-sun {
+  top: 32vh !important; left: 17% !important; right: auto !important; transform: scale(1.05) !important;
+}
+html[data-sky-phase="night"] #slfa-sky-atmosphere .slfa-sky-sun,
+html[data-sky-phase="night"] #slfa-sky-atmosphere .slfa-sky-sun::before {
+  opacity: 0 !important; animation: none !important;
+}
+@media (max-width: 620px) {
+  #slfa-sky-atmosphere .slfa-sky-sun { width: clamp(106px, 29vw, 150px) !important; }
+  html[data-sky-phase="dawn"] #slfa-sky-atmosphere .slfa-sky-sun { top: 25vh !important; right: 13% !important; }
+  html[data-sky-phase="afternoon"] #slfa-sky-atmosphere .slfa-sky-sun { top: 7vh !important; right: 10% !important; }
+  html[data-sky-phase="dusk"] #slfa-sky-atmosphere .slfa-sky-sun { top: 29vh !important; left: 12% !important; }
+}
+body .topbar, body .portal-head { z-index: 12 !important; }
