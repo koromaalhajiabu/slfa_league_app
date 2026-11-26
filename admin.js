@@ -301,15 +301,33 @@
 
     $('fxSave').addEventListener('click', function () {
       var h = $('fxHome').value.trim(), a = $('fxAway').value.trim(), d = $('fxDate').value, v = $('fxVenue').value.trim();
+      var leagueId = Number($('fxLeague').value), seasonId = Number($('fxSeason').value);
       if (!h || !a || !d) { msg('Enter both teams and the date.'); return; }
-      if (!$('fxLeague').value) { msg('Choose the league.'); return; }
-      if (!$('fxSeason').value) { msg('Choose the season.'); return; }
-      db.from('seasons').select('id').eq('id', Number($('fxSeason').value)).maybeSingle().then(function (s) {
-        return db.from('matches').insert([{ home_team: h, away_team: a, match_date: new Date(d).toISOString(), venue: v || null, season_id: s.data ? s.data.id : null, league_id: Number($('fxLeague').value), home_score: null, away_score: null, match_status: 'SCHEDULED' }]);
-      }).then(function (r) {
-        if (r.error) { msg(r.error.message); return; }
-        msg('Fixture added.'); $('fxHome').value = ''; $('fxAway').value = ''; $('fxVenue').value = ''; 
-      });
+      if (!leagueId) { msg('Choose the league.'); return; }
+      if (!seasonId) { msg('Choose the season.'); return; }
+      var start = $('fxSave'); start.disabled = true;
+      db.from('league_clubs').select('id,club_name,league_id,is_active').eq('league_id', leagueId).eq('is_active', true)
+        .then(function (clubsResult) {
+          if (clubsResult.error) throw clubsResult.error;
+          var clubs = clubsResult.data || [];
+          var home = clubs.filter(function (x) { return String(x.club_name).trim().toLowerCase() === h.toLowerCase(); })[0];
+          var away = clubs.filter(function (x) { return String(x.club_name).trim().toLowerCase() === a.toLowerCase(); })[0];
+          if (!home || !away) throw new Error('Both teams must match active club records in the selected competition.');
+          if (String(home.id) === String(away.id)) throw new Error('A club cannot play itself.');
+          return db.rpc('admin_import_fixtures', {p_rows:[{
+            season_id:seasonId,league_id:leagueId,
+            home_team:home.club_name,away_team:away.club_name,
+            home_club_id:home.id,away_club_id:away.id,
+            match_date:new Date(d).toISOString(),venue:v||null
+          }]});
+        }).then(function (r) {
+          if (r && r.error) throw r.error;
+          msg('Fixture added and both club records linked. Club Representatives can now see this fixture.');
+          $('fxHome').value = ''; $('fxAway').value = ''; $('fxVenue').value = '';
+          loadSuperAdminOverview(); loadStatusOptions(); loadAssignOptions();
+        }).catch(function (error) {
+          msg('Fixture was not saved: ' + (error.message || 'Check the selected clubs, season and kick-off time.'));
+        }).finally(function () { start.disabled = false; });
     });
 
     
@@ -569,16 +587,18 @@
       var missing = ['season', 'league', 'date', 'home_team', 'away_team'].filter(function (h) { return head.indexOf(h) < 0; });
       if (missing.length) { box.textContent = 'Missing column: ' + missing.join(', ') + '.'; return; }
       Promise.all([
-        db.from('seasons').select('id, name').then(function (r) { return r.data || []; }),
-        db.from('leagues').select('id, name').then(function (r) { return r.data || []; }),
-        db.from('league_clubs').select('club_name').then(function (r) { return r.data || []; }),
-        db.from('matches').select('season_id, league_id, home_team, away_team, match_date').limit(5000).then(function (r) { return r.data || []; })
+        db.from('seasons').select('id, name').then(function (r) { if (r.error) throw r.error; return r.data || []; }),
+        db.from('leagues').select('id, name, is_active').then(function (r) { if (r.error) throw r.error; return r.data || []; }),
+        db.from('league_clubs').select('id,club_name,league_id,is_active').then(function (r) { if (r.error) throw r.error; return r.data || []; }),
+        db.from('matches').select('season_id, league_id, home_team, away_team, home_club_id, away_club_id, match_date').limit(5000).then(function (r) { if (r.error) throw r.error; return r.data || []; })
       ]).then(function (res) {
         var seasons = {}, leagues = {}, clubs = {}, existing = {};
         res[0].forEach(function (x) { seasons[x.name.trim().toLowerCase()] = x.id; });
-        res[1].forEach(function (x) { leagues[x.name.trim().toLowerCase()] = x.id; });
-        res[2].forEach(function (x) { clubs[x.club_name.trim().toLowerCase()] = x.club_name; });
-        res[3].forEach(function (m) { existing[[m.season_id, m.league_id, String(m.home_team).trim().toLowerCase(), String(m.away_team).trim().toLowerCase(), String(m.match_date).slice(0, 10)].join('|')] = true; });
+        res[1].forEach(function (x) { if (x.is_active) leagues[x.name.trim().toLowerCase()] = x.id; });
+        res[2].forEach(function (x) { clubs[x.club_name.trim().toLowerCase()] = x; });
+        res[3].forEach(function (m) {
+          existing[[m.season_id, m.league_id, String(m.home_team).trim().toLowerCase(), String(m.away_team).trim().toLowerCase(), String(m.match_date).slice(0, 10)].join('|')] = true;
+        });
         var ok = [], problems = [], skipped = 0, seen = {};
         table.slice(1).forEach(function (cells, idx) {
           var line = idx + 2, g = {};
@@ -586,49 +606,66 @@
           var bad = [];
           var seasonId = seasons[(g.season || '').toLowerCase()], leagueId = leagues[(g.league || '').toLowerCase()];
           if (!seasonId) bad.push('season "' + g.season + '" is not in the app');
-          if (!leagueId) bad.push('league "' + g.league + '" is not in the app');
+          if (!leagueId) bad.push('active league "' + g.league + '" is not in the app');
           if (!/^\d{4}-\d{2}-\d{2}$/.test(g.date || '')) bad.push('date must look like 2026-01-10');
+          else {
+            var dp=g.date.split('-').map(Number), validDate=new Date(Date.UTC(dp[0],dp[1]-1,dp[2]));
+            if (validDate.toISOString().slice(0,10)!==g.date) bad.push('date is not a valid calendar date');
+          }
           var time = g.time || '15:00';
           if (!/^\d{2}:\d{2}$/.test(time)) bad.push('time must look like 15:00');
+          else {
+            var tp=time.split(':').map(Number);
+            if (tp[0]>23 || tp[1]>59) bad.push('time must be between 00:00 and 23:59');
+          }
           var home = clubs[(g.home_team || '').toLowerCase()], away = clubs[(g.away_team || '').toLowerCase()];
-          if (!home) bad.push('home club "' + g.home_team + '" is not in the club list');
-          if (!away) bad.push('away club "' + g.away_team + '" is not in the club list');
-          if (home && away && home === away) bad.push('home and away clubs are the same');
+          if (!home || !home.is_active) bad.push('home club "' + g.home_team + '" is not an active club in the app');
+          if (!away || !away.is_active) bad.push('away club "' + g.away_team + '" is not an active club in the app');
+          if (home && away && String(home.id)===String(away.id)) bad.push('home and away clubs are the same');
+          if (home && leagueId && Number(home.league_id)!==Number(leagueId)) bad.push('home club "'+g.home_team+'" does not belong to "'+g.league+'"');
+          if (away && leagueId && Number(away.league_id)!==Number(leagueId)) bad.push('away club "'+g.away_team+'" does not belong to "'+g.league+'"');
           if (bad.length) { problems.push('Row ' + line + ': ' + bad.join('; ')); return; }
-          var key = [seasonId, leagueId, home.toLowerCase(), away.toLowerCase(), g.date].join('|');
+          var key = [seasonId, leagueId, home.club_name.toLowerCase(), away.club_name.toLowerCase(), g.date].join('|');
           if (existing[key] || seen[key]) { skipped += 1; return; }
           seen[key] = true;
-          ok.push({ home_team: home, away_team: away, match_date: g.date + 'T' + time + ':00Z', venue: g.venue || null,
-            season_id: seasonId, league_id: leagueId, home_score: null, away_score: null, match_status: 'SCHEDULED' });
+          ok.push({
+            home_team:home.club_name, away_team:away.club_name,
+            home_club_id:home.id, away_club_id:away.id,
+            match_date:g.date + 'T' + time + ':00Z', venue:g.venue || null,
+            season_id:seasonId, league_id:leagueId
+          });
         });
         impRows = ok;
         var html = '<p><strong>' + ok.length + ' ready to import</strong>' + (skipped ? ', ' + skipped + ' already in the app and skipped' : '') + (problems.length ? ', ' + problems.length + ' with problems that need fixing first' : '') + '.</p>';
         if (problems.length) html += '<ul>' + problems.slice(0, 30).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' + (problems.length > 30 ? '<p>…and ' + (problems.length - 30) + ' more.</p>' : '');
         box.innerHTML = html;
-        $('impGo').disabled = ok.length === 0 || problems.length > 0;
+        $('impGo').disabled = ok.length === 0 || problems.length > 0 || ok.length > 1000;
+        if (ok.length > 1000) box.innerHTML += '<p>Import up to 1,000 fixtures in one batch. Split this file into smaller files.</p>';
+      }).catch(function (error) {
+        impRows = []; $('impGo').disabled = true;
+        box.textContent = 'Could not validate the fixture file: ' + (error.message || 'Check the database connection and retry.');
       });
     };
     reader.readAsText(f);
   }
   function impGo() {
-    if (!impRows.length) return;
-    var go = $('impGo'), total = impRows.length, done = 0, failed = 0, i = 0;
-    go.disabled = true;
-    function next() {
-      if (i >= total) {
-        $('impPreview').textContent = 'Imported ' + done + ' of ' + total + ' matches' + (failed ? '. ' + failed + ' could not be saved.' : '.');
-        msg('Import finished. Check the results in the admin list.');
-        
-        return;
-      }
-      var chunk = impRows.slice(i, i + 50); i += 50;
-      db.from('matches').insert(chunk).then(function (r) {
-        if (r.error) failed += chunk.length; else done += chunk.length;
-        $('impPreview').textContent = 'Importing… ' + Math.min(i, total) + ' of ' + total;
-        next();
-      });
-    }
-    next();
+    if (!impRows.length || impRows.length>1000) return;
+    var go=$('impGo'), rows=impRows.slice();
+    go.disabled=true; go.textContent='Importing safely…';
+    db.rpc('admin_import_fixtures',{p_rows:rows}).then(function(r){
+      if(r.error) throw r.error;
+      var data=r.data||{};
+      $('impPreview').textContent='Import complete. '+Number(data.inserted||rows.length)+' fixture(s) saved. Both club IDs, competition and season were linked. No partial import was committed.';
+      msg('Fixture import completed successfully.');
+      impRows=[];
+      $('impFile').value='';
+      loadSuperAdminOverview(); loadStatusOptions(); loadAssignOptions();
+    }).catch(function(error){
+      $('impPreview').textContent='Import failed. No fixture rows were saved. '+(error.message||'Correct the file and retry.');
+      msg('Fixture import failed. No partial import was committed.');
+    }).finally(function(){
+      go.disabled=false; go.textContent='Import matches';
+    });
   }
   var impWired = false;
   // Document-level handlers, attached once, so they keep working when the panel is redrawn.
