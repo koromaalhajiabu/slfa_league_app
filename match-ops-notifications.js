@@ -131,7 +131,7 @@
     if (db.auth && db.auth.onAuthStateChange) {
       db.auth.onAuthStateChange(function () {
         uid=null;
-        window.setTimeout(function () { load(); },0);
+        window.setTimeout(async function () { await load(); subscribe(); },0);
       });
     }
     load().then(subscribe);
