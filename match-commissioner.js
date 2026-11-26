@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var db = window.slfaDb, bucket = 'match-commissioner-evidence';
-  var uid = null, matches = [], reports = {}, activeMatch = null, evidencePaths = [], activeStatus = 'DRAFT', ocrText = '', ocrStatus = 'NOT_RUN', ocrConfidence = null, ocrProcessedAt = null;
+  var uid = null, matches = [], reports = {}, activeMatch = null, evidencePaths = [], activeStatus = 'DRAFT', ocrText = '', ocrStatus = 'NOT_RUN', ocrConfidence = null, ocrProcessedAt = null, ocrVerifiedText = '', ocrVerifiedBy = null, ocrVerifiedAt = null;
   var fields = [
     ['pitch_condition','Pitch and playing surface condition'],
     ['facilities_condition','Dressing rooms and match facilities'],
@@ -46,7 +46,7 @@
   function renderOCR() {
     var node = $('mcOcrText'); if (!node) return;
     node.innerHTML = '<strong>OCR extraction · ' + esc(ocrStatus.replace(/_/g,' ')) + (ocrConfidence == null ? '' : ' · confidence ' + esc(ocrConfidence) + '%') + '</strong>' +
-      (ocrText ? '<pre style="white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;margin:7px 0 0">' + esc(ocrText) + '</pre>' : '<p class="muted">No machine-read text yet. OCR runs when photographs are uploaded.</p>') +
+      (ocrText ? '<pre style="white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;margin:7px 0 0">' + esc(ocrText) + '</pre>' : '<p class="muted">No machine-read text yet. OCR runs when photographs are uploaded.</p>') + (ocrVerifiedText ? '<strong>Super Admin verified text</strong><pre style="white-space:pre-wrap;font-size:11px">' + esc(ocrVerifiedText) + '</pre>' : '') +
       '<p class="muted">Machine-read handwriting can be inaccurate. Check every name, shirt number, score and incident against the original photograph.</p>';
   }
   function renderEvidence() {
@@ -89,7 +89,7 @@
   function fillReport(r) {
     fields.forEach(function (f) { $('mc_' + f[0]).value = r && r[f[0]] ? r[f[0]] : ''; });
     evidencePaths = r && Array.isArray(r.evidence_paths) ? r.evidence_paths.slice() : [];
-    ocrText = r && r.ocr_text ? r.ocr_text : ''; ocrStatus = r && r.ocr_status ? r.ocr_status : 'NOT_RUN'; ocrConfidence = r && r.ocr_confidence != null ? r.ocr_confidence : null; ocrProcessedAt = r && r.ocr_processed_at ? r.ocr_processed_at : null;
+    ocrText = r && r.ocr_text ? r.ocr_text : ''; ocrStatus = r && r.ocr_status ? r.ocr_status : 'NOT_RUN'; ocrConfidence = r && r.ocr_confidence != null ? r.ocr_confidence : null; ocrProcessedAt = r && r.ocr_processed_at ? r.ocr_processed_at : null; ocrVerifiedText = r && r.ocr_verified_text ? r.ocr_verified_text : ''; ocrVerifiedBy = r && r.ocr_verified_by ? r.ocr_verified_by : null; ocrVerifiedAt = r && r.ocr_verified_at ? r.ocr_verified_at : null;
     renderOCR();
     activeStatus = r && r.report_status ? r.report_status : 'DRAFT';
     renderEvidence();
@@ -106,7 +106,7 @@
   function collect(status) {
     var row = {match_id:Number(activeMatch.id), commissioner_user_id:uid, report_status:status,
       evidence_paths:evidencePaths.slice(),
-      ocr_text:ocrText || null, ocr_status:ocrStatus, ocr_confidence:ocrConfidence, ocr_processed_at:ocrProcessedAt,
+      ocr_text:ocrText || null, ocr_status:ocrStatus, ocr_confidence:ocrConfidence, ocr_processed_at:ocrProcessedAt, ocr_verified_text:ocrVerifiedText || null, ocr_verified_by:ocrVerifiedBy, ocr_verified_at:ocrVerifiedAt,
       submitted_at:status === 'SUBMITTED' ? ((reports[String(activeMatch.id)] || {}).submitted_at || new Date().toISOString()) : null};
     fields.forEach(function (f) { row[f[0]] = $('mc_' + f[0]).value.trim() || null; });
     return row;
