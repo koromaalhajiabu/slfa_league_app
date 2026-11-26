@@ -174,9 +174,17 @@
         if (up.error) throw up.error;
         uploaded.push(path);
       }
-      say('Sending your report to the Super Admin…');
+      var ocr = window.slfaRunOCR
+        ? await window.slfaRunOCR(files, function (msg) { say('OCR: ' + msg); })
+        : { text:'', confidence:null, status:'FAILED' };
+      say('Sending your report and OCR text to the Super Admin…');
       var sent = await db.from('referee_match_record_submissions').update({
-        image_paths: uploaded, status:'SUBMITTED', submitted_at:new Date().toISOString(), updated_at:new Date().toISOString()
+        image_paths: uploaded,
+        ocr_text: ocr.text || null,
+        ocr_status: ocr.status || 'FAILED',
+        ocr_confidence: ocr.confidence,
+        ocr_processed_at: new Date().toISOString(),
+        status:'SUBMITTED', submitted_at:new Date().toISOString(), updated_at:new Date().toISOString()
       }).eq('id', draft.id).eq('status','DRAFT').select('id').single();
       if (sent.error) throw sent.error;
       if (!sent.data) throw new Error('Submission was not confirmed by the server.');
@@ -198,13 +206,13 @@
     var host = $('rmrHistoryHost');
     if (!host) return;
     var r = await db.from('referee_match_record_submissions')
-      .select('id,reference_code,match_id,official_role,report_type,status,submitted_at,created_at,image_paths,review_notes')
+      .select('id,reference_code,match_id,official_role,report_type,status,submitted_at,created_at,image_paths,review_notes,ocr_status,ocr_text,ocr_confidence')
       .eq('submitted_by', uid).order('created_at', { ascending:false }).limit(15);
     if (r.error) throw r.error;
     var rows = r.data || [];
     host.innerHTML = '<h3 style="margin-top:18px">My submitted match records</h3><div class="rmr-history">'+(rows.length ? rows.map(function (x) {
       var m = matchMap[String(x.match_id)] || {};
-      return '<article class="rmr-card"><div><strong>'+esc(x.reference_code)+' · '+esc(m.home_team || 'Match #'+x.match_id)+' v '+esc(m.away_team || '')+'</strong><small>'+esc(niceDate(x.submitted_at || x.created_at))+' · '+esc(x.official_role)+' · '+esc(x.report_type.replace(/_/g,' '))+'</small><small>'+((x.image_paths || []).length)+' photo(s) attached</small>'+(x.review_notes?'<small><strong>Super Admin review:</strong> '+esc(x.review_notes)+'</small>':'')+'</div><span class="rmr-pill">'+esc(x.status.replace(/_/g,' '))+'</span></article>';
+      return '<article class="rmr-card"><div><strong>'+esc(x.reference_code)+' · '+esc(m.home_team || 'Match #'+x.match_id)+' v '+esc(m.away_team || '')+'</strong><small>'+esc(niceDate(x.submitted_at || x.created_at))+' · '+esc(x.official_role)+' · '+esc(x.report_type.replace(/_/g,' '))+'</small><small>'+((x.image_paths || []).length)+' photo(s) attached · OCR '+esc(x.ocr_status||'NOT RUN')+(x.ocr_confidence==null?'':' · '+esc(x.ocr_confidence)+'%')+'</small>'+(x.ocr_text?'<small><strong>Machine-read text (verify):</strong> '+esc(x.ocr_text.slice(0,220))+'</small>':'')+(x.review_notes?'<small><strong>Super Admin review:</strong> '+esc(x.review_notes)+'</small>':'')+'</div><span class="rmr-pill">'+esc(x.status.replace(/_/g,' '))+'</span></article>';
     }).join('') : '<div class="rmr-muted">No match records submitted yet.</div>')+'</div>';
   }
   function start() {
