@@ -565,8 +565,8 @@
     return rows.filter(function (r) { return r.some(function (x) { return String(x).trim() !== ''; }); });
   }
   function impTemplate() {
-    var sample = ['2025/26', 'Leone Rock Premier League', '2026-01-10', '15:00', 'Bo Rangers', 'Mighty Blackpool', 'National Stadium'];
-    var csv = IMP_HEADERS.join(',') + '\n' + sample.map(function (x) { return /[",]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(',') + '\n';
+    // Header-only template prevents example fixtures from being imported as real SLFA match records.
+    var csv = IMP_HEADERS.join(',') + '\r\n';
     var blob = new Blob([csv], { type: 'text/csv' });
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'slfa-matches-template.csv';
     document.body.appendChild(a); a.click();
