@@ -353,7 +353,7 @@
       }
       flightLayer.appendChild(flock);
     });
-    document.body.appendChild(flightLayer);
+    document.documentElement.appendChild(flightLayer);
   }
   function init() {
     if (!document.body) return;
