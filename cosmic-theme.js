@@ -315,24 +315,24 @@
       '<span class="slfa-sky-cloud slfa-sky-cloud-c"></span>' +
       '<span class="slfa-sky-light-beam"></span>' +
       '<span class="slfa-bird-flock slfa-bird-flock-a">' +
-        '<span class="slfa-bird b1"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b2"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b3"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b4"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b5"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
+        '<span class="slfa-bird b1"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b2"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b3"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b4"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b5"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
       '</span>' +
       '<span class="slfa-bird-flock slfa-bird-flock-b">' +
-        '<span class="slfa-bird b1"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b2"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b3"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b4"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
+        '<span class="slfa-bird b1"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b2"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b3"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b4"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
       '</span>' +
       '<span class="slfa-bird-flock slfa-bird-flock-c">' +
-        '<span class="slfa-bird b1"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b2"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b3"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b4"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
-        '<span class="slfa-bird b5"><svg viewBox="0 0 42 24"><path d="M1 12C8 4 14 4 21 12C28 4 34 4 41 12C33 8 27 10 21 21C15 10 9 8 1 12Z"/></svg></span>' +
+        '<span class="slfa-bird b1"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b2"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b3"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b4"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="slfa-bird b5"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
       '</span>';
     document.body.insertBefore(layer, document.body.firstChild);
   }
