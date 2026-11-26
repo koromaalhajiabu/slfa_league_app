@@ -35,6 +35,7 @@
         cell('OCR status / confidence',(x.ocr_status||'NOT RUN')+(x.ocr_confidence==null?'':' · '+x.ocr_confidence+'%'))+
         '</div>'+sections+
         '<h2>OCR extraction from photographs · unverified</h2><div class="txt">'+esc(x.ocr_text||'No OCR text extracted.')+'</div>'+
+        '<h2>Super Admin verified / corrected OCR text</h2><div class="txt">'+esc(x.ocr_verified_text||'Not yet human-verified.')+'</div>'+
         '<h2>Original photographic evidence ('+urls.length+')</h2><div class="photos">'+photoHtml+'</div>'+
         '<div class="warning"><strong>Verification required.</strong> Handwriting OCR can misread names, numbers, scores and incidents. Compare extracted text with the original photographs before taking administrative action. This report does not itself alter match results or impose disciplinary sanctions.</div>'+
         '</body></html>';
@@ -85,6 +86,7 @@
                   return '<button type="button" class="secondary small" data-mc-evidence="' + esc(path) + '">Open ' + esc(path.split('/').pop()) + '</button>';
                 }).join(' ')) || '<p class="muted">No evidence files attached.</p>') +
                 '<button type="button" class="secondary small" data-mc-pdf="' + esc(x.id) + '">Print / Save PDF</button>' +
+                '<label for="mcOcrVerified_' + esc(x.id) + '">Verified / corrected OCR text</label><textarea id="mcOcrVerified_' + esc(x.id) + '" rows="4" maxlength="12000" placeholder="Check every extracted name, number, score and incident against the original photo">' + esc(x.ocr_verified_text || x.ocr_text || '') + '</textarea>' +
                 '<label for="mcReview_' + esc(x.id) + '">Review notes</label><textarea id="mcReview_' + esc(x.id) + '" rows="2" maxlength="2000"></textarea>' +
                 '<button type="button" class="primary" data-mc-review="' + esc(x.id) + '">Mark reviewed and lock report</button></article>';
             }).join('');
@@ -108,9 +110,12 @@
                 var id=b.getAttribute('data-mc-review'), note=$('mcReview_'+id).value.trim();
                 if (!window.confirm('Mark this Match Commissioner Report as reviewed? The commissioner will no longer be able to edit it.')) return;
                 db.auth.getUser().then(function (u) {
+                  var verifiedNode=$('mcOcrVerified_'+id), verifiedText=verifiedNode&&verifiedNode.value.trim()?verifiedNode.value.trim():null;
                   return db.from('match_commissioner_reports').update({
                     report_status:'REVIEWED', reviewed_at:new Date().toISOString(),
-                    reviewed_by:u.data.user.id, review_notes:note || null
+                    reviewed_by:u.data.user.id, review_notes:note || null,
+                    ocr_verified_text:verifiedText, ocr_verified_by:verifiedText?u.data.user.id:null,
+                    ocr_verified_at:verifiedText?new Date().toISOString():null
                   }).eq('id',Number(id));
                 }).then(function (save) {
                   if (save.error) { $('mcAdminMsg').textContent='Review failed: '+save.error.message; return; }
@@ -124,5 +129,6 @@
     }
     $('mcAdminRefresh').addEventListener('click',load);
     load();
+    if (db.channel) db.channel('slfa-match-commissioner-report-inbox').on('postgres_changes',{event:'*',schema:'public',table:'match_commissioner_reports'},load).subscribe();
   };
 })();
