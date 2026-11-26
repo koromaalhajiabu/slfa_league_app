@@ -884,3 +884,24 @@ html:not([data-theme="light"]) body .portal-head { z-index:30!important; }
     animation-duration:6s!important; animation-iteration-count:infinite!important;
   }
 }
+
+
+/* Additional nested panel surfaces used by match commissioner and review tools. */
+html:not([data-theme="light"]) body :is(
+  .mc-metrics article,.mc-evidence,.mc-evidence-item,.mc-history-item,
+  .pm-review-card,.pm-published-row,.sa-metric,.dev-metric,.dev-activity,
+  .hist-standings-admin,.terms-row,.slfa-mc-summary-stat,.slfa-mc-print-row
+) {
+  background-color:#1a3b5c!important;
+  background-image:linear-gradient(145deg,rgba(32,67,100,.98),rgba(22,47,75,.98))!important;
+  color:#edf5ff!important;
+  border-color:rgba(157,198,234,.34)!important;
+}
+html:not([data-theme="light"]) body :is(
+  .mc-metrics article,.mc-evidence,.mc-evidence-item,.mc-history-item,
+  .pm-review-card,.pm-published-row,.sa-metric,.dev-metric,.dev-activity,
+  .hist-standings-admin,.terms-row,.slfa-mc-summary-stat,.slfa-mc-print-row
+) :is(span,p,small,strong,label,li) {
+  color:#d9e8f8!important;
+  -webkit-text-fill-color:#d9e8f8!important;
+}
