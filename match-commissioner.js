@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var db = window.slfaDb, bucket = 'match-commissioner-evidence';
-  var uid = null, matches = [], reports = {}, activeMatch = null, evidencePaths = [], activeStatus = 'DRAFT';
+  var uid = null, matches = [], reports = {}, activeMatch = null, evidencePaths = [], activeStatus = 'DRAFT', ocrText = '', ocrStatus = 'NOT_RUN', ocrConfidence = null, ocrProcessedAt = null;
   var fields = [
     ['pitch_condition','Pitch and playing surface condition'],
     ['facilities_condition','Dressing rooms and match facilities'],
@@ -43,6 +43,12 @@
       if ($(id)) $(id).disabled = disabled;
     });
   }
+  function renderOCR() {
+    var node = $('mcOcrText'); if (!node) return;
+    node.innerHTML = '<strong>OCR extraction · ' + esc(ocrStatus.replace(/_/g,' ')) + (ocrConfidence == null ? '' : ' · confidence ' + esc(ocrConfidence) + '%') + '</strong>' +
+      (ocrText ? '<pre style="white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;margin:7px 0 0">' + esc(ocrText) + '</pre>' : '<p class="muted">No machine-read text yet. OCR runs when photographs are uploaded.</p>') +
+      '<p class="muted">Machine-read handwriting can be inaccurate. Check every name, shirt number, score and incident against the original photograph.</p>';
+  }
   function renderEvidence() {
     var node = $('mcEvidenceList'); if (!node) return;
     if (!evidencePaths.length) { node.innerHTML = '<span class="muted">No photographs or evidence attached.</span>'; return; }
@@ -69,7 +75,7 @@
       return '<article class="mc-history-item"><div><strong>' + esc((m.home_team || 'Home') + ' v ' + (m.away_team || 'Away')) +
         '</strong><span class="mc-status mc-status-' + esc(String(r.report_status || 'DRAFT').toLowerCase()) + '">' +
         esc(r.report_status || 'DRAFT') + '</span></div><small>' + esc(dateText(m.match_date)) + ' · Updated ' +
-        esc(dateText(r.updated_at || r.created_at)) + '</small>' +
+        esc(dateText(r.updated_at || r.created_at)) + '</small>' + (r.ocr_status ? '<small class="muted">OCR: ' + esc(r.ocr_status.replace(/_/g,' ')) + (r.ocr_confidence == null ? '' : ' · ' + esc(r.ocr_confidence) + '%') + '</small>' : '') +
         (r.review_notes ? '<p class="muted">Review notes: ' + esc(r.review_notes) + '</p>' : '') + '</article>';
     }).join('') : '<p class="muted">No reports have been saved yet.</p>';
   }
@@ -83,6 +89,8 @@
   function fillReport(r) {
     fields.forEach(function (f) { $('mc_' + f[0]).value = r && r[f[0]] ? r[f[0]] : ''; });
     evidencePaths = r && Array.isArray(r.evidence_paths) ? r.evidence_paths.slice() : [];
+    ocrText = r && r.ocr_text ? r.ocr_text : ''; ocrStatus = r && r.ocr_status ? r.ocr_status : 'NOT_RUN'; ocrConfidence = r && r.ocr_confidence != null ? r.ocr_confidence : null; ocrProcessedAt = r && r.ocr_processed_at ? r.ocr_processed_at : null;
+    renderOCR();
     activeStatus = r && r.report_status ? r.report_status : 'DRAFT';
     renderEvidence();
     $('mcCurrentStatus').textContent = 'Report status: ' + activeStatus;
@@ -98,6 +106,7 @@
   function collect(status) {
     var row = {match_id:Number(activeMatch.id), commissioner_user_id:uid, report_status:status,
       evidence_paths:evidencePaths.slice(),
+      ocr_text:ocrText || null, ocr_status:ocrStatus, ocr_confidence:ocrConfidence, ocr_processed_at:ocrProcessedAt,
       submitted_at:status === 'SUBMITTED' ? ((reports[String(activeMatch.id)] || {}).submitted_at || new Date().toISOString()) : null};
     fields.forEach(function (f) { row[f[0]] = $('mc_' + f[0]).value.trim() || null; });
     return row;
@@ -138,10 +147,17 @@
           evidencePaths.push(path);
         });
       });
-    }, Promise.resolve()).then(function () {
-      renderEvidence(); input.value = '';
+    }, Promise.resolve()).then(async function () {
+      if (window.slfaRunOCR) {
+        var result = await window.slfaRunOCR(files, function (msg) { say('OCR: ' + msg); });
+        if (result.text) ocrText = [ocrText,result.text].filter(Boolean).join('\\n\\n');
+        ocrStatus = result.status || 'FAILED';
+        ocrConfidence = result.confidence;
+        ocrProcessedAt = new Date().toISOString();
+      } else { ocrStatus = 'FAILED'; ocrProcessedAt = new Date().toISOString(); }
+      renderEvidence(); renderOCR(); input.value = '';
       return save(activeStatus === 'SUBMITTED' ? 'SUBMITTED' : 'DRAFT', true);
-    }).then(function (ok) { if (ok) say('Evidence uploaded and attached to this match report.'); })
+    }).then(function (ok) { if (ok) say('Evidence uploaded, OCR processed and attached to this match report.'); })
       .catch(function (e) { say('Evidence upload failed: ' + (e.message || 'Please try again.'), true); });
   }
   function metrics() {
@@ -196,7 +212,7 @@
       '<h3 class="mc-subhead">Pre-match inspection</h3><div class="mc-form-grid">' + fields.slice(0,7).map(formField).join('') + '</div>' +
       '<h3 class="mc-subhead">During and after the match</h3><div class="mc-form-grid">' + fields.slice(7).map(formField).join('') + '</div>' +
       '<div class="mc-evidence"><div><strong>Photographic evidence</strong><p class="muted">Private uploads: JPG, PNG or WEBP, up to 8 MB per image.</p></div><input id="mcEvidenceFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple>' +
-      '<button type="button" class="secondary" id="mcUploadEvidence">Upload and attach evidence</button><div id="mcEvidenceList" class="mc-evidence-list"></div></div>' +
+      '<button type="button" class="secondary" id="mcUploadEvidence">Upload and attach evidence</button><div id="mcEvidenceList" class="mc-evidence-list"></div><div id="mcOcrText" class="mc-evidence-list"></div></div>' +
       '<div class="mc-actions"><button type="button" class="secondary" id="mcSaveDraft">Save draft</button><button type="button" class="primary" id="mcSubmitReport">Submit official report</button><button type="button" class="secondary" id="mcPrint">Print report</button></div>' +
       '<div id="mcMessage" class="status mc-message" role="status"></div></section>' +
       '<section class="mc-panel"><h2 class="rt">Report history</h2><p class="muted">Track draft, submitted and reviewed reports for your assigned fixtures.</p><div id="mcHistory"></div></section>' +
