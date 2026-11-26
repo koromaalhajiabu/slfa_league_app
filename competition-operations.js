@@ -168,7 +168,8 @@
     var mains=rows.filter(function(a){return upper(a.official_role)==='MAIN';});
     var assistants=rows.filter(function(a){return upper(a.official_role)==='ASSISTANT';});
     var commissioners=rows.filter(function(a){return upper(a.official_role)==='MATCH_COMMISSIONER';});
-    return {rows:rows,mains:mains,assistants:assistants,commissioners:commissioners};
+    var dataOperators=rows.filter(function(a){return upper(a.official_role)==='DATA_OPERATOR';});
+    return {rows:rows,mains:mains,assistants:assistants,commissioners:commissioners,dataOperators:dataOperators};
   }
   function analyse(m){
     var now=new Date(),kick=matchTime(m),future=kick&&kick>now,elapsed=kick&&kick<=now,
@@ -188,6 +189,8 @@
     if(ops.assistants.length<2)issues.push('Assistant Referees appointed: '+ops.assistants.length+'/2.');
     if(ops.commissioners.length===0)issues.push('Match Commissioner is not appointed.');
     if(ops.commissioners.length>1)issues.push('More than one active Match Commissioner appointment exists.');
+    if(future&&ops.dataOperators.length===0)issues.push('Live Match Data Operator is not appointed.');
+    if(ops.dataOperators.length>1)issues.push('More than one active Live Match Data Operator appointment exists.');
     var sheetState=function(s,label){
       if(!s){issues.push(label+' team sheet is missing.');return 'MISSING';}
       if(s.status==='RETURNED'){issues.push(label+' team sheet was returned for correction.');return 'RETURNED';}
@@ -245,7 +248,7 @@
     else if(live(m))state='In progress';
     else if(discrepancies.length)state='Under review';
     else if(future){
-      if(issues.some(function(x){return /Main Referee|Assistant Referees|Match Commissioner|Kick-off|Venue/.test(x);}))state='Awaiting preparation';
+      if(issues.some(function(x){return /Main Referee|Assistant Referees|Match Commissioner|Match Data Operator|Kick-off|Venue/.test(x);}))state='Awaiting preparation';
       else if(homeState!=='APPROVED'||awayState!=='APPROVED')state='Awaiting team sheets';
       else if(issues.length)state='Under review';
       else state='Ready for match';
@@ -291,7 +294,7 @@
       '<div class="co-controls"><select id="coLeagueFilter"><option value="">All competitions</option>'+leagues+'</select><select id="coStateFilter"><option value="">All command states</option>'+['Awaiting preparation','Awaiting team sheets','Ready for match','In progress','Awaiting final result','Awaiting referee report','Awaiting commissioner report','Under review','Closed'].map(function(x){return '<option>'+x+'</option>';}).join('')+'</select><input id="coSearch" type="search" placeholder="Search team, venue or match status" aria-label="Search fixtures"></div>'+
       '<div class="co-table-wrap"><table><thead><tr><th>Kick-off · Freetown</th><th>Fixture / competition</th><th>Official appointments</th><th>Home / away sheets</th><th>Referee record</th><th>Commissioner report</th><th>Score / state</th><th>Compliance exceptions</th><th>Dossier</th></tr></thead><tbody id="coRows"></tbody></table></div>'+
       '<div class="co-grid"><section class="co-card"><h3>Recent result amendments</h3><div class="co-list">'+(current.changes.slice(0,10).map(function(c){var m=current.matches.find(function(x){return String(x.id)===String(c.match_id);});return '<div class="co-item"><strong>'+esc(m?matchLabel(m):'Match #'+c.match_id)+'</strong><small>'+esc(upper(c.action))+' · '+esc(c.changed_by_role||'Authorised role')+' · '+esc(fmt(c.changed_at))+'</small><small>Reason: '+esc(c.reason||'Not recorded')+'</small></div>';}).join('')||'<div class="co-empty">No result amendments recorded in the available history.</div>')+'</div></section>'+
-      '<section class="co-card"><h3>Control rules</h3><p>Ready status requires complete appointments, recorded venue and kick-off, both approved team sheets, and no outstanding preparation checks. A match cannot be closed until its official score, Main Referee photographed record and human-verified OCR, and reviewed Match Commissioner report are present.</p><p>OCR text is machine-generated and can contain errors. The original photo and verified text must be checked by an authorised human. Score and player discrepancies are flags for inspection, not automatic changes or disciplinary findings.</p><p>Some time-based follow-ups are operational prompts; they do not create or amend official SLFA regulations.</p></section></div>'+
+      '<section class="co-card"><h3>Control rules</h3><p>Ready status requires a Main Referee, two Assistant Referees, a Match Commissioner and a Live Match Data Operator, plus a recorded venue and kick-off, both approved team sheets, and no outstanding preparation checks. A match cannot be closed until its official score, Main Referee photographed record and human-verified OCR, and reviewed Match Commissioner report are present.</p><p>OCR text is machine-generated and can contain errors. The original photo and verified text must be checked by an authorised human. Score and player discrepancies are flags for inspection, not automatic changes or disciplinary findings.</p><p>Some time-based follow-ups are operational prompts; they do not create or amend official SLFA regulations.</p></section></div>'+
       '<p class="co-sub">Last refreshed: '+esc(fmt(lastLoad))+' · Read-only oversight · '+current.matches.length+' match records loaded</p>';
     function drawRows(){
       var l=$('coLeagueFilter')?$('coLeagueFilter').value:'',state=$('coStateFilter')?$('coStateFilter').value:'',term=$('coSearch')?$('coSearch').value.trim().toLowerCase():'';
@@ -303,10 +306,10 @@
       var body=$('coRows');if(!body)return;
       body.innerHTML=filtered.length?filtered.map(function(x){
         var m=x.match,o=x.ops,league=current.leagues.find(function(q){return String(q.id)===String(m.league_id);});
-        var main=o.officials.mains.length,assist=o.officials.assistants.length,mc=o.officials.commissioners.length;
+        var main=o.officials.mains.length,assist=o.officials.assistants.length,mc=o.officials.commissioners.length,operator=o.officials.dataOperators.length;
         var issues=o.issues.slice(0,4).map(function(t){return '<li>'+esc(t)+'</li>';}).join('');
         return '<tr><td>'+esc(fmt(matchTime(m)))+'</td><td><strong>'+esc(matchLabel(m))+'</strong><span class="co-sub">'+esc(league?league.name:'Competition not labelled')+'</span><span class="co-sub">'+esc(m.venue||'Venue not recorded')+'</span></td>'+
-          '<td>'+pill('Main '+main,main===1)+pill('Assistants '+assist+'/2',assist>=2)+pill('Commissioner '+mc,mc===1)+'</td>'+
+          '<td>'+pill('Main '+main,main===1)+pill('Assistants '+assist+'/2',assist>=2)+pill('Commissioner '+mc,mc===1)+pill('Data operator '+operator,operator===1)+'</td>'+
           '<td>'+pill('Home '+o.homeState,o.homeState==='APPROVED')+pill('Away '+o.awayState,o.awayState==='APPROVED')+'</td>'+
           '<td>'+pill(o.mainRecord?upper(o.mainRecord.status):'Not filed',!!o.mainRecord&&o.mainRecord.status==='ACKNOWLEDGED')+(o.mainRecord?'<span class="co-sub">OCR '+esc(o.mainRecord.ocr_status||'NOT_RUN')+' · '+(o.mainRecord.ocr_verified_at?'Human verified':'Not verified')+'</span>':'')+'</td>'+
           '<td>'+pill(o.commissioner?upper(o.commissioner.report_status):'Not filed',!!o.commissioner&&o.commissioner.report_status==='REVIEWED')+'</td>'+
