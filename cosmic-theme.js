@@ -394,7 +394,13 @@
     }
     document.addEventListener('visibilitychange', function () {
       var layer = document.getElementById('slfa-cosmos');
+      var birds = document.getElementById('slfa-bird-flight-layer');
       if (layer) layer.style.animationPlayState = document.hidden ? 'paused' : 'running';
+      if (birds) {
+        birds.querySelectorAll('.slfa-bird-flock').forEach(function (flock) {
+          flock.style.animationPlayState = document.hidden ? 'paused' : 'running';
+        });
+      }
       if (!document.hidden) { applySkyCycle(); loadGlobalTheme(); }
     });
   }
