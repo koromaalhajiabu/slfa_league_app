@@ -314,27 +314,47 @@
       '<span class="slfa-sky-cloud slfa-sky-cloud-b"></span>' +
       '<span class="slfa-sky-cloud slfa-sky-cloud-c"></span>' +
       '<span class="slfa-sky-light-beam"></span>' +
-      '<span class="slfa-bird-flock slfa-bird-flock-a">' +
-        '<span class="slfa-bird b1"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b2"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b3"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b4"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b5"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-      '</span>' +
-      '<span class="slfa-bird-flock slfa-bird-flock-b">' +
-        '<span class="slfa-bird b1"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b2"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b3"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b4"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-      '</span>' +
-      '<span class="slfa-bird-flock slfa-bird-flock-c">' +
-        '<span class="slfa-bird b1"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b2"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b3"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b4"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="slfa-bird b5"><svg viewBox="0 0 42 24"><path d="M2 14C8 5 14 6 21 15C28 6 34 5 40 14" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-      '</span>';
+
     document.body.insertBefore(layer, document.body.firstChild);
+  }
+
+  function addBirdFlights() {
+    if (!document.body || document.getElementById('slfa-bird-flight-layer')) return;
+    var flightLayer = document.createElement('div');
+    flightLayer.id = 'slfa-bird-flight-layer';
+    flightLayer.setAttribute('aria-hidden', 'true');
+
+    function makeBird(className) {
+      var bird = document.createElement('span');
+      bird.className = 'slfa-bird ' + className;
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 42 24');
+      svg.setAttribute('focusable', 'false');
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M2 14 C8 5 14 6 21 15 C28 6 34 5 40 14');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', 'currentColor');
+      path.setAttribute('stroke-width', '3.8');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(path);
+      bird.appendChild(svg);
+      return bird;
+    }
+
+    [
+      { name: 'a', count: 6 },
+      { name: 'b', count: 5 },
+      { name: 'c', count: 6 }
+    ].forEach(function (group) {
+      var flock = document.createElement('span');
+      flock.className = 'slfa-bird-flock slfa-bird-flock-' + group.name;
+      for (var i = 0; i < group.count; i++) {
+        flock.appendChild(makeBird('b' + ((i % 5) + 1)));
+      }
+      flightLayer.appendChild(flock);
+    });
+    document.body.appendChild(flightLayer);
   }
   function init() {
     if (!document.body) return;
@@ -344,6 +364,7 @@
     var cachedConfig = configFromValue(cached);
     applyPreset(cachedConfig ? cachedConfig.palette : 'night-sky', cachedConfig ? cachedConfig.custom_accent : DEFAULT_ACCENT);
     addSkyAtmosphere();
+    addBirdFlights();
     applySkyCycle();
     addStars();
     window.setInterval(applySkyCycle, 15000);
