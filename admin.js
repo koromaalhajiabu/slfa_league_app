@@ -1804,7 +1804,7 @@
     initTouchPad();
     $('rfStart').addEventListener('click', function () {
       var id = $('rfMatch').value; if (!id) { msg('Choose a match.'); return; }
-      setMatch(id, { match_status: 'LIVE', match_minute: 0 }).then(function (r) {
+      setMatch(id, { match_status: 'LIVE', match_minute: 0, current_half: 1 }).then(function (r) {
         msg(r.error ? r.error.message : 'Match is live.'); loadRefMatch(id); });
     });
     $('rfChange').addEventListener('click', function () {
@@ -1863,6 +1863,7 @@
         if (!u.data || !u.data.user) throw new Error('Sign in again before recording a match event.');
         var event = { client_event_id: makeClientEventId(), match_id: String(id), event_type: type, team_name: $('rfTeam').value, player_name: player,
           assist_player_name: $('rfAssist').value.trim() || null, player_off_name: $('rfOff').value.trim() || null, minute: minute,
+          half: (currentRefMatch && Number(currentRefMatch.current_half) === 2) ? 2 : 1,
           recorded_by: u.data.user.id, recorded_at: new Date().toISOString(), published_at: new Date().toISOString() };
         return queueAndSyncRefereeEvent(event).then(function (res) {
           if (res.error && !res.queued) { msg(res.error.message); return; }
@@ -1920,7 +1921,7 @@
   // Half time, second half and the current minute, for the Super Admin or the referee
   function wireMatchTime(prefix, matchSel) {
     $(prefix + 'Half').addEventListener('click', function () { var id = $(matchSel).value; if (!id) return; setMatch(id, { match_status: 'HT', match_minute: 45 }).then(function (r) { msg(r.error ? r.error.message : 'Half time.'); }); });
-    $(prefix + 'Second').addEventListener('click', function () { var id = $(matchSel).value; if (!id) return; setMatch(id, { match_status: 'LIVE', match_minute: 46 }).then(function (r) { msg(r.error ? r.error.message : 'Second half started.'); }); });
+    $(prefix + 'Second').addEventListener('click', function () { var id = $(matchSel).value; if (!id) return; setMatch(id, { match_status: 'LIVE', match_minute: 46, current_half: 2 }).then(function (r) { msg(r.error ? r.error.message : 'Second half started.'); }); });
     $(prefix + 'MinSave').addEventListener('click', function () {
       var id = $(matchSel).value, n = parseInt($(prefix + 'Min').value, 10);
       if (!id) return;
@@ -1931,18 +1932,19 @@
   function goalsFor(team) { return refEvents.filter(function (e) { return e.event_type === 'GOAL' && e.team_name === team; }).length; }
   function loadRefMatch(id) {
     if (!id) { $('rfPanel').classList.add('hidden'); return; }
-    db.from('matches').select('id, home_team, away_team, match_status, motm_player_id').eq('id', id).maybeSingle().then(function (r) {
+    db.from('matches').select('id, home_team, away_team, match_status, motm_player_id, current_half').eq('id', id).maybeSingle().then(function (r) {
       var m = r.data; if (!m) return;
       currentRefMatch = m;
       loadMotm(m);
       $('rfTeam').innerHTML = '<option>' + esc(m.home_team) + '</option><option>' + esc(m.away_team) + '</option>';
       $('rfPanel').classList.toggle('hidden', (m.match_status !== 'LIVE' && m.match_status !== 'HT') || !applyRefRole(id));
-      db.from('match_events').select('id, event_type, team_name, player_name, player_off_name, minute').eq('match_id', String(id)).order('minute', { ascending: true }).then(function (e) {
+      db.from('match_events').select('id, event_type, team_name, player_name, player_off_name, minute, half').eq('match_id', String(id)).order('minute', { ascending: true }).then(function (e) {
         refEvents = e.data || [];
         $('rfScore').textContent = goalsFor(m.home_team) + ' – ' + goalsFor(m.away_team);
         $('rfEvents').innerHTML = refEvents.length ? refEvents.map(function (ev) {
           var label = ev.event_type === 'SUB' ? ev.player_name + ' on, ' + (ev.player_off_name || '') + ' off' : ev.player_name;
-          return '<div class="ev"><span class="min">' + esc(ev.minute) + "'</span><span class=\"etxt\">" + esc(String(ev.event_type).replace('_',' ')) + ': ' + esc(label) +
+          var minLabel = window.slfaFormatMinute ? window.slfaFormatMinute(ev.minute, ev.half) : esc(ev.minute) + "'";
+          return '<div class="ev"><span class="min">' + minLabel + "</span><span class=\"etxt\">" + esc(String(ev.event_type).replace('_',' ')) + ': ' + esc(label) +
             '<small>' + esc(ev.team_name || '') + '</small></span><button class="small danger" data-rev="' + ev.id + '">Reverse</button></div>';
         }).join('') : 'No events yet.';
         document.querySelectorAll('[data-rev]').forEach(function (b) {
