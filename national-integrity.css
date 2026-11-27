@@ -1,0 +1,17 @@
+/* National Football Intelligence & Integrity Centre */
+#nationalIntegrityCentre{border:1px solid rgba(52,170,112,.28);background:linear-gradient(145deg,rgba(8,43,38,.96),rgba(8,30,48,.98));}
+#niMetrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+#niMetrics>div{display:grid;gap:6px;padding:13px;border:1px solid #ffffff20;border-radius:13px;background:#ffffff08}
+#niMetrics strong{font-size:clamp(19px,3vw,27px);color:#a7f3c5}
+#niMetrics span{font-size:9px;color:#c3d9d0;text-transform:uppercase;letter-spacing:.08em}
+.ni-alert{margin:10px 0;padding:13px;border:1px solid #ffffff20;border-left:4px solid #d69b35;border-radius:12px;background:#ffffff08}
+.ni-alert[data-severity="HIGH"]{border-left-color:#e05b5b}
+.ni-alert[data-severity="INFO"]{border-left-color:#4b9bd4}
+.ni-alert-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.ni-alert h3{margin:5px 0;color:#f4fff8;font-size:14px}
+.ni-alert p{margin:7px 0;color:#c7dcd2;font-size:11px;line-height:1.55;white-space:pre-wrap}
+.ni-alert small{color:#a9c6b7;font-size:9px}
+.ni-alert select,.ni-alert textarea{width:100%;margin:7px 0;padding:9px;border:1px solid #ffffff30;border-radius:8px;background:#102b3b;color:#fff}
+.ni-alert textarea{min-height:62px}
+.ni-empty{padding:16px;text-align:center;color:#c5d9cf;border:1px dashed #ffffff30;border-radius:12px}
+@media(max-width:520px){#niMetrics{grid-template-columns:1fr 1fr}#niMetrics>div:last-child{grid-column:1/-1}}
