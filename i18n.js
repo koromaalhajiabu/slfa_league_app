@@ -2715,31 +2715,7 @@
       .map(function (key) {
         return {
           lower: key.toLowerCase(),
-          regex: new RegExp(key.replace(/[.*+?^$()|[\]\\]/g, '\\  function lang() {
-    try { var v = localStorage.getItem('slfa_lang'); return DICT[v] || v === 'en' ? v : 'en'; } catch (e) { return 'en'; }
-  }
-  var current = lang();
-  var table = DICT[current] || null;
-
-  function translateValue(value) {
-    if (!table || value == null) return value;
-    var raw = String(value);
-    var key = raw.trim().replace(/\s+/g, ' ');
-    if (!key) return raw;
-    if (Object.prototype.hasOwnProperty.call(table, key)) return raw.replace(raw.trim(), table[key]);
-    var lower = key.toLowerCase();
-    var directKey = Object.keys(table).filter(function (k) { return k.toLowerCase() === lower; })[0];
-    if (directKey) return raw.replace(raw.trim(), table[directKey]);
-    var out = raw;
-    var keys = Object.keys(table).filter(function (k) { return k.length >= 4 && /\s|[.!?·]/.test(k); })
-      .sort(function (a, b) { return b.length - a.length; });
-    keys.forEach(function (k) {
-      var escaped = k.split('').map(function (ch) { return '.+*?^$()|[]\\\\'.indexOf(ch) >= 0 ? '\\\\' + ch : ch; }).join('');
-      out = out.replace(new RegExp(escaped, 'gi'), table[k]);
-    });
-    return out;
-  }
-'), 'gi'),
+          regex: new RegExp(key.replace(/[.*+?^$()|[\]\\]/g, '\\$&'), 'gi'),
           value: table[key]
         };
       });
