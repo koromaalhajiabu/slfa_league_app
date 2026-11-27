@@ -1847,6 +1847,42 @@
   "Go to the League Centre and sign in": "Go na Lig Sɛntə ɛn sayn in"
 });
 
+  
+  // Final coverage for remaining live statistics and operational edge states.
+  Object.assign(DICT.kri, {
+  "Your session has expired. Sign in again.": "Yu sɛshɔn don ɛkspaya. Sayn in bak.",
+  "Import history will appear after the database migration is installed.": "Rikɔd fɔ impɔt go apia afta dɛn install database migration.",
+  "FIFA Connect export": "Export frɔm FIFA Connect",
+  "rows ·": "row dɛn ·",
+  "new ·": "nyu ·",
+  "No player imports have been recorded yet.": "Dɛn nɔ rikɔd ɛni impɔt fɔ pleya yet.",
+  "Match awards leader": "Plea we gɛt mach award pas",
+  "No published figure": "Nɔ gɛt nɔmba we dɛn publish",
+  "The approved squad is temporarily unavailable.": "Tim pleya dɛn we dɛn apruv nɔ de fɔ naw.",
+  "Club updates are temporarily unavailable.": "Apdet fɔ klob nɔ de fɔ naw.",
+  "No public club announcements yet.": "Dɛn nɔ publish anawsmɛnt fɔ klob yet.",
+  "Club information is temporarily unavailable.": "Infomeshɔn fɔ klob nɔ de fɔ naw.",
+  "Club statistics are temporarily unavailable.": "Statistik fɔ klob nɔ de fɔ naw.",
+  "Historical season scoring will appear when completed matches are linked to published seasons.": "Infomeshɔn bɔt skɔ gɔl fɔ sezon we pas go apia wen dɛn don link mach we don ɛnd wit sezon we dɛn publish.",
+  "Matches are grouped by their assigned season. Older matches without a season ID are matched by their date within the season dates.": "Dɛn de group mach dɛn fɔlɔ sezon we dɛn assign dɛn gi. Mach dɛn we ol ɛn we nɔ gɛt sezon ID dɛn de match am by dɛt bitwin bigin ɛn ɛnd dɛt fɔ sezon.",
+  "KNOCKOUT BRACKET Competition rounds": "BRAKET FƆ KNOCKOUT: rawn fɔ kɔmpitishɔn",
+  "Club Pos P Home pts Away pts Last 5": "Klob | Poz | P | Pɔynt na os | Pɔynt na ɔda ples | Lɛst 5",
+  "Match event": "Wetin apin na mach",
+  "SLFA League App": "SLFA League App",
+  "Application temporarily unavailable The SLFA League App is undergoing maintenance or its security status cannot be verified. Please connect and try again later.": "Di app nɔ de wok fɔ naw. SLFA League App de na maintɛnans ɔ nɔ able fɔ chɛk im sikyuriti stetis. Konek na intanɛt ɛn tray bak afta smɔl tɛm.",
+  "MY CLUB": "MI KLOB",
+  "Highlights &amp; replays": "Bɛst pɔnt dɛn ɛn vidio dɛn bak",
+  "Competition regulations, season archive and football records": "Rul fɔ kɔmpitishɔn, akip fɔ sezon ɛn rikɔd fɔ futbol",
+  "Matchday photography": "Foto fɔ di mach dei",
+  "Last five": "Lɛst faiv",
+  "Last 5": "Lɛst 5",
+  "Home pts": "Pɔynt fɔ os tim",
+  "Away pts": "Pɔynt fɔ ɔda tim",
+  "Position": "Pozishɔn",
+  "Pos": "Pozishɔn",
+  "Last 5 form": "Fɔm fɔ lɛst 5 mach"
+});
+
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
