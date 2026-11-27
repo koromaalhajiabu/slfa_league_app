@@ -70,6 +70,59 @@
       });
     }).catch(function(){host.innerHTML='<p class="pp-note">Season scoring history is temporarily unavailable.</p>';});
   }
+  function loadPlayerEventHistory(host, name, club) {
+    if (!host) return;
+    host.innerHTML='<div class="pp-match-log-head"><span>PLAYER MATCH LOG</span><h3>Published match contributions</h3></div><p class="pp-note">Loading published match events…</p>';
+    var columns='match_id,event_type,team_name,player_name,player_off_name,assist_player_name,minute,half,published_at';
+    Promise.all([
+      db.from('match_events').select(columns).eq('team_name',club).eq('player_name',name).not('published_at','is',null),
+      db.from('match_events').select(columns).eq('team_name',club).eq('assist_player_name',name).not('published_at','is',null),
+      db.from('match_events').select(columns).eq('team_name',club).eq('player_off_name',name).not('published_at','is',null)
+    ]).then(function(groups){
+      if(groups.some(function(x){return x.error;})){host.innerHTML='<p class="pp-note">Player match records are temporarily unavailable.</p>';return;}
+      var seen={},events=[];
+      groups.forEach(function(group){(group.data||[]).forEach(function(e){
+        var key=[e.match_id,e.event_type,e.minute,e.half,e.team_name,e.player_name,e.player_off_name,e.assist_player_name].join('|');
+        if(!seen[key]){seen[key]=true;events.push(e);}
+      });});
+      var ids=Array.from(new Set(events.map(function(e){return String(e.match_id);})));
+      if(!ids.length){host.innerHTML='<div class="pp-match-log-head"><span>PLAYER MATCH LOG</span><h3>Published match contributions</h3></div><p class="pp-note">No published match event entries are linked to this player yet. This does not mean the player made no appearances.</p>';return;}
+      return db.from('matches').select('id,match_date,match_status,home_team,away_team,home_score,away_score,venue').in('id',ids).then(function(matchRes){
+        if(matchRes.error){host.innerHTML='<p class="pp-note">Player match records are temporarily unavailable.</p>';return;}
+        var matchMap={};
+        (matchRes.data||[]).forEach(function(m){matchMap[String(m.id)]=m;});
+        var grouped={};
+        events.forEach(function(e){var k=String(e.match_id);if(!matchMap[k])return;(grouped[k]=grouped[k]||[]).push(e);});
+        var idsSorted=Object.keys(grouped).sort(function(a,b){return new Date(matchMap[b].match_date||0)-new Date(matchMap[a].match_date||0);});
+        if(!idsSorted.length){host.innerHTML='<p class="pp-note">No linked match records are available for these published events.</p>';return;}
+        var html='<div class="pp-match-log-head"><span>PLAYER MATCH LOG</span><h3>Published match contributions</h3></div>';
+        html+='<div class="pp-match-log-list">'+idsSorted.map(function(id){
+          var m=matchMap[id],rows=grouped[id].slice().sort(function(a,b){return Number(a.half)-Number(b.half)||Number(a.minute)-Number(b.minute);});
+          var goals=rows.filter(function(e){return e.event_type==='GOAL'&&e.player_name===name;}).length;
+          var assists=rows.filter(function(e){return e.event_type==='GOAL'&&e.assist_player_name===name;}).length;
+          var shots=rows.filter(function(e){return e.player_name===name&&['GOAL','SHOT_ON_TARGET','SHOT_OFF_TARGET','SHOT_BLOCKED'].indexOf(e.event_type)>=0;}).length;
+          var saves=rows.filter(function(e){return e.event_type==='SAVE'&&e.player_name===name;}).length;
+          var yellows=rows.filter(function(e){return e.event_type==='YELLOW_CARD'&&e.player_name===name;}).length;
+          var reds=rows.filter(function(e){return e.event_type==='RED_CARD'&&e.player_name===name;}).length;
+          var score=m.home_score==null||m.away_score==null?'—':m.home_score+' – '+m.away_score;
+          var date=m.match_date?new Date(m.match_date).toLocaleDateString('en-GB',{timeZone:'Africa/Freetown',day:'numeric',month:'short',year:'numeric'}):'Date not recorded';
+          var labels={GOAL:'Goal',YELLOW_CARD:'Yellow card',RED_CARD:'Red card',SUB:'Substitution',SHOT_ON_TARGET:'Shot on target',SHOT_OFF_TARGET:'Shot off target',SHOT_BLOCKED:'Blocked shot',SAVE:'Goalkeeper save',CORNER:'Corner',FOUL:'Foul',OFFSIDE:'Offside'};
+          var eventHtml=rows.map(function(e){
+            var t=String(e.event_type||'').toUpperCase(),desc=labels[t]||'Match event';
+            if(t==='GOAL'&&e.assist_player_name===name&&e.player_name!==name)desc='Assist · '+(e.player_name||'Goal scorer');
+            else if(t==='SUB'&&e.player_off_name===name)desc='Substituted off';
+            else if(t==='SUB'&&e.player_name===name)desc='Substituted on';
+            else desc+=' · '+(e.player_name||'Player not recorded');
+            return '<li><span>'+esc(e.minute==null?'—':e.minute+"'")+'</span><strong>'+esc(desc)+'</strong></li>';
+          }).join('');
+          return '<article class="pp-match-log-card"><div class="pp-match-log-fixture"><div><small>'+esc(date)+' · '+esc(String(m.match_status||'').replace(/_/g,' '))+'</small><strong>'+esc(m.home_team||'Home')+' <b>'+esc(score)+'</b> '+esc(m.away_team||'Away')+'</strong><small>'+esc(m.venue||'Venue not recorded')+'</small></div></div><div class="pp-match-log-metrics">'+
+            (goals?'<span>⚽ '+goals+' G</span>':'')+(assists?'<span>↗ '+assists+' A</span>':'')+(shots?'<span>🎯 '+shots+' Shots</span>':'')+(saves?'<span>🧤 '+saves+' Saves</span>':'')+(yellows?'<span>🟨 '+yellows+'</span>':'')+(reds?'<span>🟥 '+reds+'</span>':'')+
+            '</div><ul class="pp-match-log-events">'+eventHtml+'</ul></article>';
+        }).join('')+'</div><p class="pp-note">Only published event entries are shown. A match without a listed event may still include an appearance or other contribution that was not entered into the event log.</p>';
+        host.innerHTML=html;
+      });
+    }).catch(function(){host.innerHTML='<p class="pp-note">Player match records are temporarily unavailable.</p>';});
+  }
   function metricCard(metric) {
     var value = metric.value == null ? '—' : esc(metric.value);
     var foot = metric.error ? 'Temporarily unavailable' : (metric.value == null ? 'No published figure yet' : 'Published league record');
@@ -128,6 +181,10 @@
       scoringHost.className = 'pp-scoring-history';
       careerHost.parentNode.insertBefore(scoringHost, careerHost.nextSibling);
       loadScoringHistory(scoringHost, name, club);
+      var eventHost = document.createElement('section');
+      eventHost.className = 'pp-match-log';
+      scoringHost.parentNode.insertBefore(eventHost, scoringHost.nextSibling);
+      loadPlayerEventHistory(eventHost, name, club);
       if (!playerId) { careerHost.innerHTML = '<p class="pp-note">Match appearances are not linked to this player record yet.</p>'; return; }
       db.from('match_lineups').select('match_id,is_starter').eq('player_id', playerId).then(function (lineupRes) {
         if (thisRequest !== requestId || !dialog.open) return;
