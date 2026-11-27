@@ -464,7 +464,7 @@
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode: function (n) {
         var p = n.parentNode;
-        if (!p || /^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|OPTION)$/.test(p.nodeName)) return NodeFilter.FILTER_REJECT;
+        if (!p || /^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT)$/.test(p.nodeName)) return NodeFilter.FILTER_REJECT;
         return n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
       }
     });
@@ -479,7 +479,7 @@
   function translateAttrs(root) {
     if (!table) return;
     root.querySelectorAll('[aria-label],[placeholder],[title]').forEach(function (el) {
-      ['aria-label', 'placeholder', 'title'].forEach(function (a) {
+      ['aria-label', 'placeholder', 'title', 'value'].forEach(function (a) {
         var v = el.getAttribute(a);
         if (v && table[v]) el.setAttribute(a, table[v]);
       });
@@ -488,7 +488,31 @@
 
   function setupPicker() {
     var sel = document.getElementById('langSelect');
-    if (!sel) return;
+    if (!sel) {
+      var label = document.createElement('label');
+      label.className = 'lang-picker';
+      label.setAttribute('aria-label', 'Choose language');
+      var caption = document.createElement('span');
+      caption.className = 'lang-picker-label';
+      caption.textContent = 'Language';
+      sel = document.createElement('select');
+      sel.id = 'langSelect';
+      label.appendChild(caption);
+      label.appendChild(sel);
+      var host = document.querySelector('.portal-head') || document.querySelector('header') || document.body;
+      if (host === document.body) {
+        label.style.cssText = 'position:fixed;z-index:10000;top:10px;right:10px;';
+        document.body.insertBefore(label, document.body.firstChild);
+      } else {
+        host.appendChild(label);
+      }
+    }
+    if (!document.getElementById('slfa-i18n-picker-style')) {
+      var style = document.createElement('style');
+      style.id = 'slfa-i18n-picker-style';
+      style.textContent = '.lang-picker{display:inline-flex;align-items:center;gap:7px;font:500 12px/1.2 system-ui,sans-serif;color:inherit}.lang-picker select{max-width:145px;min-height:34px;padding:6px 9px;border:1px solid currentColor;border-radius:9px;background:rgba(12,25,38,.82);color:inherit;font:inherit}.portal-head .lang-picker{margin-left:auto}@media(max-width:600px){.portal-head .lang-picker{margin-left:0}.lang-picker select{max-width:118px}}';
+      document.head.appendChild(style);
+    }
     sel.innerHTML = Object.keys(LABELS).map(function (k) {
       return '<option value="' + k + '"' + (k === current ? ' selected' : '') + '>' + LABELS[k] + '</option>';
     }).join('');
