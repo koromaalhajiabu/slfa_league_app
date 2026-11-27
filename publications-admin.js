@@ -19,6 +19,8 @@
   };
 
   function $(id) { return document.getElementById(id); }
+  function tr(value) { return window.slfaTranslate ? window.slfaTranslate(value) : value; }
+  function translateUI(node) { if (window.slfaTranslateDOM && node) window.slfaTranslateDOM(node); }
   function esc(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -27,7 +29,7 @@
   function say(message, bad) {
     var status = $('slfaPubStatus');
     if (status) {
-      status.textContent = message || '';
+      status.textContent = message ? tr(message) : '';
       status.classList.toggle('is-error', !!bad);
     }
   }
@@ -85,6 +87,7 @@
       '<div class="spa-library"><div class="spa-library-head"><div><h3>' + (reviewer ? 'All publications' : 'My publications') + '</h3><p class="spa-muted">' + (reviewer ? 'All drafts, submissions, published records and archived documents.' : 'Your drafts and submissions, including reviewer feedback.') + '</p></div><button type="button" class="secondary" id="slfaPubRefresh">Refresh</button></div>' +
       '<div id="slfaPubLibrary" class="spa-doc-list">Loading publications…</div></div>';
     root.appendChild(panel);
+    translateUI(panel);
     mounted = true;
     wireForm();
     loadOptions();
@@ -234,16 +237,16 @@
   function loadDocuments() {
     var library = $('slfaPubLibrary'), queue = $('slfaPubQueue');
     if (!library) return;
-    library.textContent = 'Loading publications…';
-    if (queue) queue.textContent = 'Loading review queue…';
+    library.textContent = tr('Loading publications…');
+    if (queue) queue.textContent = tr('Loading review queue…');
     db.from('slfa_publications')
       .select('id,title,document_type,summary,document_number,competition_id,season_id,file_name,storage_path,file_size_bytes,status,review_note,created_by,created_at,submitted_at,published_at,leagues(name),seasons(name)')
       .order('created_at', { ascending: false })
       .limit(200)
       .then(function (r) {
         if (r.error) {
-          library.textContent = 'Publications could not be loaded. Check that your account is authorised and the database connection is available.';
-          if (queue) queue.textContent = 'The review queue is unavailable.';
+          library.textContent = tr('Publications could not be loaded. Check that your account is authorised and the database connection is available.');
+          if (queue) queue.textContent = tr('The review queue is unavailable.');
           say(r.error.message, true);
           return;
         }
@@ -255,6 +258,8 @@
           queue.innerHTML = pending.length ? pending.map(function (x) { return rowMarkup(x, 'queue'); }).join('') :
             '<p class="spa-empty">No documents are waiting for review.</p>';
         }
+        translateUI(library);
+        if (queue) translateUI(queue);
         panel.querySelectorAll('[data-pub-action]').forEach(function (button) {
           button.addEventListener('click', function () {
             var row = rows.filter(function (x) { return String(x.id) === String(button.dataset.pubId); })[0];
@@ -269,32 +274,32 @@
     var update = { reviewed_by: activeProfile.id, reviewed_at: new Date().toISOString() };
     var status = '';
     if (action === 'publish') {
-      if (!confirm('Approve and publish "' + row.title + '" to the public Digital Publications Centre?')) { if (button) button.disabled = false; return; }
+      if (!confirm(tr('Approve and publish') + ' "' + row.title + '" ' + tr('to the public Digital Publications Centre?'))) { if (button) button.disabled = false; return; }
       status = 'PUBLISHED'; update.published_at = new Date().toISOString(); update.review_note = null;
     } else if (action === 'return') {
-      var returnNote = window.prompt('Explain what needs to be corrected before publication (at least 5 characters).');
+      var returnNote = window.prompt(tr('Explain what needs to be corrected before publication (at least 5 characters).'));
       if (returnNote == null || returnNote.trim().length < 5) { say('A reviewer note of at least five characters is required.', true); if (button) button.disabled = false; return; }
       status = 'RETURNED'; update.review_note = returnNote.trim();
     } else if (action === 'reject') {
-      var rejectNote = window.prompt('Give the reason for rejecting this document (at least 5 characters).');
+      var rejectNote = window.prompt(tr('Give the reason for rejecting this document (at least 5 characters).'));
       if (rejectNote == null || rejectNote.trim().length < 5) { say('A rejection reason of at least five characters is required.', true); if (button) button.disabled = false; return; }
       status = 'REJECTED'; update.review_note = rejectNote.trim();
     } else if (action === 'archive') {
-      if (!confirm('Withdraw "' + row.title + '" from the public library? The private PDF will be retained in the database storage for staff access.')) { if (button) button.disabled = false; return; }
+      if (!confirm(tr('Withdraw') + ' "' + row.title + '" ' + tr('from the public library? The private PDF will be retained in the database storage for staff access.'))) { if (button) button.disabled = false; return; }
       status = 'ARCHIVED'; update.review_note = 'Withdrawn from public library by an authorised reviewer.';
     } else if (action === 'resubmit' || action === 'resubmit-own') {
-      if (!confirm('Return "' + row.title + '" to the review queue?')) { if (button) button.disabled = false; return; }
+      if (!confirm(tr('Return') + ' "' + row.title + '" ' + tr('to the review queue?'))) { if (button) button.disabled = false; return; }
       status = 'SUBMITTED'; update.submitted_at = new Date().toISOString(); update.review_note = null;
       if (action === 'resubmit-own') { delete update.reviewed_by; delete update.reviewed_at; }
     } else if (action === 'delete') {
-      if (!confirm('Permanently delete this unpublished document and its private PDF?')) { if (button) button.disabled = false; return; }
+      if (!confirm(tr('Permanently delete this unpublished document and its private PDF?'))) { if (button) button.disabled = false; return; }
       db.storage.from('slfa-publications').remove([row.storage_path]).then(function (removed) {
         if (removed.error) throw removed.error;
         return db.from('slfa_publications').delete().eq('id', row.id).select('id').maybeSingle();
       }).then(function (removedRow) {
         if (removedRow.error) throw removedRow.error;
         say('Unpublished document deleted.', false); loadDocuments();
-      }).catch(function (e) { say(e.message || 'The document could not be deleted.', true); if (button) button.disabled = false; });
+      }).catch(function (e) { say(e.message || tr('The document could not be deleted.'), true); if (button) button.disabled = false; });
       return;
     }
     update.status = status;
@@ -308,7 +313,7 @@
         'Document returned to the review queue.', false);
       loadDocuments();
     }).catch(function (e) {
-      say(e.message || 'The review action failed.', true);
+      say(e.message || tr('The review action failed.'), true);
       if (button) button.disabled = false;
     });
   }
