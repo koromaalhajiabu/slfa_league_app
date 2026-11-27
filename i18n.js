@@ -1031,6 +1031,80 @@
   "All queued referee final scores have synced.": "Ɔl di final skɔ dɛn we refri put na kyu don sink."
 });
 
+  Object.assign(DICT.kri, {
+    "SLFA · PUBLIC DOCUMENTS":"SLFA · Dɔkyumɛnt dɛn fɔ pɔblik",
+    "Activity summary is currently unavailable.":"Sɔmɔri fɔ wok dɛn nɔ de wok nɔw.",
+    "All database totals refreshed successfully.":"Dɛn don frɛsh ɔl di database nɔmba dɛn fayn.",
+    "All operational totals refreshed successfully.":"Dɛn don frɛsh ɔl di wok nɔmba dɛn fayn.",
+    "Refreshing live operational totals…":"De frɛsh di wok nɔmba dɛn nɔw…",
+    "Download ready.":"Download don redi.",
+    "Fixtures and results":"Mach dɛn ɛn rizɔlt dɛn",
+    "Squad records":"Rikɔd bɔt tim pleya dɛn",
+    "Logo link (optional)":"Link fɔ logo (yu nɔ nid fɔ put am)",
+    "Assist (optional)":"Asist (yu nɔ nid fɔ put am)",
+    "Current minute":"Minut nɔw",
+    "Player off (substitutions only)":"Plea we de kɔmɔt (na fɔ chenj pleya nɔmɔ)",
+    "Choose a JPG, PNG or WebP photo no larger than 4 MB.":"Pik JPG, PNG ɔ WebP foto we nɔ big pas 4 MB.",
+    "The review action failed.":"Di wok fɔ luk am nɔ wok.",
+    "Engagement data unavailable.":"Data bɔt wetin pipul de du nɔ de avelebul.",
+    "Published media list unavailable.":"List fɔ media we dɛn publish nɔ de avelebul.",
+    "No published media yet.":"Dɛn nɔ publish media yet.",
+    "Unpublish":"Tek weh publish",
+    "Remove":"Tek weh",
+    "Impressions":"Nɔmba fɔ si am",
+    "Video plays / clicks":"Nɔmba fɔ play vidio / klik",
+    "Shares":"Shɛa dɛn",
+    "Last 30 days · deduplicated browser engagement signals, not verified unique audience figures.":"Di las 30 dei · browser de kɔnt dɛn wan wan, bat dis nɔ sho tru nɔmba fɔ ɛniwan we si am.",
+    "Media approved, assets published and staging files secured.":"Dɛn apruv media, publish di fayl dɛn ɛn kip di kopi dɛn sef.",
+    "Returned to author.":"Dɛn sɛnd am bak gi di pɔsin we rait am.",
+    "Media rejected and hidden.":"Dɛn nɔ apruv media ɛn dɛn hide am.",
+    "Remove this media item and its uploaded files from public access?":"Tek dis media tin ɛn fayl dɛn weh so di pɔblik nɔ go si dɛn?",
+    "Could not remove uploaded media files.":"Nɔ fit tek weh di media fayl dɛn we dɛn upload.",
+    "Match Information Management":"Manij infomeshɔn bɔt mach",
+    "Edit published fixture details. This editor does not change scores, match events or referee submissions. Give an official reason when postponing, rescheduling or cancelling a match.":"Edit infomeshɔn bɔt mach we dɛn publish. Dis ples nɔ de chenj skɔ, wetin apin na mach ɔ wetin refri sɛnd. Gi ɔfishal rizɔn we yu de pospon, set nɔto tɛm ɔ kansul mach.",
+    "Select fixture to edit":"Pik mach fɔ edit",
+    "Fixture status":"Status fɔ mach",
+    "Live · referee controlled":"Mach de go · refri de kontrol am",
+    "Half Time · referee controlled":"Mid tɛm · refri de kontrol am",
+    "Full Time · referee controlled":"Mach don · refri de kontrol am",
+    "Required for postponement, rescheduling or cancellation":"Yu fɔ put am if yu de pospon, set nɔto tɛm ɔ kansul mach",
+    "Save match information":"Sev infomeshɔn bɔt mach",
+    "Clear selection":"Klia wetin yu pik",
+    "Live match":"Mach we de go nɔw",
+    "The referee starts, pauses, times and ends the match.":"Na refri de start, stop, kɔnt tɛm ɛn ɛnd di mach.",
+    "Goals and cards are recorded by the assigned referees and the match commissioner.":"Refri dɛn we dɛn gi di jɔb ɛn di Mach Komisɔnɛ de rikɔd gɔl ɛn kad dɛn.",
+    "Match Officials Management":"Manij di ɔfishal dɛn fɔ mach",
+    "Super Admin only. Appoint Main and Assistant Referees, Match Commissioners and one Live Match Data Operator to each fixture. The Data Operator records live goals, cards and substitutions; the Main Referee alone controls the match clock and official result. Changes and cancellations are logged.":"Na Big Admin nɔmɔ. Gi Main Refri, Assistant Refri, Mach Komisɔnɛ ɛn wan Live Match Data Woka fɔ ɛni mach. Di Data Woka de rikɔd gɔl, kad ɛn chenj pleya; Main Refri nɔmɔ de kontrol tɛm fɔ mach ɛn ɔfishal rizɔlt. Dɛn de rikɔd ɔl di chenj ɛn kansul dɛn.",
+    "Existing active appointment (optional)":"Jɔb we dɛn don gi we de wok (yu nɔ nid fɔ pik am)",
+    "Create a new appointment…":"Mek nyu jɔb we dɛn go gi…",
+    "Official duty":"Jɔb fɔ ɔfishal",
+    "Choose a duty first…":"Fɔs pik di jɔb…",
+    "Change / cancellation reason":"Rizɔn fɔ chenj / kansul",
+    "Required when changing or cancelling an existing appointment":"Yu fɔ put am we yu de chenj ɔ kansul wan jɔb we dɛn don gi.",
+    "Save appointment":"Sev di jɔb",
+    "Cancel appointment":"Kansul di jɔb",
+    "Clear":"Klia",
+    "Appointment register":"List fɔ ɔfishal jɔb dɛn",
+    "Loading appointments…":"Di ɔfishal jɔb dɛn de lod…",
+    "News awaiting approval":"Nyuz we de wet fɔ apruv",
+    "Published media":"Media we dɛn publish",
+    "Media engagement · last 30 days":"Wetin pipul du bɔt media na di las 30 dei",
+    "Audit log":"Rikɔd bɔt wok dɛn",
+    "Recent changes across the app, newest first. Read only.":"Chenj dɛn we apin na di app, nyu wan dɛn fɔs. Nɔ fit chenj am.",
+    "Last 30 days":"Di las 30 dei",
+    "Last 90 days":"Di las 90 dei",
+    "Last year":"Las yia",
+    "Area":"Ples",
+    "All areas":"Ɔl di ples dɛn",
+    "App usage, last 30 days":"Wetin pipul de du na di app na di las 30 dei",
+    " recorded app events across ":" rikɔd ivɛnt bɔt app na ",
+    " event types.":" kain ivɛnt.",
+    "Manage media submissions":"Manij media we pipul sɛnd",
+    "Review media submissions":"Luk media we dɛn sɛnd",
+    "Approval status":"Status fɔ apruv",
+    "No media submissions yet.":"Dɛn nɔ sɛnd media yet."
+  });
+
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
@@ -1041,30 +1115,53 @@
 
   function translateValue(value) {
     if (!table || value == null) return value;
-    var raw = String(value), key = raw.trim();
-    if (table[key]) return raw.replace(key, table[key]);
+    var raw = String(value);
+    var key = raw.trim().replace(/\s+/g, ' ');
+    if (!key) return raw;
+    if (Object.prototype.hasOwnProperty.call(table, key)) return raw.replace(raw.trim(), table[key]);
+    var lower = key.toLowerCase();
+    var directKey = Object.keys(table).filter(function (k) { return k.toLowerCase() === lower; })[0];
+    if (directKey) return raw.replace(raw.trim(), table[directKey]);
     var out = raw;
-    Object.keys(table).sort(function(a,b){return b.length-a.length;}).forEach(function(k){
-      if (k.length >= 4 && /[ .!?]/.test(k) && out.indexOf(k) !== -1) out = out.split(k).join(table[k]);
+    var keys = Object.keys(table).filter(function (k) { return k.length >= 4 && /\s|[.!?·]/.test(k); })
+      .sort(function (a, b) { return b.length - a.length; });
+    keys.forEach(function (k) {
+      var escaped = k.replace(/[.*+?^|[\]\\]/g, '\\$&');
+      out = out.replace(new RegExp(escaped, 'gi'), table[k]);
     });
     return out;
   }
   window.slfaTranslate = translateValue;
 
+  function ignoredTextNode(node) {
+    var p = node && node.parentNode;
+    while (p && p.nodeType === 1) {
+      if (/^(SCRIPT|STYLE|TEXTAREA|INPUT|CODE|PRE)$/.test(p.nodeName) || p.isContentEditable) return true;
+      p = p.parentNode;
+    }
+    return false;
+  }
+
   function translateText(root) {
     if (!table || !root) return;
+    if (root.nodeType === 3) {
+      if (!ignoredTextNode(root) && root.nodeValue.trim()) {
+        var one = translateValue(root.nodeValue);
+        if (one !== root.nodeValue) root.nodeValue = one;
+      }
+      return;
+    }
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode: function (n) {
-        var p = n.parentNode;
-        if (!p || /^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT)$/.test(p.nodeName)) return NodeFilter.FILTER_REJECT;
-        return n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      acceptNode: function (node) {
+        return !ignoredTextNode(node) && node.nodeValue.trim()
+          ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
       }
     });
-    var nodes = [], n;
-    while ((n = walker.nextNode())) nodes.push(n);
-    nodes.forEach(function (node) {
-      var translated = translateValue(node.nodeValue);
-      if (translated !== node.nodeValue) node.nodeValue = translated;
+    var nodes = [], node;
+    while ((node = walker.nextNode())) nodes.push(node);
+    nodes.forEach(function (item) {
+      var translated = translateValue(item.nodeValue);
+      if (translated !== item.nodeValue) item.nodeValue = translated;
     });
   }
 
@@ -1075,12 +1172,23 @@
     if (root.nodeType === 1 && root.matches && root.matches(selector)) elements.push(root);
     if (root.querySelectorAll) elements = elements.concat(Array.prototype.slice.call(root.querySelectorAll(selector)));
     elements.forEach(function (el) {
-      ['aria-label','placeholder','title','value','alt'].forEach(function(a){
-        var v = el.getAttribute(a);
-        if (v) { var translated = translateValue(v); if (translated !== v) el.setAttribute(a, translated); }
+      ['aria-label', 'placeholder', 'title', 'value', 'alt'].forEach(function (attr) {
+        var value = el.getAttribute(attr);
+        if (value) {
+          var translated = translateValue(value);
+          if (translated !== value) el.setAttribute(attr, translated);
+        }
       });
     });
   }
+
+  function translateSubtree(root) {
+    if (!table || !root) return;
+    translateAttrs(root);
+    translateText(root);
+  }
+  window.slfaTranslateDOM = translateSubtree;
+  window.slfaI18n = { language: current, translate: translateValue, apply: translateSubtree };
 
   function setupPicker() {
     var sel = document.getElementById('langSelect');
@@ -1123,20 +1231,28 @@
   if (current === 'ar') { document.documentElement.setAttribute('lang', 'ar'); document.documentElement.setAttribute('dir', 'rtl'); }
   else if (current !== 'en') document.documentElement.lang = current === 'kri' ? 'en' : 'fr';
 
-  var pending = false;
+  var observer = new MutationObserver(function (records) {
+    if (!table) return;
+    records.forEach(function (record) {
+      if (record.type === 'childList') {
+        Array.prototype.forEach.call(record.addedNodes, translateSubtree);
+      } else if (record.type === 'characterData') {
+        translateText(record.target);
+      } else if (record.type === 'attributes') {
+        translateAttrs(record.target);
+      }
+    });
+  });
   function run() {
     if (!table) return;
-    observer.disconnect();
     document.title = translateValue(document.title);
-    translateText(document.body);
-    translateAttrs(document.body);
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-label','placeholder','title','value','alt'] });
+    translateSubtree(document.body);
+    observer.observe(document.documentElement, {
+      childList: true, subtree: true, characterData: true,
+      attributes: true,
+      attributeFilter: ['aria-label', 'placeholder', 'title', 'value', 'alt']
+    });
   }
-  var observer = new MutationObserver(function () {
-    if (pending) return;
-    pending = true;
-    setTimeout(function () { pending = false; run(); }, 50);
-  });
 
   // Light or dark: remembered on this device. Dark is the default.
   function setupTheme() {
