@@ -92,6 +92,51 @@
       });
     });
   }
+  function createEmptyCompetitionTemplates() {
+    var button=$('createCompetitionTemplates');
+    if(!button) return;
+    button.addEventListener('click',function(){
+      var season=seasons.find(function(x){return x.is_current;})||seasons[0];
+      if(!season){note('competitionTemplateStatus','Create a season first. No templates were added.');return;}
+      var templates=[
+        {name:"Men's Division One",type:'LEAGUE',gender:'MEN',sort:10,tier:'DIVISION_1',rank:2,group:'MEN'},
+        {name:"Men's Division Two",type:'LEAGUE',gender:'MEN',sort:11,tier:'DIVISION_2',rank:3,group:'MEN'},
+        {name:"Men's Division Three",type:'LEAGUE',gender:'MEN',sort:12,tier:'DIVISION_3',rank:4,group:'MEN'},
+        {name:"Women's Division One",type:'LEAGUE',gender:'WOMEN',sort:20,tier:'DIVISION_1',rank:2,group:'WOMEN'},
+        {name:"Women's Division Two",type:'LEAGUE',gender:'WOMEN',sort:21,tier:'DIVISION_2',rank:3,group:'WOMEN'},
+        {name:'Regional League',type:'LEAGUE',gender:'OPEN',sort:30,tier:'REGIONAL',rank:1,group:'REGIONAL'},
+        {name:'District League',type:'LEAGUE',gender:'OPEN',sort:31,tier:'REGIONAL',rank:2,group:'REGIONAL'},
+        {name:'National Youth League U17',type:'YOUTH',gender:'OPEN',sort:40,tier:'YOUTH',rank:1,group:'YOUTH'},
+        {name:'National Youth League U20',type:'YOUTH',gender:'OPEN',sort:41,tier:'YOUTH',rank:2,group:'YOUTH'}
+      ];
+      button.disabled=true;
+      note('competitionTemplateStatus','Creating unpublished competition shells and linking their empty tier settings…');
+      templates.reduce(function(chain,t){
+        return chain.then(function(){
+          var existing=leagues.find(function(l){return String(l.name).toLowerCase()===t.name.toLowerCase();});
+          var idPromise=existing?Promise.resolve(existing.id):db.rpc('admin_upsert_competition',{
+            p_id:null,p_name:t.name,p_type:t.type,p_gender:t.gender,
+            p_description:null,p_logo_url:null,p_sort_order:t.sort,p_is_active:false,
+            p_season_id:null,p_start_date:null,p_end_date:null,p_venue:null,p_format_details:null
+          }).then(function(r){if(r.error)throw r.error;return r.data;});
+          return idPromise.then(function(id){
+            return db.from('league_division_settings').upsert({
+              league_id:Number(id),season_id:Number(season.id),tier_code:t.tier,tier_rank:t.rank,
+              pyramid_group:t.group,promotion_spots:0,relegation_spots:0,playoff_spots:0,
+              promotion_playoff:false,relegation_playoff:false,movement_policy:'MANUAL_APPROVAL',
+              notes:'Empty setup template. League administrators must enter and obtain approval for official clubs, format, dates, venues and promotion/relegation rules.',
+              updated_at:new Date().toISOString()
+            },{onConflict:'league_id,season_id'});
+          }).then(function(r){if(r.error)throw r.error;});
+        });
+      },Promise.resolve()).then(function(){
+        note('competitionTemplateStatus','Empty competition templates are ready. They remain unpublished and have no clubs, fixtures, scores or promotion/relegation places. Administrators can now complete each profile and publish only after approval.');
+        return loadBase();
+      }).catch(function(e){
+        note('competitionTemplateStatus','Template setup stopped safely: '+(e.message||'Unknown error')+'. Refresh the list and retry; existing records are not duplicated.');
+      }).then(function(){button.disabled=false;});
+    });
+  }
   $('divLeague').addEventListener('change',loadSettings);
   $('divSeason').addEventListener('change',loadSettings);
   $('moveFrom').addEventListener('change',loadClubs);
@@ -133,5 +178,6 @@
       $('moveReason').value='';loadClubs();loadMovements();
     }).catch(function(e){$('movementSave').disabled=false;note('movementStatus','Movement could not be completed: '+(e.message||'Unknown error.'));loadMovements();});
   });
+  createEmptyCompetitionTemplates();
   loadBase().catch(function(e){note('divisionStatus','Division management could not load: '+(e.message||'Database unavailable.'));});
 })();
