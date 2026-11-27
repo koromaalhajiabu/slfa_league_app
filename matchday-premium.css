@@ -54,6 +54,15 @@
 @media(max-width:650px){.slfa-mc-heading{padding:16px}.slfa-mc-card{border-radius:15px}.slfa-mc-teams{gap:5px}.slfa-mc-team{font-size:10px}.slfa-mc-card-bottom{gap:8px;flex-wrap:wrap}.slfa-lp-table{min-width:560px}.slfa-cup-bracket-panel .slfa-lp-match{padding:11px}}
 @media(prefers-reduced-motion:reduce){.slfa-mc-card,.slfa-mc-live-dot,.slfa-mc-detail,.slfa-lp-table tbody tr,.pp-metric{animation:none!important;transition:none!important}.slfa-mc-card:hover,.pp-metric:hover{transform:none}}
 
+/* Recorded live match statistics and compact match-centre event chips. */
+.slfa-mc-live-counts{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}
+.slfa-mc-live-counts span{padding:4px 7px;border:1px solid rgba(141,240,176,.15);border-radius:7px;background:rgba(255,255,255,.035);font-size:9px;font-variant-numeric:tabular-nums}
+.slfa-mc-stats>div{grid-template-columns:repeat(2,minmax(0,1fr))}
+.slfa-mc-stats>div>strong{grid-column:1/-1}
+.slfa-mc-stats>div>span{padding:3px 4px;border-radius:6px;background:rgba(105,184,239,.055);font-size:10px}
+.slfa-mc-stats-note{margin:7px 0 13px;color:var(--muted);font-size:9px;line-height:1.5}
+@media(max-width:360px){.slfa-mc-stats>div{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 /* SLFA interactive matchday behaviours */
 .slfa-goal-celebration{position:fixed;z-index:99999;left:50%;top:18%;width:min(88vw,340px);padding:20px 22px;text-align:center;border:1px solid rgba(141,240,176,.55);border-radius:22px;color:#fff;background:radial-gradient(circle at 50% 0,rgba(141,240,176,.26),transparent 55%),linear-gradient(135deg,#052f20,#087b43 65%,#082f48);box-shadow:0 22px 70px rgba(0,0,0,.4);opacity:0;pointer-events:none;transform:translate(-50%,-18px) scale(.92)}
 .slfa-goal-celebration.is-visible{animation:slfaGoalPop .42s cubic-bezier(.2,.9,.25,1.2) forwards}
