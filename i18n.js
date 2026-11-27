@@ -1988,6 +1988,34 @@
     "Substitution":"تبديل"
   });
 
+  Object.assign(DICT.fr, {
+    "Loading published match events…":"Chargement des événements de match publiés…",
+    "Only published event entries are shown. A match without a listed event may still include an appearance or other contribution that was not entered into the event log.":"Seuls les événements publiés sont affichés. Un match sans événement répertorié peut néanmoins inclure une participation ou une autre contribution qui n’a pas été saisie dans le journal.",
+    "Goal":"But",
+    "Assist":"Passe décisive",
+    "Goal scorer":"Buteur",
+    "Match event":"Événement du match",
+    "Venue not recorded":"Lieu non enregistré"
+  });
+  Object.assign(DICT.kri, {
+    "Loading published match events…":"Di event dɛn we dɛn publish de lod…",
+    "Only published event entries are shown. A match without a listed event may still include an appearance or other contribution that was not entered into the event log.":"Wi de sho event nɔmɔ we dɛn publish. Mach we nɔ gɛt event na dis list fit stil gɛt pleya we play ɔ oda wok we dɛn nɔ put na event log.",
+    "Goal":"Gɔl",
+    "Assist":"Asist",
+    "Goal scorer":"Plea we skɔ gɔl",
+    "Match event":"Wetin apin na mach",
+    "Venue not recorded":"Ples we dɛn nɔ rikɔd"
+  });
+  Object.assign(DICT.ar, {
+    "Loading published match events…":"جارٍ تحميل أحداث المباراة المنشورة…",
+    "Only published event entries are shown. A match without a listed event may still include an appearance or other contribution that was not entered into the event log.":"تُعرض الأحداث المنشورة فقط. وقد تتضمن المباراة التي لا يظهر فيها حدث مشاركة أو مساهمة أخرى لم تُسجل في سجل الأحداث.",
+    "Goal":"هدف",
+    "Assist":"تمريرة حاسمة",
+    "Goal scorer":"مسجل الهدف",
+    "Match event":"حدث المباراة",
+    "Venue not recorded":"الملعب غير مسجل"
+  });
+
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
