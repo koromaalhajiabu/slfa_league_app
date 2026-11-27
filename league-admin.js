@@ -51,9 +51,10 @@ async function loadOperationalPanels(matches,clubs){
  var clubIds=clubs.map(x=>x.id),players=[];
  if(clubIds.length){var p=await db.from('club_squad').select('id,player_name,club_id').in('club_id',clubIds).order('player_name');if(!p.error)players=p.data||[];}
  $('laCasePlayer').innerHTML='<option value="">Not player-specific</option>'+players.map(p=>'<option value="'+p.id+'">'+esc(p.player_name)+'</option>').join('');
- var sheets=[],commissioners=[],disputes=[],sanctions=[],cases=[],audit=[];
+ var sheets=[],commissioners=[],disputes=[],sanctions=[],cases=[],audit=[],standings=[];
  if(ids.length){
   var q=await Promise.all([
+   db.from('league_standings').select('club,pos,mp,w,d,l,gf,ga,pts').eq('league_id',activeLeague.id).order('pos',{ascending:true}),
    db.from('match_team_sheets').select('id,match_id,club_id,starting_player_ids,substitute_player_ids,submitted_at,status,reference_code,review_notes').in('match_id',ids).order('submitted_at',{ascending:false}),
    db.from('match_commissioner_reports').select('id,match_id,report_status,pitch_condition,facilities_condition,security_arrangements,incident_details,post_match_summary,recommendations,submitted_at,created_at').in('match_id',ids).order('created_at',{ascending:false}),
    db.from('match_disputes').select('id,match_id,club_id,subject,description,status,raised_at,decision_note').in('match_id',ids).order('raised_at',{ascending:false}),
@@ -61,7 +62,9 @@ async function loadOperationalPanels(matches,clubs){
    db.from('league_admin_disciplinary_cases').select('id,match_id,player_id,case_type,description,status,admin_notes,created_at,referred_at').eq('league_id',activeLeague.id).order('created_at',{ascending:false}),
    db.from('match_audit_log').select('id,occurred_at,actor_name,actor_role,table_name,action,reason,match_id').in('match_id',ids.map(String)).order('occurred_at',{ascending:false}).limit(40)
   ]);
-  sheets=q[0].data||[];commissioners=q[1].data||[];disputes=q[2].data||[];sanctions=q[3].data||[];cases=q[4].data||[];audit=q[5].data||[];
+  standings=q[0].data||[];sheets=q[1].data||[];commissioners=q[2].data||[];disputes=q[3].data||[];sanctions=q[4].data||[];cases=q[5].data||[];audit=q[6].data||[];
+  $('laStandings').innerHTML=q[0].error?'Standings unavailable.':standings.length?'<div class="la-row"><strong>Club</strong><span>MP · W · D · L</span><span>GD · Pts</span></div>'+standings.map(x=>'<div class="la-row"><strong>'+esc(x.pos)+'. '+esc(x.club)+'</strong><span>'+esc(x.mp)+' · '+esc(x.w)+' · '+esc(x.d)+' · '+esc(x.l)+'</span><span>'+esc(Number(x.gf||0)-Number(x.ga||0))+' · '+esc(x.pts)+'</span></div>').join(''):'<p>No standings published for this competition.</p>';
+  var results=matches.filter(x=>x.home_score!==null&&x.away_score!==null);$('laResults').innerHTML=results.map(x=>'<div class="la-row"><strong>'+esc(x.home_team)+' '+esc(x.home_score)+' – '+esc(x.away_score)+' '+esc(x.away_team)+'</strong><span>'+esc(x.match_status)+'</span><span>'+esc(x.match_date?new Date(x.match_date).toLocaleDateString():'')+'</span></div>').join('')||'<p>No recorded results yet.</p>';
   $('laTeamSheets').innerHTML=q[0].error?'Team-sheet oversight unavailable.':sheets.map(x=>{var m=matches.find(y=>y.id===x.match_id)||{},c=clubs.find(y=>y.id===x.club_id)||{};return '<div class="la-row"><strong>'+esc(c.club_name||'Club')+' · '+esc(m.home_team)+' v '+esc(m.away_team)+'</strong><span>'+esc(x.reference_code)+' · '+esc(x.status)+'</span><span>'+esc(x.submitted_at?new Date(x.submitted_at).toLocaleString():'')+'</span></div>';}).join('')||'<p>No team sheets submitted yet.</p>';
   $('laCommissionerReports').innerHTML=q[1].error?'Commissioner reports unavailable.':commissioners.map(x=>{var m=matches.find(y=>y.id===x.match_id)||{};return '<div class="la-row"><strong>'+esc(m.home_team)+' v '+esc(m.away_team)+'</strong><span>'+esc(x.report_status)+'</span><span>'+esc(x.incident_details||x.post_match_summary||x.recommendations||'No incident summary')+'</span></div>';}).join('')||'<p>No commissioner reports submitted yet.</p>';
   $('laDisputes').innerHTML=q[2].error?'Dispute register unavailable.':disputes.map(x=>{var m=matches.find(y=>y.id===x.match_id)||{};return '<div class="la-row"><strong>'+esc(x.subject)+'</strong><span>'+esc(m.home_team)+' v '+esc(m.away_team)+' · '+esc(x.status)+'</span><span>'+esc(x.description)+'</span></div>';}).join('')||'<p>No disputes recorded.</p>';
@@ -70,7 +73,7 @@ async function loadOperationalPanels(matches,clubs){
   $('laAudit').innerHTML=q[5].error?'Activity log unavailable.':audit.map(x=>'<div class="la-row"><strong>'+esc(x.action)+' · '+esc(x.table_name)+'</strong><span>'+esc(x.actor_name||x.actor_role||'System')+'</span><span>'+esc(x.occurred_at?new Date(x.occurred_at).toLocaleString():'')+' · '+esc(x.reason||'')+'</span></div>').join('')||'<p>No match activity available.</p>';
  }else{$('laTeamSheets').textContent='No fixtures to review.';$('laCommissionerReports').textContent='No fixtures to review.';$('laDisputes').textContent='No fixtures to review.';$('laSanctions').textContent='No fixtures to review.';$('laCases').textContent='No fixtures to review.';$('laAudit').textContent='No fixtures to review.';}
  $('laCases').querySelectorAll('[data-refer-case]').forEach(function(b){b.addEventListener('click',async function(){var r=await db.from('league_admin_disciplinary_cases').update({status:'REFERRED',referred_at:new Date().toISOString()}).eq('id',b.dataset.referCase).eq('status','DRAFT');if(r.error){status('Could not refer case: '+r.error.message);return;}status('Case referred to the Disciplinary Officer. Final decision remains with the disciplinary authority.');await loadOperationalPanels(currentMatches,currentClubs);});});
- reportData={matches:matches,clubs:clubs,sheets:sheets,commissioners:commissioners,disputes:disputes,sanctions:sanctions,cases:cases,audit:audit};
+ reportData={matches:matches,clubs:clubs,standings:standings,sheets:sheets,commissioners:commissioners,disputes:disputes,sanctions:sanctions,cases:cases,audit:audit};
 }
 $('laCreateCase').addEventListener('click',async function(){
  if(!activeLeague)return;var mid=Number($('laCaseMatch').value),desc=$('laCaseDescription').value.trim();if(!mid||desc.length<20){status('Select a match and enter a description of at least 20 characters.');return;}
@@ -84,6 +87,7 @@ $('laExportReport').addEventListener('click',function(){
  var d=reportData,rows=[['Section','Reference','Status','Details','Date']];
  (d.matches||[]).forEach(x=>rows.push(['Fixture',x.id,x.match_status,(x.home_team||'')+' v '+(x.away_team||''),x.match_date||'']));
  (d.clubs||[]).forEach(x=>rows.push(['Club',x.id,x.is_active?'Active':'Inactive',x.club_name,x.city||'']));
+ (d.standings||[]).forEach(x=>rows.push(['Standing',x.pos,'',x.club+' · Played '+x.mp+' · Points '+x.pts,'']));
  (d.sheets||[]).forEach(x=>rows.push(['Team sheet',x.reference_code,x.status,'Match '+x.match_id,x.submitted_at||'']));
  (d.commissioners||[]).forEach(x=>rows.push(['Commissioner report',x.id,x.report_status,x.incident_details||x.post_match_summary||'',x.submitted_at||'']));
  (d.disputes||[]).forEach(x=>rows.push(['Dispute',x.id,x.status,x.subject+' — '+x.description,x.raised_at||'']));
