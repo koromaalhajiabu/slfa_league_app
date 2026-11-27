@@ -397,3 +397,11 @@ test('Leagues panel reuses shared league, club and season data', () => {
   assert.match(matchCentre, /description,sort_order,season_id,start_date,end_date,venue,format_details/);
   assert.match(matchCentre, /stadium,city,founded_year,about/);
 });
+
+test('Media Centre tab has one loader and avoids duplicate media queries', () => {
+  const app = fs.readFileSync(path.join(ROOT, 'public.js'), 'utf8');
+  const media = fs.readFileSync(path.join(ROOT, 'premium-media.js'), 'utf8');
+  assert.match(app, /if \(window\.slfaPremiumMediaLoad\) \{ window\.slfaPremiumMediaLoad\(\); return; \}/);
+  assert.doesNotMatch(media, /nav\.addEventListener\('click'/);
+  assert.match(media, /window\.slfaPremiumMediaLoad=load/);
+});
