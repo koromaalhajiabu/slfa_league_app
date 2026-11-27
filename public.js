@@ -171,6 +171,11 @@
   function currentSeason() { return seasonList.filter(function (x) { return x.is_current; })[0] || null; }
   function selectedSeason() { return seasonList.filter(function (x) { return String(x.id) === String(seasonSel); })[0] || currentSeason(); }
   function loadSeasonData() {
+    if (window.slfaPublicData && Array.isArray(window.slfaPublicData.seasons)) {
+      seasonList = window.slfaPublicData.seasons.slice();
+      renderSeasonPick();
+      return Promise.resolve();
+    }
     return db.from('seasons').select('id, name, start_date, end_date, is_current').order('start_date', { ascending: false }).then(function (r) {
       seasonList = r.error ? [] : (r.data || []);
       renderSeasonPick();
@@ -193,6 +198,13 @@
   }
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch (e) {}
   function loadLeagueData() {
+    if (window.slfaPublicData && Array.isArray(window.slfaPublicData.leagues) && Array.isArray(window.slfaPublicData.clubs)) {
+      leagueList = window.slfaPublicData.leagues.slice();
+      clubLeague = {};
+      window.slfaPublicData.clubs.forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; });
+      renderLeagueSwitch();
+      return Promise.resolve();
+    }
     return Promise.all([
       db.from('leagues').select('id, name, logo_url, competition_type, gender_category').eq('is_active', true).order('sort_order'),
       db.from('league_clubs').select('club_name, league_id').eq('is_active', true)
@@ -1155,6 +1167,19 @@
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'match_events' }, function (p) { if (p && p.new) favAlert(p.new); })
     .subscribe();
 
+  document.addEventListener('slfa:public-data-ready', function (event) {
+    var data = event.detail || window.slfaPublicData;
+    if (!data) return;
+    if (Array.isArray(data.leagues) && Array.isArray(data.clubs)) {
+      leagueList = data.leagues.slice();
+      clubLeague = {};
+      data.clubs.forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; });
+      renderLeagueSwitch();
+    }
+    if (Array.isArray(data.seasons)) { seasonList = data.seasons.slice(); renderSeasonPick(); }
+    loadMatchDay();
+    if (activePublicTab === 'matches') loadLive();
+  });
   if ($('seasonPick')) $('seasonPick').addEventListener('change', function () { setSeason(this.value); });
   refreshAll();
   subscribeLive();
