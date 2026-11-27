@@ -85,6 +85,8 @@
     '<p class="portal-manual-intro">' + manual.intro + '</p><div class="portal-manual-sections">' + sections + '</div>' +
     '<div class="portal-manual-actions"><button type="button" class="secondary portal-manual-print">Print / Save as PDF</button><button type="button" class="primary portal-manual-done">Close manual</button></div>';
   document.body.appendChild(dialog);
+  // Apply the selected language immediately to the late-mounted manual content.
+  if (window.slfaTranslateDOM) { window.slfaTranslateDOM(button); window.slfaTranslateDOM(dialog); }
   function close() { if (dialog.open) dialog.close(); }
   button.addEventListener('click', function () { if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open','open'); });
   dialog.querySelector('.portal-manual-close').addEventListener('click', close);
