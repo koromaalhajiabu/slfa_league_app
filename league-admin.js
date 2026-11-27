@@ -13,7 +13,7 @@ async function start(){
  if(!u.data||!u.data.user){showAuth('Sign in with your approved SLFA account.');return;}
  var p=await db.from('user_profiles').select('id,full_name,email,system_role,status').eq('id',u.data.user.id).maybeSingle();
  if(p.error||!p.data||p.data.status!=='Active'||p.data.system_role!=='LEAGUE_ADMIN'){await db.auth.signOut();showAuth('This account is not authorised as a League Administrator.');return;}
- showApp();$('laWho').textContent=p.data.full_name||p.data.email;
+ var fr=await db.from('application_control').select('app_frozen').eq('id',1).maybeSingle();\n if(fr.error||!fr.data||fr.data.app_frozen){await db.auth.signOut();showAuth(fr.error?'Security status could not be verified. Access is blocked.':'The SLFA application is temporarily in maintenance mode.');return;}\n showApp();$('laWho').textContent=p.data.full_name||p.data.email;
  var a=await db.from('league_admin_assignments').select('id,league_id,leagues(id,name,competition_type,gender_category,description,start_date,end_date,venue,format_details)').eq('user_id',u.data.user.id).eq('is_active',true);
  if(a.error){status('Could not load your competition assignments.');return;}
  var rows=a.data||[];assignedRows=rows;$('laCompetition').innerHTML=rows.map(function(x){return '<option value="'+x.league_id+'">'+esc(x.leagues&&x.leagues.name||'Competition')+'</option>';}).join('');
