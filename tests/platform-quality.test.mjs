@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v308'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v310'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
