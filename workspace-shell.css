@@ -33,7 +33,7 @@ body:not([data-portal]) .top-controls {
 }
 body:not([data-portal]) main { width: min(1320px, calc(100% - 32px)); margin: 22px auto 36px; }
 body:not([data-portal]) #public { min-width: 0; }
-body:not([data-portal]) .hero {
+body:not([data-portal]) #public .hero {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -41,8 +41,8 @@ body:not([data-portal]) .hero {
   flex-wrap: wrap;
   margin-bottom: 16px;
 }
-body:not([data-portal]) .hero .title { max-width: 760px; }
-body:not([data-portal]) .hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+body:not([data-portal]) #public .hero .title { max-width: 760px; }
+body:not([data-portal]) #public .hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 body:not([data-portal]) .slfa-home-dashboard { margin: 14px 0 18px; }
 body:not([data-portal]) .leagueSwitch,
 body:not([data-portal]) .season-switch {
@@ -246,7 +246,7 @@ html[data-theme="light"] body:not([data-portal]) .season-switch {
   body:not([data-portal]) .top-controls { width: 100%; justify-content: flex-start; margin-left: 0; }
   body:not([data-portal]) .top-controls > * { min-width: 0; }
   body:not([data-portal]) main { width: calc(100% - 22px); margin-top: 13px; }
-  body:not([data-portal]) .hero { padding: 19px !important; }
+  body:not([data-portal]) #public .hero { padding: 19px !important; }
   body:not([data-portal]) .tabs { display: flex; gap: 6px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; }
   body:not([data-portal]) .tabs button { flex: 0 0 auto; min-width: 88px; scroll-snap-align: start; }
   body[data-portal] .portal-head { gap: 8px 12px; padding: 10px 12px; }
