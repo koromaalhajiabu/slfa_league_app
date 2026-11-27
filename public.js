@@ -219,7 +219,7 @@
     return dayKey(new Date(p[0], p[1] - 1, p[2] + n));
   }
   function onDate(rows) { return dateSel ? rows.filter(function (m) { return dayKey(m.match_date) === dateSel; }) : rows; }
-  var MATCH_COLS = 'id, match_date, venue, match_status, match_minute, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number';
+  var MATCH_COLS = 'id, match_date, venue, match_status, match_minute, current_half, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number';
   // Match Centre is rendered exclusively by match-centre.js. Keep this legacy
   // loader as a no-op so older refresh/favourites hooks cannot overwrite it.
   function loadMatches() { return; }
@@ -247,7 +247,7 @@
     var st = m.match_status;
     var playing = st === 'LIVE' || st === 'HT' || st === 'FT';
     var score = playing && m.home_score != null ? '<span class="score">' + esc(m.home_score) + ' – ' + esc(m.away_score) + '</span>' : '<span class="vs">v</span>';
-    var label = st === 'LIVE' ? (m.match_minute != null ? esc(m.match_minute) + "'" : 'Live')
+    var label = st === 'LIVE' ? (m.match_minute != null ? esc(window.slfaFormatMinute ? window.slfaFormatMinute(m.match_minute, m.current_half) : m.match_minute + "'") : 'Live')
       : st === 'HT' ? 'Half time' : st === 'FT' ? 'Full time'
       : st === 'POSTPONED' ? 'Postponed' : st === 'CANCELLED' ? 'Cancelled' : st === 'RESCHEDULED' ? 'Rescheduled' : '';
     var motm = m.motm_name ? '<div class="meta">Man of the Match: ' + esc(m.motm_name) + (m.motm_jersey_number ? ' (#' + esc(m.motm_jersey_number) + ')' : '') + '</div>' : '';
@@ -995,7 +995,7 @@
   }
   // Live matches: the score is counted from goal events
   function loadLive() {
-    db.from('matches').select('id, match_date, venue, match_status, match_minute, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
+    db.from('matches').select('id, match_date, venue, match_status, match_minute, current_half, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
       .in('match_status', ['LIVE', 'HT']).order('match_date', { ascending: true })
       .then(function (res) {
         if (res.error) { setLive(empty('Live matches are not available right now.')); return; }

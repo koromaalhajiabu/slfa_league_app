@@ -42,7 +42,7 @@
   }
   function label(m) {
     var s = status(m);
-    if (['LIVE','1H','2H','ET','PEN','EXTRA_TIME'].indexOf(s) !== -1) { var mn = liveMinute(m); return 'LIVE' + (mn == null ? '' : ' · '+(mn > 90 ? '90+' : mn)+"'"); }
+    if (['LIVE','1H','2H','ET','PEN','EXTRA_TIME'].indexOf(s) !== -1) { var mn = liveMinute(m); return 'LIVE' + (mn == null ? '' : ' · '+(window.slfaFormatMinute ? window.slfaFormatMinute(mn, m.current_half) : mn+"'")); }
     if (s === 'HT') return 'HALF TIME';
     return ({HT:'HALF TIME',FT:'FULL TIME',SCHEDULED:'UPCOMING',RESCHEDULED:'RESCHEDULED',POSTPONED:'POSTPONED',CANCELLED:'CANCELLED',ABANDONED:'ABANDONED'})[s] || s.replace(/_/g,' ') || 'STATUS PENDING';
   }
@@ -104,7 +104,7 @@
       layer.setAttribute('aria-live','polite');
       document.body.appendChild(layer);
     }
-    layer.innerHTML = '<div class="slfa-goal-burst" aria-hidden="true">⚽ ✦ ⚽</div><strong>GOAL!</strong><span>' + esc(event.player_name || 'Goal recorded') + '</span><small>' + esc(event.team_name || 'SLFA match') + (event.minute == null ? '' : ' · ' + esc(event.minute) + "'") + '</small>';
+    layer.innerHTML = '<div class="slfa-goal-burst" aria-hidden="true">⚽ ✦ ⚽</div><strong>GOAL!</strong><span>' + esc(event.player_name || 'Goal recorded') + '</span><small>' + esc(event.team_name || 'SLFA match') + (event.minute == null ? '' : ' · ' + esc(window.slfaFormatMinute ? window.slfaFormatMinute(event.minute, event.half) : event.minute + "'")) + '</small>';
     layer.classList.remove('is-visible');
     void layer.offsetWidth;
     layer.classList.add('is-visible');
@@ -122,7 +122,7 @@
       '<div class="slfa-mc-live-events">'+recent.map(function(e){
         var type=e.event_type==='GOAL'?'Goal':e.event_type==='YELLOW_CARD'?'Yellow card':e.event_type==='RED_CARD'?'Red card':'Substitution';
         var player=e.event_type==='SUB'?(e.player_name||'Player on')+' on':(e.player_name||type);
-        return '<span><b>'+esc(e.minute==null?'—':e.minute+"'")+'</b> '+esc(type)+' · '+esc(player)+'</span>';
+        return '<span><b>'+esc(e.minute==null?'—':(window.slfaFormatMinute ? window.slfaFormatMinute(e.minute, e.half) : e.minute+"'"))+'</b> '+esc(type)+' · '+esc(player)+'</span>';
       }).join('')+'</div></div>';
   }
   function card(m) {
@@ -191,7 +191,7 @@
     if(box.dataset.loaded)return;
     box.innerHTML='<p class="slfa-mc-detail-loading">Loading published match details…</p>';
     Promise.all([
-      db.from('match_events').select('event_type,team_name,player_name,player_off_name,assist_player_name,minute,published_at').eq('match_id',String(id)).not('published_at','is',null).order('minute',{ascending:true}),
+      db.from('match_events').select('event_type,team_name,player_name,player_off_name,assist_player_name,minute,half,published_at').eq('match_id',String(id)).not('published_at','is',null).order('minute',{ascending:true}),
       db.from('match_lineups').select('is_starter,league_clubs(club_name),club_squad(player_name,jersey_number)').eq('match_id',String(id))
     ]).then(function(a){
       box.dataset.loaded='1';var ev=a[0].error?[]:(a[0].data||[]),lu=a[1].error?[]:(a[1].data||[]),html='';
@@ -201,7 +201,7 @@
         html+='<h4>Match timeline</h4><div class="slfa-mc-timeline">'+ev.map(function(e){
         var t=String(e.event_type||'').toUpperCase(),ico=t==='GOAL'?'⚽':t==='YELLOW_CARD'?'🟨':t==='RED_CARD'?'🟥':t==='SUB'?'↔':'•';
         var who=t==='SUB'?(e.player_name||'Player on')+' for '+(e.player_off_name||'player'):(e.player_name||'Match event')+(e.assist_player_name?' · Assist: '+e.assist_player_name:'');
-        return '<div class="slfa-mc-event"><span class="slfa-mc-minute">'+esc(e.minute==null?'—':e.minute+"'")+'</span><span>'+ico+'</span><div><strong>'+esc(who)+'</strong><small>'+esc(e.team_name||'')+'</small></div></div>';
+        return '<div class="slfa-mc-event"><span class="slfa-mc-minute">'+esc(e.minute==null?'—':(window.slfaFormatMinute ? window.slfaFormatMinute(e.minute, e.half) : e.minute+"'"))+'</span><span>'+ico+'</span><div><strong>'+esc(who)+'</strong><small>'+esc(e.team_name||'')+'</small></div></div>';
       }).join('')+'</div>';}
       if(lu.length){var by={};lu.forEach(function(x){var n=x.league_clubs&&x.league_clubs.club_name||'Team',p=x.club_squad||{},v=(p.jersey_number?'#'+p.jersey_number+' ':'')+(p.player_name||'Player');by[n]=by[n]||{xi:[],bench:[]};(x.is_starter?by[n].xi:by[n].bench).push(v);});
         html+='<h4>Published line-ups</h4><div class="slfa-mc-lineups">'+Object.keys(by).map(function(n){return '<div><strong role="button" tabindex="0" data-open-club-name="'+esc(n)+'">'+esc(n)+'</strong><p><b>Starting:</b> '+esc(by[n].xi.join(', ')||'Not published')+'</p><p><b>Bench:</b> '+esc(by[n].bench.join(', ')||'Not published')+'</p></div>';}).join('')+'</div>';}
@@ -230,7 +230,7 @@
     Promise.all([
       db.from('matches').select('match_date,venue,home_team,away_team,home_score,away_score,match_status').eq('id', String(id)).maybeSingle(),
       db.from('match_lineups').select('is_starter,league_clubs(club_name),club_squad(player_name,jersey_number)').eq('match_id', String(id)),
-      db.from('match_events').select('event_type,team_name,player_name,player_off_name,assist_player_name,minute,published_at').eq('match_id', String(id)).not('published_at', 'is', null).order('minute', { ascending: true })
+      db.from('match_events').select('event_type,team_name,player_name,player_off_name,assist_player_name,minute,half,published_at').eq('match_id', String(id)).not('published_at', 'is', null).order('minute', { ascending: true })
     ]).then(function (a) {
       var m = (a[0].data) || {}, lu = a[1].data || [], ev = a[2].data || [];
       var when = m.match_date ? new Date(m.match_date).toLocaleString('en-GB', { timeZone: 'Africa/Freetown', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
@@ -248,7 +248,7 @@
         var t = String(e.event_type || '').toUpperCase();
         var what = t === 'GOAL' ? 'Goal' : t === 'YELLOW_CARD' ? 'Yellow card' : t === 'RED_CARD' ? 'Red card' : t === 'SUB' ? 'Substitution' : 'Event';
         var who = t === 'SUB' ? (e.player_name || '') + ' for ' + (e.player_off_name || '') : (e.player_name || '') + (e.assist_player_name ? ' (assist: ' + e.assist_player_name + ')' : '');
-        return '<tr><td>' + esc(e.minute == null ? '—' : e.minute) + '</td><td>' + what + '</td><td>' + esc(who) + '</td><td>' + esc(e.team_name || '') + '</td></tr>';
+        return '<tr><td>' + esc(e.minute == null ? '—' : (window.slfaFormatMinute ? window.slfaFormatMinute(e.minute, e.half) : e.minute)) + '</td><td>' + what + '</td><td>' + esc(who) + '</td><td>' + esc(e.team_name || '') + '</td></tr>';
       }).join('') + '</tbody></table>' : '<p>No match events published.</p>';
       var doc = '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Match sheet</title><style>' +
         '@page{size:A4;margin:14mm}body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:11pt}' +
@@ -280,7 +280,7 @@
   });
   function fetchData() {
     var request = Promise.all([
-      db.from('matches').select('id,match_date,venue,match_status,match_minute,status_set_at,league_id,season_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(500),
+      db.from('matches').select('id,match_date,venue,match_status,match_minute,status_set_at,current_half,league_id,season_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(500),
       db.from('leagues').select('id,name').eq('is_active',true).order('sort_order'),
       db.from('league_clubs').select('club_name,logo_url').eq('is_active',true),
       db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date',{ascending:false})
@@ -291,7 +291,7 @@
       (a[1].data||[]).forEach(function(x){leagueNames[String(x.id)]=x.name;});
       (a[2].data||[]).forEach(function(x){clubLogos[x.club_name]=x.logo_url || clubLogoFallback(x.club_name);});
       var live=matches.filter(function(m){return group(m)==='live';});
-      var eventQuery=live.length?db.from('match_events').select('match_id,event_type,team_name,player_name,minute,published_at').in('match_id',live.map(function(m){return String(m.id);})).not('published_at','is',null).order('minute',{ascending:true}):Promise.resolve({data:[]});
+      var eventQuery=live.length?db.from('match_events').select('match_id,event_type,team_name,player_name,minute,half,published_at').in('match_id',live.map(function(m){return String(m.id);})).not('published_at','is',null).order('minute',{ascending:true}):Promise.resolve({data:[]});
       return eventQuery.then(function(g){
         liveEvents=g.error?[]:(g.data||[]);
         if(!g.error&&live.length){
