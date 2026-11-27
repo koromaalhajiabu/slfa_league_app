@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v302'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v303'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v302'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v303'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -237,4 +237,42 @@ test('official table shortcut is translated in all supported app languages', () 
   assert.match(dictionary, /Voir le classement officiel/);
   assert.match(dictionary, /Luk di ɔfisyal tebul/);
   assert.match(dictionary, /عرض الجدول الرسمي/);
+});
+
+
+test('Krio translations load across public and all staff portals', () => {
+  const pages = [
+    'index.html', 'developer.html', 'super-admin.html', 'referee.html',
+    'team-official.html', 'match-data-operator.html', 'media.html',
+    'disciplinary.html', 'league-admin.html', 'help.html', 'privacy.html',
+    'my-data.html', 'reset-password.html'
+  ];
+  for (const pageName of pages) {
+    const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
+    assert.match(page, /i18n\\.js\\?v=18/, pageName + ' must load the expanded language dictionary');
+  }
+
+  const leagueAdmin = fs.readFileSync(path.join(ROOT, 'league-admin.html'), 'utf8');
+  assert.ok(leagueAdmin.indexOf('i18n.js?v=18') < leagueAdmin.indexOf('league-admin.js'),
+    'League Administrator must load translations before its dynamic interface');
+
+  const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
+  for (const phrase of [
+    'National Football Intelligence & Integrity Centre',
+    'Division Leagues & Promotion / Relegation',
+    'No referee match records have been submitted yet.',
+    'Pitch condition',
+    'Your assigned matches are ready. Choose the fixture and submit clear photographs.',
+    'Signed in as',
+    'Create fixture',
+    'View official table'
+  ]) {
+    assert.ok(dictionary.includes(phrase), 'Missing Krio dictionary key: ' + phrase);
+  }
+  assert.match(dictionary, /National Football Intelligence & Integrity Centre[\\s\\S]*?Nashɔnəl Futbɔl Infomeshɔn/);
+  assert.match(dictionary, /No referee match records have been submitted yet\\.[\\s\\S]*?Nɔ gɛt referee mach rikɔd/);
+
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  assert.ok(sw.includes('i18n.js?v=18'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v303'), 'Service worker cache must be advanced for the Krio update');
 });
