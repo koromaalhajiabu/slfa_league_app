@@ -138,6 +138,11 @@
   var publicTabLoaded = { matches: true };
   var activePublicTab = 'matches';
   function isPublicTabActive(name) { return activePublicTab === name; }
+  function refreshActivePublicTab() {
+    if (!activePublicTab || activePublicTab === 'matches' || activePublicTab === 'live') return;
+    publicTabLoaded[activePublicTab] = false;
+    loadPublicTab(activePublicTab, true);
+  }
   function loadPublicTab(name, force) {
     if (!name || name === 'matches' || name === 'live') return;
     if (!force && publicTabLoaded[name]) return;
@@ -194,7 +199,7 @@
     try { localStorage.setItem('slfa_season', seasonSel); } catch (e) {}
     renderSeasonPick();
     document.dispatchEvent(new CustomEvent('slfa:season-change', { detail: { seasonId: seasonSel } }));
-    refreshAll();
+    refreshActivePublicTab();
   }
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch (e) {}
   function loadLeagueData() {
@@ -249,7 +254,7 @@
     try { localStorage.setItem('slfa_league', currentLeague); } catch (e) {}
     renderLeagueSwitch();
     document.dispatchEvent(new CustomEvent('slfa:league-change', { detail: { leagueId: currentLeague } }));
-    refreshAll();
+    refreshActivePublicTab();
   }
   function inLeague(rows) { return (rows || []).filter(function (r) { return !currentLeague || clubLeague[r.club] === currentLeague; }); }
   // Local calendar day as YYYY-MM-DD, so the date picker matches what the viewer sees
@@ -1077,47 +1082,75 @@
   }
   var appFreezeBanner = null;
   function refreshAll() {
-    db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(fr){
+    return db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(fr){
       var cached=null;
       if(!fr.error&&fr.data){cached=!!fr.data.app_frozen;try{localStorage.setItem('slfa_app_frozen_v1',String(cached));}catch(e){}}
       else if(!navigator.onLine){try{cached=localStorage.getItem('slfa_app_frozen_v1')==='true';}catch(e){}}
-      // Fail closed while online if the maintenance flag cannot be verified.
       var frozen=fr.error||!fr.data ? (navigator.onLine||cached!==false) : cached;
       var area=$('public');
       if(frozen){
         if(!appFreezeBanner){appFreezeBanner=document.createElement('section');appFreezeBanner.id='appFreezeBanner';appFreezeBanner.className='card';appFreezeBanner.style.cssText='max-width:760px;margin:12vh auto;padding:40px 24px;text-align:center;border-top:5px solid #16834a';appFreezeBanner.innerHTML='<h2>Application temporarily unavailable</h2><p>The SLFA League App is undergoing maintenance or its security status cannot be verified. Please connect and try again later.</p>';if(area&&area.parentNode)area.parentNode.insertBefore(appFreezeBanner,area);}
-        if(area)area.hidden=true;return;
+        if(area)area.hidden=true;return false;
       }
       if(appFreezeBanner){appFreezeBanner.remove();appFreezeBanner=null;}if(area)area.hidden=false;
-      Promise.all([loadLeagueData(), loadSeasonData()]).then(function(){
-        loadMatchDay();
-        if (activePublicTab === 'matches') loadLive();
-        else loadPublicTab(activePublicTab, true);
-      });
+      // Match Centre owns the shared fixtures, standings context and season snapshot.
+      // Do not issue a second set of league, season or match requests here.
+      return true;
+    }).catch(function(){
+      if(!navigator.onLine){var area=$('public');if(area)area.hidden=false;return true;}
+      return false;
     });
   }
 
-  // Offline: say so, and refresh the screens when the connection comes back
+  document.addEventListener('slfa:public-data-error', function () {
+    // Only use this fallback when Match Centre cannot create the shared public snapshot.
+    Promise.all([loadLeagueData(), loadSeasonData()]).then(function () {
+      loadMatchDay();
+      if (activePublicTab === 'matches') loadLive();
+    });
+  });
+
   function showOnline() { var b = $('offlineBanner'); if (b) b.hidden = navigator.onLine !== false; }
   window.addEventListener('offline', showOnline);
   window.addEventListener('online', function () { showOnline(); refreshAll(); });
   showOnline();
 
-  // Live updates: changes in the database refresh the screens, with a short pause to batch them
-  var refreshTimer = null;
-  function scheduleRefresh() {
+  // Refresh only the view affected by a database change. Match Centre separately
+  // owns match and match-event updates, avoiding a second fixture refresh channel.
+  var refreshTimer = null, pendingRefreshTables = Object.create(null);
+  function scheduleRefresh(tableName) {
+    pendingRefreshTables[tableName] = true;
     clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(refreshAll, 400);
+    refreshTimer = setTimeout(function () {
+      var changed = pendingRefreshTables;
+      pendingRefreshTables = Object.create(null);
+      if (changed.application_control) refreshAll();
+      if (changed.league_standings) {
+        if (activePublicTab === 'table') refreshActivePublicTab();
+        document.dispatchEvent(new CustomEvent('slfa:standings-changed'));
+      }
+      if (changed.league_clubs) {
+        if (activePublicTab === 'teams') refreshActivePublicTab();
+        document.dispatchEvent(new CustomEvent('slfa:public-clubs-changed'));
+      }
+      if (changed.club_squad) document.dispatchEvent(new CustomEvent('slfa:public-roster-changed'));
+      if (changed.top_scorers || changed.top_assists || changed.clean_sheets || changed.motm_awards) {
+        if (activePublicTab === 'players') refreshActivePublicTab();
+      }
+      if (changed.media_posts) {
+        if (activePublicTab === 'news') refreshActivePublicTab();
+        if (activePublicTab === 'videos' && window.slfaPremiumMediaLoad) window.slfaPremiumMediaLoad();
+      }
+    }, 400);
   }
   function subscribeLive() {
-    var ch = db.channel('public-league');
-    ['matches', 'match_events', 'league_standings', 'league_clubs', 'club_squad', 'top_scorers', 'top_assists', 'clean_sheets', 'media_posts', 'application_control'].forEach(function (t) {
-      ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, scheduleRefresh);
+    var ch = db.channel('public-view-updates');
+    ['application_control','league_standings','league_clubs','club_squad','top_scorers','top_assists','clean_sheets','motm_awards','media_posts'].forEach(function (t) {
+      ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, function () { scheduleRefresh(t); });
     });
     ch.subscribe();
-    setInterval(function(){if(document.visibilityState !== 'hidden')refreshAll();}, 180000);
+    setInterval(function(){if(document.visibilityState !== 'hidden')refreshAll();}, 300000);
   }
-
   // Premium interaction: pull to refresh, light tactile feedback, and goal and card alerts for favourite clubs
   var buzz = function (pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {} };
   document.addEventListener('click', function (e) {
@@ -1144,7 +1177,7 @@
     if (pullY == null) return;
     var dy = e.changedTouches[0].clientY - pullY;
     pullY = null;
-    if (dy > 70) { pull.textContent = 'Refreshing…'; pull.style.transform = 'translateY(40px)'; buzz(12); refreshAll(); setTimeout(hidePull, 900); }
+    if (dy > 70) { pull.textContent = 'Refreshing…'; pull.style.transform = 'translateY(40px)'; buzz(12); refreshAll(); if (window.slfaRefreshMatchCentre) window.slfaRefreshMatchCentre(); refreshActivePublicTab(); setTimeout(hidePull, 900); }
     else hidePull();
   });
 

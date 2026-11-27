@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v308'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v310'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v308'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v310'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -274,7 +274,7 @@ test('Krio translations load across public and all staff portals', () => {
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('i18n.js?v=23'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v308'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('slfa-app-v310'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -338,7 +338,7 @@ test('public data loads on demand instead of fetching hidden tabs at startup', (
   assert.match(app, /else if \(name === 'videos'\) loadVideos\(\)/);
   assert.match(app, /if \(activePublicTab === 'matches'\) loadLive\(\)/);
   assert.doesNotMatch(app, /loadMatches\(\);loadLive\(\);loadMatchDay\(\);loadTable\(\);loadTeams\(\);loadPlayers\(\);loadNews\(\);loadVideos\(\)/);
-  assert.match(app, /setInterval\(function\(\)\{if\(document\.visibilityState !== 'hidden'\)refreshAll\(\);\}, 180000\)/);
+  assert.match(app, /setInterval\(function\(\)\{if\(document\.visibilityState !== 'hidden'\)refreshAll\(\);\}, 300000\)/);
 });
 
 test('Leagues panel data is fetched only when the panel is opened', () => {
@@ -356,4 +356,52 @@ test('public views reuse the Match Centre public snapshot for shared data', () =
   assert.ok(app.includes('Array.isArray(window.slfaPublicData.seasons)'), 'Season selector should reuse shared season data');
   assert.ok(matchCentre.includes('liveEvents: liveEvents.slice()'), 'Match Centre should publish already-loaded live events');
   assert.ok(matchCentre.includes('logo_url,competition_type,gender_category'), 'Shared league data should include the public league metadata');
+});
+
+test('player directory defers squad queries until the Players tab is opened', () => {
+  const directory = fs.readFileSync(path.join(ROOT, 'player-directory.js'), 'utf8');
+  assert.match(directory, /playersTab\.addEventListener\('click',[\s\S]*?load\(\)/);
+  assert.match(directory, /directoryLoaded = false, directoryLoading = false/);
+  assert.doesNotMatch(directory, /try \{ currentLeague = localStorage\.getItem\('slfa_league'\)[\s\S]*?\n\s*load\(\);/);
+});
+
+test('service worker serves versioned app assets cache first while keeping public data network first', () => {
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  const dataStart = sw.indexOf('if (isPublicDataRequest(req))');
+  const assetStart = sw.indexOf('// Public app assets are installed into the versioned shell cache.');
+  const pushStart = sw.indexOf("self.addEventListener('push'");
+  assert.ok(dataStart >= 0 && assetStart > dataStart && pushStart > assetStart);
+  const dataHandler = sw.slice(dataStart, assetStart);
+  const assetHandler = sw.slice(assetStart, pushStart);
+  assert.match(dataHandler, /e\.respondWith\(fetch\(req\)/);
+  assert.match(assetHandler, /cache\.match\(req\)[\s\S]*?if \(hit\) return hit[\s\S]*?return fetch\(req\)/);
+  assert.match(assetHandler, /pathname\.endsWith\('\/sw\.js'\)/);
+  assert.match(sw, /const CACHE = 'slfa-app-v310'/);
+});
+
+test('public data changes refresh only the affected panel', () => {
+  const app = fs.readFileSync(path.join(ROOT, 'public.js'), 'utf8');
+  assert.match(app, /function scheduleRefresh\(tableName\)/);
+  assert.match(app, /if \(changed\.application_control\) refreshAll\(\)/);
+  assert.match(app, /if \(changed\.league_standings\)/);
+  assert.match(app, /if \(changed\.media_posts\)/);
+  assert.doesNotMatch(app, /refreshTimer = setTimeout\(refreshAll, 400\)/);
+});
+
+test('Leagues panel reuses shared league, club and season data', () => {
+  const pages = fs.readFileSync(path.join(ROOT, 'league-pages.js'), 'utf8');
+  const matchCentre = fs.readFileSync(path.join(ROOT, 'match-centre.js'), 'utf8');
+  assert.match(pages, /var hasSharedCore = shared[\s\S]*?shared\.leagues[\s\S]*?shared\.clubs[\s\S]*?shared\.seasons/);
+  assert.match(pages, /Promise\.resolve\(\{ data: shared\.leagues, error: null \}\)/);
+  assert.match(pages, /Promise\.resolve\(\{ data: shared\.seasons, error: null \}\)/);
+  assert.match(matchCentre, /description,sort_order,season_id,start_date,end_date,venue,format_details/);
+  assert.match(matchCentre, /stadium,city,founded_year,about/);
+});
+
+test('Media Centre tab has one loader and avoids duplicate media queries', () => {
+  const app = fs.readFileSync(path.join(ROOT, 'public.js'), 'utf8');
+  const media = fs.readFileSync(path.join(ROOT, 'premium-media.js'), 'utf8');
+  assert.match(app, /if \(window\.slfaPremiumMediaLoad\) \{ window\.slfaPremiumMediaLoad\(\); return; \}/);
+  assert.doesNotMatch(media, /nav\.addEventListener\('click'/);
+  assert.match(media, /window\.slfaPremiumMediaLoad=load/);
 });

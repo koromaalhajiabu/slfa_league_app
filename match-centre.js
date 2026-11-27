@@ -342,8 +342,8 @@
   function fetchData() {
     var request = Promise.all([
       db.from('matches').select('id,match_date,venue,match_status,match_minute,status_set_at,current_half,league_id,season_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(300),
-      db.from('leagues').select('id,name,logo_url,competition_type,gender_category').eq('is_active',true).order('sort_order'),
-      db.from('league_clubs').select('club_name,league_id,logo_url').eq('is_active',true),
+      db.from('leagues').select('id,name,logo_url,competition_type,gender_category,description,sort_order,season_id,start_date,end_date,venue,format_details').eq('is_active',true).order('sort_order'),
+      db.from('league_clubs').select('id,league_id,club_name,logo_url,stadium,city,founded_year,about').eq('is_active',true),
       db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date',{ascending:false})
     ]).then(function(a){
       var failed = a.slice(0, 3).find(function (item) { return item && item.error; });
@@ -376,6 +376,8 @@
       return false;
     }).then(function (result) { clearTimeout(fetchTimer); return result; });
   }
+  window.slfaRefreshMatchCentre = fetchData;
+  document.addEventListener('slfa:manual-refresh', fetchData);
   function schedule(){clearTimeout(timer);timer=setTimeout(fetchData,500);}
   if(window.MutationObserver){new MutationObserver(function(){if(!host.querySelector('.slfa-match-centre-v2')&&matches.length)render();}).observe(host,{childList:true,subtree:true});}
   var switcher=document.getElementById('leagueSwitch');

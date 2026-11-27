@@ -11,6 +11,7 @@
   var search = '', clubFilter = '', positionFilter = '';
   var compareIds = [];
   var favouritePlayerIds = {};
+  var directoryLoaded = false, directoryLoading = false;
   function localPlayerFavourites() {
     try { return JSON.parse(localStorage.getItem('slfa_fav_players') || '[]').map(String); }
     catch (e) { return []; }
@@ -169,7 +170,9 @@
     else compareIds.push(id);
     render();
   });
-  function load() {
+  function load(force) {
+    if (directoryLoading || (directoryLoaded && !force)) return;
+    directoryLoading = true;
     root.innerHTML = '<div class="pd-loading">Loading registered players…</div>';
     db.from('league_clubs').select('id, league_id, club_name, logo_url').eq('is_active', true).order('club_name')
       .then(function (res) {
@@ -193,16 +196,26 @@
           p.club_name=clubMap[String(p.club_id)]; return p;
         });
         return loadPlayerFavourites().then(render);
+      }).then(function () {
+        directoryLoading = false;
+        directoryLoaded = true;
       }).catch(function(){
+        directoryLoading = false;
+        directoryLoaded = false;
         root.innerHTML = '<div class="pd-empty"><strong>Player directory unavailable</strong><p>We could not load the public squad records. Please refresh and try again.</p><button type="button" id="pdRetry">Retry</button></div>';
         var retry=root.querySelector('#pdRetry'); if(retry) retry.addEventListener('click',load);
       });
   }
+  document.addEventListener('slfa:public-clubs-changed', function () { if (directoryLoaded) load(true); });
+  document.addEventListener('slfa:public-roster-changed', function () { if (directoryLoaded) load(true); });
   document.addEventListener('slfa:league-change',function(e){
     currentLeague=String(e.detail && e.detail.leagueId || '');
-    clubFilter='';load();
+    clubFilter='';
+    if (directoryLoaded) load(true);
   });
-  db.auth.onAuthStateChange(function () { loadPlayerFavourites().then(render); });
+  db.auth.onAuthStateChange(function () { if (directoryLoaded) loadPlayerFavourites().then(render); });
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch(e) {}
-  load();
+  var playersTab = document.querySelector('[data-tab="players"]');
+  if (playersTab) playersTab.addEventListener('click', function () { if (!directoryLoaded) load(); });
+  if (window.location.hash === '#players') load();
 })();
