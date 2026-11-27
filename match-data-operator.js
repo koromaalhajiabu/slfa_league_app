@@ -162,7 +162,7 @@
     if(!Number.isInteger(minute)||minute<1||minute>120||![1,2].includes(half)){status.textContent='Enter a valid match minute and half.';return;}
     if(!activeMatch||['LIVE','HT'].indexOf(activeMatch.match_status)<0){status.textContent='This fixture is not currently live.';return;}
     var event={
-      client_event_id:uuid(),match_id:String(activeMatch.id),event_type:type,team_name:team,
+      client_event_id:uuid(),match_id:Number(activeMatch.id),event_type:type,team_name:team,
       player_name:player,player_off_name:type==='SUB'?off:null,assist_player_name:type==='GOAL'?(assist||null):null,
       minute:minute,half:half,recorded_by:user.id,recorded_at:new Date().toISOString(),published_at:new Date().toISOString()
     };
