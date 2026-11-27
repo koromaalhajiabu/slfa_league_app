@@ -4,8 +4,8 @@ var cfg=window.SLFA_CONFIG, db=window.supabase.createClient(cfg.supabaseUrl,cfg.
 window.slfaDb=db;
 var $=function(id){return document.getElementById(id);};
 var esc=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
-var activeLeague=null;
-function status(s){$('laStatus').textContent=s;}
+var activeLeague=null, assignedRows=[];
+function status(s){var a=$('laLoginStatus'),b=$('laAppStatus');if(a)a.textContent=s;if(b)b.textContent=s;}
 function showAuth(s){$('laLogin').hidden=false;$('laApp').hidden=true;if(s)status(s);}
 function showApp(){ $('laLogin').hidden=true;$('laApp').hidden=false; }
 async function start(){
@@ -16,7 +16,7 @@ async function start(){
  showApp();$('laWho').textContent=p.data.full_name||p.data.email;
  var a=await db.from('league_admin_assignments').select('id,league_id,leagues(id,name,competition_type,gender_category,description,start_date,end_date,venue,format_details)').eq('user_id',u.data.user.id).eq('is_active',true);
  if(a.error){status('Could not load your competition assignments.');return;}
- var rows=a.data||[];$('laCompetition').innerHTML=rows.map(function(x){return '<option value="'+x.league_id+'">'+esc(x.leagues&&x.leagues.name||'Competition')+'</option>';}).join('');
+ var rows=a.data||[];assignedRows=rows;$('laCompetition').innerHTML=rows.map(function(x){return '<option value="'+x.league_id+'">'+esc(x.leagues&&x.leagues.name||'Competition')+'</option>';}).join('');
  if(!rows.length){status('No active competition has been assigned to this account. Contact the Super Admin.');return;}
  $('laCompetition').addEventListener('change',function(){loadLeague(rows);});
  $('laCompetition').value=String(rows[0].league_id);await loadLeague(rows);
@@ -40,7 +40,7 @@ $('laSignIn').addEventListener('click',async function(){status('Signing in…');
 $('laPassword').addEventListener('keydown',function(e){if(e.key==='Enter')$('laSignIn').click();});
 $('laSignOut').addEventListener('click',async function(){await db.auth.signOut();location.reload();});
 $('laSaveCompetition').addEventListener('click',async function(){if(!activeLeague)return;status('Saving competition details…');var r=await db.from('leagues').update({description:$('laDescription').value.trim(),venue:$('laVenue').value.trim()||null,start_date:$('laStart').value||null,end_date:$('laEnd').value||null,format_details:$('laFormat').value.trim()||null}).eq('id',activeLeague.id);if(r.error){status('Could not save. '+r.error.message);return;}status('Competition details saved. Publishing and global rules remain under Super Admin control.');});
-$('laAddClub').addEventListener('click',async function(){if(!activeLeague)return;var name=$('laClubName').value.trim();if(name.length<2){status('Enter a valid club name.');return;}status('Adding club…');var r=await db.from('league_clubs').insert({club_name:name,city:$('laClubCity').value.trim()||null,stadium:$('laClubStadium').value.trim()||null,league_id:activeLeague.id,is_active:true});if(r.error){status('Could not add club. '+r.error.message);return;}$('laClubName').value='';$('laClubCity').value='';$('laClubStadium').value='';var selected=$('laCompetition').value;var all=await db.from('league_admin_assignments').select('league_id,leagues(id,name,competition_type,gender_category,description,start_date,end_date,venue,format_details)').eq('is_active',true);await loadLeague((all.data||[]).filter(function(x){return String(x.league_id)===selected;}));status('Club added to assigned competition.');});
+$('laAddClub').addEventListener('click',async function(){if(!activeLeague)return;var name=$('laClubName').value.trim();if(name.length<2){status('Enter a valid club name.');return;}status('Adding club…');var r=await db.from('league_clubs').insert({club_name:name,city:$('laClubCity').value.trim()||null,stadium:$('laClubStadium').value.trim()||null,league_id:activeLeague.id,is_active:true});if(r.error){status('Could not add club. '+r.error.message);return;}$('laClubName').value='';$('laClubCity').value='';$('laClubStadium').value='';await loadLeague(assignedRows);status('Club added to assigned competition.');});
 $('laAddFixture').addEventListener('click',async function(){if(!activeLeague)return;var h=$('laHome').value.trim(),a=$('laAway').value.trim(),d=$('laDate').value;if(!h||!a||!d){status('Enter both clubs and a kickoff date/time.');return;}status('Creating fixture…');var r=await db.from('matches').insert({league_id:activeLeague.id,home_team:h,away_team:a,match_date:new Date(d).toISOString(),venue:$('laMatchVenue').value.trim()||activeLeague.venue||null,match_status:'SCHEDULED',current_half:1});if(r.error){status('Could not create fixture. '+r.error.message);return;}$('laHome').value='';$('laAway').value='';$('laDate').value='';status('Fixture created. Referee assignment and result confirmation remain separate authorised processes.');await start();});
 start();
 })();
