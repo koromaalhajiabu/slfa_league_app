@@ -124,6 +124,41 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
     </section>
 
 
+    <section id="divisionManagement" class="card" aria-labelledby="divisionManagementHeading">
+      <h2 class="rt" id="divisionManagementHeading">Division Leagues & Promotion / Relegation</h2>
+      <p class="muted">Super Admin only. Configure separate competition tiers for each season, define promotion and relegation places, and record approved club movements. Apply a movement only after the Association has formally confirmed the decision.</p>
+      <h3>Division structure and rules</h3>
+      <label for="divLeague">Competition</label><select id="divLeague"><option value="">Loading competitions…</option></select>
+      <label for="divSeason">Season</label><select id="divSeason"><option value="">Loading seasons…</option></select>
+      <div class="sa-metric-grid">
+        <div><label for="divTier">Division tier</label><select id="divTier"><option value="PREMIER">Premier Division</option><option value="DIVISION_1">Division One</option><option value="DIVISION_2">Division Two</option><option value="DIVISION_3">Division Three</option><option value="REGIONAL">Regional / District</option><option value="YOUTH">Youth tier</option><option value="OTHER">Other</option></select></div>
+        <div><label for="divRank">Tier rank (1 = highest)</label><input id="divRank" type="number" min="1" max="20" value="1"></div>
+        <div><label for="divGroup">Competition pyramid</label><select id="divGroup"><option value="MEN">Men</option><option value="WOMEN">Women</option><option value="YOUTH">Youth</option><option value="REGIONAL">Regional</option><option value="OPEN">Open</option></select></div>
+      </div>
+      <div class="sa-metric-grid">
+        <div><label for="divPromote">Promotion places</label><input id="divPromote" type="number" min="0" max="30" value="0"></div>
+        <div><label for="divRelegate">Relegation places</label><input id="divRelegate" type="number" min="0" max="30" value="0"></div>
+        <div><label for="divPlayoff">Playoff places</label><input id="divPlayoff" type="number" min="0" max="30" value="0"></div>
+      </div>
+      <label><input id="divPromotePlayoff" type="checkbox"> Promotion decided through a playoff</label>
+      <label><input id="divRelegatePlayoff" type="checkbox"> Relegation decided through a playoff</label>
+      <label for="divNotes">Official competition / movement notes</label><textarea id="divNotes" rows="3" maxlength="1500"></textarea>
+      <div class="btns"><button type="button" class="primary" id="divSave">Save division rules</button></div>
+      <div class="status" id="divisionStatus" role="status"></div>
+      <hr>
+      <h3>Record an approved club movement</h3>
+      <p class="muted">The system checks that both competitions belong to the same pyramid and that promotion/relegation follows their configured tier order. Applying the movement updates the club's current competition while preserving its historical match records.</p>
+      <label for="moveSeason">Season / decision year</label><select id="moveSeason"><option value="">Loading seasons…</option></select>
+      <label for="moveFrom">Source competition</label><select id="moveFrom"><option value="">Loading competitions…</option></select>
+      <label for="moveClub">Club</label><select id="moveClub"><option value="">Choose source competition first…</option></select>
+      <label for="moveTo">Destination competition</label><select id="moveTo"><option value="">Choose destination…</option></select>
+      <label for="moveType">Movement type</label><select id="moveType"><option value="PROMOTION">Promotion</option><option value="RELEGATION">Relegation</option><option value="PLAYOFF">Playoff outcome</option><option value="TRANSFER">Approved transfer</option></select>
+      <label for="moveReason">Official decision / approval reference</label><textarea id="moveReason" rows="3" maxlength="1000" placeholder="Record the authorised decision, meeting or regulation reference."></textarea>
+      <div class="btns"><button type="button" class="primary" id="movementSave">Approve and apply movement</button></div>
+      <div class="status" id="movementStatus" role="status"></div>
+      <h3>Club movement history</h3><div id="movementList" class="muted">Loading movement history…</div>
+    </section>
+
     <section id="cupBracketAdmin" class="card" aria-labelledby="cupBracketHeading">
       <h2 class="rt" id="cupBracketHeading">Knockout cup bracket</h2>
       <p class="muted">Create single-match knockout ties, connect each winner to the next round, and advance the officially confirmed winner. Create the next-round fixture first in Add a fixture.</p>
@@ -150,6 +185,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
 <script src="portal.js"></script>
 <script src="match-minute-format.js?v=1"></script>
 <script src="admin.js?v=35"></script>
+<script src="division-management.js?v=1"></script>
 <script src="publications-admin.js?v=28"></script>
 <script src="match-commissioner-review.js?v=3"></script>
 <script src="competition-operations.js?v=3"></script>
