@@ -11,9 +11,9 @@ The application is a public competition-information and match-operations platfor
 
 The current architecture includes separate public and staff workspaces, competition and season administration, division movement controls, electronic team sheets, referee match-record submissions, commissioner reports, matchday operational checks, integrity alerts, result-history controls and public publication workflows.
 
-The current Supabase project was reachable and reported a healthy project status during this review. The public schema contained **93 application tables**, with RLS enabled on all 93.
+The current Supabase project was reachable and reported a healthy project status during this review. Public fan-data retrieval and deletion now require a versioned 256-bit browser token generated through the Web Crypto API; the old weak Math.random fallback has been removed from the browser flow. The related fan-data tables were empty when this control was deployed. The public schema contained **93 application tables**, with RLS enabled on all 93.
 
-A final access-denial migration was applied on 27 November 2026. Before that migration, 41 RLS-enabled tables had no policies and no direct table grants for `anon` or `authenticated`. The migration added one restrictive `USING (false) / WITH CHECK (false)` policy to each. This makes the intended API denial explicit and keeps those tables blocked if a permissive policy is added later. It did not insert, update or delete application records.
+A final access-denial migration was applied on 27 November 2026. The same review also corrected the public past-season statistics RPC so that only match events with a non-null publication timestamp contribute to public scorers and assists. Verification confirmed that the RPC returns a JSON object and that both goal and assist queries apply the publication filter. No match data was present to expose during this test. Before that migration, 41 RLS-enabled tables had no policies and no direct table grants for `anon` or `authenticated`. The migration added one restrictive `USING (false) / WITH CHECK (false)` policy to each. This makes the intended API denial explicit and keeps those tables blocked if a permissive policy is added later. It did not insert, update or delete application records.
 
 The following operational tables contained no records at the time of review:
 
@@ -67,7 +67,7 @@ Use a dedicated staging project with synthetic accounts and fixtures. Do not cre
 | AT-12 | Two club users attempt cross-club access | Each can access only permitted records for their own club. |
 | AT-13 | Staff account is suspended or role revoked | New privileged actions are denied; session/token revocation behaviour is verified. |
 | AT-14 | Network disconnects during referee entry | Local pending entries are not lost; reconnection does not create duplicate submissions. |
-| AT-15 | Backup is restored into an isolated project | Database and private evidence files are recoverable and cross-checked. |
+| AT-15 | Backup is restored into an isolated project | Database and private evidence files are recoverable and cross-checked. |\n| AT-16 | A short, malformed or legacy fan-data token is submitted | The database rejects access and deletion; only the versioned cryptographic token format is accepted. |
 
 Record the tester, account role, fixture identifier, expected result, actual result, evidence and pass/fail status for every test. Do not use production personal data for this test cycle.
 

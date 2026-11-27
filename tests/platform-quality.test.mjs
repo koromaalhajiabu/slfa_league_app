@@ -156,3 +156,32 @@ test('public browser configuration does not contain server-side Supabase secrets
   assert.doesNotMatch(config, /postgres(?:ql)?:\/\/[^\s'"\x60]+/i, 'A database connection string appears in config.js');
   assert.doesNotMatch(config, /SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*['"][^'"]+['"]/i, 'A service-role key assignment appears in config.js');
 });
+
+
+test('fan-data access uses a cryptographically random versioned browser token', () => {
+  const tokenPath = path.join(ROOT, 'voter-key.js');
+  const tokenSource = fs.readFileSync(tokenPath, 'utf8');
+  assert.match(tokenSource, /crypto\.getRandomValues/);
+  assert.match(tokenSource, /new Uint8Array\(32\)/);
+  assert.match(tokenSource, /v2_/);
+  assert.doesNotMatch(tokenSource, /Math\.random|randomUUID/);
+
+  for (const page of ['help.html', 'my-data.html']) {
+    const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    assert.ok(html.includes('voter-key.js?v=1'), page + ' must load the shared secure token helper');
+    assert.ok(html.includes('slfaGetVoterKey'), page + ' must use the shared secure token helper');
+  }
+
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
+  assert.ok(sw.includes('slfa-app-v300'), 'Service worker cache version must be advanced');
+});
+
+test('public past-season statistics are limited to published events', () => {
+  const migration = fs.readFileSync(
+    path.join(ROOT, 'supabase/migrations/20261127110133_published_only_season_player_statistics.sql'),
+    'utf8'
+  );
+  const filters = migration.match(/e\.published_at\s+IS\s+NOT\s+NULL/gi) || [];
+  assert.equal(filters.length, 2, 'Both goal and assist aggregations must filter unpublished events');
+});
