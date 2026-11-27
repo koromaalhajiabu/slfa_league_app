@@ -260,3 +260,5 @@ html[data-theme="light"] body:not([data-portal]) .season-switch {
 @media (prefers-reduced-motion: reduce) {
   .slfa-workspace-nav__links a { transition: none; }
 }
+
+body[data-portal="SUPER_ADMIN"] #portalArea > nav[aria-label="Content Management Centre"] { display: none !important; }
