@@ -2586,6 +2586,53 @@
   "Synced to your account": "Dɛn don sync am go na yu akawnt."
 });
 
+
+  // Final precision coverage for historical records and dynamic public empty states.
+  Object.assign(DICT.kri, {
+  "Derived from published full-time scores because no manually saved final table is present. Exact tied positions should be checked against the approved competition tie-break rules.": "Dɛn kalkuleyt am frɔm ɔfishal skɔ we mach don fɔnis bikɔs nɔ gɛt final tebul we dɛn sev na han. Pɔsitɔn dɛn we gɛt sɛm pɔint fɔ chɛk agens di tie-break rul we dɛn apruv.",
+  "No published goal records yet.": "Nɔ gɛt rekɔd fɔ gɔl we dɛn publish yet.",
+  "No published goals records yet.": "Nɔ gɛt rekɔd fɔ gɔl we dɛn publish yet.",
+  "No published assist records yet.": "Nɔ gɛt rekɔd fɔ asist we dɛn publish yet.",
+  "No published assists records yet.": "Nɔ gɛt rekɔd fɔ asist we dɛn publish yet.",
+  "No published clean sheets records yet.": "Nɔ gɛt rekɔd fɔ clean sheet we dɛn publish yet.",
+  "No published match awards records yet.": "Nɔ gɛt rekɔd fɔ match awɔd we dɛn publish yet.",
+  "No published goal events are available for this selection.": "Nɔ gɛt gɔl ivɛnt we dɛn publish fɔ wetin yu pik.",
+  "No published assist events are available for this selection.": "Nɔ gɛt asist ivɛnt we dɛn publish fɔ wetin yu pik.",
+  "No verified full-time results are currently stored for": "Dɛn nɔ sev ɔfishal result fɔ mach we don fɔnis fɔ",
+  "Records will populate when official match scores are published.": "Rikɔd dɛn go sho wen dɛn publish ɔfishal mach skɔ dɛn.",
+  "Club rankings will appear after full-time results are published.": "Renk fɔ klob dɛn go sho afta dɛn publish result fɔ mach we don fɔnis.",
+  "This is an all-time or season-filtered record ranking, not the official live league table.": "Dis na rikɔd fɔ ɔl tɛm ɔ fɔ sezon we yu fɔlta, e nɔto ɔfishal tebul fɔ lig we de nɔw.",
+  "Player rankings use published goal events linked to those matches.": "Renk fɔ plea dɛn de yuz gɔl ivɛnt we dɛn publish ɛn link wit dem mach dɛn.",
+  "Records are calculated from completed matches marked Full Time.": "Dɛn de kalkuleyt rikɔd dɛn frɔm mach we dɛn mark se don fɔnis.",
+  "Verified full-time results": "Result fɔ mach we dɛn konfirm se don fɔnis",
+  "Club performance records": "Rikɔd fɔ klob performance",
+  "Published goal scorers": "Plea we dɛn publish se dɛn skɔ gɔl",
+  "Published assists": "Asist we dɛn publish",
+  "Match events": "Ivɛnt fɔ mach",
+  "Goal event records": "Rikɔd fɔ gɔl ivɛnt",
+  "Across selected matches": "Na ɔl mach we yu pik",
+  "Appearing in completed matches": "Wetin apia na mach we don fɔnis",
+  "Linked to completed matches": "Dɛn link am wit mach we don fɔnis",
+  "Only Full Time matches are included; live, abandoned, postponed and unverified scores are excluded. Player goal and assist totals require published match events.": "Wi de count mach we don fɔnis nɔmɔ; mach we de ple, we dɛn abandon, we dɛn postpone, ɔ skɔ we dɛn nɔ konfirm, wi nɔ de count. Totɔl fɔ gɔl ɛn asist fɔ pleya de nid match ivɛnt we dɛn publish.",
+  "No verified full-time results are currently stored for ": "Dɛn nɔ sev ɔfishal result fɔ mach we don fɔnis fɔ ",
+  "Player statistics are temporarily unavailable.": "Statistik fɔ plea dɛn nɔ de wok fɔ naw.",
+  "Suspensions are not available right now.": "Infomeshɔn fɔ ban dɛn nɔ de fɔ naw.",
+  "No players are suspended right now.": "Nɔ gɛt plea we dɛn ban fɔ naw.",
+  "Not recorded for past seasons yet.": "Dɛn nɔ rikɔd am fɔ ol sezon dɛn yet.",
+  "Awaiting published statistics": "De wet fɔ statistik we dɛn publish",
+  "Golden Boot": "Golden Boot",
+  "Top Playmaker": "Plea we mek asist pas",
+  "Golden Glove": "Golden Glove",
+  "Most Awards": "Plea we gɛt awɔd pas",
+  "No winning streak in the available results": "Nɔ gɛt tim we win mach wan afta wan na result dɛn we de ya",
+  "No unbeaten run in the available results": "Nɔ gɛt tim we nɔ los mach wan afta wan na result dɛn we de ya",
+  "All competitions": "Ɔl kɔmpitishɔn dɛn",
+  "All seasons": "Ɔl sezon dɛn",
+  "All positions": "Ɔl pɔsitɔn dɛn",
+  "Club not listed": "Dɛn nɔ put nem fɔ klob",
+  "Player": "Plea"
+});
+
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
