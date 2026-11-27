@@ -48,3 +48,11 @@ The database enforces the role boundaries. Official match results are written th
 Project settings are in `config.js`. The browser uses the Supabase publishable key only; no service-role key belongs in the public repository.
 
 Developed by **Koroma Leone Tech**.
+
+## Engineering assurance and deployment readiness
+
+- **Automated repository quality gate:** GitHub Actions checks required portals, critical governance modules, local HTML dependencies, service-worker precache coverage and browser JavaScript syntax.
+- **Read-only security review:** supabase/audits/read-only-security-audit.sql inventories table RLS and grants, executable SECURITY DEFINER functions, exposed views, storage bucket visibility and match-operation record counts.
+- **Production acceptance and pilot gates:** see [docs/production-readiness-gates.md](docs/production-readiness-gates.md) for the verified system position, remaining security findings and role-by-role acceptance tests.
+
+Static repository checks do not replace authenticated browser tests, security review, backup restoration exercises or formal SLFA acceptance. The platform remains subject to a supervised pilot before production deployment.

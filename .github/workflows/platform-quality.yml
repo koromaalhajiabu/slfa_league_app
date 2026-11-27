@@ -1,0 +1,33 @@
+name: Platform Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+      - final-assurance-hardening-*
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-quality:
+    name: Static platform checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate portals, local assets, service-worker cache and JavaScript syntax
+        run: node --test tests/platform-quality.test.mjs

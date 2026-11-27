@@ -76,6 +76,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="i18n.js?v=17"></script>
+<script src="voter-key.js?v=1"></script>
 <script>
 (function () {
   var cfg = window.SLFA_CONFIG || {};
@@ -84,7 +85,7 @@
   var kinds = { reports: 'cReports', comments: 'cComments', predictions: 'cPredictions', poll_votes: 'cVotes' };
   var data = null;
 
-  function key() { try { return localStorage.getItem('slfa_voter_key') || ''; } catch (e) { return ''; } }
+  function key() { try { return typeof window.slfaGetVoterKey === 'function' ? window.slfaGetVoterKey() : ''; } catch (e) { return ''; } }
   function setStatus(text, isError) { var s = $('status'); s.textContent = text; s.className = 'status' + (isError ? ' error' : ''); }
   function setBusy(busy) { ['download', 'deleteSelected', 'deleteAll'].forEach(function (id) { $(id).disabled = busy || !data; }); }
 
