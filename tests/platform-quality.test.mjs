@@ -338,7 +338,7 @@ test('public data loads on demand instead of fetching hidden tabs at startup', (
   assert.match(app, /else if \(name === 'videos'\) loadVideos\(\)/);
   assert.match(app, /if \(activePublicTab === 'matches'\) loadLive\(\)/);
   assert.doesNotMatch(app, /loadMatches\(\);loadLive\(\);loadMatchDay\(\);loadTable\(\);loadTeams\(\);loadPlayers\(\);loadNews\(\);loadVideos\(\)/);
-  assert.match(app, /setInterval\(function\(\)\{if\(document\.visibilityState !== 'hidden'\)refreshAll\(\);\}, 180000\)/);
+  assert.match(app, /setInterval\(function\(\)\{if\(document\.visibilityState !== 'hidden'\)refreshAll\(\);\}, 300000\)/);
 });
 
 test('Leagues panel data is fetched only when the panel is opened', () => {
