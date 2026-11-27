@@ -50,7 +50,7 @@
     if($(ROOT))return;
     addStyle();
     var panel=document.createElement('section');panel.id=ROOT;
-    panel.innerHTML='<span class="mdo-kicker">SLFA · MATCHDAY LIVE DESK</span><h2>Live Match Event Operator</h2><p>Record goals, cards and substitutions while the referee manages the match itself.</p><div class="mdo-note"><strong>Role boundary:</strong> You can record events only for fixtures assigned to you. Every player and assist is checked against the approved match line-up before the database accepts it. You cannot start, pause or end matches, change the match clock, submit final scores or change results. The Main Referee retains those responsibilities. You may reverse only an event you personally entered, while the match is live, by giving an audit reason.</div><div id="mdoStatus" class="mdo-status" role="status" aria-live="polite">Loading your appointments…</div><div id="mdoApp"></div>';
+    panel.innerHTML='<span class="mdo-kicker">SLFA · MATCHDAY LIVE DESK</span><h2>Live Match Event Operator</h2><p>Record goals, cards, substitutions, shots, saves, corners, fouls and offsides while the referee manages the match itself.</p><div class="mdo-note"><strong>Role boundary:</strong> You can record events only for fixtures assigned to you. Every player and assist is checked against the approved match line-up before the database accepts it. You cannot start, pause or end matches, change the match clock, submit final scores or change results. The Main Referee retains those responsibilities. You may reverse only an event you personally entered, while the match is live, by giving an audit reason.</div><div id="mdoStatus" class="mdo-status" role="status" aria-live="polite">Loading your appointments…</div><div id="mdoApp"></div>';
     tools.appendChild(panel);loadAssignments();
   }
   async function loadAssignments(){
@@ -128,7 +128,7 @@
     if(!live){host.innerHTML='<div class="mdo-note">Event entry is paused. The referee must start the fixture before you can enter live events.</div>';return;}
     var home=activeMatch.home_team||'Home',away=activeMatch.away_team||'Away';
     var teamOptions='<option value="">Choose team…</option><option value="'+esc(home)+'">'+esc(home)+'</option><option value="'+esc(away)+'">'+esc(away)+'</option>';
-    host.innerHTML='<div class="mdo-grid"><div><label for="mdoType">Event</label><select id="mdoType"><option value="GOAL">Goal</option><option value="YELLOW_CARD">Yellow card</option><option value="RED_CARD">Red card</option><option value="SUB">Substitution</option></select></div><div><label for="mdoMinute">Match minute</label><input id="mdoMinute" type="number" min="1" max="120" value="'+esc(Math.max(1,Number(activeMatch.match_minute)||1))+'"></div></div><div class="mdo-grid"><div><label for="mdoHalf">Half</label><select id="mdoHalf"><option value="1" '+(Number(activeMatch.current_half)===1?'selected':'')+'>First half</option><option value="2" '+(Number(activeMatch.current_half)===2?'selected':'')+'>Second half</option></select></div><div><label for="mdoTeam">Team</label><select id="mdoTeam">'+teamOptions+'</select></div></div><label for="mdoPlayer">Player</label><select id="mdoPlayer"><option value="">Choose a team first…</option></select><div id="mdoSubOffWrap" hidden><label for="mdoPlayerOff">Player substituted off</label><select id="mdoPlayerOff"><option value="">Choose player going off…</option></select></div><div id="mdoAssistWrap"><label for="mdoAssist">Assist (optional, goals only)</label><select id="mdoAssist"><option value="">No assist recorded</option></select></div><div class="mdo-actions"><button id="mdoSave" type="button">Record event to live match</button><button id="mdoRefresh" class="secondary" type="button">Refresh match</button></div><div id="mdoFormStatus" class="mdo-status" role="status"></div>';
+    host.innerHTML='<div class="mdo-grid"><div><label for="mdoType">Event</label><select id="mdoType"><option value="GOAL">Goal</option><option value="YELLOW_CARD">Yellow card</option><option value="RED_CARD">Red card</option><option value="SUB">Substitution</option><option value="SHOT_ON_TARGET">Shot on target</option><option value="SHOT_OFF_TARGET">Shot off target</option><option value="SHOT_BLOCKED">Blocked shot</option><option value="SAVE">Goalkeeper save</option><option value="CORNER">Corner</option><option value="FOUL">Foul</option><option value="OFFSIDE">Offside</option></select></div><div><label for="mdoMinute">Match minute</label><input id="mdoMinute" type="number" min="1" max="120" value="'+esc(Math.max(1,Number(activeMatch.match_minute)||1))+'"></div></div><div class="mdo-grid"><div><label for="mdoHalf">Half</label><select id="mdoHalf"><option value="1" '+(Number(activeMatch.current_half)===1?'selected':'')+'>First half</option><option value="2" '+(Number(activeMatch.current_half)===2?'selected':'')+'>Second half</option></select></div><div><label for="mdoTeam">Team</label><select id="mdoTeam">'+teamOptions+'</select></div></div><p id="mdoEventGuidance" class="mdo-event-guidance" role="note"></p><label for="mdoPlayer">Player</label><select id="mdoPlayer"><option value="">Choose a team first…</option></select><div id="mdoSubOffWrap" hidden><label for="mdoPlayerOff">Player substituted off</label><select id="mdoPlayerOff"><option value="">Choose player going off…</option></select></div><div id="mdoAssistWrap"><label for="mdoAssist">Assist (optional, goals only)</label><select id="mdoAssist"><option value="">No assist recorded</option></select></div><div class="mdo-actions"><button id="mdoSave" type="button">Record event to live match</button><button id="mdoRefresh" class="secondary" type="button">Refresh match</button></div><div id="mdoFormStatus" class="mdo-status" role="status"></div>';
     $('mdoType').addEventListener('change',updateFormType);
     $('mdoTeam').addEventListener('change',updateTeamPlayers);
     $('mdoSave').addEventListener('click',recordEvent);
@@ -139,6 +139,8 @@
     var type=$('mdoType');if(!type)return;
     var sub=type.value==='SUB',goal=type.value==='GOAL';
     $('mdoSubOffWrap').hidden=!sub;$('mdoAssistWrap').hidden=!goal;
+    var guidance={GOAL:'Select the scorer. A goal is counted as a shot on target.',SHOT_ON_TARGET:'Select the shooter. Use this when the attempt is saved or otherwise kept out.',SHOT_OFF_TARGET:'Select the shooter whose attempt went wide or over.',SHOT_BLOCKED:'Select the shooter whose attempt was blocked by a defender.',SAVE:'Select the goalkeeper who made the save and choose the goalkeeper’s team.',CORNER:'Select the player who took the corner and choose that player’s team.',FOUL:'Select the player who committed the foul and choose that player’s team.',OFFSIDE:'Select the player flagged offside and choose that player’s team.',YELLOW_CARD:'Select the player cautioned by the referee.',RED_CARD:'Select the player sent off by the referee.',SUB:'Select the player coming on and the player leaving the pitch.'};
+    var hint=$('mdoEventGuidance');if(hint)hint.textContent=guidance[type.value]||'Select the player involved in this event.';
     updateTeamPlayers();
   }
   function updateTeamPlayers(){
@@ -202,11 +204,25 @@
     var count=readQueue().length;
     host.textContent=count?count+' event(s) saved on this device and waiting to sync. Keep this account signed in on this device until they are uploaded.':'No events are waiting to sync.';
   }
+  function operatorStats(){
+    if(!activeMatch)return '';
+    var records=events.concat(readQueue().filter(function(e){return String(e.match_id)===String(activeMatch.id);}));
+    function count(team,type){return records.filter(function(e){return String(e.team_name)===String(team)&&e.event_type===type;}).length;}
+    var teams=[activeMatch.home_team,activeMatch.away_team];
+    var cards=teams.map(function(team){
+      var goals=count(team,'GOAL'),onTarget=goals+count(team,'SHOT_ON_TARGET');
+      var shots=onTarget+count(team,'SHOT_OFF_TARGET')+count(team,'SHOT_BLOCKED');
+      return '<section class="mdo-stat-team"><strong>'+esc(team)+'</strong><div class="mdo-stat-counts">'+
+        '<span><b>'+shots+'</b> Shots</span><span><b>'+onTarget+'</b> On target</span><span><b>'+count(team,'SHOT_BLOCKED')+'</b> Blocked</span><span><b>'+count(team,'SAVE')+'</b> Saves</span><span><b>'+count(team,'CORNER')+'</b> Corners</span><span><b>'+count(team,'FOUL')+'</b> Fouls</span><span><b>'+count(team,'OFFSIDE')+'</b> Offsides</span><span><b>'+goals+'</b> Goals</span><span><b>'+count(team,'YELLOW_CARD')+'</b> Yellow cards</span><span><b>'+count(team,'RED_CARD')+'</b> Red cards</span><span><b>'+count(team,'SUB')+'</b> Subs</span></div></section>';
+    }).join('');
+    var queued=records.length-events.length;
+    return '<div class="mdo-stat-wrap"><h4>Recorded match statistics</h4><div class="mdo-stats">'+cards+'</div><p class="mdo-stat-note">Totals include saved events for this fixture. '+(queued?queued+' event(s) are still queued on this device. ':'')+'A zero means no event has been entered; it is not independent confirmation that none occurred.</p></div>';
+  }
   function renderEvents(){
     var host=$('mdoEventList');if(!host)return;
     var rows=events.slice().sort(function(a,b){return Number(a.half)-Number(b.half)||Number(a.minute)-Number(b.minute)||new Date(a.recorded_at||0)-new Date(b.recorded_at||0);});
     var html=rows.map(function(e){
-      var label={GOAL:'Goal',YELLOW_CARD:'Yellow card',RED_CARD:'Red card',SUB:'Substitution'}[e.event_type]||e.event_type;
+      var label={GOAL:'Goal',YELLOW_CARD:'Yellow card',RED_CARD:'Red card',SUB:'Substitution',SHOT_ON_TARGET:'Shot on target',SHOT_OFF_TARGET:'Shot off target',SHOT_BLOCKED:'Blocked shot',SAVE:'Goalkeeper save',CORNER:'Corner',FOUL:'Foul',OFFSIDE:'Offside'}[e.event_type]||e.event_type;
       var detail=e.event_type==='SUB'?e.player_name+' on · '+(e.player_off_name||'player off'):(e.player_name||'Player');
       if(e.assist_player_name)detail+=' · Assist: '+e.assist_player_name;
       var undo=String(e.recorded_by||'')===String(user&&user.id||'')&&['LIVE','HT'].indexOf(activeMatch.match_status)>=0?
@@ -216,7 +232,7 @@
     var queued=readQueue().filter(function(e){return !activeMatch||String(e.match_id)===String(activeMatch.id);}).map(function(e){
       return '<article class="mdo-event"><span class="mdo-time">'+esc(e.minute)+'′</span><div><strong>Pending · '+esc(e.event_type)+' · '+esc(e.team_name)+'</strong><small>'+esc(e.player_name)+' · '+(Number(e.half)===1?'First half':'Second half')+' · waiting for connection</small></div><span class="mdo-badge warn">QUEUED</span></article>';
     }).join('');
-    host.innerHTML=(html+queued)||'<div class="mdo-empty">No match events have been recorded for this fixture yet.</div>';
+    host.innerHTML=operatorStats()+((html+queued)||'<div class="mdo-empty">No match events have been recorded for this fixture yet.</div>');
     host.querySelectorAll('[data-mdo-undo]').forEach(function(b){
       b.addEventListener('click',async function(){
         var reason=window.prompt('Reason for reversing your own event (minimum 5 characters):');
