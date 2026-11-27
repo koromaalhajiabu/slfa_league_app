@@ -27,8 +27,27 @@
       '<span class="md-venue">' + esc(m.venue || 'Venue to be confirmed') + '</span>' +
       '<span class="md-status">' + esc(matchDayLabel(m)) + '</span></div>';
   }
+  function renderMatchDayRows(rows) {
+    var box = $('matchDay'); if (!box) return;
+    var start = new Date(dayStart(0)).getTime(), end = new Date(dayStart(1)).getTime();
+    var today = (rows || []).filter(function (m) {
+      var t = new Date(m.match_date).getTime(); return t >= start && t < end;
+    }).sort(function (a, b) { return new Date(a.match_date) - new Date(b.match_date); }).slice(0, 30);
+    if (today.length) {
+      box.hidden = false;
+      box.innerHTML = '<h2 class="md-title">Today’s matches</h2>' + today.map(matchDayRow).join('');
+      return;
+    }
+    var next = (rows || []).filter(function (m) { return new Date(m.match_date).getTime() >= end; })
+      .sort(function (a, b) { return new Date(a.match_date) - new Date(b.match_date); }).slice(0, 3);
+    if (!next.length) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = '<h2 class="md-title">No matches today. Next up</h2>' + next.map(matchDayRow).join('');
+  }
   function loadMatchDay() {
     var box = $('matchDay'); if (!box) return;
+    var shared = window.slfaPublicData;
+    if (shared && Array.isArray(shared.matches)) { renderMatchDayRows(shared.matches); return; }
     var cols = 'id, match_date, venue, home_team, away_team, home_score, away_score, match_status';
     db.from('matches').select(cols).gte('match_date', dayStart(0)).lt('match_date', dayStart(1)).order('match_date', { ascending: true }).limit(30).then(function (r) {
       if (r.error) { box.hidden = true; return; }
@@ -39,10 +58,7 @@
         return;
       }
       db.from('matches').select(cols).gte('match_date', dayStart(1)).order('match_date', { ascending: true }).limit(3).then(function (n) {
-        var next = (n.data || []);
-        if (!next.length) { box.hidden = true; return; }
-        box.hidden = false;
-        box.innerHTML = '<h2 class="md-title">No matches today. Next up</h2>' + next.map(matchDayRow).join('');
+        renderMatchDayRows(n.data || []);
       });
     });
   }
