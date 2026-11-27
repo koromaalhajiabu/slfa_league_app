@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v307'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v308'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v307'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v308'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -273,8 +273,8 @@ test('Krio translations load across public and all staff portals', () => {
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=22'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v307'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=23'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v308'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -318,15 +318,16 @@ test('new supporter and match browsing controls are translated in all supported 
 });
 
 
-test('Krio language preference is normalized and translation runtime uses cached phrase lookups', () => {
+test('Krio language preference supports dynamic text and efficient translation', () => {
   const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
-  assert.match(dictionary, /if \(v === 'krio'\) v = 'kri'/);
-  assert.match(dictionary, /var exactLookup = Object\.create\(null\)/);
-  assert.match(dictionary, /var phraseRules = \[\]/);
-  assert.match(dictionary, /regex: new RegExp\(key\.replace/);
-  assert.doesNotMatch(dictionary, /characterData:\s*true/,
-    'The translation observer must not repeatedly process its own text-node updates');
-  assert.match(dictionary, /Object\.assign\(DICT\.kri,[\s\S]*?["']Browse by date["']/);
+  assert.ok(dictionary.includes("if (v === 'krio') v = 'kri'"));
+  assert.ok(dictionary.includes('var exactLookup = Object.create(null)'));
+  assert.ok(dictionary.includes('var phraseKeys = []'));
+  assert.ok(dictionary.includes('phrasePattern = phraseKeys.length'));
+  assert.ok(dictionary.includes('var translatedTextWrites = new WeakMap()'));
+  assert.ok(dictionary.includes("record.type === 'characterData'"));
+  assert.ok(dictionary.includes('characterData: true'));
+  assert.ok(dictionary.includes('translatedTextWrites.get(record.target)'));
 });
 
 test('public data loads on demand instead of fetching hidden tabs at startup', () => {
@@ -345,4 +346,14 @@ test('Leagues panel data is fetched only when the panel is opened', () => {
   assert.match(pages, /function refreshIfVisible\(\)/);
   assert.doesNotMatch(pages, /\.then\(function\(\) \{ loading = false; \}\);\n  load\(\);/,
     'League Pages must not issue its multi-query load on initial home screen startup');
+});
+
+test('public views reuse the Match Centre public snapshot for shared data', () => {
+  const app = fs.readFileSync(path.join(ROOT, 'public.js'), 'utf8');
+  const matchCentre = fs.readFileSync(path.join(ROOT, 'match-centre.js'), 'utf8');
+  assert.ok(app.includes('var shared = window.slfaPublicData;'), 'Live and match-day panels should use shared public data');
+  assert.ok(app.includes('renderMatchDayRows(shared.matches)'), 'Match-day board should avoid a duplicate fixture query');
+  assert.ok(app.includes('Array.isArray(window.slfaPublicData.seasons)'), 'Season selector should reuse shared season data');
+  assert.ok(matchCentre.includes('liveEvents: liveEvents.slice()'), 'Match Centre should publish already-loaded live events');
+  assert.ok(matchCentre.includes('logo_url,competition_type,gender_category'), 'Shared league data should include the public league metadata');
 });

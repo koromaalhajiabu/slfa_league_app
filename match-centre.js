@@ -10,7 +10,7 @@
   function seasonOf(m) { if (m.season_id != null) return String(m.season_id); var d = String(m.match_date || '').slice(0, 10); var hit = seasons.filter(function (x) { return d >= String(x.start_date) && d <= String(x.end_date); })[0]; return hit ? String(hit.id) : ''; }
   function applySeason() { var sel = selectedSeason(); matches = sel ? allMatches.filter(function (m) { return seasonOf(m) === String(sel.id); }) : allMatches; }
   function publishPublicData() {
-    var payload = { matches: matches.slice(), allMatches: allMatches.slice(), seasons: seasons.slice(), leagues: leagueRows.slice(), clubs: clubRows.slice(), updatedAt: updated ? updated.getTime() : Date.now() };
+    var payload = { matches: matches.slice(), allMatches: allMatches.slice(), seasons: seasons.slice(), leagues: leagueRows.slice(), clubs: clubRows.slice(), liveEvents: liveEvents.slice(), updatedAt: updated ? updated.getTime() : Date.now() };
     window.slfaPublicData = payload;
     document.dispatchEvent(new CustomEvent('slfa:public-data-ready', { detail: payload }));
   }
@@ -342,7 +342,7 @@
   function fetchData() {
     var request = Promise.all([
       db.from('matches').select('id,match_date,venue,match_status,match_minute,status_set_at,current_half,league_id,season_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(300),
-      db.from('leagues').select('id,name').eq('is_active',true).order('sort_order'),
+      db.from('leagues').select('id,name,logo_url,competition_type,gender_category').eq('is_active',true).order('sort_order'),
       db.from('league_clubs').select('club_name,league_id,logo_url').eq('is_active',true),
       db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date',{ascending:false})
     ]).then(function(a){

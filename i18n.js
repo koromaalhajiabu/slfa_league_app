@@ -2699,26 +2699,28 @@
   }
   var current = lang();
   var table = DICT[current] || null;
-  // Build lookup maps and phrase patterns once per page load, not once per text node.
+  // Compile translation lookups once. A single phrase matcher avoids scanning
+  // every dictionary entry for every text node on mobile devices.
   var exactLookup = Object.create(null);
   var lowerLookup = Object.create(null);
-  var phraseRules = [];
+  var phraseKeys = [];
+  var phraseLookup = Object.create(null);
+  var phrasePattern = null;
   if (table) {
     Object.keys(table).forEach(function (key) {
       var value = table[key];
       exactLookup[key.trim().replace(/\s+/g, ' ')] = value;
       lowerLookup[key.trim().replace(/\s+/g, ' ').toLowerCase()] = value;
     });
-    phraseRules = Object.keys(table)
+    phraseKeys = Object.keys(table)
       .filter(function (key) { return key.length >= 4 && /\s|[.!?·]/.test(key); })
-      .sort(function (a, b) { return b.length - a.length; })
-      .map(function (key) {
-        return {
-          lower: key.toLowerCase(),
-          regex: new RegExp(key.replace(/[.*+?^$()|[\]\\]/g, '\\$&'), 'gi'),
-          value: table[key]
-        };
-      });
+      .sort(function (a, b) { return b.length - a.length; });
+    phraseKeys.forEach(function (key) { phraseLookup[key.toLowerCase()] = table[key]; });
+    phrasePattern = phraseKeys.length
+      ? new RegExp(phraseKeys.map(function (key) {
+          return key.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
+        }).join('|'), 'gi')
+      : null;
   }
 
   function translateValue(value) {
@@ -2730,12 +2732,10 @@
     var direct = exactLookup[key];
     if (direct === undefined) direct = lowerLookup[key.toLowerCase()];
     if (direct !== undefined) return raw.replace(trimmed, direct);
-    var out = raw, lower = raw.toLowerCase();
-    for (var i = 0; i < phraseRules.length; i++) {
-      var rule = phraseRules[i];
-      if (lower.indexOf(rule.lower) !== -1) out = out.replace(rule.regex, rule.value);
-    }
-    return out;
+    return phrasePattern ? raw.replace(phrasePattern, function (match) {
+      var replacement = phraseLookup[match.toLowerCase()];
+      return replacement === undefined ? match : replacement;
+    }) : raw;
   }
   window.slfaTranslate = translateValue;
 
@@ -2748,12 +2748,18 @@
     return false;
   }
 
+  var translatedTextWrites = new WeakMap();
+  function writeTranslatedText(node, value) {
+    translatedTextWrites.set(node, value);
+    node.nodeValue = value;
+  }
+
   function translateText(root) {
     if (!table || !root) return;
     if (root.nodeType === 3) {
       if (!ignoredTextNode(root) && root.nodeValue.trim()) {
         var one = translateValue(root.nodeValue);
-        if (one !== root.nodeValue) root.nodeValue = one;
+        if (one !== root.nodeValue) writeTranslatedText(root, one);
       }
       return;
     }
@@ -2767,7 +2773,7 @@
     while ((node = walker.nextNode())) nodes.push(node);
     nodes.forEach(function (item) {
       var translated = translateValue(item.nodeValue);
-      if (translated !== item.nodeValue) item.nodeValue = translated;
+      if (translated !== item.nodeValue) writeTranslatedText(item, translated);
     });
   }
 
@@ -2846,6 +2852,13 @@
         Array.prototype.forEach.call(record.addedNodes, function (node) {
           if (node && (node.nodeType === 1 || node.nodeType === 3)) added.push(node);
         });
+      } else if (record.type === 'characterData') {
+        var expected = translatedTextWrites.get(record.target);
+        if (expected !== undefined && record.target.nodeValue === expected) {
+          translatedTextWrites.delete(record.target);
+        } else {
+          translateText(record.target);
+        }
       } else if (record.type === 'attributes') {
         translateAttrs(record.target);
       }
@@ -2864,6 +2877,7 @@
     translateSubtree(document.body);
     observer.observe(document.documentElement, {
       childList: true, subtree: true,
+      characterData: true,
       attributes: true,
       attributeFilter: ['aria-label', 'placeholder', 'title', 'value', 'alt']
     });

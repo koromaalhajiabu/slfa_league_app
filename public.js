@@ -27,8 +27,27 @@
       '<span class="md-venue">' + esc(m.venue || 'Venue to be confirmed') + '</span>' +
       '<span class="md-status">' + esc(matchDayLabel(m)) + '</span></div>';
   }
+  function renderMatchDayRows(rows) {
+    var box = $('matchDay'); if (!box) return;
+    var start = new Date(dayStart(0)).getTime(), end = new Date(dayStart(1)).getTime();
+    var today = (rows || []).filter(function (m) {
+      var t = new Date(m.match_date).getTime(); return t >= start && t < end;
+    }).sort(function (a, b) { return new Date(a.match_date) - new Date(b.match_date); }).slice(0, 30);
+    if (today.length) {
+      box.hidden = false;
+      box.innerHTML = '<h2 class="md-title">Today’s matches</h2>' + today.map(matchDayRow).join('');
+      return;
+    }
+    var next = (rows || []).filter(function (m) { return new Date(m.match_date).getTime() >= end; })
+      .sort(function (a, b) { return new Date(a.match_date) - new Date(b.match_date); }).slice(0, 3);
+    if (!next.length) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = '<h2 class="md-title">No matches today. Next up</h2>' + next.map(matchDayRow).join('');
+  }
   function loadMatchDay() {
     var box = $('matchDay'); if (!box) return;
+    var shared = window.slfaPublicData;
+    if (shared && Array.isArray(shared.matches)) { renderMatchDayRows(shared.matches); return; }
     var cols = 'id, match_date, venue, home_team, away_team, home_score, away_score, match_status';
     db.from('matches').select(cols).gte('match_date', dayStart(0)).lt('match_date', dayStart(1)).order('match_date', { ascending: true }).limit(30).then(function (r) {
       if (r.error) { box.hidden = true; return; }
@@ -39,10 +58,7 @@
         return;
       }
       db.from('matches').select(cols).gte('match_date', dayStart(1)).order('match_date', { ascending: true }).limit(3).then(function (n) {
-        var next = (n.data || []);
-        if (!next.length) { box.hidden = true; return; }
-        box.hidden = false;
-        box.innerHTML = '<h2 class="md-title">No matches today. Next up</h2>' + next.map(matchDayRow).join('');
+        renderMatchDayRows(n.data || []);
       });
     });
   }
@@ -155,6 +171,11 @@
   function currentSeason() { return seasonList.filter(function (x) { return x.is_current; })[0] || null; }
   function selectedSeason() { return seasonList.filter(function (x) { return String(x.id) === String(seasonSel); })[0] || currentSeason(); }
   function loadSeasonData() {
+    if (window.slfaPublicData && Array.isArray(window.slfaPublicData.seasons)) {
+      seasonList = window.slfaPublicData.seasons.slice();
+      renderSeasonPick();
+      return Promise.resolve();
+    }
     return db.from('seasons').select('id, name, start_date, end_date, is_current').order('start_date', { ascending: false }).then(function (r) {
       seasonList = r.error ? [] : (r.data || []);
       renderSeasonPick();
@@ -177,6 +198,13 @@
   }
   try { currentLeague = localStorage.getItem('slfa_league') || ''; } catch (e) {}
   function loadLeagueData() {
+    if (window.slfaPublicData && Array.isArray(window.slfaPublicData.leagues) && Array.isArray(window.slfaPublicData.clubs)) {
+      leagueList = window.slfaPublicData.leagues.slice();
+      clubLeague = {};
+      window.slfaPublicData.clubs.forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; });
+      renderLeagueSwitch();
+      return Promise.resolve();
+    }
     return Promise.all([
       db.from('leagues').select('id, name, logo_url, competition_type, gender_category').eq('is_active', true).order('sort_order'),
       db.from('league_clubs').select('club_name, league_id').eq('is_active', true)
@@ -1010,6 +1038,25 @@
   }
   // Live matches: the score is counted from goal events
   function loadLive() {
+    var shared = window.slfaPublicData;
+    if (shared && Array.isArray(shared.matches)) {
+      var sharedRows = shared.matches.filter(function (m) {
+        return ['LIVE', 'HT'].indexOf(String(m.match_status || '').toUpperCase()) !== -1 &&
+          (!currentLeague || String(m.league_id) === currentLeague);
+      });
+      if (!sharedRows.length) { setLive(empty('No live matches right now.')); return; }
+      var sharedGoals = shared.liveEvents || [];
+      setLive(sharedRows.map(function (match) {
+        var m = Object.assign({}, match);
+        var goals = sharedGoals.filter(function (g) {
+          return String(g.match_id) === String(m.id) && g.event_type === 'GOAL';
+        });
+        if (m.home_score == null) m.home_score = goals.filter(function (g) { return g.team_name === m.home_team; }).length;
+        if (m.away_score == null) m.away_score = goals.filter(function (g) { return g.team_name === m.away_team; }).length;
+        return matchCard(m);
+      }).join(''));
+      return;
+    }
     db.from('matches').select('id, match_date, venue, match_status, match_minute, current_half, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
       .in('match_status', ['LIVE', 'HT']).order('match_date', { ascending: true })
       .then(function (res) {
@@ -1028,7 +1075,6 @@
           });
       });
   }
-
   var appFreezeBanner = null;
   function refreshAll() {
     db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(fr){
@@ -1121,6 +1167,19 @@
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'match_events' }, function (p) { if (p && p.new) favAlert(p.new); })
     .subscribe();
 
+  document.addEventListener('slfa:public-data-ready', function (event) {
+    var data = event.detail || window.slfaPublicData;
+    if (!data) return;
+    if (Array.isArray(data.leagues) && Array.isArray(data.clubs)) {
+      leagueList = data.leagues.slice();
+      clubLeague = {};
+      data.clubs.forEach(function (c) { clubLeague[c.club_name] = c.league_id ? String(c.league_id) : ''; });
+      renderLeagueSwitch();
+    }
+    if (Array.isArray(data.seasons)) { seasonList = data.seasons.slice(); renderSeasonPick(); }
+    loadMatchDay();
+    if (activePublicTab === 'matches') loadLive();
+  });
   if ($('seasonPick')) $('seasonPick').addEventListener('change', function () { setSeason(this.value); });
   refreshAll();
   subscribeLive();
