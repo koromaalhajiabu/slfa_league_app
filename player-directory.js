@@ -206,6 +206,8 @@
         var retry=root.querySelector('#pdRetry'); if(retry) retry.addEventListener('click',load);
       });
   }
+  document.addEventListener('slfa:public-clubs-changed', function () { if (directoryLoaded) load(true); });
+  document.addEventListener('slfa:public-roster-changed', function () { if (directoryLoaded) load(true); });
   document.addEventListener('slfa:league-change',function(e){
     currentLeague=String(e.detail && e.detail.leagueId || '');
     clubFilter='';
