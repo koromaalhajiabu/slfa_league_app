@@ -18,6 +18,7 @@
       if(r.error||!r.data||String(r.data.system_role).toUpperCase()!=='SUPER_ADMIN'||String(r.data.status).toLowerCase()!=='active')throw new Error('This workspace is restricted to active Super Admin accounts.');
     });
   }
+  function hashIdentity(value){var h=2166136261,s=String(value||'');for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16);}
   function alertKey(prefix,parts){return prefix+':'+parts.map(function(x){return String(x==null?'':x);}).join(':');}
   function makeAlert(a){return {alert_key:a.key,alert_type:a.type,severity:a.severity||'REVIEW',league_id:a.leagueId||null,match_id:a.matchId||null,player_id:a.playerId||null,title:a.title,details:a.details,evidence:a.evidence||{},created_by:userId};}
   function scan(){
@@ -40,7 +41,7 @@
         group.forEach(function(p){clubs[String(p.club_id||'')]=true;});
         if(group.length>1&&Object.keys(clubs).length>1){
           var first=group[0],names=group.map(function(p){return p.player_name+' — '+(p.league_clubs&&p.league_clubs.club_name||'Club not linked');});
-          findings.push(makeAlert({key:alertKey('DUPLICATE_PLAYER_IDENTITY',[k]),type:'DUPLICATE_PLAYER_IDENTITY',severity:'HIGH',leagueId:first.league_clubs&&first.league_clubs.league_id,playerId:first.id,title:'Possible duplicate player identity across clubs',details:'The same identity reference appears on approved active registrations at more than one club in the same season. This is a review flag, not a finding of wrongdoing. Verify the original registration documents and player identity before taking action.',evidence:{season_id:first.season_id,player_records:group.map(function(p){return {player_id:p.id,player_name:p.player_name,club_id:p.club_id,club_name:p.league_clubs&&p.league_clubs.club_name||null};}),identity_reference_suffix:String(first.player_nin||'').slice(-4)}}));
+          findings.push(makeAlert({key:alertKey('DUPLICATE_PLAYER_IDENTITY',[String(first.season_id||'none'),hashIdentity(nin)]),type:'DUPLICATE_PLAYER_IDENTITY',severity:'HIGH',leagueId:first.league_clubs&&first.league_clubs.league_id,playerId:first.id,title:'Possible duplicate player identity across clubs',details:'The same identity reference appears on approved active registrations at more than one club in the same season. This is a review flag, not a finding of wrongdoing. Verify the original registration documents and player identity before taking action.',evidence:{season_id:first.season_id,player_records:group.map(function(p){return {player_id:p.id,player_name:p.player_name,club_id:p.club_id,club_name:p.league_clubs&&p.league_clubs.club_name||null};}),identity_reference_suffix:String(first.player_nin||'').slice(-4)}}));
         }
       });
       var matchById={};matches.forEach(function(m){matchById[String(m.id)]=m;});
