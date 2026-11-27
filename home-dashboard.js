@@ -2,7 +2,7 @@
   'use strict';
   var db=window.slfaDb, host=document.getElementById('homeDashboard');
   if(!db||!host)return;
-  var rows=[],clubs=[],leagues=[],seasons=[],lastError=false,quickStandings=[],quickStandingsError=false;
+  var rows=[],clubs=[],leagues=[],seasons=[],lastError=false,quickStandings=[],quickStandingsError=false,quickStandingsLoaded=false,quickStandingsLoading=false,supporterSnapshot=null,supporterLoading=false;
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function dateText(v){if(!v)return 'Date to be confirmed';var d=new Date(v);return isNaN(d.getTime())?String(v):d.toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}
   function status(m){return String(m.match_status||'').toUpperCase();}
@@ -13,13 +13,15 @@
   function selectedSeason(){var id='';try{id=localStorage.getItem('slfa_season')||'';}catch(e){}return seasons.filter(function(s){return String(s.id)===id;})[0]||seasons.filter(function(s){return s.is_current;})[0]||null;}
   function visibleMatches(){var id=selectedLeague();if(!id)return rows.slice();var byName={};clubs.forEach(function(c){byName[c.club_name]=String(c.league_id||'');});return rows.filter(function(m){return String(m.league_id||'')===id||(byName[m.home_team]===id&&byName[m.away_team]===id);});}
   function loadQuickStandings(){
+    if(quickStandingsLoaded||quickStandingsLoading)return;
+    quickStandingsLoading=true;
     var season=selectedSeason(),request;
     if(season&&!season.is_current){
       request=Promise.all(leagues.map(function(l){return db.rpc('season_table',{p_season_id:Number(season.id),p_league_id:Number(l.id)});})).then(function(results){quickStandingsError=results.some(function(r){return !!r.error;});quickStandings=[];results.forEach(function(r){if(!r.error)quickStandings=quickStandings.concat(r.data||[]);});});
     }else{
       request=db.from('league_standings').select('league_id,pos,club,mp,pts').order('pos',{ascending:true}).then(function(r){quickStandingsError=!!r.error;quickStandings=r.error?[]:(r.data||[]);});
     }
-    return Promise.resolve(request).then(renderQuickStandings).catch(function(){quickStandingsError=true;quickStandings=[];renderQuickStandings();});
+    return Promise.resolve(request).then(function(){quickStandingsLoading=false;quickStandingsLoaded=true;renderQuickStandings();}).catch(function(){quickStandingsLoading=false;quickStandingsLoaded=true;quickStandingsError=true;quickStandings=[];renderQuickStandings();});
   }
   function renderQuickStandings(){
     var body=host.querySelector('#slfaQuickStandingsBody');if(!body)return;
@@ -60,8 +62,11 @@
       var note=document.getElementById('alertStatus');if(note)note.textContent='Could not save this match reminder. Check that Get alerts is enabled.';
     }).finally(function(){button.disabled=false;});
   }
-  function loadSupporterDashboard(){
+  function loadSupporterDashboard(force){
     var box=host.querySelector('#slfaSupporterDashboard');if(!box)return;
+    if(supporterSnapshot&&!force){renderSupporterDashboard(box,supporterSnapshot.clubs,supporterSnapshot.players,supporterSnapshot.signedIn,supporterSnapshot.localPlayerCount);return;}
+    if(supporterLoading)return;
+    supporterLoading=true;
     box.innerHTML='<div class="slfa-supporter-loading">Loading your followed clubs and players…</div>';
     db.auth.getUser().then(function(u){
       if(u.data&&u.data.user){
@@ -72,22 +77,25 @@
           if(all.some(function(r){return r.error;}))throw new Error('Supporter preferences unavailable');
           var followedClubs=(all[0].data||[]).map(function(x){return x.league_clubs&&x.league_clubs.club_name;}).filter(Boolean);
           var followedPlayers=(all[1].data||[]).map(function(x){return x.club_squad&&x.club_squad.player_name;}).filter(Boolean);
-          renderSupporterDashboard(box,followedClubs,followedPlayers,true);
+          supporterLoading=false;renderSupporterDashboard(box,followedClubs,followedPlayers,true);
         });
       }
       var localClubs=[];
       try{localClubs=JSON.parse(localStorage.getItem('slfa_fav_clubs')||'[]').map(function(x){return x.name;}).filter(Boolean);}catch(e){}
       var localPlayers=[];try{localPlayers=JSON.parse(localStorage.getItem('slfa_fav_players')||'[]').map(String);}catch(e){}
-      if(!localPlayers.length){renderSupporterDashboard(box,localClubs,[],false,0);return;}
+      if(!localPlayers.length){supporterLoading=false;renderSupporterDashboard(box,localClubs,[],false,0);return;}
       db.from('club_squad').select('id, player_name').in('id',localPlayers).then(function(r){
         var names=r.error?[]:(r.data||[]).map(function(x){return x.player_name;}).filter(Boolean);
-        renderSupporterDashboard(box,localClubs,names,false,names.length||localPlayers.length);
+        supporterLoading=false;renderSupporterDashboard(box,localClubs,names,false,names.length||localPlayers.length);
       });
     }).catch(function(){
+      supporterLoading=false;
       box.innerHTML='<p class="slfa-supporter-empty">Your supporter preferences are temporarily unavailable.</p>';
     });
   }
   function renderSupporterDashboard(box,followedClubs,followedPlayers,signedIn,localPlayerCount){
+    supporterSnapshot={clubs:followedClubs.slice(),players:followedPlayers.slice(),signedIn:signedIn,localPlayerCount:localPlayerCount||0};
+    supporterLoading=false;
     var clubMarkup=followedClubs.length?followedClubs.map(function(n){return '<span class="slfa-follow-chip">'+esc(n)+'</span>';}).join(''):'<span class="slfa-supporter-empty">No clubs followed yet. Save a club with the star in Teams.</span>';
     var playerMarkup=followedPlayers.length?followedPlayers.map(function(n){return '<span class="slfa-follow-chip">'+esc(n)+'</span>';}).join(''):(localPlayerCount?'<span class="slfa-follow-chip">'+localPlayerCount+' player'+(localPlayerCount===1?'':'s')+' followed on this device</span>':'<span class="slfa-supporter-empty">No players followed yet. Save players from the Players directory.</span>');
     var upcomingMatches=rows.filter(upcoming).filter(function(m){return followedClubs.indexOf(m.home_team)!==-1||followedClubs.indexOf(m.away_team)!==-1;}).sort(function(a,b){return new Date(a.match_date)-new Date(b.match_date);}).slice(0,3);
@@ -131,22 +139,31 @@
     var calendarButton=host.querySelector('[data-slfa-calendar]');
     if(calendarButton)calendarButton.addEventListener('click',function(){exportCalendar(list.filter(upcoming).sort(function(a,b){return new Date(a.match_date)-new Date(b.match_date);}));});
     var tableButton=host.querySelector('[data-slfa-open-table]');if(tableButton)tableButton.addEventListener('click',function(){var tab=document.querySelector('[data-tab="table"]');if(tab)tab.click();});
+    var quickTable=host.querySelector('#slfaQuickStandings');if(quickTable)quickTable.addEventListener('toggle',function(){if(quickTable.open)loadQuickStandings();});
     renderQuickStandings();
     host.querySelectorAll('[data-slfa-remind]').forEach(function(b){b.addEventListener('click',function(){setMatchReminder(b.getAttribute('data-slfa-remind'),b);});});
     loadSupporterDashboard();
   }
-  function load(){
-    Promise.all([
-      db.from('matches').select('id,league_id,match_date,venue,match_status,match_minute,home_team,away_team,home_score,away_score').order('match_date',{ascending:false}).limit(250),
-      db.from('league_clubs').select('club_name,league_id,logo_url').eq('is_active',true),
-      db.from('leagues').select('id,name').eq('is_active',true),
-      db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date',{ascending:false})
-    ]).then(function(all){lastError=all.slice(0,3).some(function(x){return !!x.error;});rows=all[0].error?[]:(all[0].data||[]);clubs=all[1].error?[]:(all[1].data||[]);leagues=all[2].error?[]:(all[2].data||[]);seasons=all[3].error?[]:(all[3].data||[]);render();loadQuickStandings();}).catch(function(){lastError=true;render();loadQuickStandings();});
+  function consumeSharedData(data){
+    if(!data){return;}
+    lastError=false;
+    rows=Array.isArray(data.matches)?data.matches:[];
+    clubs=Array.isArray(data.clubs)?data.clubs:[];
+    leagues=Array.isArray(data.leagues)?data.leagues:[];
+    seasons=Array.isArray(data.seasons)?data.seasons:[];
+    render();
+    var quickTable=host.querySelector('#slfaQuickStandings');
+    if(quickTable&&quickTable.open){quickStandingsLoaded=false;quickStandingsLoading=false;loadQuickStandings();}
   }
+  document.addEventListener('slfa:public-data-ready',function(e){consumeSharedData(e.detail||window.slfaPublicData);});
+  document.addEventListener('slfa:public-data-error',function(){lastError=true;rows=[];render();});
   var switcher=document.getElementById('leagueSwitch');
   if(switcher)switcher.addEventListener('click',function(){window.setTimeout(render,80);});
-  document.addEventListener('slfa:season-change',loadQuickStandings);
-  if(db.channel)db.channel('slfa-home-dashboard').on('postgres_changes',{event:'*',schema:'public',table:'matches'},load).on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},load).on('postgres_changes',{event:'*',schema:'public',table:'league_standings'},load).on('postgres_changes',{event:'*',schema:'public',table:'seasons'},load).subscribe();
-  if(db.auth)db.auth.onAuthStateChange(function(){window.setTimeout(loadSupporterDashboard,0);});
-  load();
+  document.addEventListener('slfa:season-change',function(){
+    if(window.slfaPublicData)consumeSharedData(window.slfaPublicData);
+    quickStandingsLoaded=false;quickStandingsLoading=false;
+    var quickTable=host.querySelector('#slfaQuickStandings');if(quickTable&&quickTable.open)loadQuickStandings();
+  });
+  if(db.auth)db.auth.onAuthStateChange(function(){supporterSnapshot=null;supporterLoading=false;window.setTimeout(function(){loadSupporterDashboard(true);},0);});
+  if(window.slfaPublicData)consumeSharedData(window.slfaPublicData);
 })();

@@ -119,10 +119,25 @@
     try { db.rpc('log_app_event', { p_event: ev }).then(function () {}, function () {}); } catch (e) {}
   };
   try { if (!sessionStorage.getItem('slfa_seen')) { sessionStorage.setItem('slfa_seen', '1'); window.slfaTrack('app_open'); } } catch (e) {}
+  var publicTabLoaded = { matches: true };
+  var activePublicTab = 'matches';
+  function isPublicTabActive(name) { return activePublicTab === name; }
+  function loadPublicTab(name, force) {
+    if (!name || name === 'matches' || name === 'live') return;
+    if (!force && publicTabLoaded[name]) return;
+    publicTabLoaded[name] = true;
+    if (name === 'table') loadTable();
+    else if (name === 'teams') loadTeams();
+    else if (name === 'players') loadPlayers();
+    else if (name === 'news') loadNews();
+    else if (name === 'videos') loadVideos();
+  }
   document.querySelectorAll('[data-tab]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b === btn)); });
       document.querySelectorAll('[data-view]').forEach(function (v) { v.hidden = v.dataset.view !== btn.dataset.tab; });
+      activePublicTab = btn.dataset.tab;
+      loadPublicTab(activePublicTab, false);
       window.slfaTrack('tab_' + btn.dataset.tab);
     });
   });
@@ -438,7 +453,7 @@
           myFavIds[f.club_id] = true; myFavNames[name] = true; myFavList.push({ id: f.club_id, name: name });
         });
       });
-    }).then(function () { loadTeams(); renderMyClub(); });
+    }).then(function () { if (isPublicTabActive('teams')) { publicTabLoaded.teams = true; loadTeams(); } renderMyClub(); });
   }
   function refreshFavs() { loadFavs().then(function () { loadMatches(); }); }
   function toggleFav(clubId, clubs) {
@@ -1028,7 +1043,11 @@
         if(area)area.hidden=true;return;
       }
       if(appFreezeBanner){appFreezeBanner.remove();appFreezeBanner=null;}if(area)area.hidden=false;
-      Promise.all([loadLeagueData(), loadSeasonData()]).then(function(){loadMatches();loadLive();loadMatchDay();loadTable();loadTeams();loadPlayers();loadNews();loadVideos();});
+      Promise.all([loadLeagueData(), loadSeasonData()]).then(function(){
+        loadMatchDay();
+        if (activePublicTab === 'matches') loadLive();
+        else loadPublicTab(activePublicTab, true);
+      });
     });
   }
 
@@ -1050,8 +1069,7 @@
       ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, scheduleRefresh);
     });
     ch.subscribe();
-    setInterval(refreshAll, 120000);
-    setInterval(loadMatchDay, 120000);
+    setInterval(function(){if(document.visibilityState !== 'hidden')refreshAll();}, 180000);
   }
 
   // Premium interaction: pull to refresh, light tactile feedback, and goal and card alerts for favourite clubs

@@ -2689,27 +2689,52 @@
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
-    try { var v = localStorage.getItem('slfa_lang'); return DICT[v] || v === 'en' ? v : 'en'; } catch (e) { return 'en'; }
+    try {
+      var v = String(localStorage.getItem('slfa_lang') || 'en').toLowerCase();
+      if (v === 'krio') v = 'kri';
+      if (v === 'french') v = 'fr';
+      if (v === 'arabic') v = 'ar';
+      return Object.prototype.hasOwnProperty.call(DICT, v) || v === 'en' ? v : 'en';
+    } catch (e) { return 'en'; }
   }
   var current = lang();
   var table = DICT[current] || null;
+  // Build lookup maps and phrase patterns once per page load, not once per text node.
+  var exactLookup = Object.create(null);
+  var lowerLookup = Object.create(null);
+  var phraseRules = [];
+  if (table) {
+    Object.keys(table).forEach(function (key) {
+      var value = table[key];
+      exactLookup[key.trim().replace(/\s+/g, ' ')] = value;
+      lowerLookup[key.trim().replace(/\s+/g, ' ').toLowerCase()] = value;
+    });
+    phraseRules = Object.keys(table)
+      .filter(function (key) { return key.length >= 4 && /\s|[.!?·]/.test(key); })
+      .sort(function (a, b) { return b.length - a.length; })
+      .map(function (key) {
+        return {
+          lower: key.toLowerCase(),
+          regex: new RegExp(key.replace(/[.*+?^$()|[\]\\]/g, '\\$&'), 'gi'),
+          value: table[key]
+        };
+      });
+  }
 
   function translateValue(value) {
     if (!table || value == null) return value;
     var raw = String(value);
-    var key = raw.trim().replace(/\s+/g, ' ');
-    if (!key) return raw;
-    if (Object.prototype.hasOwnProperty.call(table, key)) return raw.replace(raw.trim(), table[key]);
-    var lower = key.toLowerCase();
-    var directKey = Object.keys(table).filter(function (k) { return k.toLowerCase() === lower; })[0];
-    if (directKey) return raw.replace(raw.trim(), table[directKey]);
-    var out = raw;
-    var keys = Object.keys(table).filter(function (k) { return k.length >= 4 && /\s|[.!?·]/.test(k); })
-      .sort(function (a, b) { return b.length - a.length; });
-    keys.forEach(function (k) {
-      var escaped = k.split('').map(function (ch) { return '.+*?^$()|[]\\\\'.indexOf(ch) >= 0 ? '\\\\' + ch : ch; }).join('');
-      out = out.replace(new RegExp(escaped, 'gi'), table[k]);
-    });
+    var trimmed = raw.trim();
+    if (!trimmed) return raw;
+    var key = trimmed.replace(/\s+/g, ' ');
+    var direct = exactLookup[key];
+    if (direct === undefined) direct = lowerLookup[key.toLowerCase()];
+    if (direct !== undefined) return raw.replace(trimmed, direct);
+    var out = raw, lower = raw.toLowerCase();
+    for (var i = 0; i < phraseRules.length; i++) {
+      var rule = phraseRules[i];
+      if (lower.indexOf(rule.lower) !== -1) out = out.replace(rule.regex, rule.value);
+    }
     return out;
   }
   window.slfaTranslate = translateValue;
@@ -2814,22 +2839,31 @@
 
   var observer = new MutationObserver(function (records) {
     if (!table) return;
+    // Batch inserted DOM roots so a large card/list render is translated in one pass.
+    var added = [];
     records.forEach(function (record) {
       if (record.type === 'childList') {
-        Array.prototype.forEach.call(record.addedNodes, translateSubtree);
-      } else if (record.type === 'characterData') {
-        translateText(record.target);
+        Array.prototype.forEach.call(record.addedNodes, function (node) {
+          if (node && (node.nodeType === 1 || node.nodeType === 3)) added.push(node);
+        });
       } else if (record.type === 'attributes') {
         translateAttrs(record.target);
       }
     });
+    // Ignore nested roots already covered by an earlier inserted ancestor.
+    added = added.filter(function (node, index) {
+      return !added.some(function (other, otherIndex) {
+        return otherIndex !== index && other.nodeType === 1 && other.contains && other.contains(node);
+      });
+    });
+    added.forEach(translateSubtree);
   });
   function run() {
     if (!table) return;
     document.title = translateValue(document.title);
     translateSubtree(document.body);
     observer.observe(document.documentElement, {
-      childList: true, subtree: true, characterData: true,
+      childList: true, subtree: true,
       attributes: true,
       attributeFilter: ['aria-label', 'placeholder', 'title', 'value', 'alt']
     });
