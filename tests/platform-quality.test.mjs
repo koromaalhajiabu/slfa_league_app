@@ -249,7 +249,7 @@ test('Krio translations load across public and all staff portals', () => {
   ];
   for (const pageName of pages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.match(page, /i18n\\.js\\?v=18/, pageName + ' must load the expanded language dictionary');
+    assert.ok(page.includes('i18n.js?v=18'), pageName + ' must load the expanded language dictionary');
   }
 
   const leagueAdmin = fs.readFileSync(path.join(ROOT, 'league-admin.html'), 'utf8');
@@ -269,8 +269,8 @@ test('Krio translations load across public and all staff portals', () => {
   ]) {
     assert.ok(dictionary.includes(phrase), 'Missing Krio dictionary key: ' + phrase);
   }
-  assert.match(dictionary, /National Football Intelligence & Integrity Centre[\\s\\S]*?Nashɔnəl Futbɔl Infomeshɔn/);
-  assert.match(dictionary, /No referee match records have been submitted yet\\.[\\s\\S]*?Nɔ gɛt referee mach rikɔd/);
+  assert.match(dictionary, /National Football Intelligence & Integrity Centre[\s\S]*?Nashɔnəl Futbɔl Infomeshɔn/);
+  assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('i18n.js?v=18'), 'Service worker must precache the expanded language dictionary');
