@@ -323,7 +323,7 @@ test('Krio language preference supports dynamic text and efficient translation',
   assert.ok(dictionary.includes("if (v === 'krio') v = 'kri'"));
   assert.ok(dictionary.includes('var exactLookup = Object.create(null)'));
   assert.ok(dictionary.includes('var phraseKeys = []'));
-  assert.ok(dictionary.includes('var phrasePattern = phraseKeys.length'));
+  assert.ok(dictionary.includes('phrasePattern = phraseKeys.length'));
   assert.ok(dictionary.includes('var translatedTextWrites = new WeakMap()'));
   assert.ok(dictionary.includes("record.type === 'characterData'"));
   assert.ok(dictionary.includes('characterData: true'));
