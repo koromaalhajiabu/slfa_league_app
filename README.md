@@ -43,6 +43,10 @@ The database enforces the role boundaries. Official match results are written th
 - Club movement records retain the decision reason and timestamps. Existing match rows retain their original competition and season references; no existing competition or result is reclassified by the migration.
 - Division settings and applied movement history are available to public readers; only the Super Admin can create or change settings and apply movements.
 
+## Interface language support
+
+The public League Centre and staff workspaces include English (default), Krio, French and Arabic interface wording. Shared translations are maintained in `i18n.js`; the selected language is saved on the user's device. The public and staff pages load the shared dictionary before their dynamic interface modules, and the service worker precaches the versioned language asset.
+
 ## Configuration
 
 Project settings are in `config.js`. The browser uses the Supabase publishable key only; no service-role key belongs in the public repository.
