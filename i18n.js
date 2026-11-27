@@ -1883,6 +1883,47 @@
   "Last 5 form": "Fɔm fɔ lɛst 5 mach"
 });
 
+  // Match Centre event-data transparency and player-contribution vocabulary.
+  Object.assign(DICT.fr, {
+    "Recorded match statistics":"Statistiques de match enregistrées",
+    "Player contributions":"Contributions des joueurs",
+    "No published match events are available. Statistics are unavailable, not confirmed zero.":"Aucun événement de match n’a été publié. Les statistiques sont indisponibles ; cela ne confirme pas un total de zéro.",
+    "Numbers count published entries from assigned match staff only. An unrecorded action is not treated as confirmed absent.":"Les chiffres comptent uniquement les événements publiés par les officiels affectés au match. Un événement non enregistré n’est pas considéré comme certainement absent.",
+    "Player figures are derived from the published event log. No estimated player ratings are presented.":"Les chiffres des joueurs proviennent du journal des événements publié. Aucune note estimée des joueurs n’est affichée.",
+    "No player-level entries have been published for this team.":"Aucune donnée individuelle de joueur n’a été publiée pour cette équipe.",
+    "Published match event data could not be loaded. Close and reopen Match details to retry.":"Les événements publiés du match n’ont pas pu être chargés. Fermez puis rouvrez les détails du match pour réessayer.",
+    "Published team line-up data is temporarily unavailable.":"Les compositions publiées des équipes sont temporairement indisponibles.",
+    "Shots":"Tirs",
+    "On target":"Cadrés",
+    "Saves":"Arrêts"
+  });
+  Object.assign(DICT.kri, {
+    "Recorded match statistics":"Statistik fɔ mach we dɛn rikɔd",
+    "Player contributions":"Di kontribyushɔn dɛn fɔ pleya",
+    "No published match events are available. Statistics are unavailable, not confirmed zero.":"Nɔ gɛt event fɔ mach we dɛn publish. Statistik nɔ de; dis nɔ mean se nɔ bin gɛt event.",
+    "Numbers count published entries from assigned match staff only. An unrecorded action is not treated as confirmed absent.":"Di nɔmba dɛn na nɔmɔ event dɛn we ɔfishal we dɛn gi di jɔb publish. Event we dɛn nɔ rikɔd nɔ mean se e nɔ bin apin.",
+    "Player figures are derived from the published event log. No estimated player ratings are presented.":"Di nɔmba fɔ pleya dɛn kam frɔm event rikɔd we dɛn publish. Wi nɔ de mek rating we nɔ get pruf.",
+    "No player-level entries have been published for this team.":"Dɛn nɔ publish eniting we show wetin di pleya dɛn du fɔ dis tim yet.",
+    "Published match event data could not be loaded. Close and reopen Match details to retry.":"Wi nɔ able fɔ lod event dɛn we dɛn publish. Klos ɛn opɛn Match details bak fɔ tray.",
+    "Published team line-up data is temporarily unavailable.":"Di tim list we dɛn publish nɔ de fɔ naw.",
+    "Shots":"Shɔt dɛn",
+    "On target":"Na gɔl dɔt",
+    "Saves":"Save dɛn"
+  });
+  Object.assign(DICT.ar, {
+    "Recorded match statistics":"إحصاءات المباراة المسجلة",
+    "Player contributions":"مساهمات اللاعبين",
+    "No published match events are available. Statistics are unavailable, not confirmed zero.":"لم تُنشر أحداث للمباراة بعد. الإحصاءات غير متاحة، ولا يعني ذلك أن الأرقام صفر.",
+    "Numbers count published entries from assigned match staff only. An unrecorded action is not treated as confirmed absent.":"تحتسب الأرقام الأحداث المنشورة فقط من طاقم المباراة المعيّن. ولا يعني عدم تسجيل حدث أنه لم يقع بالتأكيد.",
+    "Player figures are derived from the published event log. No estimated player ratings are presented.":"تُستمد أرقام اللاعبين من سجل الأحداث المنشور. لا تُعرض تقييمات تقديرية للاعبين.",
+    "No player-level entries have been published for this team.":"لم تُنشر بيانات فردية للاعبي هذا الفريق.",
+    "Published match event data could not be loaded. Close and reopen Match details to retry.":"تعذر تحميل أحداث المباراة المنشورة. أغلق تفاصيل المباراة ثم افتحها مجدداً للمحاولة.",
+    "Published team line-up data is temporarily unavailable.":"تشكيلات الفرق المنشورة غير متاحة مؤقتاً.",
+    "Shots":"التسديدات",
+    "On target":"على المرمى",
+    "Saves":"تصديات"
+  });
+
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
