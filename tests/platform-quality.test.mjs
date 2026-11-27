@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v303'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v306'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v303'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v306'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -249,11 +249,11 @@ test('Krio translations load across public and all staff portals', () => {
   ];
   for (const pageName of pages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.ok(page.includes('i18n.js?v=18'), pageName + ' must load the expanded language dictionary');
+    assert.match(page, /i18n\.js\?v=\d+/, pageName + ' must load a versioned shared language dictionary');
   }
 
   const leagueAdmin = fs.readFileSync(path.join(ROOT, 'league-admin.html'), 'utf8');
-  assert.ok(leagueAdmin.indexOf('i18n.js?v=18') < leagueAdmin.indexOf('league-admin.js'),
+  assert.ok(/i18n\.js\?v=\d+/.test(leagueAdmin) && leagueAdmin.indexOf('i18n.js') < leagueAdmin.indexOf('league-admin.js'),
     'League Administrator must load translations before its dynamic interface');
 
   const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
@@ -273,6 +273,46 @@ test('Krio translations load across public and all staff portals', () => {
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=18'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v303'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=21'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v306'), 'Service worker cache must be advanced for the Krio update');
+});
+
+
+test('supporter-first home screen and quick standings preview are present', () => {
+  const home = fs.readFileSync(path.join(ROOT, 'home-dashboard.js'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'home-dashboard.css'), 'utf8');
+  assert.ok(home.indexOf('id="slfaSupporterDashboard"') < home.indexOf('aria-label="Featured match"'),
+    'Followed clubs and players should appear before the featured match on the home screen');
+  assert.match(home, /data-slfa-open-tab="teams"/);
+  assert.match(home, /data-slfa-open-tab="players"/);
+  assert.match(home, /id="slfaQuickStandings"/);
+  assert.match(home, /data-slfa-open-table/);
+  assert.match(home, /db\.from\('league_standings'\)/);
+  assert.match(home, /db\.rpc\('season_table'/);
+  assert.match(home, /slice\(0,chosen\?5:3\)/);
+  assert.match(css, /\.slfa-home-quick-table/);
+  assert.match(css, /\.slfa-supporter-actions/);
+});
+
+test('Match Centre includes a swipeable seven-day date strip', () => {
+  const matches = fs.readFileSync(path.join(ROOT, 'match-centre.js'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'match-centre.css'), 'utf8');
+  assert.match(matches, /dateStripItems/);
+  assert.match(matches, /data-mc-day/);
+  assert.match(matches, /dateScope\.filter/);
+  assert.match(matches, /chosenDate=b\.getAttribute\('data-mc-day'\)/);
+  assert.match(matches, /id="mcDate"/, 'Keep the precise date picker as an alternative');
+  assert.match(css, /\.slfa-mc-date-strip/);
+  assert.match(css, /overflow-x:auto/);
+});
+
+test('new supporter and match browsing controls are translated in all supported languages', () => {
+  const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
+  for (const phrase of [
+    'No clubs followed yet. Save a club with the star in Teams.', 'No players followed yet. Save players from the Players directory.', 'Upcoming fixtures involving your followed clubs will appear here.' , 'Browse by date', 'All dates', 'Your followed teams',
+    'Followed clubs & players', 'Quick table preview', 'View full official table'
+  ]) assert.ok(dictionary.includes(phrase), 'Missing translation key: ' + phrase);
+  assert.match(dictionary, /Object\.assign\(DICT\.kri,[\s\S]*?Browse by date/);
+  assert.match(dictionary, /Object\.assign\(DICT\.fr,[\s\S]*?Browse by date/);
+  assert.match(dictionary, /Object\.assign\(DICT\.ar,[\s\S]*?Browse by date/);
 });

@@ -15,6 +15,8 @@
   function league() { try { return localStorage.getItem('slfa_league') || ''; } catch (e) { return ''; } }
   function dateText(v) { if (!v) return 'Date TBC'; var d = new Date(v); return isNaN(d) ? String(v) : d.toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
   function day(v) { var d = new Date(v); return isNaN(d) ? '' : d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function dateStripItems(){var base=new Date();base.setHours(12,0,0,0);var items=[];for(var i=0;i<7;i++){var d=new Date(base);d.setDate(base.getDate()+i);items.push({key:dateKey(d),date:d,label:i===0?'Today':i===1?'Tomorrow':d.toLocaleDateString(undefined,{weekday:'short'}),number:d.getDate()});}if(chosenDate&&!items.some(function(x){return x.key===chosenDate;})){var p=chosenDate.split('-').map(Number),selectedDate=new Date(p[0],p[1]-1,p[2],12);if(!isNaN(selectedDate.getTime()))items.unshift({key:chosenDate,date:selectedDate,label:'Selected',number:selectedDate.getDate()});}return items;}
   function status(m) { return String(m.match_status || '').toUpperCase(); }
   function clubKey(v) { return String(v || '').toLowerCase().replace(/\bfc\b/g, '').replace(/[^a-z0-9]/g, ''); }
   function sameClub(a,b) { return clubKey(a) === clubKey(b); }
@@ -143,12 +145,21 @@
   function render() {
     var list = selected(), clubs = {};
     // Competition/date/club scope is shared by filters and the live overview.
-    var scoped = matches.filter(function (m) {
+    var dateScope = matches.filter(function (m) {
       if (league() && String(m.league_id || '') !== league()) return false;
-      if (chosenDate && day(m.match_date) !== chosenDate) return false;
       if (chosenClub && m.home_team !== chosenClub && m.away_team !== chosenClub) return false;
       return true;
     });
+    var scoped = dateScope.filter(function(m){return !chosenDate||day(m.match_date)===chosenDate;});
+    var dateItems=dateStripItems();
+    var dayButtons='<button type="button" class="slfa-mc-day'+(!chosenDate?' active':'')+'" data-mc-day="" aria-pressed="'+(!chosenDate)+'"><span>All dates</span><strong>'+dateScope.filter(function(m){return filter==='all'||group(m)===filter;}).length+'</strong></button>';
+    dateItems.forEach(function(item){
+      var count=dateScope.filter(function(m){return day(m.match_date)===item.key&&(filter==='all'||group(m)===filter);}).length;
+      var active=chosenDate===item.key;
+      var fullDate=item.date.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+      dayButtons+='<button type="button" class="slfa-mc-day'+(active?' active':'')+'" data-mc-day="'+esc(item.key)+'" aria-pressed="'+active+'" aria-label="'+esc(fullDate+', '+count+' matches')+'"><span>'+esc(item.label)+'</span><strong>'+esc(item.number)+'</strong><small><b>'+count+'</b> <span>'+(count===1?'match':'matches')+'</span></small></button>';
+    });
+    var dateStrip='<div class="slfa-mc-date-browser"><div class="slfa-mc-date-browser-head"><strong>Browse by date</strong><span>Swipe to see the next days</span></div><div class="slfa-mc-date-strip" role="group" aria-label="Choose a match date">'+dayButtons+'</div></div>';
     var liveCount = scoped.filter(function (m) { return group(m) === 'live'; }).length;
     var upcomingCount = scoped.filter(function (m) { return group(m) === 'upcoming'; }).length;
     var resultCount = scoped.filter(function (m) { return group(m) === 'results'; }).length;
@@ -159,7 +170,7 @@
       return '<button type="button" class="slfa-mc-filter'+(filter===f[0]?' active':'')+'" data-mc-filter="'+f[0]+'" aria-pressed="'+(filter===f[0])+'">'+f[1]+' <span class="slfa-mc-count-pill">'+n+'</span></button>';
     }).join('');
     host.innerHTML = '<section class="slfa-match-centre-v2" aria-label="Match Centre"><div class="slfa-mc-heading"><div><p class="slfa-mc-eyebrow">THE SLFA LEAGUE APP</p><h3>Match Centre</h3><p>Fixtures, live scores and completed results</p></div><span class="slfa-mc-update">'+(updated?'Updated '+new Date(updated).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'Public match information')+'</span></div>'+
-      '<div class="slfa-mc-tools"><div class="slfa-mc-filters" role="group" aria-label="Match filters">'+filters+'</div><div class="slfa-mc-selects"><label>Date<input type="date" id="mcDate" value="'+esc(chosenDate)+'"></label><label>Club<select id="mcClub"><option value="">All clubs</option>'+options+'</select></label><button type="button" class="slfa-mc-reset" id="mcReset">Reset</button></div></div>'+
+      '<div class="slfa-mc-tools"><div class="slfa-mc-filters" role="group" aria-label="Match filters">'+filters+'</div>'+dateStrip+'<div class="slfa-mc-selects"><label>Date<input type="date" id="mcDate" value="'+esc(chosenDate)+'"></label><label>Club<select id="mcClub"><option value="">All clubs</option>'+options+'</select></label><button type="button" class="slfa-mc-reset" id="mcReset">Reset</button></div></div>'+
       '<div class="slfa-mc-summary" aria-live="polite">'+
       '<span class="slfa-mc-summary-stat live"><i aria-hidden="true"></i><b>'+liveCount+'</b><small>Live now</small></span>'+
       '<span class="slfa-mc-summary-stat"><b>'+upcomingCount+'</b><small>Upcoming</small></span>'+
@@ -169,6 +180,7 @@
       (list.length?'<div class="slfa-mc-grid">'+list.map(card).join('')+'</div>':'<div class="slfa-mc-empty"><span>⚽</span><strong>No matches found</strong><p>Try another date, club or match filter.</p></div>')+
       '<p class="slfa-mc-footnote">Scores and match details reflect information currently published in the app.</p></section>';
     host.querySelectorAll('[data-mc-filter]').forEach(function (b) { b.addEventListener('click',function(){filter=b.dataset.mcFilter;render();}); });
+    host.querySelectorAll('[data-mc-day]').forEach(function(b){b.addEventListener('click',function(){chosenDate=b.getAttribute('data-mc-day')||'';render();});});
     var d=document.getElementById('mcDate'), c=document.getElementById('mcClub'), r=document.getElementById('mcReset');
     if(d)d.addEventListener('change',function(){chosenDate=this.value;render();});
     if(c)c.addEventListener('change',function(){chosenClub=this.value;render();});

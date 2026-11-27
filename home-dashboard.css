@@ -75,3 +75,32 @@
 .slfa-supporter-match button{flex:0 0 auto;padding:7px 9px;border:1px solid rgba(170,255,210,.34);border-radius:9px;background:rgba(255,255,255,.08);color:#f4fff8;font-size:8px;font-weight:800}
 .slfa-supporter-hint{padding-top:2px;color:#aeeac6}
 @media(max-width:520px){.slfa-supporter-groups{grid-template-columns:1fr}.slfa-supporter-match{align-items:flex-start}.slfa-home-fixture{display:flex;align-items:center;justify-content:space-between;gap:10px}.slfa-home-remind{max-width:118px;white-space:normal}}
+
+
+/* Supporter-first home layout: make followed clubs and players a primary destination. */
+.slfa-supporter-dashboard{border-color:rgba(117,245,174,.42);background:linear-gradient(135deg,rgba(8,75,54,.96),rgba(5,31,54,.98));box-shadow:0 18px 40px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.07)}
+.slfa-supporter-head strong{font-size:16px}
+.slfa-supporter-actions{display:flex;flex-wrap:wrap;gap:8px}
+.slfa-supporter-actions button,.slfa-home-quick-actions button{min-height:38px;padding:9px 13px;border:1px solid rgba(145,238,184,.34);border-radius:999px;background:linear-gradient(135deg,rgba(16,148,84,.36),rgba(0,114,198,.2));color:#f1fff6;font-size:10px;font-weight:800;cursor:pointer}
+.slfa-supporter-actions button:focus-visible,.slfa-home-quick-actions button:focus-visible{outline:2px solid #a8f5c9;outline-offset:3px}
+.slfa-home-quick-table{overflow:hidden;border:1px solid rgba(145,238,184,.3);border-radius:17px;background:linear-gradient(145deg,rgba(7,41,78,.8),rgba(2,24,56,.91))}
+.slfa-home-quick-table>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;cursor:pointer;list-style:none}
+.slfa-home-quick-table>summary::-webkit-details-marker{display:none}
+.slfa-home-quick-table>summary>span:first-child{display:grid;gap:4px}
+.slfa-home-quick-table>summary small{color:#aeeac6;font-size:8px;font-weight:900;letter-spacing:.16em}
+.slfa-home-quick-table>summary strong{color:#f4fff8;font-size:14px}
+.slfa-home-quick-chevron{display:grid;place-items:center;width:29px;height:29px;border:1px solid rgba(145,238,184,.3);border-radius:50%;color:#baf4d0;font-size:17px;transition:transform .18s ease}
+.slfa-home-quick-table[open] .slfa-home-quick-chevron{transform:rotate(45deg)}
+.slfa-home-quick-body{display:grid;gap:10px;padding:0 13px 12px}
+.slfa-home-quick-group{min-width:0;padding:10px;border:1px solid rgba(145,238,184,.15);border-radius:12px;background:rgba(255,255,255,.035)}
+.slfa-home-quick-group h4{margin:0 0 7px;color:#d8f6e3;font-size:10px}
+.slfa-home-quick-scroll{max-width:100%;overflow-x:auto}
+.slfa-home-quick-scroll table{width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums}
+.slfa-home-quick-scroll th,.slfa-home-quick-scroll td{padding:7px 8px;border-bottom:1px solid rgba(145,238,184,.12);text-align:left;white-space:nowrap}
+.slfa-home-quick-scroll th{color:#aeeac6;font-size:8px;text-transform:uppercase;letter-spacing:.07em}
+.slfa-home-quick-scroll td{color:#eefaf2}
+.slfa-home-quick-scroll td:first-child{color:#9be9ba;font-weight:800}
+.slfa-home-quick-scroll td:last-child strong{color:#fff}
+.slfa-home-quick-empty{margin:0;padding:10px 3px;color:#c4dfcf;font-size:9px;line-height:1.5}
+.slfa-home-quick-actions{display:flex;justify-content:flex-end;padding:0 13px 13px}
+@media(max-width:520px){.slfa-supporter-dashboard{padding:13px}.slfa-supporter-actions button{flex:1 1 auto}.slfa-home-quick-table>summary{padding:12px}}
