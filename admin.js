@@ -1738,7 +1738,7 @@
     db.auth.getUser().then(function (u) {
       if (!u.data || !u.data.user) throw new Error('Sign in again before recording a match event.');
       var event = {
-        client_event_id: makeClientEventId(), match_id: String(tp.id), event_type: tp.type, team_name: tp.team,
+        client_event_id: makeClientEventId(), match_id: Number(tp.id), event_type: tp.type, team_name: tp.team,
         player_name: player, player_off_name: off || null, minute: tp.minute, recorded_by: u.data.user.id,
         recorded_at: new Date().toISOString(), published_at: new Date().toISOString()
       };
@@ -1861,7 +1861,7 @@
       if (type === 'SUB' && !$('rfOff').value.trim()) { msg('Enter the player coming off.'); return; }
       db.auth.getUser().then(function (u) {
         if (!u.data || !u.data.user) throw new Error('Sign in again before recording a match event.');
-        var event = { client_event_id: makeClientEventId(), match_id: String(id), event_type: type, team_name: $('rfTeam').value, player_name: player,
+        var event = { client_event_id: makeClientEventId(), match_id: Number(id), event_type: type, team_name: $('rfTeam').value, player_name: player,
           assist_player_name: $('rfAssist').value.trim() || null, player_off_name: $('rfOff').value.trim() || null, minute: minute,
           half: (currentRefMatch && Number(currentRefMatch.current_half) === 2) ? 2 : 1,
           recorded_by: u.data.user.id, recorded_at: new Date().toISOString(), published_at: new Date().toISOString() };
