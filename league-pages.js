@@ -454,13 +454,22 @@
     if (loading) return;
     loading = true;
     host.innerHTML = '<section class="slfa-league-pages"><div class="slfa-lp-loading">Loading public competition information…</div></section>';
-    Promise.all([
+    var shared = window.slfaPublicData;
+    var hasSharedCore = shared && Array.isArray(shared.leagues) && Array.isArray(shared.clubs) && Array.isArray(shared.seasons);
+    var coreRequests = hasSharedCore ? [
+      Promise.resolve({ data: shared.leagues, error: null }),
+      Promise.resolve({ data: shared.clubs, error: null }),
+      db.from('matches').select('id,league_id,season_id,match_date,venue,match_status,home_team,away_team,home_score,away_score').order('match_date',{ascending:false}).limit(1000),
+      db.from('league_standings').select('league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos',{ascending:true}),
+      Promise.resolve({ data: shared.seasons, error: null })
+    ] : [
       db.from('leagues').select('id,name,competition_type,gender_category,description,logo_url,sort_order,season_id,start_date,end_date,venue,format_details').eq('is_active',true).order('sort_order'),
       db.from('league_clubs').select('id,league_id,club_name,logo_url,stadium,city,founded_year,about').eq('is_active',true).order('club_name'),
       db.from('matches').select('id,league_id,season_id,match_date,venue,match_status,home_team,away_team,home_score,away_score').order('match_date',{ascending:false}).limit(1000),
       db.from('league_standings').select('league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos',{ascending:true}),
       db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date',{ascending:true})
-    ]).then(function (r) {
+    ];
+    Promise.all(coreRequests).then(function (r) {
       if (r[0].error) {
         return db.from('leagues').select('id,name').eq('is_active',true).order('sort_order').then(function(fallback) {
           r[0] = fallback;
