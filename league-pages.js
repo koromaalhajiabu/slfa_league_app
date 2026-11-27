@@ -7,8 +7,7 @@
   var host;
   if (!db || !nav || !switcher) return;
 
-  var leagues = [], clubs = [], matches = [], standings = [], historicalStandings = [], cupTies = [], seasons = [];
-  var tableSeasonChoice = {};
+  var leagues = [], clubs = [], matches = [], standings = [], cupTies = [], seasons = [];
   var selectedId = '';
   var loading = false, lastLoaded = 0;
 
@@ -160,32 +159,10 @@
     var next = games.filter(upcoming).sort(function (a,b) { return new Date(a.match_date)-new Date(b.match_date); });
     var recent = played.sort(function (a,b) { return new Date(b.match_date)-new Date(a.match_date); });
     var goals = played.reduce(function (n,m) { return n + (Number(m.home_score)||0) + (Number(m.away_score)||0); }, 0);
-    var leagueSeasonOptions = seasons.slice().sort(function (a,b) {
-      return String(b.start_date || '').localeCompare(String(a.start_date || ''));
-    });
-    var defaultTableSeason = leagueSeasonOptions.filter(function (x) { return x.is_current; })[0] || leagueSeasonOptions[0] || null;
-    var tableSeasonId = tableSeasonChoice[id] || (defaultTableSeason ? String(defaultTableSeason.id) : '');
-    var chosenTableSeason = leagueSeasonOptions.filter(function (x) { return String(x.id) === String(tableSeasonId); })[0] || null;
-    var currentTableRows = standings.filter(function (r) { return String(r.league_id) === id; });
-    var tableRows = (chosenTableSeason && !chosenTableSeason.is_current
-      ? historicalStandings.filter(function (r) { return String(r.league_id) === id && String(r.season_id) === String(chosenTableSeason.id); })
-      : currentTableRows.slice())
-      .sort(function (a,b) { return Number(a.pos) - Number(b.pos); });
     var clubCards = teamRows.map(function (c) {
       return '<button type="button" class="slfa-lp-club slfa-lp-club-link" data-open-club="' + esc(c.id) + '">' +
         clubBadge(c) + '<span><strong>' + esc(c.club_name) + '</strong><small>' + esc(c.city || 'Sierra Leone') + '</small></span><span class="slfa-lp-club-arrow">›</span></button>';
     }).join('');
-    var tableSeasonControl = leagueSeasonOptions.length ? '<label class="slfa-lp-season-select">Season<select id="slfaLpTableSeason" aria-label="Choose league table season">' +
-      leagueSeasonOptions.map(function (s) { return '<option value="' + esc(s.id) + '"' + (String(s.id) === String(tableSeasonId) ? ' selected' : '') + '>' + esc(s.name) + (s.is_current ? ' · Current' : '') + '</option>'; }).join('') +
-      '</select></label>' : '';
-    var tableTitle = chosenTableSeason ? chosenTableSeason.name + ' standings' : 'Current standings';
-    var tableEmpty = chosenTableSeason && !chosenTableSeason.is_current
-      ? 'No historical final table has been published for ' + chosenTableSeason.name + ' yet.'
-      : 'No current league standings are available yet.';
-    var tableHtml = String(lg.competition_type || 'LEAGUE').toUpperCase() === 'CUP' ? '' : '<section class="slfa-lp-panel"><div class="slfa-lp-section-head slfa-lp-table-head"><div><span>LEAGUE TABLE</span><h4>' + esc(tableTitle) + '</h4></div>' + tableSeasonControl + '</div>' +
-      (tableRows.length ? '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table"><thead><tr><th>#</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>' +
-      tableRows.map(function (r) { return '<tr><td>' + esc(r.pos) + '</td><td class="club">' + esc(r.club) + '</td><td>' + esc(r.mp) + '</td><td>' + esc(r.w) + '</td><td>' + esc(r.d) + '</td><td>' + esc(r.l) + '</td><td>' + esc((Number(r.gf)||0)-(Number(r.ga)||0)) + '</td><td class="pts">' + esc(r.pts) + '</td></tr>'; }).join('') +
-      '</tbody></table></div>' : '<p class="slfa-lp-empty">' + esc(tableEmpty) + '</p>') + '</section>';
     function outcomeFor(club, match) {
       var home = sameClub(match.home_team, club);
       var gf = Number(home ? match.home_score : match.away_score) || 0;
@@ -204,11 +181,11 @@
       var home = all.filter(function(m) { return sameClub(m.home_team,name); });
       var away = all.filter(function(m) { return sameClub(m.away_team,name); });
       var form = all.slice().sort(function(a,b) { return new Date(b.match_date)-new Date(a.match_date); }).slice(0,5).reverse().map(function(m) { return outcomeFor(name,m); });
-      return {name:name,homePoints:pointsFor(name,home),awayPoints:pointsFor(name,away),form:form || '—',played:all.length};
+      return {name:name,homePoints:pointsFor(name,home),awayPoints:pointsFor(name,away),form:form || '—'};
     });
     var analyticsHtml = '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>PERFORMANCE INTELLIGENCE</span><h4>Home, away and recent form</h4></div><small>From completed results</small></div>' +
-      '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table slfa-lp-analytics-table"><thead><tr><th>Club</th><th>Pos</th><th>P</th><th>Home pts</th><th>Away pts</th><th>Last 5</th></tr></thead><tbody>' +
-      analyticsRows.map(function(x) { var standing=currentTableRows.find(function(r){return sameClub(r.club,x.name);}); return '<tr><td class="club">'+esc(x.name)+'</td><td>'+(standing?'<strong class="slfa-lp-current-rank">#'+esc(standing.pos)+'</strong>':'—')+'</td><td>'+x.played+'</td><td>'+x.homePoints+'</td><td>'+x.awayPoints+'</td><td><strong class="slfa-lp-form">'+(Array.isArray(x.form)&&x.form.length?x.form.map(function(v){return '<i class="slfa-form-'+v.toLowerCase()+'" title="'+(v==='W'?'Win':v==='D'?'Draw':'Loss')+'">'+v+'</i>';}).join(''):'—')+'</strong></td></tr>'; }).join('') +
+      '<div class="slfa-lp-table-wrap"><table class="slfa-lp-table slfa-lp-analytics-table"><thead><tr><th>Club</th><th>Home pts</th><th>Away pts</th><th>Last 5</th></tr></thead><tbody>' +
+      analyticsRows.map(function(x) { return '<tr><td class="club">'+esc(x.name)+'</td><td>'+x.homePoints+'</td><td>'+x.awayPoints+'</td><td><strong class="slfa-lp-form">'+(Array.isArray(x.form)&&x.form.length?x.form.map(function(v){return '<i class="slfa-form-'+v.toLowerCase()+'" title="'+(v==='W'?'Win':v==='D'?'Draw':'Loss')+'">'+v+'</i>';}).join(''):'—')+'</strong></td></tr>'; }).join('') +
       '</tbody></table></div></section>';
     var seasonTrendRows = seasons.map(function(season) {
       var seasonMatches = games.filter(function(m) {
@@ -249,7 +226,7 @@
         : String(lg.name || '').toLowerCase().indexOf('leone rock') !== -1
         ? '<img class="slfa-lp-competition-logo" src="league-logos/leone-rock-premier-league.jpg" alt="Leone Rock Premier League logo" loading="lazy">'
         : '<span class="slfa-lp-hero-mark">SLFA</span>')) + '</div>' +
-      '<div class="slfa-lp-detail-actions"><button type="button" id="slfaLpAll">‹ All competitions</button><span>Public information</span></div>' +
+      '<div class="slfa-lp-detail-actions"><button type="button" id="slfaLpAll">‹ All competitions</button><button type="button" class="slfa-lp-table-link" id="slfaLpViewTable">View official table</button></div>' +
       '<section class="slfa-lp-profile-meta" aria-label="Official competition details">' +
       (lg.season_id ? '<span><b>Season</b>' + esc((seasons.find(function(s){return String(s.id)===String(lg.season_id);})||{}).name || 'Season assigned') + '</span>' : '') +
       (lg.start_date ? '<span><b>Starts</b>' + esc(dateLabel(lg.start_date)) + '</span>' : '') +
@@ -260,17 +237,12 @@
       kpi(goals,'Goals recorded') + kpi(next.length,'Upcoming fixtures') + '</div>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>PARTICIPATING TEAMS</span><h4>Clubs in this competition</h4></div><small>' + teamRows.length + ' clubs</small></div>' +
       (clubCards ? '<div class="slfa-lp-clubs">' + clubCards + '</div>' : '<p class="slfa-lp-empty">No clubs have been published for this competition yet.</p>') + '</section>' +
-      cupBracketHtml + tableHtml + analyticsHtml + seasonTrendHtml + h2hHtml +
+      cupBracketHtml + analyticsHtml + seasonTrendHtml + h2hHtml +
       '<div class="slfa-lp-match-panels"><section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>UP NEXT</span><h4>Upcoming fixtures</h4></div></div>' +
       (next.length ? next.slice(0,3).map(matchRow).join('') : '<p class="slfa-lp-empty">No upcoming fixtures published yet.</p>') + '</section>' +
       '<section class="slfa-lp-panel"><div class="slfa-lp-section-head"><div><span>RECENT ACTION</span><h4>Latest results</h4></div></div>' +
       (recent.length ? recent.slice(0,3).map(matchRow).join('') : '<p class="slfa-lp-empty">No completed results published yet.</p>') + '</section></div>' +
       '<p class="slfa-lp-source">Club, match and fixture information reflects the records currently published in the SLFA League App. Official updates are subject to SLFA publication.</p></section>';
-    var tableSeasonSelect = document.getElementById('slfaLpTableSeason');
-    if (tableSeasonSelect) tableSeasonSelect.addEventListener('change', function () {
-      tableSeasonChoice[id] = this.value;
-      renderLeague(lg);
-    });
     host.querySelectorAll('[data-cup-round]').forEach(function(button){
       button.addEventListener('click',function(){
         var chosen=button.getAttribute('data-cup-round');
@@ -280,6 +252,11 @@
     });
     var back = document.getElementById('slfaLpAll');
     if (back) back.addEventListener('click', renderDirectory);
+    var openOfficialTable = document.getElementById('slfaLpViewTable');
+    if (openOfficialTable) openOfficialTable.addEventListener('click', function () {
+      var tableTab = nav.querySelector('[data-tab="table"]');
+      if (tableTab) tableTab.click();
+    });
     host.querySelectorAll('[data-open-club]').forEach(function (button) {
       button.addEventListener('click', function () {
         var club = teamRows.find(function (c) { return String(c.id) === String(button.getAttribute('data-open-club')); });
@@ -482,8 +459,7 @@
       db.from('league_clubs').select('id,league_id,club_name,logo_url,stadium,city,founded_year,about').eq('is_active',true).order('club_name'),
       db.from('matches').select('id,league_id,season_id,match_date,venue,match_status,home_team,away_team,home_score,away_score').order('match_date',{ascending:false}).limit(1000),
       db.from('league_standings').select('league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos',{ascending:true}),
-      db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date',{ascending:true}),
-      db.from('season_standings').select('season_id,league_id,pos,club,mp,w,d,l,gf,ga,pts').order('pos',{ascending:true})
+      db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date',{ascending:true})
     ]).then(function (r) {
       if (r[0].error) {
         return db.from('leagues').select('id,name').eq('is_active',true).order('sort_order').then(function(fallback) {
@@ -498,14 +474,13 @@
       matches = r[2].error ? [] : (r[2].data || []);
       standings = r[3].error ? [] : (r[3].data || []);
       seasons = r[4].error ? [] : (r[4].data || []);
-      historicalStandings = r[5].error ? [] : (r[5].data || []);
       lastLoaded = Date.now();
       render();
       db.from('cup_ties').select('id,competition_id,season_id,round_name,tie_number,winner_team,matches(home_team,away_team,home_score,away_score,match_status,match_date)').order('round_name').order('tie_number').then(function(ct){
         cupTies = ct.error ? [] : (ct.data || []);
         if (!host.hidden) render();
       });
-      if (r.slice(0, 5).some(function (x) { return !!x.error; })) {
+      if (r.some(function (x) { return !!x.error; })) {
         var warning = document.createElement('p');
         warning.className = 'slfa-lp-source';
         warning.textContent = 'Some competition information could not be loaded. Please try again when connected.';
