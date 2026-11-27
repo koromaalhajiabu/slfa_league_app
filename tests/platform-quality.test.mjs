@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v301'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v302'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -210,4 +210,31 @@ test('structured navigation assets load across every staff workspace', () => {
   assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
   assert.ok(sw.includes('slfa-app-v301'), 'Service worker cache must be advanced for the interface refresh');
+});
+
+
+test('official standings have one canonical public destination', () => {
+  const leaguePages = fs.readFileSync(path.join(ROOT, 'league-pages.js'), 'utf8');
+  const index = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+
+  assert.doesNotMatch(leaguePages, /LEAGUE TABLE|tableHtml|slfaLpTableSeason/,
+    'Competition profiles must not render a second standings table or season selector');
+  assert.match(leaguePages, /id="slfaLpViewTable"/,
+    'Competition profiles must provide a shortcut to the official Table panel');
+  assert.match(leaguePages, /tableTab\.click\(\)/,
+    'The shortcut must open the canonical Table tab');
+  assert.match(index, /data-tab="table"/,
+    'The public navigation must retain the dedicated Table tab');
+  assert.match(index, /id="tableBody"/,
+    'The dedicated Table panel must retain its single standings table body');
+  assert.match(leaguePages, /Home pts.*Away pts.*Last 5/,
+    'Competition profiles should retain the unique home/away and recent-form insights');
+});
+
+test('official table shortcut is translated in all supported app languages', () => {
+  const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
+  assert.match(dictionary, /View official table/);
+  assert.match(dictionary, /Voir le classement officiel/);
+  assert.match(dictionary, /Luk di ɔfisyal tebul/);
+  assert.match(dictionary, /عرض الجدول الرسمي/);
 });
