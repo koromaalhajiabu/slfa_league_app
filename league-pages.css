@@ -202,3 +202,18 @@
 .slfa-lp-profile-meta span{display:flex;flex-direction:column;gap:3px;min-width:120px;color:var(--ink);font-size:11px}
 .slfa-lp-profile-meta b{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em}
 .slfa-lp-profile-meta p{flex-basis:100%;margin:4px 0 0;color:var(--ink);font-size:11px;line-height:1.6;white-space:pre-line}
+
+/* One authoritative standings destination: keep its shortcut visible on each competition profile. */
+.slfa-lp-detail-actions .slfa-lp-table-link {
+  border-color: rgba(35, 166, 104, .48);
+  background: rgba(35, 166, 104, .12);
+  color: var(--ink);
+  font-weight: 800;
+}
+.slfa-lp-detail-actions .slfa-lp-table-link:hover,
+.slfa-lp-detail-actions .slfa-lp-table-link:focus-visible {
+  border-color: var(--accent2);
+  background: rgba(35, 166, 104, .2);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
