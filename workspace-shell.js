@@ -162,8 +162,7 @@
 
   buildNavigation();
   var observer = new MutationObserver(function () { buildNavigation(); });
-  observer.observe(workspace, { childList: true, subtree: true, characterData: true });
-  observer.observe(workspace, { attributes: true, attributeFilter: ['hidden'] });
+  observer.observe(workspace, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['hidden'] });
   window.addEventListener('storage', function (event) {
     if (event.key === 'slfa_lang') buildNavigation();
   });
