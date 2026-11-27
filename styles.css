@@ -1142,3 +1142,8 @@ html body .slfa-club-share { margin:6px 0 10px; padding:8px 12px; border-radius:
 
 /* Prevent an empty fixed toast from leaving a blue sliver at the bottom of mobile screens. */
 .toast:empty { display:none !important; }
+
+
+/* Prevent the hidden toast's translated blue edge from peeking above the mobile viewport. */
+.toast:not(.show), .toast:empty { display:none !important; visibility:hidden !important; opacity:0 !important; pointer-events:none !important; }
+.toast.show { display:block !important; visibility:visible !important; opacity:1 !important; }
