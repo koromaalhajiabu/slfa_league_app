@@ -453,13 +453,280 @@
   };
   // Shared staff/admin vocabulary used by dynamically rendered panels on every portal.
   Object.assign(DICT.fr, {
-    'Save':'Enregistrer','Save changes':'Enregistrer les modifications','Cancel':'Annuler','Close':'Fermer','Delete':'Supprimer','Edit':'Modifier','Add':'Ajouter','Create':'Créer','Search':'Rechercher','Filter':'Filtrer','Status':'Statut','Active':'Actif','Inactive':'Inactif','Pending':'En attente','Approved':'Approuvé','Rejected':'Rejeté','Submit':'Soumettre','Update':'Mettre à jour','Assign':'Attribuer','Upload':'Téléverser','Download':'Télécharger','Select':'Sélectionner','Select all':'Tout sélectionner','Refresh':'Actualiser','Back':'Retour','Continue':'Continuer','Confirm':'Confirmer','Yes':'Oui','No':'Non','Name':'Nom','Role':'Rôle','Club':'Club','Home':'Domicile','Away':'Extérieur','Match':'Match','Fixture':'Rencontre','Player':'Joueur','Players':'Joueurs','Team':'Équipe','Teams':'Équipes','Date':'Date','Time':'Heure','Venue':'Lieu','Competition':'Compétition','Season':'Saison','Email':'E-mail','Password':'Mot de passe','Notes':'Notes','Reason':'Motif','Actions':'Actions','No records found':'Aucun enregistrement trouvé','Loading...':'Chargement...','Loading':'Chargement','Sign in':'Se connecter','Sign out':'Se déconnecter','Dashboard':'Tableau de bord','Settings':'Paramètres','Reports':'Rapports','Notifications':'Notifications','Review':'Examiner','Return for correction':'Renvoyer pour correction','Approve':'Approuver','Save draft':'Enregistrer le brouillon','Create fixture':'Créer une rencontre','Select fixture':'Sélectionner une rencontre','Match officials':'Officiels du match','Team sheet':'Feuille de match','Starting XI':'Onze de départ','Substitutes':'Remplaçants','Goals':'Buts','Assists':'Passes décisives','Yellow cards':'Cartons jaunes','Red cards':'Cartons rouges','Substitutions':'Remplacements'
+    'Save':'Enregistrer','Save changes':'Enregistrer les modifications','Cancel':'Annuler','Close':'Fermer','Delete':'Supprimer','Edit':'Modifier','Add':'Ajouter','Create':'Créer','Search':'Rechercher','Filter':'Filtrer','Status':'Statut','Active':'Actif','Inactive':'Inactif','Pending':'En attente','Approved':'Approuvé','Rejected':'Rejeté','Submit':'Soumettre','Update':'Mettre à jour','Assign':'Attribuer','Upload':'Téléverser','Download':'Télécharger','Select':'Sélectionner','Select all':'Tout sélectionner','Refresh':'Actualiser','Back':'Retour','Continue':'Continuer','Confirm':'Confirmer','Yes':'Oui','No':'Non','Name':'Nom','Role':'Rôle','Club':'Club','Home':'Domicile','Away':'Extérieur','Match':'Match','Fixture':'Rencontre','Player':'Joueur','Players':'Joueurs','Team':'Équipe','Teams':'Équipes','Date':'Date','Time':'Heure','Venue':'Lieu','Competition':'Compétition','Season':'Saison','Email':'E-mail','Password':'Mot de passe','Notes':'Notes','Reason':'Motif','Actions':'Actions','No records found':'Aucun enregistrement trouvé','Loading...':'Chargement...','Loading':'Chargement','Sign in':'Se connecter','Sign out':'Se déconnecter','Dashboard':'Tableau de bord','Settings':'Paramètres','Reports':'Rapports','Notifications':'Notifications','Review':'Examiner','Return for correction':'Renvoyer pour correction','Approve':'Approuver','Save draft':'Enregistrer le brouillon','Create fixture':'Créer une rencontre','Select fixture':'Sélectionner une rencontre','Match officials':'Officiels du match','Team sheet':'Feuille de match','Starting XI':'Onze de départ','Substitutes':'Remplaçants','Goals':'Buts','Assists':'Passes décisives','Yellow cards':'Cartons jaunes','Red cards':'Cartons rouges','Substitutions':'Remplacements',
+"Content Management Centre":"Centre de gestion du contenu",
+"Super Admin":"Super administrateur",
+"Technical Director":"Directeur technique",
+"Referee Portal":"Portail de l’arbitre",
+"Match Commissioner":"Commissaire de match",
+"Media Officer":"Responsable des médias",
+"Disciplinary Officer":"Responsable disciplinaire",
+"Club Representative":"Représentant du club",
+"Match Data Operator":"Opérateur des données du match",
+"Overview":"Vue d’ensemble",
+"Match operations":"Opérations de match",
+"Club management":"Gestion des clubs",
+"Player management":"Gestion des joueurs",
+"Staff management":"Gestion du personnel",
+"User management":"Gestion des utilisateurs",
+"Access control":"Contrôle d’accès",
+"Audit trail":"Journal d’audit",
+"Activity log":"Journal d’activité",
+"Competition management":"Gestion des compétitions",
+"Fixture management":"Gestion des rencontres",
+"Team sheets":"Feuilles de match",
+"Starting XI":"Onze de départ",
+"Substitutes":"Remplaçants",
+"Captain":"Capitaine",
+"Goalkeeper":"Gardien de but",
+"Squad list":"Liste de l’effectif",
+"Registered players":"Joueurs inscrits",
+"Player registration":"Inscription des joueurs",
+"Shirt number":"Numéro de maillot",
+"Match report":"Rapport de match",
+"Match events":"Événements du match",
+"Own goal":"But contre son camp",
+"Penalty":"Penalty",
+"Assist":"Passe décisive",
+"Yellow card":"Carton jaune",
+"Red card":"Carton rouge",
+"Substitution":"Remplacement",
+"Kick-off":"Coup d’envoi",
+"Half-time":"Mi-temps",
+"Full-time":"Fin du match",
+"Extra time":"Prolongation",
+"Penalty shoot-out":"Tirs au but",
+"Awaiting approval":"En attente d’approbation",
+"Submitted":"Soumis",
+"Draft":"Brouillon",
+"Locked":"Verrouillé",
+"Verified":"Vérifié",
+"Publish results":"Publier les résultats",
+"Assign referee":"Affecter un arbitre",
+"Home team":"Équipe à domicile",
+"Away team":"Équipe visiteuse",
+"Match date":"Date du match",
+"Kick-off time":"Heure du coup d’envoi",
+"Match venue":"Lieu du match",
+"This field is required.":"Ce champ est obligatoire.",
+"Please complete all required fields.":"Veuillez remplir tous les champs obligatoires.",
+"Please select a fixture.":"Veuillez sélectionner une rencontre.",
+"Please select a club.":"Veuillez sélectionner un club.",
+"Please select at least one player.":"Veuillez sélectionner au moins un joueur.",
+"A player can only appear once on the team sheet.":"Un joueur ne peut apparaître qu’une seule fois sur la feuille de match.",
+"The starting XI must contain 11 players.":"Le onze de départ doit contenir 11 joueurs.",
+"You do not have permission to perform this action.":"Vous n’êtes pas autorisé à effectuer cette action.",
+"Your session has expired. Please sign in again.":"Votre session a expiré. Veuillez vous reconnecter.",
+"Unable to connect. Check your internet connection and try again.":"Connexion impossible. Vérifiez votre connexion Internet et réessayez.",
+"Something went wrong. Please try again.":"Une erreur s’est produite. Veuillez réessayer.",
+"Saved successfully.":"Enregistré avec succès.",
+"Changes saved successfully.":"Modifications enregistrées avec succès.",
+"Submitted successfully.":"Soumis avec succès.",
+"Approved successfully.":"Approuvé avec succès.",
+"Deleted successfully.":"Supprimé avec succès.",
+"No data available.":"Aucune donnée disponible.",
+"No notifications yet.":"Aucune notification pour le moment.",
+"You have unsaved changes.":"Vous avez des modifications non enregistrées.",
+"No results match your filters.":"Aucun résultat ne correspond à vos filtres.",
+"Connection restored.":"Connexion rétablie.",
+"Sync pending":"Synchronisation en attente",
+"Sync failed":"Échec de la synchronisation",
+"Last updated":"Dernière mise à jour",
+"Submitted by":"Soumis par",
+"Reviewed by":"Examiné par",
+"Rejection reason":"Motif du rejet",
+"Save and continue":"Enregistrer et continuer",
+"Discard changes":"Abandonner les modifications",
+"Add player":"Ajouter un joueur",
+"Remove player":"Retirer le joueur",
+"Record goal":"Enregistrer un but",
+"Record card":"Enregistrer un carton",
+"Record substitution":"Enregistrer un remplacement",
+"Event reversed":"Événement annulé"
   });
   Object.assign(DICT.kri, {
-    'Save':'Sev','Save changes':'Sev di chenj dɛn','Cancel':'Kansul','Close':'Klos','Delete':'Delit','Edit':'Edit','Add':'Ad','Create':'Mek','Search':'Sɛch','Filter':'Fɔlta','Status':'Stetis','Active':'De wok','Inactive':'Nɔ de wok','Pending':'De wet','Approved':'Dɛn apruv am','Rejected':'Dɛn nɔ apruv am','Submit':'Sɛnd','Update':'Apdet','Assign':'Gi jɔb','Upload':'Ap lod','Download':'Dɔnlod','Select':'Pik','Select all':'Pik ɔl','Refresh':'Frɛsh','Back':'Go bak','Continue':'Go fɔwod','Confirm':'Kɔnfirm','Yes':'Ɛɛ','No':'Nɔ','Name':'Nem','Role':'Rul','Club':'Klob','Home':'Os','Away':'Ɔda sid','Match':'Mach','Fixture':'Mach we dɛn set','Player':'Plea','Players':'Plea dɛn','Team':'Tim','Teams':'Tim dɛn','Date':'Dɛt','Time':'Tɛm','Venue':'Ples','Competition':'Kɔmpitishɔn','Season':'Sizin','Email':'Imel','Password':'Paswɔd','Notes':'Not dɛn','Reason':'Rizɔn','Actions':'Wok dɛn','No records found':'Nɔ gɛt rikɔd','Loading...':'De lod...','Loading':'De lod','Sign in':'Sayn in','Sign out':'Kɔmɔt','Dashboard':'Dashbɔd','Settings':'Sɛtin dɛn','Reports':'Ripɔt dɛn','Notifications':'Alɛt dɛn','Review':'Luk am','Return for correction':'Sɛnd bak fɔ fiks','Approve':'Apruv','Save draft':'Sev di draf','Create fixture':'Mek mach','Select fixture':'Pik mach','Match officials':'Mach ɔfishal dɛn','Team sheet':'Tim shit','Starting XI':'Di 11 pleya we de start','Substitutes':'Bɛnch pleya dɛn','Goals':'Gɔl dɛn','Assists':'Asist dɛn','Yellow cards':'Yɛlo kad dɛn','Red cards':'Rɛd kad dɛn','Substitutions':'Chenj pleya dɛn'
+    'Save':'Sev','Save changes':'Sev di chenj dɛn','Cancel':'Kansul','Close':'Klos','Delete':'Delit','Edit':'Edit','Add':'Ad','Create':'Mek','Search':'Sɛch','Filter':'Fɔlta','Status':'Stetis','Active':'De wok','Inactive':'Nɔ de wok','Pending':'De wet','Approved':'Dɛn apruv am','Rejected':'Dɛn nɔ apruv am','Submit':'Sɛnd','Update':'Apdet','Assign':'Gi jɔb','Upload':'Ap lod','Download':'Dɔnlod','Select':'Pik','Select all':'Pik ɔl','Refresh':'Frɛsh','Back':'Go bak','Continue':'Go fɔwod','Confirm':'Kɔnfirm','Yes':'Ɛɛ','No':'Nɔ','Name':'Nem','Role':'Rul','Club':'Klob','Home':'Os','Away':'Ɔda sid','Match':'Mach','Fixture':'Mach we dɛn set','Player':'Plea','Players':'Plea dɛn','Team':'Tim','Teams':'Tim dɛn','Date':'Dɛt','Time':'Tɛm','Venue':'Ples','Competition':'Kɔmpitishɔn','Season':'Sizin','Email':'Imel','Password':'Paswɔd','Notes':'Not dɛn','Reason':'Rizɔn','Actions':'Wok dɛn','No records found':'Nɔ gɛt rikɔd','Loading...':'De lod...','Loading':'De lod','Sign in':'Sayn in','Sign out':'Kɔmɔt','Dashboard':'Dashbɔd','Settings':'Sɛtin dɛn','Reports':'Ripɔt dɛn','Notifications':'Alɛt dɛn','Review':'Luk am','Return for correction':'Sɛnd bak fɔ fiks','Approve':'Apruv','Save draft':'Sev di draf','Create fixture':'Mek mach','Select fixture':'Pik mach','Match officials':'Mach ɔfishal dɛn','Team sheet':'Tim shit','Starting XI':'Di 11 pleya we de start','Substitutes':'Bɛnch pleya dɛn','Goals':'Gɔl dɛn','Assists':'Asist dɛn','Yellow cards':'Yɛlo kad dɛn','Red cards':'Rɛd kad dɛn','Substitutions':'Chenj pleya dɛn',
+"Content Management Centre":"Sɛntə fɔ manij infomeshɔn",
+"Super Admin":"Big Admin",
+"Technical Director":"Teknikal Direktɔ",
+"Referee Portal":"Refri Portal",
+"Match Commissioner":"Mach Komisɔnɛ",
+"Media Officer":"Media Ɔfisɛ",
+"Disciplinary Officer":"Disiplin Ɔfisɛ",
+"Club Representative":"Klob Riprɛsɛntativ",
+"Match Data Operator":"Mach Data Woka",
+"Overview":"Ɔvaview",
+"Match operations":"Wok bɔt mach dɛn",
+"Club management":"Manij klob dɛn",
+"Player management":"Manij pleya dɛn",
+"Staff management":"Manij staff dɛn",
+"User management":"Manij yusɛ dɛn",
+"Access control":"Kontrol fɔ ɛntə",
+"Audit trail":"Rikɔd bɔt wok dɛn",
+"Activity log":"Rikɔd bɔt wetin apin",
+"Competition management":"Manij kɔmpitishɔn dɛn",
+"Fixture management":"Manij mach dɛn",
+"Team sheets":"Tim shit dɛn",
+"Starting XI":"Di 11 pleya we de start",
+"Substitutes":"Bɛnch pleya dɛn",
+"Captain":"Kapten",
+"Goalkeeper":"Gɔlkipa",
+"Squad list":"List fɔ tim pleya dɛn",
+"Registered players":"Pleya dɛn we dɛn rijista",
+"Player registration":"Rijista pleya",
+"Shirt number":"Nɔmba na shɔt",
+"Match report":"Ripɔt bɔt mach",
+"Match events":"Wetin apin na mach",
+"Own goal":"Gɔl fɔ di ɔda tim",
+"Penalty":"Penalti",
+"Assist":"Asist",
+"Yellow card":"Yɛlo kad",
+"Red card":"Rɛd kad",
+"Substitution":"Chenj pleya",
+"Kick-off":"Mach bigin",
+"Half-time":"Mid tɛm",
+"Full-time":"Mach don",
+"Extra time":"Ekstra tɛm",
+"Penalty shoot-out":"Penalti kik",
+"Awaiting approval":"De wet fɔ apruv",
+"Submitted":"Dɛn sɛnd am",
+"Draft":"Draf",
+"Locked":"Dɛn lok am",
+"Verified":"Dɛn chɛk am",
+"Publish results":"Publish di rizɔlt dɛn",
+"Assign referee":"Gi refri di jɔb",
+"Home team":"Os tim",
+"Away team":"Ɔda tim",
+"Match date":"Mach dɛt",
+"Kick-off time":"Mach bigin tɛm",
+"Match venue":"Ples fɔ mach",
+"This field is required.":"Yu fɔ fɔl dis wan.",
+"Please complete all required fields.":"Du ɔl di tin dɛn we yu fɔ du.",
+"Please select a fixture.":"Pik wan mach we dɛn set.",
+"Please select a club.":"Pik wan klob.",
+"Please select at least one player.":"Pik wan pleya ɔ mɔ.",
+"A player can only appear once on the team sheet.":"Wan pleya nɔ fɔ de tu tɛm na tim shit.",
+"The starting XI must contain 11 players.":"Di pleya dɛn we de start fɔ bi 11.",
+"You do not have permission to perform this action.":"Yu nɔ gɛt rayt fɔ du dis wok.",
+"Your session has expired. Please sign in again.":"Yu sɛshɔn don ɛkspaya. Sayn in bak.",
+"Unable to connect. Check your internet connection and try again.":"Nɔ fit konek. Chɛk yu intanɛt ɛn tray bak.",
+"Something went wrong. Please try again.":"Wan tin go rong. Tray bak.",
+"Saved successfully.":"Dɛn sev am fayn.",
+"Changes saved successfully.":"Dɛn sev di chenj dɛn fayn.",
+"Submitted successfully.":"Dɛn sɛnd am fayn.",
+"Approved successfully.":"Dɛn apruv am fayn.",
+"Deleted successfully.":"Dɛn delit am fayn.",
+"No data available.":"Nɔ gɛt data.",
+"No notifications yet.":"Nɔ gɛt alɛt yet.",
+"You have unsaved changes.":"Yu gɛt chenj we yu nɔ sev yet.",
+"No results match your filters.":"Nɔ gɛt rizɔlt fɔ yu fɔlta dɛn.",
+"Connection restored.":"Konekshɔn don kam bak.",
+"Sync pending":"Sink de wet",
+"Sync failed":"Sink nɔ wok",
+"Last updated":"Lɛst apdet",
+"Submitted by":"Sɛnd bɔt",
+"Reviewed by":"Luk bɔt",
+"Rejection reason":"Rizɔn fɔ nɔ apruv",
+"Save and continue":"Sev ɛn go fɔwod",
+"Discard changes":"Tek weh di chenj dɛn",
+"Add player":"Ad pleya",
+"Remove player":"Tek weh pleya",
+"Record goal":"Rikɔd gɔl",
+"Record card":"Rikɔd kad",
+"Record substitution":"Rikɔd chenj pleya",
+"Event reversed":"Dɛn kansul di ivɛnt"
   });
   Object.assign(DICT.ar, {
-    'Save':'حفظ','Save changes':'حفظ التغييرات','Cancel':'إلغاء','Close':'إغلاق','Delete':'حذف','Edit':'تعديل','Add':'إضافة','Create':'إنشاء','Search':'بحث','Filter':'تصفية','Status':'الحالة','Active':'نشط','Inactive':'غير نشط','Pending':'قيد الانتظار','Approved':'تمت الموافقة','Rejected':'مرفوض','Submit':'إرسال','Update':'تحديث','Assign':'تعيين','Upload':'رفع','Download':'تنزيل','Select':'اختيار','Select all':'اختيار الكل','Refresh':'تحديث','Back':'رجوع','Continue':'متابعة','Confirm':'تأكيد','Yes':'نعم','No':'لا','Name':'الاسم','Role':'الدور','Club':'النادي','Home':'صاحب الأرض','Away':'الضيف','Match':'المباراة','Fixture':'المواجهة','Player':'اللاعب','Players':'اللاعبون','Team':'الفريق','Teams':'الفرق','Date':'التاريخ','Time':'الوقت','Venue':'الملعب','Competition':'المسابقة','Season':'الموسم','Email':'البريد الإلكتروني','Password':'كلمة المرور','Notes':'ملاحظات','Reason':'السبب','Actions':'الإجراءات','No records found':'لم يتم العثور على سجلات','Loading...':'جارٍ التحميل...','Loading':'جارٍ التحميل','Sign in':'تسجيل الدخول','Sign out':'تسجيل الخروج','Dashboard':'لوحة التحكم','Settings':'الإعدادات','Reports':'التقارير','Notifications':'الإشعارات','Review':'مراجعة','Return for correction':'إعادة للتصحيح','Approve':'موافقة','Save draft':'حفظ المسودة','Create fixture':'إنشاء مواجهة','Select fixture':'اختيار المواجهة','Match officials':'مسؤولو المباراة','Team sheet':'قائمة الفريق','Starting XI':'التشكيلة الأساسية','Substitutes':'البدلاء','Goals':'الأهداف','Assists':'التمريرات الحاسمة','Yellow cards':'البطاقات الصفراء','Red cards':'البطاقات الحمراء','Substitutions':'التبديلات'
+    'Save':'حفظ','Save changes':'حفظ التغييرات','Cancel':'إلغاء','Close':'إغلاق','Delete':'حذف','Edit':'تعديل','Add':'إضافة','Create':'إنشاء','Search':'بحث','Filter':'تصفية','Status':'الحالة','Active':'نشط','Inactive':'غير نشط','Pending':'قيد الانتظار','Approved':'تمت الموافقة','Rejected':'مرفوض','Submit':'إرسال','Update':'تحديث','Assign':'تعيين','Upload':'رفع','Download':'تنزيل','Select':'اختيار','Select all':'اختيار الكل','Refresh':'تحديث','Back':'رجوع','Continue':'متابعة','Confirm':'تأكيد','Yes':'نعم','No':'لا','Name':'الاسم','Role':'الدور','Club':'النادي','Home':'صاحب الأرض','Away':'الضيف','Match':'المباراة','Fixture':'المواجهة','Player':'اللاعب','Players':'اللاعبون','Team':'الفريق','Teams':'الفرق','Date':'التاريخ','Time':'الوقت','Venue':'الملعب','Competition':'المسابقة','Season':'الموسم','Email':'البريد الإلكتروني','Password':'كلمة المرور','Notes':'ملاحظات','Reason':'السبب','Actions':'الإجراءات','No records found':'لم يتم العثور على سجلات','Loading...':'جارٍ التحميل...','Loading':'جارٍ التحميل','Sign in':'تسجيل الدخول','Sign out':'تسجيل الخروج','Dashboard':'لوحة التحكم','Settings':'الإعدادات','Reports':'التقارير','Notifications':'الإشعارات','Review':'مراجعة','Return for correction':'إعادة للتصحيح','Approve':'موافقة','Save draft':'حفظ المسودة','Create fixture':'إنشاء مواجهة','Select fixture':'اختيار المواجهة','Match officials':'مسؤولو المباراة','Team sheet':'قائمة الفريق','Starting XI':'التشكيلة الأساسية','Substitutes':'البدلاء','Goals':'الأهداف','Assists':'التمريرات الحاسمة','Yellow cards':'البطاقات الصفراء','Red cards':'البطاقات الحمراء','Substitutions':'التبديلات',
+"Content Management Centre":"مركز إدارة المحتوى",
+"Super Admin":"المسؤول الأعلى",
+"Technical Director":"المدير الفني",
+"Referee Portal":"بوابة الحكم",
+"Match Commissioner":"مراقب المباراة",
+"Media Officer":"مسؤول الإعلام",
+"Disciplinary Officer":"مسؤول الانضباط",
+"Club Representative":"ممثل النادي",
+"Match Data Operator":"مسؤول بيانات المباراة",
+"Overview":"نظرة عامة",
+"Match operations":"عمليات المباريات",
+"Club management":"إدارة الأندية",
+"Player management":"إدارة اللاعبين",
+"Staff management":"إدارة الموظفين",
+"User management":"إدارة المستخدمين",
+"Access control":"التحكم في الوصول",
+"Audit trail":"سجل التدقيق",
+"Activity log":"سجل النشاط",
+"Competition management":"إدارة المسابقات",
+"Fixture management":"إدارة المواجهات",
+"Team sheets":"قوائم الفرق",
+"Starting XI":"التشكيلة الأساسية",
+"Substitutes":"البدلاء",
+"Captain":"قائد الفريق",
+"Goalkeeper":"حارس المرمى",
+"Squad list":"قائمة اللاعبين",
+"Registered players":"اللاعبون المسجلون",
+"Player registration":"تسجيل اللاعبين",
+"Shirt number":"رقم القميص",
+"Match report":"تقرير المباراة",
+"Match events":"أحداث المباراة",
+"Own goal":"هدف عكسي",
+"Penalty":"ركلة جزاء",
+"Assist":"تمريرة حاسمة",
+"Yellow card":"بطاقة صفراء",
+"Red card":"بطاقة حمراء",
+"Substitution":"تبديل",
+"Kick-off":"انطلاق المباراة",
+"Half-time":"نهاية الشوط الأول",
+"Full-time":"نهاية المباراة",
+"Extra time":"وقت إضافي",
+"Penalty shoot-out":"ركلات الترجيح",
+"Awaiting approval":"بانتظار الموافقة",
+"Submitted":"تم الإرسال",
+"Draft":"مسودة",
+"Locked":"مقفل",
+"Verified":"تم التحقق",
+"Publish results":"نشر النتائج",
+"Assign referee":"تعيين الحكم",
+"Home team":"الفريق المضيف",
+"Away team":"الفريق الضيف",
+"Match date":"تاريخ المباراة",
+"Kick-off time":"وقت انطلاق المباراة",
+"Match venue":"ملعب المباراة",
+"This field is required.":"هذا الحقل مطلوب.",
+"Please complete all required fields.":"يرجى إكمال جميع الحقول المطلوبة.",
+"Please select a fixture.":"يرجى اختيار مواجهة.",
+"Please select a club.":"يرجى اختيار نادٍ.",
+"Please select at least one player.":"يرجى اختيار لاعب واحد على الأقل.",
+"A player can only appear once on the team sheet.":"لا يجوز إدراج اللاعب أكثر من مرة في قائمة الفريق.",
+"The starting XI must contain 11 players.":"يجب أن تضم التشكيلة الأساسية 11 لاعبًا.",
+"You do not have permission to perform this action.":"ليس لديك إذن لتنفيذ هذا الإجراء.",
+"Your session has expired. Please sign in again.":"انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
+"Unable to connect. Check your internet connection and try again.":"تعذر الاتصال. تحقق من اتصال الإنترنت وحاول مرة أخرى.",
+"Something went wrong. Please try again.":"حدث خطأ. يرجى المحاولة مرة أخرى.",
+"Saved successfully.":"تم الحفظ بنجاح.",
+"Changes saved successfully.":"تم حفظ التغييرات بنجاح.",
+"Submitted successfully.":"تم الإرسال بنجاح.",
+"Approved successfully.":"تمت الموافقة بنجاح.",
+"Deleted successfully.":"تم الحذف بنجاح.",
+"No data available.":"لا توجد بيانات متاحة.",
+"No notifications yet.":"لا توجد إشعارات حتى الآن.",
+"You have unsaved changes.":"لديك تغييرات غير محفوظة.",
+"No results match your filters.":"لا توجد نتائج تطابق عوامل التصفية.",
+"Connection restored.":"تم استعادة الاتصال.",
+"Sync pending":"المزامنة معلقة",
+"Sync failed":"فشلت المزامنة",
+"Last updated":"آخر تحديث",
+"Submitted by":"أرسل بواسطة",
+"Reviewed by":"تمت المراجعة بواسطة",
+"Rejection reason":"سبب الرفض",
+"Save and continue":"حفظ ومتابعة",
+"Discard changes":"تجاهل التغييرات",
+"Add player":"إضافة لاعب",
+"Remove player":"إزالة اللاعب",
+"Record goal":"تسجيل هدف",
+"Record card":"تسجيل بطاقة",
+"Record substitution":"تسجيل تبديل",
+"Event reversed":"تم إلغاء الحدث"
   });
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
@@ -469,29 +736,45 @@
   var current = lang();
   var table = DICT[current] || null;
 
+  function translateValue(value) {
+    if (!table || value == null) return value;
+    var raw = String(value), key = raw.trim();
+    if (table[key]) return raw.replace(key, table[key]);
+    var out = raw;
+    Object.keys(table).sort(function(a,b){return b.length-a.length;}).forEach(function(k){
+      if (k.length >= 4 && /[ .!?]/.test(k) && out.indexOf(k) !== -1) out = out.split(k).join(table[k]);
+    });
+    return out;
+  }
+  window.slfaTranslate = translateValue;
+
   function translateText(root) {
-    if (!table) return;
+    if (!table || !root) return;
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode: function (n) {
         var p = n.parentNode;
-        if (!p || /^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT)$/.test(p.nodeName)) return NodeFilter.FILTER_REJECT;
+        if (!p || /^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|OPTION)$/.test(p.nodeName)) return NodeFilter.FILTER_REJECT;
         return n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
       }
     });
     var nodes = [], n;
     while ((n = walker.nextNode())) nodes.push(n);
     nodes.forEach(function (node) {
-      var key = node.nodeValue.trim();
-      if (table[key]) node.nodeValue = node.nodeValue.replace(key, table[key]);
+      var translated = translateValue(node.nodeValue);
+      if (translated !== node.nodeValue) node.nodeValue = translated;
     });
   }
 
   function translateAttrs(root) {
-    if (!table) return;
-    root.querySelectorAll('[aria-label],[placeholder],[title]').forEach(function (el) {
-      ['aria-label', 'placeholder', 'title', 'value'].forEach(function (a) {
+    if (!table || !root) return;
+    var selector = '[aria-label],[placeholder],[title],[value],[alt]';
+    var elements = [];
+    if (root.nodeType === 1 && root.matches && root.matches(selector)) elements.push(root);
+    if (root.querySelectorAll) elements = elements.concat(Array.prototype.slice.call(root.querySelectorAll(selector)));
+    elements.forEach(function (el) {
+      ['aria-label','placeholder','title','value','alt'].forEach(function(a){
         var v = el.getAttribute(a);
-        if (v && table[v]) el.setAttribute(a, table[v]);
+        if (v) { var translated = translateValue(v); if (translated !== v) el.setAttribute(a, translated); }
       });
     });
   }
@@ -543,7 +826,7 @@
     observer.disconnect();
     translateText(document.body);
     translateAttrs(document.body);
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-label','placeholder','title','value','alt'] });
   }
   var observer = new MutationObserver(function () {
     if (pending) return;
