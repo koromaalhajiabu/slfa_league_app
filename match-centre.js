@@ -157,7 +157,7 @@
       var count=dateScope.filter(function(m){return day(m.match_date)===item.key&&(filter==='all'||group(m)===filter);}).length;
       var active=chosenDate===item.key;
       var fullDate=item.date.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
-      dayButtons+='<button type="button" class="slfa-mc-day'+(active?' active':'')+'" data-mc-day="'+esc(item.key)+'" aria-pressed="'+active+'" aria-label="'+esc(fullDate+', '+count+' matches')+'"><span>'+esc(item.label)+'</span><strong>'+esc(item.number)+'</strong><small>'+count+' '+(count===1?'match':'matches')+'</small></button>';
+      dayButtons+='<button type="button" class="slfa-mc-day'+(active?' active':'')+'" data-mc-day="'+esc(item.key)+'" aria-pressed="'+active+'" aria-label="'+esc(fullDate+', '+count+' matches')+'"><span>'+esc(item.label)+'</span><strong>'+esc(item.number)+'</strong><small><b>'+count+'</b> <span>'+(count===1?'match':'matches')+'</span></small></button>';
     });
     var dateStrip='<div class="slfa-mc-date-browser"><div class="slfa-mc-date-browser-head"><strong>Browse by date</strong><span>Swipe to see the next days</span></div><div class="slfa-mc-date-strip" role="group" aria-label="Choose a match date">'+dayButtons+'</div></div>';
     var liveCount = scoped.filter(function (m) { return group(m) === 'live'; }).length;
