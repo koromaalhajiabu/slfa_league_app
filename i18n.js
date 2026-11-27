@@ -753,7 +753,7 @@
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode: function (n) {
         var p = n.parentNode;
-        if (!p || /^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|OPTION)$/.test(p.nodeName)) return NodeFilter.FILTER_REJECT;
+        if (!p || /^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT)$/.test(p.nodeName)) return NodeFilter.FILTER_REJECT;
         return n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
       }
     });
