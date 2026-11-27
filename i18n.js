@@ -988,6 +988,7 @@
   function run() {
     if (!table) return;
     observer.disconnect();
+    document.title = translateValue(document.title);
     translateText(document.body);
     translateAttrs(document.body);
     observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-label','placeholder','title','value','alt'] });
