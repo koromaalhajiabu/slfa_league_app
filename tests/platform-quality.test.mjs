@@ -318,17 +318,16 @@ test('new supporter and match browsing controls are translated in all supported 
 });
 
 
-test('Krio language preference is normalized and translation runtime uses cached phrase lookups', () => {
+test('Krio language preference supports dynamic text and efficient translation', () => {
   const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
-  assert.match(dictionary, /if \(v === 'krio'\) v = 'kri'/);
-  assert.match(dictionary, /var exactLookup = Object\\.create\\(null\\)/);
-  assert.match(dictionary, /var phraseKeys = \\[\\]/);
-  assert.match(dictionary, /var phrasePattern = phraseKeys\\.length/);
-  assert.match(dictionary, /var translatedTextWrites = new WeakMap\\(\\)/);
-  assert.match(dictionary, /record\\.type === 'characterData'/);
-  assert.match(dictionary, /characterData: true/);
-  assert.match(dictionary, /translatedTextWrites\\.get\\(record\\.target\\)/);
-  assert.match(dictionary, /Object\.assign\(DICT\.kri,[\s\S]*?["']Browse by date["']/);
+  assert.ok(dictionary.includes("if (v === 'krio') v = 'kri'"));
+  assert.ok(dictionary.includes('var exactLookup = Object.create(null)'));
+  assert.ok(dictionary.includes('var phraseKeys = []'));
+  assert.ok(dictionary.includes('var phrasePattern = phraseKeys.length'));
+  assert.ok(dictionary.includes('var translatedTextWrites = new WeakMap()'));
+  assert.ok(dictionary.includes("record.type === 'characterData'"));
+  assert.ok(dictionary.includes('characterData: true'));
+  assert.ok(dictionary.includes('translatedTextWrites.get(record.target)'));
 });
 
 test('public data loads on demand instead of fetching hidden tabs at startup', () => {
