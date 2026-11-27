@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v308'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v310'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -274,7 +274,7 @@ test('Krio translations load across public and all staff portals', () => {
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('i18n.js?v=23'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v308'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('slfa-app-v310'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
