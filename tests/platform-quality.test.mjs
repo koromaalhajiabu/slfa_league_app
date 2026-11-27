@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v300'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v301'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -184,4 +184,30 @@ test('public past-season statistics are limited to published events', () => {
   );
   const filters = migration.match(/e\.published_at\s+IS\s+NOT\s+NULL/gi) || [];
   assert.equal(filters.length, 2, 'Both goal and assist aggregations must filter unpublished events');
+});
+
+test('structured navigation assets load across every staff workspace', () => {
+  const publicPage = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.ok(publicPage.includes('workspace-shell.css?v=1'), 'Public League Centre must load the structured layout stylesheet');
+
+  const staffPages = [
+    'developer.html',
+    'super-admin.html',
+    'referee.html',
+    'team-official.html',
+    'match-data-operator.html',
+    'media.html',
+    'disciplinary.html',
+    'league-admin.html'
+  ];
+  for (const pageName of staffPages) {
+    const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
+    assert.ok(page.includes('workspace-shell.css?v=1'), pageName + ' must load the shared workspace stylesheet');
+    assert.ok(page.includes('workspace-shell.js?v=1'), pageName + ' must load role-aware section navigation');
+  }
+
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
+  assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
+  assert.ok(sw.includes('slfa-app-v301'), 'Service worker cache must be advanced for the interface refresh');
 });
