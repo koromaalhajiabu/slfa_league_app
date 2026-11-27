@@ -1138,3 +1138,7 @@ html body .slfa-club-share { margin:6px 0 10px; padding:8px 12px; border-radius:
   .alert-options-list { grid-template-columns:1fr; }
   .alert-preferences button { width:100%; }
 }
+
+
+/* Prevent an empty fixed toast from leaving a blue sliver at the bottom of mobile screens. */
+.toast:empty { display:none !important; }
