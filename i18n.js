@@ -1924,6 +1924,70 @@
     "Saves":"تصديات"
   });
 
+  Object.assign(DICT.fr, {
+    "PLAYER MATCH LOG":"JOURNAL DES MATCHS DU JOUEUR",
+    "Published match contributions":"Contributions publiées en match",
+    "Player match records are temporarily unavailable.":"Les données de match du joueur sont temporairement indisponibles.",
+    "No published match event entries are linked to this player yet. This does not mean the player made no appearances.":"Aucun événement de match publié n’est encore lié à ce joueur. Cela ne signifie pas qu’il n’a fait aucune apparition.",
+    "No linked match records are available for these published events.":"Aucun dossier de match lié n’est disponible pour ces événements publiés.",
+    "Date not recorded":"Date non enregistrée",
+    "Player not recorded":"Joueur non enregistré",
+    "Substituted off":"Remplacé",
+    "Substituted on":"Entré en jeu",
+    "Shot on target":"Tir cadré",
+    "Shot off target":"Tir non cadré",
+    "Blocked shot":"Tir bloqué",
+    "Goalkeeper save":"Arrêt du gardien",
+    "Corner":"Corner",
+    "Foul":"Faute",
+    "Offside":"Hors-jeu",
+    "Yellow card":"Carton jaune",
+    "Red card":"Carton rouge",
+    "Substitution":"Remplacement"
+  });
+  Object.assign(DICT.kri, {
+    "PLAYER MATCH LOG":"PLEYA MACH LOG",
+    "Published match contributions":"Wetin di pleya dɛn du na mach we dɛn publish",
+    "Player match records are temporarily unavailable.":"Rikɔd fɔ mach fɔ dis pleya nɔ de fɔ naw.",
+    "No published match event entries are linked to this player yet. This does not mean the player made no appearances.":"Dɛn nɔ link event fɔ mach we dɛn publish to dis pleya yet. Dis nɔ mean se di pleya nɔ play mach.",
+    "No linked match records are available for these published events.":"Rikɔd fɔ mach we link to dis event dɛn nɔ de.",
+    "Date not recorded":"Dɛt we dɛn nɔ rikɔd",
+    "Player not recorded":"Pleya we dɛn nɔ rikɔd",
+    "Substituted off":"Dɛn chenj am fɔ nɔ ɔ",
+    "Substituted on":"E kɔmɔ na gem",
+    "Shot on target":"Shɔt we go na gɔl",
+    "Shot off target":"Shɔt we nɔ go na gɔl",
+    "Blocked shot":"Shɔt we dɛn blok",
+    "Goalkeeper save":"Gɔlkipa save",
+    "Corner":"Kɔnɔ",
+    "Foul":"Fɔl",
+    "Offside":"Ɔfsayd",
+    "Yellow card":"Yɛlo kad",
+    "Red card":"Rɛd kad",
+    "Substitution":"Chenj pleya"
+  });
+  Object.assign(DICT.ar, {
+    "PLAYER MATCH LOG":"سجل مباريات اللاعب",
+    "Published match contributions":"مساهمات اللاعب المنشورة في المباريات",
+    "Player match records are temporarily unavailable.":"سجلات مباريات اللاعب غير متاحة مؤقتاً.",
+    "No published match event entries are linked to this player yet. This does not mean the player made no appearances.":"لا توجد أحداث مباريات منشورة مرتبطة بهذا اللاعب حتى الآن. ولا يعني ذلك أنه لم يشارك في المباريات.",
+    "No linked match records are available for these published events.":"لا تتوفر سجلات مباريات مرتبطة بهذه الأحداث المنشورة.",
+    "Date not recorded":"التاريخ غير مسجل",
+    "Player not recorded":"اللاعب غير مسجل",
+    "Substituted off":"تم استبداله",
+    "Substituted on":"دخل بديلاً",
+    "Shot on target":"تسديدة على المرمى",
+    "Shot off target":"تسديدة خارج المرمى",
+    "Blocked shot":"تسديدة تم صدها",
+    "Goalkeeper save":"تصدي حارس المرمى",
+    "Corner":"ركنية",
+    "Foul":"خطأ",
+    "Offside":"تسلل",
+    "Yellow card":"بطاقة صفراء",
+    "Red card":"بطاقة حمراء",
+    "Substitution":"تبديل"
+  });
+
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
