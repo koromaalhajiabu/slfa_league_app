@@ -2633,6 +2633,23 @@
   "Player": "Plea"
 });
 
+
+  // Krio for final static governance, account and privacy labels.
+  Object.assign(DICT.kri, {
+  "Initial automated checks: duplicate player identity references and discrepancies between submitted referee scores and official match scores. Human review is required before any administrative action.": "Di fɔs automatic chɛk dɛn: plea ID we dɛn ripit ɛn diferɛns bitwin skɔ we referee sɛnd ɛn ɔfishal mach skɔ. Pipul fɔ luk am bifo ɛni administrativ wok.",
+  "Record the authorised decision, meeting or regulation reference.": "Rikɔd rɛfɛrɛns fɔ disishɔn, miting ɔ rul we dɛn apruv.",
+  "Match": "Mach",
+  ". Usage counts are kept for": ". Dɛn de kip nɔmba fɔ yuz fɔ",
+  ". Alert addresses are removed when they stop working or when you turn alerts off. Records of agreement are kept while the account exists.": ". Dɛn go tek weh alɛt adɛs dɛn wen dɛn nɔ de wok ɔ wen yu ɔf alɛt. Dɛn go kip rikɔd fɔ agri til di akawnt don ɛnd.",
+  "[SLFA to set the retention period]": "[SLFA fɔ set di tɛm we dɛn fɔ kip rikɔd]",
+  "[SLFA to set the period]": "[SLFA fɔ set di tɛm]",
+  "[SLFA to set the period, for example 13 months]": "[SLFA fɔ set di tɛm, fɔ ɛgzampul 13 mun]",
+  "[SLFA contact email or form]": "[Email ɔ fɔm fɔ kɔnɛkt wit SLFA]",
+  "[SLFA to confirm how comments from under-18s are handled]": "[SLFA fɔ konfirm wetin dɛn de du wit kɔmɛnt fɔ pipul we nɔ rich 18 yet]",
+  "[SLFA to confirm the usage terms for crests]": "[SLFA fɔ konfirm di rul fɔ yuz klob ɛn ɔganayzeshɔn lɔgɔ]",
+  ", or ask the Developer to check your staff invitation.": ", ɔ ask di Developer fɔ chɛk yu staff invitation."
+});
+
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
