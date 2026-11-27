@@ -94,6 +94,7 @@
       '<div id="pubList" class="pub-list" aria-live="polite"><p class="pub-loading">Loading publications…</p></div>' +
       '<p class="pub-footnote">Files are made available through time-limited download links. The public library shows documents currently marked as published in the league database.</p>' +
       '<p id="pubError" class="pub-error" role="status" aria-live="polite"></p>';
+    if (window.slfaTranslateDOM) window.slfaTranslateDOM(host);
 
     $('pubSearch').addEventListener('input', function () { searchText = this.value.trim().toLowerCase(); render(); });
     $('pubCategory').addEventListener('change', function () { categoryChoice = this.value; render(); });
@@ -180,6 +181,7 @@
       return;
     }
     $('pubList').innerHTML = rows.map(cardMarkup).join('');
+    if (window.slfaTranslateDOM) window.slfaTranslateDOM(host);
     var thisRequest = ++requestNo;
     Promise.all(rows.map(function (d) {
       return db.storage.from('slfa-publications')
