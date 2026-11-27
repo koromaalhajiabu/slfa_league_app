@@ -39,6 +39,7 @@ revoke all on public.league_division_settings from authenticated;
 grant select on public.league_division_settings to anon, authenticated;
 grant insert, update, delete on public.league_division_settings to authenticated;
 grant insert, update, delete on public.league_division_settings to authenticated;
+revoke all on sequence public.league_division_settings_id_seq from anon, authenticated;
 grant usage, select on sequence public.league_division_settings_id_seq to authenticated;
 
 create table if not exists public.league_movement_records (
@@ -78,6 +79,7 @@ revoke all on public.league_movement_records from anon;
 revoke all on public.league_movement_records from authenticated;
 grant select on public.league_movement_records to anon, authenticated;
 grant insert, update, delete on public.league_movement_records to authenticated;
+revoke all on sequence public.league_movement_records_id_seq from anon, authenticated;
 grant usage, select on sequence public.league_movement_records_id_seq to authenticated;
 
 create or replace function public.admin_apply_league_movement(p_movement_id bigint)
