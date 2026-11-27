@@ -161,7 +161,7 @@ test('public browser configuration does not contain server-side Supabase secrets
 test('fan-data access uses a cryptographically random versioned browser token', () => {
   const tokenPath = path.join(ROOT, 'voter-key.js');
   const tokenSource = fs.readFileSync(tokenPath, 'utf8');
-  assert.match(tokenSource, /crypto\.getRandomValues/);
+  assert.match(tokenSource, /cryptoApi\.getRandomValues/);
   assert.match(tokenSource, /new Uint8Array\(32\)/);
   assert.match(tokenSource, /v2_/);
   assert.doesNotMatch(tokenSource, /Math\.random|randomUUID/);
