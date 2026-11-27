@@ -136,6 +136,21 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
     </section>
 
 
+
+    <section id="nationalIntegrityCentre" class="card" aria-labelledby="nationalIntegrityHeading">
+      <h2 class="rt" id="nationalIntegrityHeading">National Football Intelligence &amp; Integrity Centre</h2>
+      <p class="muted">Private Super Admin workspace. Runs evidence-based checks against existing player registrations and referee submissions. Findings are advisory; this centre does not alter official scores, registrations or sanctions.</p>
+      <div class="sa-metric-grid" id="niMetrics">
+        <div><strong id="niOpenCount">—</strong><span>Open alerts</span></div>
+        <div><strong id="niHighCount">—</strong><span>High-priority alerts</span></div>
+        <div><strong id="niScannedAt">—</strong><span>Last scan</span></div>
+      </div>
+      <div class="btns"><button type="button" class="primary" id="niRunScan">Run integrity scan</button><button type="button" class="secondary" id="niRefresh">Refresh alert queue</button></div>
+      <div class="status" id="niStatus" role="status" aria-live="polite">Loading integrity review queue…</div>
+      <div id="niAlerts" class="muted">Loading alerts…</div>
+      <p class="muted">Initial automated checks: duplicate player identity references and discrepancies between submitted referee scores and official match scores. Human review is required before any administrative action.</p>
+    </section>
+
     <section id="divisionManagement" class="card" aria-labelledby="divisionManagementHeading">
       <h2 class="rt" id="divisionManagementHeading">Division Leagues & Promotion / Relegation</h2>
       <p class="muted">Super Admin only. Configure separate competition tiers for each season, define promotion and relegation places, and record approved club movements. Apply a movement only after the Association has formally confirmed the decision.</p>
@@ -206,6 +221,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
 <script src="super-admin-referee-match-records.js?v=4"></script>
 <script src="super-admin-team-sheets.js?v=1"></script>
 <script src="player-import.js?v=5"></script>
+<script src="national-integrity.js?v=1"></script>
 <script src="portal-manual.js?v=3"></script>
 <script src="theme-toggle.js"></script>
 <script src="cosmic-theme.js?v=17"></script>
