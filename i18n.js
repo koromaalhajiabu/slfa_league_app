@@ -1126,7 +1126,7 @@
     var keys = Object.keys(table).filter(function (k) { return k.length >= 4 && /\s|[.!?·]/.test(k); })
       .sort(function (a, b) { return b.length - a.length; });
     keys.forEach(function (k) {
-      var escaped = k.replace(/[.*+?^|[\]\\]/g, '\\$&');
+      var escaped = k.split('').map(function (ch) { return '.+*?^$()|[]\\\\'.indexOf(ch) >= 0 ? '\\\\' + ch : ch; }).join('');
       out = out.replace(new RegExp(escaped, 'gi'), table[k]);
     });
     return out;
