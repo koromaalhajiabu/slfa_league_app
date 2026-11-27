@@ -249,11 +249,11 @@ test('Krio translations load across public and all staff portals', () => {
   ];
   for (const pageName of pages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.match(page, /i18n\\.js\\?v=\\d+/, pageName + ' must load a versioned shared language dictionary');
+    assert.match(page, /i18n\.js\?v=\d+/, pageName + ' must load a versioned shared language dictionary');
   }
 
   const leagueAdmin = fs.readFileSync(path.join(ROOT, 'league-admin.html'), 'utf8');
-  assert.ok(/i18n\\.js\\?v=\\d+/.test(leagueAdmin) && leagueAdmin.indexOf('i18n.js') < leagueAdmin.indexOf('league-admin.js'),
+  assert.ok(/i18n\.js\?v=\d+/.test(leagueAdmin) && leagueAdmin.indexOf('i18n.js') < leagueAdmin.indexOf('league-admin.js'),
     'League Administrator must load translations before its dynamic interface');
 
   const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
