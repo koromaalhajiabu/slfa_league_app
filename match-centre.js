@@ -376,6 +376,8 @@
       return false;
     }).then(function (result) { clearTimeout(fetchTimer); return result; });
   }
+  window.slfaRefreshMatchCentre = fetchData;
+  document.addEventListener('slfa:manual-refresh', fetchData);
   function schedule(){clearTimeout(timer);timer=setTimeout(fetchData,500);}
   if(window.MutationObserver){new MutationObserver(function(){if(!host.querySelector('.slfa-match-centre-v2')&&matches.length)render();}).observe(host,{childList:true,subtree:true});}
   var switcher=document.getElementById('leagueSwitch');
