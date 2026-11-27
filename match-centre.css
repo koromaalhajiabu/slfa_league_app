@@ -141,3 +141,19 @@
   .slfa-mc-summary button{grid-column:1/-1;width:100%;min-height:40px}
 }
 @media(prefers-reduced-motion:reduce){.slfa-mc-summary-stat.live i{animation:none}}
+
+
+/* Player impact table: event-derived contributions, without invented ratings. */
+.slfa-mc-player-impact{display:grid;gap:10px;margin:8px 0 12px}
+.slfa-mc-player-impact-team{min-width:0;padding:10px;border:1px solid rgba(87,190,132,.22);border-radius:12px;background:rgba(8,95,54,.06)}
+.slfa-mc-player-impact-team>strong{display:block;margin:0 0 8px;font-size:11px;overflow-wrap:anywhere}
+.slfa-mc-player-impact-team>p{margin:0;color:var(--muted);font-size:10px}
+.slfa-mc-player-impact-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.slfa-mc-player-impact table{width:100%;min-width:580px;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums}
+.slfa-mc-player-impact th,.slfa-mc-player-impact td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+.slfa-mc-player-impact th{color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.05em}
+.slfa-mc-player-impact th:first-child,.slfa-mc-player-impact td:first-child{text-align:left;min-width:130px}
+.slfa-mc-player-impact td:first-child{font-weight:700}
+.slfa-mc-player-impact td small{display:block;color:var(--muted);font-size:8px;font-weight:500}
+.slfa-mc-stats-note{margin:7px 2px 12px;color:var(--muted);font-size:9px;line-height:1.5}
+@media(prefers-color-scheme:light){.slfa-mc-player-impact-team{background:#f1f8f3;border-color:rgba(20,100,60,.14)}.slfa-mc-player-impact th,.slfa-mc-player-impact td{border-color:rgba(20,43,68,.12)}}
