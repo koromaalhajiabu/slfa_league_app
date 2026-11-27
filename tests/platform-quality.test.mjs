@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v305'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v306'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v305'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v306'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -273,8 +273,8 @@ test('Krio translations load across public and all staff portals', () => {
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=20'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v305'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=21'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v306'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -309,7 +309,7 @@ test('Match Centre includes a swipeable seven-day date strip', () => {
 test('new supporter and match browsing controls are translated in all supported languages', () => {
   const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
   for (const phrase of [
-    'Browse by date', 'All dates', 'Your followed teams',
+    'No clubs followed yet. Save a club with the star in Teams.', 'No players followed yet. Save players from the Players directory.', 'Upcoming fixtures involving your followed clubs will appear here.' , 'Browse by date', 'All dates', 'Your followed teams',
     'Followed clubs & players', 'Quick table preview', 'View full official table'
   ]) assert.ok(dictionary.includes(phrase), 'Missing translation key: ' + phrase);
   assert.match(dictionary, /Object\.assign\(DICT\.kri,[\s\S]*?Browse by date/);
