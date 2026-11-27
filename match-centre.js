@@ -114,13 +114,15 @@
   function livePreview(m) {
     var events = liveEvents.filter(function (e) { return String(e.match_id) === String(m.id); });
     if (!events.length) return '<div class="slfa-mc-live-feed"><span class="slfa-mc-feed-empty">Live event updates will appear here</span></div>';
-    var goals = events.filter(function (e) { return e.event_type === 'GOAL'; }).length;
-    var yellows = events.filter(function (e) { return e.event_type === 'YELLOW_CARD'; }).length;
-    var reds = events.filter(function (e) { return e.event_type === 'RED_CARD'; }).length;
+    function count(type){return events.filter(function(e){return e.event_type===type;}).length;}
+    var goals=count('GOAL'),yellows=count('YELLOW_CARD'),reds=count('RED_CARD');
+    var shots=goals+count('SHOT_ON_TARGET')+count('SHOT_OFF_TARGET')+count('SHOT_BLOCKED');
+    var onTarget=goals+count('SHOT_ON_TARGET');
     var recent = events.slice().sort(function (a,b) { return Number(b.minute || 0) - Number(a.minute || 0); }).slice(0,3);
-    return '<div class="slfa-mc-live-feed"><div class="slfa-mc-live-counts"><span>⚽ '+goals+' goals</span><span>🟨 '+yellows+' yellow</span><span>🟥 '+reds+' red</span></div>' +
+    var labels={GOAL:'Goal',YELLOW_CARD:'Yellow card',RED_CARD:'Red card',SUB:'Substitution',SHOT_ON_TARGET:'Shot on target',SHOT_OFF_TARGET:'Shot off target',SHOT_BLOCKED:'Blocked shot',SAVE:'Goalkeeper save',CORNER:'Corner',FOUL:'Foul',OFFSIDE:'Offside'};
+    return '<div class="slfa-mc-live-feed"><div class="slfa-mc-live-counts"><span>⚽ '+goals+' goals</span><span>🥅 '+shots+' shots</span><span>🎯 '+onTarget+' on target</span><span>🚩 '+count('CORNER')+' corners</span><span>🧤 '+count('SAVE')+' saves</span><span>🟨 '+yellows+' yellow</span><span>🟥 '+reds+' red</span></div>' +
       '<div class="slfa-mc-live-events">'+recent.map(function(e){
-        var type=e.event_type==='GOAL'?'Goal':e.event_type==='YELLOW_CARD'?'Yellow card':e.event_type==='RED_CARD'?'Red card':'Substitution';
+        var type=labels[e.event_type]||'Match event';
         var player=e.event_type==='SUB'?(e.player_name||'Player on')+' on':(e.player_name||type);
         return '<span><b>'+esc(e.minute==null?'—':(window.slfaFormatMinute ? window.slfaFormatMinute(e.minute, e.half) : e.minute+"'"))+'</b> '+esc(type)+' · '+esc(player)+'</span>';
       }).join('')+'</div></div>';
@@ -196,11 +198,15 @@
     ]).then(function(a){
       box.dataset.loaded='1';var ev=a[0].error?[]:(a[0].data||[]),lu=a[1].error?[]:(a[1].data||[]),html='';
       if(ev.length){
-        var st={};ev.forEach(function(e){var k=e.team_name||'Match',t=String(e.event_type||'').toUpperCase();st[k]=st[k]||{goals:0,yellow:0,red:0,subs:0};if(t==='GOAL')st[k].goals++;else if(t==='YELLOW_CARD')st[k].yellow++;else if(t==='RED_CARD')st[k].red++;else if(t==='SUB')st[k].subs++;});
-        html+='<h4>Match stats</h4><div class="slfa-mc-stats">'+Object.keys(st).map(function(k){var x=st[k];return '<div><strong>'+esc(k)+'</strong><span>⚽ '+x.goals+' goals</span><span>🟨 '+x.yellow+' yellow</span><span>🟥 '+x.red+' red</span><span>↔ '+x.subs+' subs</span></div>';}).join('')+'</div>';
+        var st={};
+        var statMatch=allMatches.find(function(m){return String(m.id)===String(id);})||{};
+        [statMatch.home_team,statMatch.away_team].filter(Boolean).forEach(function(k){st[k]={goals:0,shots:0,onTarget:0,blocked:0,saves:0,corners:0,fouls:0,offsides:0,yellow:0,red:0,subs:0};});
+        ev.forEach(function(e){var k=e.team_name||'Match',t=String(e.event_type||'').toUpperCase();st[k]=st[k]||{goals:0,shots:0,onTarget:0,blocked:0,saves:0,corners:0,fouls:0,offsides:0,yellow:0,red:0,subs:0};var x=st[k];if(t==='GOAL'){x.goals++;x.shots++;x.onTarget++;}else if(t==='SHOT_ON_TARGET'){x.shots++;x.onTarget++;}else if(t==='SHOT_OFF_TARGET')x.shots++;else if(t==='SHOT_BLOCKED'){x.shots++;x.blocked++;}else if(t==='SAVE')x.saves++;else if(t==='CORNER')x.corners++;else if(t==='FOUL')x.fouls++;else if(t==='OFFSIDE')x.offsides++;else if(t==='YELLOW_CARD')x.yellow++;else if(t==='RED_CARD')x.red++;else if(t==='SUB')x.subs++;});
+        html+='<h4>Recorded match statistics</h4><div class="slfa-mc-stats">'+Object.keys(st).map(function(k){var x=st[k];return '<div><strong>'+esc(k)+'</strong><span>⚽ '+x.goals+' goals</span><span>🥅 '+x.shots+' shots</span><span>🎯 '+x.onTarget+' on target</span><span>🧱 '+x.blocked+' blocked</span><span>🧤 '+x.saves+' saves</span><span>🚩 '+x.corners+' corners</span><span>✋ '+x.fouls+' fouls</span><span>⚑ '+x.offsides+' offsides</span><span>🟨 '+x.yellow+' yellow</span><span>🟥 '+x.red+' red</span><span>↔ '+x.subs+' subs</span></div>';}).join('')+'</div><p class="slfa-mc-stats-note">Totals are based on events published by assigned match staff. An unrecorded event is not treated as confirmed absent.</p>';
+        var eventLabels={GOAL:'Goal',YELLOW_CARD:'Yellow card',RED_CARD:'Red card',SUB:'Substitution',SHOT_ON_TARGET:'Shot on target',SHOT_OFF_TARGET:'Shot off target',SHOT_BLOCKED:'Blocked shot',SAVE:'Goalkeeper save',CORNER:'Corner',FOUL:'Foul',OFFSIDE:'Offside'};
         html+='<h4>Match timeline</h4><div class="slfa-mc-timeline">'+ev.map(function(e){
-        var t=String(e.event_type||'').toUpperCase(),ico=t==='GOAL'?'⚽':t==='YELLOW_CARD'?'🟨':t==='RED_CARD'?'🟥':t==='SUB'?'↔':'•';
-        var who=t==='SUB'?(e.player_name||'Player on')+' for '+(e.player_off_name||'player'):(e.player_name||'Match event')+(e.assist_player_name?' · Assist: '+e.assist_player_name:'');
+        var t=String(e.event_type||'').toUpperCase(),ico=t==='GOAL'?'⚽':t==='YELLOW_CARD'?'🟨':t==='RED_CARD'?'🟥':t==='SUB'?'↔':t==='SHOT_ON_TARGET'?'🎯':t==='SHOT_OFF_TARGET'?'↗':t==='SHOT_BLOCKED'?'🧱':t==='SAVE'?'🧤':t==='CORNER'?'🚩':t==='FOUL'?'✋':t==='OFFSIDE'?'⚑':'•';
+        var who=t==='SUB'?(e.player_name||'Player on')+' for '+(e.player_off_name||'player'):(eventLabels[t]||'Match event')+' · '+(e.player_name||'Not recorded')+(e.assist_player_name?' · Assist: '+e.assist_player_name:'');
         return '<div class="slfa-mc-event"><span class="slfa-mc-minute">'+esc(e.minute==null?'—':(window.slfaFormatMinute ? window.slfaFormatMinute(e.minute, e.half) : e.minute+"'"))+'</span><span>'+ico+'</span><div><strong>'+esc(who)+'</strong><small>'+esc(e.team_name||'')+'</small></div></div>';
       }).join('')+'</div>';}
       if(lu.length){var by={};lu.forEach(function(x){var n=x.league_clubs&&x.league_clubs.club_name||'Team',p=x.club_squad||{},v=(p.jersey_number?'#'+p.jersey_number+' ':'')+(p.player_name||'Player');by[n]=by[n]||{xi:[],bench:[]};(x.is_starter?by[n].xi:by[n].bench).push(v);});
