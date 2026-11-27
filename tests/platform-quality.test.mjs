@@ -326,7 +326,7 @@ test('Krio language preference is normalized and translation runtime uses cached
   assert.match(dictionary, /regex: new RegExp\(key\.replace/);
   assert.doesNotMatch(dictionary, /characterData:\s*true/,
     'The translation observer must not repeatedly process its own text-node updates');
-  assert.match(dictionary, /Object\.assign\(DICT\.kri,[\s\S]*?'Browse by date'/);
+  assert.match(dictionary, /Object\.assign\(DICT\.kri,[\s\S]*?["']Browse by date["']/);
 });
 
 test('public data loads on demand instead of fetching hidden tabs at startup', () => {
