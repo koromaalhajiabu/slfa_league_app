@@ -64,6 +64,17 @@
       $('moveClub').innerHTML='<option value="">Choose club…</option>'+clubs.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.club_name)+'</option>';}).join('');
     });
   }
+  function applyMovement(id, button) {
+    if(button) button.disabled=true;
+    db.rpc('admin_apply_league_movement',{p_movement_id:Number(id)}).then(function(r){
+      if(r.error) throw r.error;
+      note('movementStatus','Approved club movement applied successfully. Historical match records remain attached to their original competition.');
+      loadClubs();loadMovements();
+    }).catch(function(e){
+      if(button) button.disabled=false;
+      note('movementStatus','Movement was not applied: '+(e.message||'Unknown error.'));
+    });
+  }
   function loadMovements() {
     Promise.all([
       db.from('league_movement_records').select('id,season_id,club_id,from_league_id,to_league_id,movement_type,decision_status,reason,created_at').order('created_at',{ascending:false}).limit(30),
@@ -73,9 +84,12 @@
       var rows=all[0].data||[], clubRows=all[1].data||[];
       var leagueName=function(id){var l=leagues.find(function(x){return String(x.id)===String(id);});return l?l.name:'Competition '+id;};
       var clubName=function(id){var c=clubRows.find(function(x){return String(x.id)===String(id);});return c?c.club_name:'Club '+id;};
-      $('movementList').innerHTML=rows.length?'<div class="scroll"><table class="table"><thead><tr><th>Club</th><th>Movement</th><th>From</th><th>To</th><th>Status</th><th>Reason</th></tr></thead><tbody>'+rows.map(function(x){
-        return '<tr><td>'+esc(clubName(x.club_id))+'</td><td>'+esc(x.movement_type)+'</td><td>'+esc(leagueName(x.from_league_id))+'</td><td>'+esc(leagueName(x.to_league_id))+'</td><td>'+esc(x.decision_status)+'</td><td>'+esc(x.reason)+'</td></tr>';
+      $('movementList').innerHTML=rows.length?'<div class="scroll"><table class="table"><thead><tr><th>Club</th><th>Movement</th><th>From</th><th>To</th><th>Status</th><th>Reason</th><th>Action</th></tr></thead><tbody>'+rows.map(function(x){
+        return '<tr><td>'+esc(clubName(x.club_id))+'</td><td>'+esc(x.movement_type)+'</td><td>'+esc(leagueName(x.from_league_id))+'</td><td>'+esc(leagueName(x.to_league_id))+'</td><td>'+esc(x.decision_status)+'</td><td>'+esc(x.reason)+'</td><td>'+(x.decision_status==='APPROVED'?'<button type="button" class="secondary" data-apply-movement="'+esc(x.id)+'">Apply</button>':'—')+'</td></tr>';
       }).join('')+'</tbody></table></div>':'<p>No club movements recorded for this system yet.</p>';
+      $('movementList').querySelectorAll('[data-apply-movement]').forEach(function(button){
+        button.addEventListener('click',function(){applyMovement(button.getAttribute('data-apply-movement'),button);});
+      });
     });
   }
   $('divLeague').addEventListener('change',loadSettings);
