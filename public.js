@@ -1026,6 +1026,25 @@
   }
   // Live matches: the score is counted from goal events
   function loadLive() {
+    var shared = window.slfaPublicData;
+    if (shared && Array.isArray(shared.matches)) {
+      var sharedRows = shared.matches.filter(function (m) {
+        return ['LIVE', 'HT'].indexOf(String(m.match_status || '').toUpperCase()) !== -1 &&
+          (!currentLeague || String(m.league_id) === currentLeague);
+      });
+      if (!sharedRows.length) { setLive(empty('No live matches right now.')); return; }
+      var sharedGoals = shared.liveEvents || [];
+      setLive(sharedRows.map(function (match) {
+        var m = Object.assign({}, match);
+        var goals = sharedGoals.filter(function (g) {
+          return String(g.match_id) === String(m.id) && g.event_type === 'GOAL';
+        });
+        if (m.home_score == null) m.home_score = goals.filter(function (g) { return g.team_name === m.home_team; }).length;
+        if (m.away_score == null) m.away_score = goals.filter(function (g) { return g.team_name === m.away_team; }).length;
+        return matchCard(m);
+      }).join(''));
+      return;
+    }
     db.from('matches').select('id, match_date, venue, match_status, match_minute, current_half, league_id, home_team, away_team, home_score, away_score, motm_name, motm_jersey_number')
       .in('match_status', ['LIVE', 'HT']).order('match_date', { ascending: true })
       .then(function (res) {
@@ -1044,7 +1063,6 @@
           });
       });
   }
-
   var appFreezeBanner = null;
   function refreshAll() {
     db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(fr){
