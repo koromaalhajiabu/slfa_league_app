@@ -2650,6 +2650,30 @@
   ", or ask the Developer to check your staff invitation.": ", ɔ ask di Developer fɔ chɛk yu staff invitation."
 });
 
+
+  // Public League Centre wording visible on the mobile dashboard.
+  Object.assign(DICT.kri, {
+    "League Centre": "Di Lig Sɛnta",
+    "Manage alerts": "Manij alɛt dɛn",
+    "Share": "Shɛa",
+    "Football at a glance": "Futbol na wan luk",
+    "FOOTBALL AT A GLANCE": "FUTBOL NA WAN LUK",
+    "No match has been published for this competition yet.": "Dɛn nɔ publish mach fɔ dis kɔmpitishɔn yet.",
+    "Your fixture planner": "Yu plan fɔ mach dɛn",
+    "Coming up": "Wetin de kam",
+    "UPCOMING": "DI WETIN DE KAM",
+    "Upcoming fixtures": "Mach dɛn we de kam",
+    "Add to calendar": "Put am na kalenda",
+    "Clubs": "Klob dɛn",
+    "Completed matches": "Mach dɛn we don ɛnd",
+    "UPCOMING FIXTURES": "MACH DƐN WE DE KAM",
+    "CLUBS": "KLOB DƐN",
+    "COMPLETED MATCHES": "MACH DƐN WE DON ƐND",
+    "League": "Lig",
+    "Fixture planner": "Plan fɔ mach dɛn",
+    "No upcoming fixtures yet.": "Nɔ gɛt mach we de kam yet."
+  });
+
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
