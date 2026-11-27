@@ -405,3 +405,18 @@ test('Media Centre tab has one loader and avoids duplicate media queries', () =>
   assert.doesNotMatch(media, /nav\.addEventListener\('click'/);
   assert.match(media, /window\.slfaPremiumMediaLoad=load/);
 });
+
+
+test('database client table privileges are retained only when RLS has a matching permissive policy', () => {
+  const migration = fs.readFileSync(
+    path.join(ROOT, 'supabase/migrations/20261127165944_align_client_table_grants_with_rls_policies.sql'),
+    'utf8'
+  );
+  assert.match(migration, /c\.relrowsecurity/);
+  assert.match(migration, /p\.permissive = 'PERMISSIVE'/);
+  assert.match(migration, /p\.cmd IN \('ALL', v_policy_command\)/);
+  assert.match(migration, /ARRAY\[v_role\]::name\[\]/);
+  assert.match(migration, /ARRAY\['public'::name\]/);
+  assert.match(migration, /REVOKE %s ON TABLE public\.%I FROM %I/);
+  assert.doesNotMatch(migration, /DELETE FROM public\.|DROP POLICY|ALTER TABLE .* DISABLE ROW LEVEL SECURITY/i);
+});
