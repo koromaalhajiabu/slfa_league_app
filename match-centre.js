@@ -3,13 +3,18 @@
   'use strict';
   var db = window.slfaDb, host = document.getElementById('matchList');
   if (!db || !host) return;
-  var allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer, celebratedGoals = {};
+  var allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, leagueRows = [], clubRows = [], liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer, celebratedGoals = {};
   // Season: the picker stores the chosen season; the default is the current season.
   function selectedSeason() { var stored = ''; try { stored = localStorage.getItem('slfa_season') || ''; } catch (e) {} var cur = seasons.filter(function (x) { return x.is_current; })[0] || null; return seasons.filter(function (x) { return String(x.id) === stored; })[0] || cur; }
   // Matches saved without a season count toward the season their date falls in.
   function seasonOf(m) { if (m.season_id != null) return String(m.season_id); var d = String(m.match_date || '').slice(0, 10); var hit = seasons.filter(function (x) { return d >= String(x.start_date) && d <= String(x.end_date); })[0]; return hit ? String(hit.id) : ''; }
   function applySeason() { var sel = selectedSeason(); matches = sel ? allMatches.filter(function (m) { return seasonOf(m) === String(sel.id); }) : allMatches; }
-  document.addEventListener('slfa:season-change', function () { applySeason(); render(); });
+  function publishPublicData() {
+    var payload = { matches: matches.slice(), allMatches: allMatches.slice(), seasons: seasons.slice(), leagues: leagueRows.slice(), clubs: clubRows.slice(), updatedAt: updated ? updated.getTime() : Date.now() };
+    window.slfaPublicData = payload;
+    document.dispatchEvent(new CustomEvent('slfa:public-data-ready', { detail: payload }));
+  }
+  document.addEventListener('slfa:season-change', function () { applySeason(); publishPublicData(); render(); });
 
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function league() { try { return localStorage.getItem('slfa_league') || ''; } catch (e) { return ''; } }
@@ -336,16 +341,16 @@
   });
   function fetchData() {
     var request = Promise.all([
-      db.from('matches').select('id,match_date,venue,match_status,match_minute,status_set_at,current_half,league_id,season_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(500),
+      db.from('matches').select('id,match_date,venue,match_status,match_minute,status_set_at,current_half,league_id,season_id,home_team,away_team,home_score,away_score,motm_name,motm_jersey_number').order('match_date',{ascending:false}).limit(300),
       db.from('leagues').select('id,name').eq('is_active',true).order('sort_order'),
-      db.from('league_clubs').select('club_name,logo_url').eq('is_active',true),
+      db.from('league_clubs').select('club_name,league_id,logo_url').eq('is_active',true),
       db.from('seasons').select('id,name,start_date,end_date,is_current').order('start_date',{ascending:false})
     ]).then(function(a){
       var failed = a.slice(0, 3).find(function (item) { return item && item.error; });
       if (failed) throw new Error(failed.error.message || 'A league database query failed.');
-      allMatches=a[0].data||[];seasons=a[3].error?[]:(a[3].data||[]);applySeason();leagueNames={};clubLogos={};
-      (a[1].data||[]).forEach(function(x){leagueNames[String(x.id)]=x.name;});
-      (a[2].data||[]).forEach(function(x){clubLogos[x.club_name]=x.logo_url || clubLogoFallback(x.club_name);});
+      allMatches=a[0].data||[];seasons=a[3].error?[]:(a[3].data||[]);leagueRows=a[1].data||[];clubRows=a[2].data||[];applySeason();leagueNames={};clubLogos={};
+      leagueRows.forEach(function(x){leagueNames[String(x.id)]=x.name;});
+      clubRows.forEach(function(x){clubLogos[x.club_name]=x.logo_url || clubLogoFallback(x.club_name);});
       var live=matches.filter(function(m){return group(m)==='live';});
       var eventQuery=live.length?db.from('match_events').select('match_id,event_type,team_name,player_name,minute,half,published_at').in('match_id',live.map(function(m){return String(m.id);})).not('published_at','is',null).order('minute',{ascending:true}):Promise.resolve({data:[]});
       return eventQuery.then(function(g){
@@ -357,12 +362,14 @@
             if(m.away_score==null)m.away_score=goals.filter(function(x){return x.team_name===m.away_team;}).length;
           });
         }
-        updated=new Date();render();return true;
+        updated=new Date();publishPublicData();render();return true;
       });
     });
     return Promise.race([request, new Promise(function (_, reject) {
       fetchTimer = setTimeout(function () { reject(new Error('The database did not respond within 12 seconds.')); }, 12000);
     })]).catch(function (err) {
+      window.slfaPublicData = null;
+      document.dispatchEvent(new CustomEvent('slfa:public-data-error'));
       host.innerHTML = '<section class="slfa-match-centre-v2"><div class="slfa-mc-empty"><strong>Matches could not load</strong><p>Check your internet connection and try again. The league database did not complete the request.</p><button type="button" id="slfaMcRetry">Retry loading matches</button></div></section>';
       var retry = document.getElementById('slfaMcRetry');
       if (retry) retry.addEventListener('click', function () { retry.disabled = true; retry.textContent = 'Retrying…'; fetchData(); });
@@ -375,6 +382,7 @@
   if(switcher)switcher.addEventListener('click',function(){window.setTimeout(render,50);});
   if(db.channel)db.channel('public-match-centre').on('postgres_changes',{event:'*',schema:'public',table:'matches'},schedule).on('postgres_changes',{event:'INSERT',schema:'public',table:'match_events'},function(payload){var e=payload&&payload.new;if(e&&e.published_at)goalCelebration(e);schedule();}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'match_events'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'match_lineups'},schedule).subscribe();
   window.addEventListener('online',schedule);
-  window.setInterval(fetchData,60000);
+  window.setInterval(function(){if(document.visibilityState !== 'hidden')fetchData();},180000);
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState === 'visible' && (!updated || Date.now()-updated.getTime()>90000))fetchData();});
   fetchData();
 })();
