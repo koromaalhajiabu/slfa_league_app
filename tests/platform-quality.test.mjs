@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v306'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v307'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v306'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v307'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -273,8 +273,8 @@ test('Krio translations load across public and all staff portals', () => {
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=21'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v306'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=22'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v307'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -315,4 +315,34 @@ test('new supporter and match browsing controls are translated in all supported 
   assert.match(dictionary, /Object\.assign\(DICT\.kri,[\s\S]*?Browse by date/);
   assert.match(dictionary, /Object\.assign\(DICT\.fr,[\s\S]*?Browse by date/);
   assert.match(dictionary, /Object\.assign\(DICT\.ar,[\s\S]*?Browse by date/);
+});
+
+
+test('Krio language preference is normalized and translation runtime uses cached phrase lookups', () => {
+  const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
+  assert.match(dictionary, /if \(v === 'krio'\) v = 'kri'/);
+  assert.match(dictionary, /var exactLookup = Object\.create\(null\)/);
+  assert.match(dictionary, /var phraseRules = \[\]/);
+  assert.match(dictionary, /regex: new RegExp\(key\.replace/);
+  assert.doesNotMatch(dictionary, /characterData:\s*true/,
+    'The translation observer must not repeatedly process its own text-node updates');
+  assert.match(dictionary, /Object\.assign\(DICT\.kri,[\s\S]*?'Browse by date'/);
+});
+
+test('public data loads on demand instead of fetching hidden tabs at startup', () => {
+  const app = fs.readFileSync(path.join(ROOT, 'public.js'), 'utf8');
+  assert.match(app, /function loadPublicTab\(name, force\)/);
+  assert.match(app, /else if \(name === 'players'\) loadPlayers\(\)/);
+  assert.match(app, /else if \(name === 'news'\) loadNews\(\)/);
+  assert.match(app, /else if \(name === 'videos'\) loadVideos\(\)/);
+  assert.match(app, /if \(activePublicTab === 'matches'\) loadLive\(\)/);
+  assert.doesNotMatch(app, /loadMatches\(\);loadLive\(\);loadMatchDay\(\);loadTable\(\);loadTeams\(\);loadPlayers\(\);loadNews\(\);loadVideos\(\)/);
+  assert.match(app, /setInterval\(function\(\)\{if\(document\.visibilityState !== 'hidden'\)refreshAll\(\);\}, 180000\)/);
+});
+
+test('Leagues panel data is fetched only when the panel is opened', () => {
+  const pages = fs.readFileSync(path.join(ROOT, 'league-pages.js'), 'utf8');
+  assert.match(pages, /function refreshIfVisible\(\)/);
+  assert.doesNotMatch(pages, /\.then\(function\(\) \{ loading = false; \}\);\n  load\(\);/,
+    'League Pages must not issue its multi-query load on initial home screen startup');
 });
