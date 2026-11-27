@@ -2016,6 +2016,10 @@
     "Venue not recorded":"الملعب غير مسجل"
   });
 
+  Object.assign(DICT.fr, { 'View official table': 'Voir le classement officiel' });
+  Object.assign(DICT.kri, { 'View official table': 'Luk di ɔfisyal tebul' });
+  Object.assign(DICT.ar, { 'View official table': 'عرض الجدول الرسمي' });
+
   var LABELS = { en: 'English', kri: 'Krio', fr: 'Français', ar: 'العربية' };
 
   function lang() {
