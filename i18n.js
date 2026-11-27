@@ -2699,26 +2699,29 @@
   }
   var current = lang();
   var table = DICT[current] || null;
-  // Build lookup maps and phrase patterns once per page load, not once per text node.
+  // Compile translation lookups once. A single phrase matcher avoids scanning
+  // every dictionary entry for every text node on mobile devices.
   var exactLookup = Object.create(null);
   var lowerLookup = Object.create(null);
-  var phraseRules = [];
+  var phraseKeys = [];
+  var phraseLookup = Object.create(null);
+  var phrasePattern = null;
   if (table) {
     Object.keys(table).forEach(function (key) {
       var value = table[key];
       exactLookup[key.trim().replace(/\s+/g, ' ')] = value;
       lowerLookup[key.trim().replace(/\s+/g, ' ').toLowerCase()] = value;
     });
-    phraseRules = Object.keys(table)
-      .filter(function (key) { return key.length >= 4 && /\\s|[.!?·]/.test(key); })
+    phraseKeys = Object.keys(table)
+      .filter(function (key) { return key.length >= 4 && /\s|[.!?·]/.test(key); })
       .sort(function (a, b) { return b.length - a.length; });
-    var phraseLookup = Object.create(null);
-    phraseRules.forEach(function (key) { phraseLookup[key.toLowerCase()] = table[key]; });
-    var phrasePattern = phraseRules.length
-      ? new RegExp(phraseRules.map(function (key) {
-          return key.replace(/[.*+?^$()|[\\]\\\\]/g, '\\\\$&');
+    phraseKeys.forEach(function (key) { phraseLookup[key.toLowerCase()] = table[key]; });
+    phrasePattern = phraseKeys.length
+      ? new RegExp(phraseKeys.map(function (key) {
+          return key.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
         }).join('|'), 'gi')
-      : null;  }
+      : null;
+  }
 
   function translateValue(value) {
     if (!table || value == null) return value;
@@ -2729,13 +2732,10 @@
     var direct = exactLookup[key];
     if (direct === undefined) direct = lowerLookup[key.toLowerCase()];
     if (direct !== undefined) return raw.replace(trimmed, direct);
-    var out = phrasePattern ? raw.replace(phrasePattern, function (match) {
+    return phrasePattern ? raw.replace(phrasePattern, function (match) {
       var replacement = phraseLookup[match.toLowerCase()];
       return replacement === undefined ? match : replacement;
     }) : raw;
-    return out;
-  }
-  window.slfaTranslate    return out;
   }
   window.slfaTranslate = translateValue;
 
