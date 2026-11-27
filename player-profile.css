@@ -79,3 +79,23 @@
 .pp-career-totals small{font-size:8px;letter-spacing:.06em}
 .pp-career-totals strong{font-size:22px}
 @media(max-width:390px){.pp-career-totals{gap:6px}.pp-career-totals>div{padding:9px 6px}.pp-career-totals strong{font-size:19px}}
+
+
+/* Published player match log for evidence-led player discovery. */
+.pp-match-log{margin-top:14px;padding:15px;border:1px solid rgba(137,221,165,.16);border-radius:18px;background:rgba(8,45,29,.48)}
+.pp-match-log-head{display:grid;gap:4px;margin-bottom:11px}
+.pp-match-log-head>span{color:#8be5ad;font-size:8px;font-weight:900;letter-spacing:.14em}
+.pp-match-log-head h3{margin:0;color:#f2fff6;font-size:15px}
+.pp-match-log-list{display:grid;gap:9px}
+.pp-match-log-card{padding:11px;border:1px solid rgba(164,224,184,.14);border-radius:13px;background:rgba(255,255,255,.035)}
+.pp-match-log-fixture>div{display:grid;gap:5px}
+.pp-match-log-fixture small{color:#aac9b6;font-size:9px}
+.pp-match-log-fixture strong{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:#f2fff6;font-size:11px}
+.pp-match-log-fixture strong b{color:#91edb3;font-size:12px;font-variant-numeric:tabular-nums}
+.pp-match-log-metrics{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.pp-match-log-metrics span{padding:4px 7px;border:1px solid rgba(129,222,160,.18);border-radius:999px;background:rgba(35,120,70,.16);color:#d9f7e2;font-size:9px;font-weight:700}
+.pp-match-log-events{display:grid;gap:5px;margin:9px 0 0;padding:8px 0 0;border-top:1px solid rgba(164,224,184,.12);list-style:none}
+.pp-match-log-events li{display:flex;align-items:flex-start;gap:8px;color:#e9fff0;font-size:9px}
+.pp-match-log-events li>span{min-width:28px;color:#8be5ad;font-variant-numeric:tabular-nums}
+.pp-match-log-events li strong{font-weight:600}
+@media(prefers-color-scheme:light){.pp-match-log{background:#f1f8f3;border-color:rgba(20,100,60,.14)}.pp-match-log-head h3,.pp-match-log-fixture strong,.pp-match-log-events li{color:#153b28}.pp-match-log-fixture small{color:#547562}.pp-match-log-metrics span{background:#e1f3e7;color:#14552f}.pp-match-log-events{border-color:rgba(20,100,60,.14)}}
