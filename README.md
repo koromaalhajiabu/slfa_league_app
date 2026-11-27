@@ -36,6 +36,13 @@ The database enforces the role boundaries. Official match results are written th
 - Referee score and event queues support local save-and-sync when connectivity is unavailable.
 - **OCR limitation:** photographed reports can be machine-read with Tesseract.js English OCR. Handwriting, names, numbers and scores can be misread; extracted text is not treated as verified. The Super Admin must compare the original image and record corrected text before using it.
 
+## Division league management
+
+- Super Admins can configure separate division tiers per competition and season, including pyramid group, tier order, promotion places, relegation places and playoff places.
+- The division manager records approved promotion, relegation, playoff and transfer decisions. Applying a movement validates the configured competition pyramid and tier direction before updating the club's current competition association.
+- Club movement records retain the decision reason and timestamps. Existing match rows retain their original competition and season references; no existing competition or result is reclassified by the migration.
+- Division settings and applied movement history are available to public readers; only the Super Admin can create or change settings and apply movements.
+
 ## Configuration
 
 Project settings are in `config.js`. The browser uses the Supabase publishable key only; no service-role key belongs in the public repository.
