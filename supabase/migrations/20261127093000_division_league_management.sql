@@ -34,7 +34,10 @@ create policy league_division_settings_super_admin_manage
   using (public.app_role() = 'SUPER_ADMIN')
   with check (public.app_role() = 'SUPER_ADMIN');
 
+revoke all on public.league_division_settings from anon;
+revoke all on public.league_division_settings from authenticated;
 grant select on public.league_division_settings to anon, authenticated;
+grant insert, update, delete on public.league_division_settings to authenticated;
 grant insert, update, delete on public.league_division_settings to authenticated;
 grant usage, select on sequence public.league_division_settings_id_seq to authenticated;
 
@@ -71,6 +74,8 @@ create policy league_movement_records_super_admin_manage
   using (public.app_role() = 'SUPER_ADMIN')
   with check (public.app_role() = 'SUPER_ADMIN');
 
+revoke all on public.league_movement_records from anon;
+revoke all on public.league_movement_records from authenticated;
 grant select on public.league_movement_records to anon, authenticated;
 grant insert, update, delete on public.league_movement_records to authenticated;
 grant usage, select on sequence public.league_movement_records_id_seq to authenticated;
