@@ -159,6 +159,10 @@
   document.addEventListener('slfa:public-data-error',function(){lastError=true;rows=[];render();});
   var switcher=document.getElementById('leagueSwitch');
   if(switcher)switcher.addEventListener('click',function(){window.setTimeout(render,80);});
+  document.addEventListener('slfa:standings-changed',function(){
+    quickStandingsLoaded=false;quickStandingsLoading=false;
+    var table=host.querySelector('#slfaQuickStandings');if(table&&table.open)loadQuickStandings();
+  });
   document.addEventListener('slfa:season-change',function(){
     if(window.slfaPublicData)consumeSharedData(window.slfaPublicData);
     quickStandingsLoaded=false;quickStandingsLoading=false;
