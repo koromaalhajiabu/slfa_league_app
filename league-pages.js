@@ -502,12 +502,13 @@
   if (matchView && matchView.parentNode) matchView.parentNode.insertBefore(host, matchView.nextSibling);
   tab.addEventListener('click', function () { activateTab(); if (!lastLoaded || Date.now()-lastLoaded>60000) load(); else render(); });
   switcher.addEventListener('click', function () { window.setTimeout(function () { if (!host.hidden) render(); }, 90); });
-  if (db.channel) db.channel('public-league-pages').on('postgres_changes',{event:'*',schema:'public',table:'leagues'},load)
-    .on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},load)
-    .on('postgres_changes',{event:'*',schema:'public',table:'matches'},load)
-    .on('postgres_changes',{event:'*',schema:'public',table:'league_standings'},load)
-    .on('postgres_changes',{event:'*',schema:'public',table:'season_standings'},load)
-    .on('postgres_changes',{event:'*',schema:'public',table:'cup_ties'},load).subscribe();
+  function refreshIfVisible() { if (!host.hidden && !loading) load(); }
+  if (db.channel) db.channel('public-league-pages').on('postgres_changes',{event:'*',schema:'public',table:'leagues'},refreshIfVisible)
+    .on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},refreshIfVisible)
+    .on('postgres_changes',{event:'*',schema:'public',table:'matches'},refreshIfVisible)
+    .on('postgres_changes',{event:'*',schema:'public',table:'league_standings'},refreshIfVisible)
+    .on('postgres_changes',{event:'*',schema:'public',table:'season_standings'},refreshIfVisible)
+    .on('postgres_changes',{event:'*',schema:'public',table:'cup_ties'},refreshIfVisible).subscribe();
   window.addEventListener('online',function(){ if(!host.hidden)load(); });
-  load();
+  // Load the five competition datasets only when a supporter opens the Leagues tab.
 })();
