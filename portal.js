@@ -50,7 +50,7 @@
           var m=p&&String(p.status)==='Pending'?'Your account is waiting for a role. Ask the Technical Director to assign one.':'This account is not active. Ask the Technical Director to check it.';
           return db.auth.signOut().then(function(){showSignIn(m);});
         }
-        var role=String(p.system_role).toUpperCase();
+        var role=String(p.system_role).toUpperCase()==='LEAGUE_ADMIN'?'SUPER_ADMIN':String(p.system_role).toUpperCase();
         if(role!=='DEVELOPER'){
           return db.from('application_control').select('app_frozen').eq('id',1).maybeSingle().then(function(fr){
             if(fr.error||!fr.data){
