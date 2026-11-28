@@ -3,7 +3,7 @@
   'use strict';
   var db = window.slfaDb, host = document.getElementById('matchList');
   if (!db || !host) return;
-  var allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, leagueRows = [], clubRows = [], liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer, celebratedGoals = {}, commissionerConfirmed = {}, commissionerStatusRequested = Object.create(null), commissionerStatusGeneration = 0, visibleCount = 24;
+  var matchesLoaded = false, allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, leagueRows = [], clubRows = [], liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer, celebratedGoals = {}, commissionerConfirmed = {}, commissionerStatusRequested = Object.create(null), commissionerStatusGeneration = 0, visibleCount = 24;
   // Season: the picker stores the chosen season; the default is the current season.
   function selectedSeason() { var stored = ''; try { stored = localStorage.getItem('slfa_season') || ''; } catch (e) {} var cur = seasons.filter(function (x) { return x.is_current; })[0] || null; return seasons.filter(function (x) { return String(x.id) === stored; })[0] || cur; }
   // Matches saved without a season count toward the season their date falls in.
@@ -381,6 +381,7 @@
       .then(function(matchResult) {
         if (matchResult.error) throw new Error(matchResult.error.message || 'Matches could not be loaded.');
         allMatches = matchResult.data || [];
+        matchesLoaded = true;
         seasons = []; leagueRows = []; clubRows = []; liveEvents = [];
         leagueNames = {}; clubLogos = {};
         applySeason();
@@ -432,7 +433,7 @@
       fetchTimer = setTimeout(function () { reject(new Error('The database did not respond within 12 seconds.')); }, 12000);
     })]).catch(function (err) {
       // Keep any already-rendered fixture list if secondary metadata fails.
-      if (!allMatches.length) {
+      if (!matchesLoaded) {
         window.slfaPublicData = null;
         document.dispatchEvent(new CustomEvent('slfa:public-data-error'));
         host.innerHTML = '<section class="slfa-match-centre-v2"><div class="slfa-mc-empty"><strong>Matches could not load</strong><p>Check your internet connection and try again. The league database did not complete the request.</p><button type="button" id="slfaMcRetry">Retry loading matches</button></div></section>';
