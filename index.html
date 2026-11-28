@@ -459,7 +459,8 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
   function staffRoute() { $('adminDropdown').classList.toggle('staff-open', location.hash === '#staff'); }
   staffRoute();
   window.addEventListener('hashchange', staffRoute);
-  loadPublic();
+  // Legacy hidden fixtures/results containers are no longer loaded separately;
+  // Match Centre supplies the shared public data snapshot.
   showAdmin();
 })();
 </script>
