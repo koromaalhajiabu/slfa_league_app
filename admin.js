@@ -200,6 +200,15 @@
   function superAdmin(p) {
     box().innerHTML =
       '<section class="sa-command-centre"><h2 class="rt">Super Admin Command Centre</h2><p class="muted">Live operational overview from the connected SLFA database. These are record totals, not performance estimates.</p><div class="sa-metric-grid">'+[['saMetricCompetitions','Competitions'],['saMetricSeasons','Seasons'],['saMetricMatches','Fixtures and results'],['saMetricClubs','Clubs'],['saMetricPlayers','Squad records']].map(function(x){return '<article class="sa-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="muted" id="saOverviewStatus" role="status">Loading operational totals…</div><button class="secondary" type="button" id="saRefreshOverview">Refresh overview</button></section>' +
+      '<section class="sa-staff-management" id="superAdminStaffManagement"><h2 class="rt">User &amp; Role Management</h2><p class="muted">Manage operational administrators and staff. Super Admin accounts and the Developer account are protected; only the Developer can appoint or change Super Admins.</p>' +
+      '<h3>Invite operational staff</h3><label for="saStaffName">Full name</label><input id="saStaffName" type="text" autocomplete="name">' +
+      '<label for="saStaffEmail">Email address</label><input id="saStaffEmail" type="email" autocomplete="email">' +
+      '<label for="saStaffRole">Operational role</label><select id="saStaffRole"><option value="REFEREE">Referee</option><option value="MATCH_COMMISSIONER">Match Commissioner</option><option value="TEAM_OFFICIAL">Team Official / Club Representative</option><option value="MATCH_DATA_OPERATOR">Match Data Operator</option><option value="MEDIA_OFFICER">Media Officer</option><option value="DISCIPLINARY_OFFICER">Disciplinary Officer</option><option value="LEAGUE_ADMIN">League Administrator</option></select>' +
+      '<div id="saStaffClubWrap" hidden><label for="saStaffClub">Club represented</label><select id="saStaffClub"><option value="">Choose a club…</option></select></div>' +
+      '<div class="btns"><button type="button" class="primary" id="saStaffInvite">Save invitation</button><button type="button" class="secondary" id="saStaffRefresh">Refresh staff register</button></div><div class="status" id="saStaffStatus" role="status"></div>' +
+      '<h3>Pending invitations</h3><div id="saStaffInvites" class="muted">Loading invitations…</div>' +
+      '<h3>Operational accounts</h3><div id="saStaffAccounts" class="muted">Loading accounts…</div>' +
+      '<h3>Role and account activity</h3><div id="saStaffAudit" class="muted">Loading activity…</div></section>' +
       '<h2 class="rt">Downloads</h2>' +
       '<p class="muted">Super Admin only. Each download is recorded in the export log.</p>' +
       '<div class="btns"><button class="secondary" data-export="matches">Matches and results (CSV)</button>' +
@@ -337,6 +346,7 @@
     wireCompetitionAdmin();
     loadSuperAdminOverview();
     $('saRefreshOverview').onclick=loadSuperAdminOverview;
+    wireSuperAdminStaffManagement();
     wireClubs();
     wireMatchInformationAdmin();
     loadReview();
@@ -1416,6 +1426,116 @@
     }).catch(function(e){msg(e.message||'Could not remove uploaded media files.');});
   }
   function loadMediaAnalytics(){var host=$('mediaAnalytics');if(!host)return;var since=new Date(Date.now()-30*86400000).toISOString();db.from('media_engagement').select('event_type,created_at').gte('created_at',since).order('created_at',{ascending:false}).limit(10000).then(function(r){if(r.error){host.textContent='Engagement data unavailable.';return;}var n={IMPRESSION:0,VIDEO_PLAY:0,VIDEO_CLICK:0,SHARE:0};(r.data||[]).forEach(function(x){if(n[x.event_type]!=null)n[x.event_type]++;});host.innerHTML='<div class="pm-analytics-grid">'+[['Impressions',n.IMPRESSION],['Video plays / clicks',n.VIDEO_PLAY+n.VIDEO_CLICK],['Shares',n.SHARE]].map(function(x){return '<div><strong>'+x[1]+'</strong><span>'+x[0]+'</span></div>';}).join('')+'</div><p class="muted">Last 30 days · deduplicated browser engagement signals, not verified unique audience figures.</p>';});}
+
+  // ---------- SUPER ADMIN: OPERATIONAL STAFF MANAGEMENT ----------
+  var SA_OPERATIONAL_ROLES = [
+    ['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],
+    ['TEAM_OFFICIAL','Team Official / Club Representative'],['MATCH_DATA_OPERATOR','Match Data Operator'],
+    ['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer'],['LEAGUE_ADMIN','League Administrator']
+  ];
+  function saStaffSay(text){var el=$('saStaffStatus');if(el)el.textContent=text||'';}
+  function saStaffRoleKey(row){return String(row.system_role||'').toUpperCase()==='REFEREE'&&String(row.official_title||'').trim().toLowerCase()==='match commissioner'?'MATCH_COMMISSIONER':String(row.system_role||'').toUpperCase();}
+  function wireSuperAdminStaffManagement(){
+    if(!$('saStaffInvite')||$('saStaffInvite').dataset.wired)return;
+    $('saStaffInvite').dataset.wired='1';
+    function refresh(){refreshSuperAdminStaff();}
+    $('saStaffRole').addEventListener('change',function(){$('saStaffClubWrap').hidden=this.value!=='TEAM_OFFICIAL';});
+    db.from('league_clubs').select('id,club_name').eq('is_active',true).order('club_name').then(function(r){
+      if(r.error){saStaffSay('Club list unavailable: '+r.error.message);return;}
+      $('saStaffClub').innerHTML='<option value="">Choose a club…</option>'+(r.data||[]).map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.club_name)+'</option>';}).join('');
+    });
+    $('saStaffInvite').addEventListener('click',function(){
+      var name=$('saStaffName').value.trim(),email=$('saStaffEmail').value.trim().toLowerCase(),role=$('saStaffRole').value,club=role==='TEAM_OFFICIAL'?($('saStaffClub').value||null):null;
+      if(!name||!email){saStaffSay('Enter the full name and email address.');return;}
+      if(role==='TEAM_OFFICIAL'&&!club){saStaffSay('Choose the club represented by this Team Official.');return;}
+      var button=$('saStaffInvite');button.disabled=true;saStaffSay('Saving operational role…');
+      db.rpc('invite_user',{p_email:email,p_role:role,p_club:club,p_full_name:name,p_photo_url:null}).then(function(r){
+        if(r.error)throw r.error;
+        saStaffSay(r.data||'Role saved.');
+        return db.from('role_invitations').select('email').eq('email',email).maybeSingle().then(function(check){
+          if(check.error)throw check.error;
+          if(!check.data){saStaffSay((r.data||'Role saved.')+' Existing account updated; no invitation email is needed.');return;}
+          saStaffSay('Invitation saved. Sending the invitation email…');
+          return sendRoleInvitation(email).then(function(result){saStaffSay(result.message||'Invitation email sent.');})
+            .catch(function(error){saStaffSay('Invitation saved, but email delivery failed. Retry it below. '+(error.message||''));});
+        });
+      }).then(function(){ $('saStaffName').value='';$('saStaffEmail').value='';$('saStaffClub').value='';refresh(); })
+        .catch(function(error){saStaffSay('Could not save invitation: '+(error.message||'Unknown error.'));})
+        .finally(function(){button.disabled=false;});
+    });
+    $('saStaffRefresh').addEventListener('click',refresh);refresh();
+  }
+  function refreshSuperAdminStaff(){loadSuperAdminStaffAccounts();loadSuperAdminStaffInvites();loadSuperAdminStaffAudit();}
+  function loadSuperAdminStaffAccounts(){
+    var host=$('saStaffAccounts');if(!host)return;
+    Promise.all([
+      db.from('user_profiles').select('id,full_name,email,photo_url,system_role,status,official_title,club_id').order('email').limit(500),
+      db.from('league_clubs').select('id,club_name').eq('is_active',true).order('club_name')
+    ]).then(function(all){
+      if(all[0].error){host.textContent='Account register unavailable: '+all[0].error.message;return;}
+      if(all[1].error){host.textContent='Club assignments unavailable: '+all[1].error.message;return;}
+      var rows=all[0].data||[],clubs=all[1].data||[];
+      host.innerHTML=rows.length?rows.map(function(u){
+        var active=String(u.status||'').toLowerCase()==='active',role=saStaffRoleKey(u);
+        var options=SA_OPERATIONAL_ROLES.map(function(o){return '<option value="'+o[0]+'"'+(role===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('');
+        var clubControl=role==='TEAM_OFFICIAL'?'<label>Assigned club</label><select data-sa-club-for="'+esc(u.id)+'"><option value="">Choose a club…</option>'+clubs.map(function(x){return '<option value="'+esc(x.id)+'"'+(String(x.id)===String(u.club_id)?' selected':'')+'>'+esc(x.club_name)+'</option>';}).join('')+'</select><button class="small" type="button" data-sa-club-save="'+esc(u.id)+'">Save club assignment</button>':'';
+        return '<article class="post"><strong>'+esc(u.full_name||u.email||'Staff account')+'</strong><div class="muted">'+esc(u.email)+' · '+esc(u.status)+' · '+esc(u.official_title||u.system_role)+'</div><label>Operational role</label><select data-sa-role-for="'+esc(u.id)+'">'+options+'</select>'+clubControl+'<div class="btns"><button class="small" type="button" data-sa-role-save="'+esc(u.id)+'">Save role</button><button class="small '+(active?'danger':'')+'" type="button" data-sa-status="'+esc(u.id)+'" data-sa-next="'+(active?'Suspended':'Active')+'">'+(active?'Suspend account':'Restore account')+'</button></div></article>';
+      }).join(''):'No operational staff accounts found.';
+      host.querySelectorAll('[data-sa-role-save]').forEach(function(b){b.onclick=function(){
+        var id=b.dataset.saRoleSave,select=host.querySelector('[data-sa-role-for="'+id+'"]');if(!select)return;
+        if(!confirm('Apply this operational role to the selected account?'))return;
+        b.disabled=true;db.rpc('set_user_role',{p_user:id,p_role:select.value}).then(function(r){
+          if(r.error){saStaffSay(r.error.message);return;}saStaffSay(r.data||'Role updated.');refreshSuperAdminStaff();
+        }).finally(function(){b.disabled=false;});
+      };});
+      host.querySelectorAll('[data-sa-club-save]').forEach(function(b){b.onclick=function(){
+        var id=b.dataset.saClubSave,select=host.querySelector('[data-sa-club-for="'+id+'"]');if(!select)return;
+        db.rpc('set_team_official_club',{p_user:id,p_club:select.value||null}).then(function(r){
+          if(r.error){saStaffSay(r.error.message);return;}saStaffSay(r.data||'Club assignment saved.');refreshSuperAdminStaff();
+        });
+      };});
+      host.querySelectorAll('[data-sa-status]').forEach(function(b){b.onclick=function(){
+        var reason=prompt('Enter the reason for this account status change (at least 5 characters).');if(reason===null)return;
+        if(reason.trim().length<5){saStaffSay('Give a reason of at least 5 characters.');return;}
+        var next=b.dataset.saNext;if(!confirm((next==='Suspended'?'Suspend':'Restore')+' this staff account?'))return;
+        db.rpc('set_account_status',{p_user:b.dataset.saStatus,p_status:next,p_reason:reason.trim()}).then(function(r){
+          if(r.error){saStaffSay(r.error.message);return;}saStaffSay('Account status updated and logged.');refreshSuperAdminStaff();
+        });
+      };});
+    });
+  }
+  function loadSuperAdminStaffInvites(){
+    var host=$('saStaffInvites');if(!host)return;
+    db.from('role_invitations').select('email,full_name,system_role,official_title,invited_at,email_delivery_status,email_sent_at,email_delivery_error,invitation_status')
+      .in('invitation_status',['PENDING','ACCOUNT_CREATED']).order('invited_at',{ascending:false}).limit(200).then(function(r){
+        if(r.error){host.textContent='Pending invitations unavailable: '+r.error.message;return;}
+        var rows=r.data||[];
+        host.innerHTML=rows.length?rows.map(function(x){
+          var sent=String(x.email_delivery_status||'').toUpperCase()==='SENT';
+          return '<article class="post"><strong>'+esc(x.full_name||x.email)+'</strong><div class="muted">'+esc(x.email)+' · '+esc(x.official_title||x.system_role)+' · '+(sent?'Email sent':'Email not sent')+'</div>'+
+            (sent?'<span class="muted">Invitation email sent</span>':'<button class="small" type="button" data-sa-send="'+esc(x.email)+'">Send / retry email</button>')+
+            ' <button class="small danger" type="button" data-sa-cancel="'+esc(x.email)+'">Cancel invitation</button></article>';
+        }).join(''):'No pending operational invitations.';
+        host.querySelectorAll('[data-sa-send]').forEach(function(b){b.onclick=function(){
+          var email=b.dataset.saSend;b.disabled=true;sendRoleInvitation(email).then(function(x){saStaffSay(x.message||'Invitation email sent.');})
+            .catch(function(e){saStaffSay('Email delivery failed: '+(e.message||'Unknown error.'));}).finally(function(){loadSuperAdminStaffInvites();});
+        };});
+        host.querySelectorAll('[data-sa-cancel]').forEach(function(b){b.onclick=function(){
+          var email=b.dataset.saCancel;if(!confirm('Cancel this operational staff invitation?'))return;
+          db.from('role_invitations').update({invitation_status:'CANCELLED'}).eq('email',email).neq('system_role','SUPER_ADMIN')
+            .then(function(x){if(x.error){saStaffSay(x.error.message);return;}saStaffSay('Invitation cancelled.');refreshSuperAdminStaff();});
+        };});
+      });
+  }
+  function loadSuperAdminStaffAudit(){
+    var host=$('saStaffAudit');if(!host)return;
+    db.from('role_change_log').select('user_email,previous_role,new_role,reason,changed_at,changed_by')
+      .order('changed_at',{ascending:false}).limit(30).then(function(r){
+        if(r.error){host.textContent='Staff activity log unavailable: '+r.error.message;return;}
+        var rows=r.data||[];
+        host.innerHTML=rows.length?rows.map(function(x){return '<div class="ev"><span class="etxt">'+esc(x.user_email)+': '+esc(x.previous_role||'—')+' → '+esc(x.new_role)+'<small>'+esc(new Date(x.changed_at).toLocaleString())+' · '+esc(x.reason||'Role change')+'</small></span></div>';}).join(''):'No role changes recorded.';
+      });
+  }
 
   // ---------- DEVELOPER PANEL ----------
   var devUser = null;
