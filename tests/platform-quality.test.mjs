@@ -507,9 +507,9 @@ test('Help, feedback, privacy and terms are fully covered by Krio translations',
     '[SLFA to set the retention period]',
     '[SLFA to confirm how comments from under-18s are handled]'
   ]) assert.ok(dictionary.includes(phrase), 'Missing full-sentence Krio translation key: ' + phrase);
-  assert.match(help, /i18n\\.js\\?v=28/);
-  assert.match(privacy, /i18n\\.js\\?v=28/);
-  assert.match(sw, /i18n\\.js\\?v=28/);
+  assert.ok(help.includes('i18n.js?v=29'));
+  assert.ok(privacy.includes('i18n.js?v=29'));
+  assert.ok(sw.includes('i18n.js?v=29'));
   assert.match(sw, /slfa-app-v320/);
 });
 
@@ -589,10 +589,10 @@ test('Arabic translation covers privacy, public help, account data and staff ope
   ];
   for (const pageName of pages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.match(page, /i18n\.js\?v=28/, pageName + ' must load the current shared language dictionary');
+    assert.ok(page.includes('i18n.js?v=29'), pageName + ' must load the current shared language dictionary');
   }
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.match(sw, /i18n\.js\?v=28/);
+  assert.ok(sw.includes('i18n.js?v=29'));
   assert.match(sw, /slfa-app-v320/);
 });
 
@@ -664,9 +664,9 @@ test('French translation covers privacy, help, account data and all staff operat
   ];
   for (const pageName of pages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.match(page, /i18n\\.js\\?v=29/, pageName + ' must load the expanded French dictionary');
+    assert.ok(page.includes('i18n.js?v=29'), pageName + ' must load the expanded French dictionary');
   }
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.match(sw, /i18n\\.js\\?v=29/);
+  assert.ok(sw.includes('i18n.js?v=29'));
   assert.match(sw, /slfa-app-v320/);
 });
