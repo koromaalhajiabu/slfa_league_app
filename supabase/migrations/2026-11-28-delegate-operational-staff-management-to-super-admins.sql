@@ -175,7 +175,7 @@ begin
   end if;
 
   update public.user_profiles
-     set system_role=v_role,official_title=v_title,club_id=null,status='Active'
+     set system_role=v_role,official_title=v_title,club_id=null
    where id=p_user;
   insert into public.role_change_log(user_id,user_email,previous_role,new_role,reason,changed_by)
   values(p_user,v_email,v_previous,coalesce(v_title,v_role),
