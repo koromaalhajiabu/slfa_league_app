@@ -271,3 +271,22 @@ create policy "developer manages super admin invitation only" on public.role_inv
 for all to authenticated
 using (public.app_role()='DEVELOPER' and upper(coalesce(system_role,'')) in ('SUPER_ADMIN','LEAGUE_ADMIN'))
 with check (public.app_role()='DEVELOPER' and upper(coalesce(system_role,'')) in ('SUPER_ADMIN','LEAGUE_ADMIN'));
+
+
+-- Do not expose legacy League Administrator rows as operational staff.
+drop policy if exists "superadmin read league admin profiles" on public.user_profiles;
+drop policy if exists "superadmin_read_operational_profiles" on public.user_profiles;
+create policy "superadmin_read_operational_profiles" on public.user_profiles
+for select to authenticated
+using (public.app_role()='SUPER_ADMIN' and upper(coalesce(system_role,'')) not in ('SUPER_ADMIN','LEAGUE_ADMIN','DEVELOPER'));
+
+drop policy if exists "superadmin_read_operational_invitations" on public.role_invitations;
+create policy "superadmin_read_operational_invitations" on public.role_invitations
+for select to authenticated
+using (public.app_role()='SUPER_ADMIN' and upper(coalesce(system_role,'')) not in ('SUPER_ADMIN','LEAGUE_ADMIN','DEVELOPER'));
+
+drop policy if exists "superadmin_update_operational_invitations" on public.role_invitations;
+create policy "superadmin_update_operational_invitations" on public.role_invitations
+for update to authenticated
+using (public.app_role()='SUPER_ADMIN' and upper(coalesce(system_role,'')) not in ('SUPER_ADMIN','LEAGUE_ADMIN','DEVELOPER'))
+with check (public.app_role()='SUPER_ADMIN' and upper(coalesce(system_role,'')) not in ('SUPER_ADMIN','LEAGUE_ADMIN','DEVELOPER'));
