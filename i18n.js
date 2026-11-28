@@ -5124,6 +5124,14 @@
     "Correct errors through the appropriate review process and follow SLFA media policy.": "صحح الأخطاء من خلال عملية المراجعة المناسبة واتبع سياسة SLFA الإعلامية."
   });
 
+  // Remaining Football Intelligence (Insights) panel strings not covered by the earlier Arabic pass.
+  Object.assign(DICT.ar, {
+    "Elite football intelligence dashboard": "لوحة متقدمة لمعلومات وتحليلات كرة القدم",
+    "Calculated from completed matches": "مُحتسب من المباريات المكتملة",
+    "P": "لعب",
+    "GD": "ف.أ"
+  });
+
   var current = lang();
   var table = DICT[current] || null;
   // Compile translation lookups once. A single phrase matcher avoids scanning

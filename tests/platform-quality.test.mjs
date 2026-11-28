@@ -275,8 +275,8 @@ test('Krio translations load across public and all staff portals', () => {
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=30'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v322'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=33'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v337'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -507,10 +507,10 @@ test('Help, feedback, privacy and terms are fully covered by Krio translations',
     '[SLFA to set the retention period]',
     '[SLFA to confirm how comments from under-18s are handled]'
   ]) assert.ok(dictionary.includes(phrase), 'Missing full-sentence Krio translation key: ' + phrase);
-  assert.ok(help.includes('i18n.js?v=30'));
-  assert.ok(privacy.includes('i18n.js?v=30'));
-  assert.ok(sw.includes('i18n.js?v=30'));
-  assert.match(sw, /slfa-app-v322/);
+  assert.ok(help.includes('i18n.js?v=33'));
+  assert.ok(privacy.includes('i18n.js?v=33'));
+  assert.ok(sw.includes('i18n.js?v=33'));
+  assert.match(sw, /slfa-app-v337/);
 });
 
 
@@ -589,11 +589,11 @@ test('Arabic translation covers privacy, public help, account data and staff ope
   ];
   for (const pageName of pages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.ok(page.includes('i18n.js?v=30'), pageName + ' must load the current shared language dictionary');
+    assert.ok(page.includes('i18n.js?v=33'), pageName + ' must load the current shared language dictionary');
   }
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=30'));
-  assert.match(sw, /slfa-app-v322/);
+  assert.ok(sw.includes('i18n.js?v=33'));
+  assert.match(sw, /slfa-app-v337/);
 });
 
 test('Arabic public match centre and dynamic operations wording is available in the shared dictionary', () => {
@@ -671,9 +671,9 @@ test('French translation covers privacy, help, account data and all staff operat
   ];
   for (const pageName of pages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.ok(page.includes('i18n.js?v=30'), pageName + ' must load the expanded French dictionary');
+    assert.ok(page.includes('i18n.js?v=33'), pageName + ' must load the expanded French dictionary');
   }
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=30'));
-  assert.match(sw, /slfa-app-v322/);
+  assert.ok(sw.includes('i18n.js?v=33'));
+  assert.match(sw, /slfa-app-v337/);
 });
