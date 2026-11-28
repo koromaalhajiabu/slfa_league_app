@@ -1550,7 +1550,7 @@
       '<label for="ivPhoto">Round profile photo</label><input id="ivPhoto" type="file" accept="image/jpeg,image/png,image/webp"><div id="ivPhotoPreview" class="muted">No photo selected.</div>'+
       '<label for="ivRole">Role</label><select id="ivRole">'+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join('')+'</select><div id="devSuperAdminSlot" class="muted" role="status">Checking Super Admin appointment availability…</div>'+
       
-      '<div class="btns"><button class="primary" id="ivSave">Save invitation</button></div>'+
+      '<div class="btns"><button class="primary" id="ivSave" disabled>Appoint Super Admin</button></div>'+
       '<h2 class="rt">Pending Super Admin invitation</h2><div id="ivList" class="muted">Loading…</div>'+
       '<h2 class="rt">Super Admin appointment</h2><div id="roleList" class="muted">The Super Admin / League Administrator is the single league authority. Only this appointment is managed here.</div>'+
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
@@ -1631,18 +1631,23 @@
       var failed=results.some(function(r){return r.error;});
       var occupied=!failed&&((results[0].count||0)+(results[1].count||0)>0);
       var option=select.querySelector('option[value="SUPER_ADMIN"]');
+      var saveButton=$('ivSave');
       if(failed||occupied){
+        if(saveButton)saveButton.disabled=true;
         if(option)option.remove();
         if(select.value==='SUPER_ADMIN')select.value='REFEREE';
         note.textContent=failed
           ?'Super Admin appointment is temporarily disabled because the current appointment status could not be verified.'
           :'The single Super Admin position is already assigned or has a pending invitation. Revoke that appointment before appointing a replacement.';
       }else{
+        if(!option){option=document.createElement('option');option.value='SUPER_ADMIN';option.textContent='Super Admin / League Administrator';select.appendChild(option);}
+        if(saveButton)saveButton.disabled=false;
         note.textContent='One Super Admin appointment is available. Only one Super Admin account or pending invitation is permitted.';
       }
     }).catch(function(){
       var option=select.querySelector('option[value="SUPER_ADMIN"]');if(option)option.remove();
-      if(select.value==='SUPER_ADMIN')select.value='REFEREE';
+      var saveButton=$('ivSave');if(saveButton)saveButton.disabled=true;
+      if(select.value==='SUPER_ADMIN')select.value='';
       note.textContent='Super Admin appointment is disabled until the existing appointment status can be verified.';
     });
   }
@@ -1667,6 +1672,7 @@
     var name=$('ivName').value.trim(),email=$('ivEmail').value.trim().toLowerCase(),role='SUPER_ADMIN',file=$('ivPhoto').files&&$('ivPhoto').files[0];
     var club=null;
     if(!name||!email){msg('Enter the full name and email address.');return;}
+    if(!$('ivRole').querySelector('option[value="SUPER_ADMIN"]')){msg('A Super Admin is already appointed or appointment availability could not be verified.');return;}
     if(role!=='SUPER_ADMIN'){msg('The Developer can appoint only the Super Admin.');return;}
     var save=$('ivSave');if(save)save.disabled=true;
     msg('Saving role and preparing the secure invitation…');
