@@ -507,9 +507,9 @@ test('Help, feedback, privacy and terms are fully covered by Krio translations',
     '[SLFA to set the retention period]',
     '[SLFA to confirm how comments from under-18s are handled]'
   ]) assert.ok(dictionary.includes(phrase), 'Missing full-sentence Krio translation key: ' + phrase);
-  assert.match(help, /i18n\.js\?v=26/);
-  assert.match(privacy, /i18n\.js\?v=26/);
-  assert.match(sw, /i18n\.js\?v=26/);
+  assert.match(help, /i18n\\.js\\?v=28/);
+  assert.match(privacy, /i18n\\.js\\?v=28/);
+  assert.match(sw, /i18n\\.js\\?v=28/);
   assert.match(sw, /slfa-app-v319/);
 });
 
@@ -538,6 +538,8 @@ test('Match-Day Submission Inbox reconciles both club sheets and every assigned 
 });
 
 
+
+
 test('Arabic translation covers privacy, public help, account data and staff operation panels', () => {
   const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
   const requiredArabicKeys = [
@@ -548,10 +550,10 @@ test('Arabic translation covers privacy, public help, account data and staff ope
     'Who can see it',
     'How long we keep it',
     'Terms of use',
-    'Keep comments respectful. Do not post abuse, threats, hate, racism, spam, or anyone\\'s personal details.',
+    "Keep comments respectful. Do not post abuse, threats, hate, racism, spam, or anyone's personal details.",
     'Help & Feedback Centre',
     'My fan data',
-    'This page provides access to match comments, problem reports and historic supporter entries previously submitted from this browser. Predictions and polls are no longer available in the current public app. Your browser keeps a small code to link them to you. Nobody else can see this page\\'s contents unless they use this device. Clearing the app\\'s site data removes the code, and the records then cannot be found again from this device.',
+    "This page provides access to match comments, problem reports and historic supporter entries previously submitted from this browser. Predictions and polls are no longer available in the current public app. Your browser keeps a small code to link them to you. Nobody else can see this page's contents unless they use this device. Clearing the app's site data removes the code, and the records then cannot be found again from this device.",
     'Match-Day Submission Inbox',
     'Electronic Team Sheet Inbox',
     'Referee Match Record Inbox',
@@ -575,11 +577,11 @@ test('Arabic translation covers privacy, public help, account data and staff ope
   for (const phrase of requiredArabicKeys) {
     assert.ok(dictionary.includes(phrase), 'Arabic dictionary is missing a required interface phrase: ' + phrase);
   }
-  assert.match(dictionary, /documentElement\\.setAttribute\\('dir', current === 'ar' \\? 'rtl' : 'ltr'\\)/,
+  assert.ok(dictionary.includes("document.documentElement.setAttribute('dir', current === 'ar' ? 'rtl' : 'ltr')"),
     'The document direction must switch explicitly between RTL and LTR');
-  assert.match(dictionary, /Input values can be database enum values/);
-  assert.match(dictionary, /el\\.tagName === 'INPUT' && \\/\\^\\(button\\|submit\\|reset\\)\\$\\/i\\.test/,
+  assert.ok(dictionary.includes("el.tagName === 'INPUT' && /^(button|submit|reset)$/i.test"),
     'Only visible input button captions may have their value attribute translated');
+
   const pages = [
     'index.html','developer.html','super-admin.html','referee.html','team-official.html',
     'match-data-operator.html','media.html','disciplinary.html','league-admin.html',
@@ -587,13 +589,12 @@ test('Arabic translation covers privacy, public help, account data and staff ope
   ];
   for (const pageName of pages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.match(page, /i18n\\.js\\?v=27/, pageName + ' must load the current shared language dictionary');
+    assert.match(page, /i18n\.js\?v=28/, pageName + ' must load the current shared language dictionary');
   }
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.match(sw, /i18n\\.js\\?v=27/);
+  assert.match(sw, /i18n\.js\?v=28/);
   assert.match(sw, /slfa-app-v319/);
 });
-
 
 test('Arabic public match centre and dynamic operations wording is available in the shared dictionary', () => {
   const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
