@@ -1,0 +1,42 @@
+/* SLFA mobile performance layer: preserve the visual system while reducing paint and scroll costs. */
+html { scroll-behavior:auto !important; }
+body { background-attachment:scroll !important; }
+*, *::before, *::after {
+  scroll-behavior:auto !important;
+  -webkit-tap-highlight-color:transparent;
+}
+@media (max-width: 900px) {
+  /* Blur and large layered shadows are costly to composite on entry-level phones. */
+  *, *::before, *::after {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+  .card, .admin-body, .portal, .post, .panel,
+  .slfa-home-feature, .match.live {
+    box-shadow:0 5px 16px rgba(0,0,0,.16) !important;
+  }
+  body, body::before, body::after {
+    background-attachment:scroll !important;
+    animation:none !important;
+  }
+  /* Avoid repeated layout/paint work for large sections until they approach the viewport. */
+  main > section, .portal > section, .view, #publicContent > section {
+    content-visibility:auto;
+    contain-intrinsic-size:auto 420px;
+  }
+  img { image-rendering:auto; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Keep interactions immediate; do not animate expensive shadows or filters. */
+  button, a, .tabs button, nav a, nav button {
+    transition:background-color .12s ease,color .12s ease,border-color .12s ease !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
