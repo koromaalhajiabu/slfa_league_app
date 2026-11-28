@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v316'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v317'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=2'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=2'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v316'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v317'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -276,7 +276,7 @@ test('Krio translations load across public and all staff portals', () => {
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('i18n.js?v=26'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v316'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('slfa-app-v317'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -378,7 +378,7 @@ test('service worker serves versioned app assets cache first while keeping publi
   assert.match(dataHandler, /e\.respondWith\(fetch\(req\)/);
   assert.match(assetHandler, /cache\.match\(req\)[\s\S]*?if \(hit\) return hit[\s\S]*?return fetch\(req\)/);
   assert.match(assetHandler, /pathname\.endsWith\('\/sw\.js'\)/);
-  assert.match(sw, /const CACHE = 'slfa-app-v316'/);
+  assert.match(sw, /const CACHE = 'slfa-app-v317'/);
 });
 
 
@@ -510,5 +510,29 @@ test('Help, feedback, privacy and terms are fully covered by Krio translations',
   assert.match(help, /i18n\.js\?v=26/);
   assert.match(privacy, /i18n\.js\?v=26/);
   assert.match(sw, /i18n\.js\?v=26/);
-  assert.match(sw, /slfa-app-v316/);
+  assert.match(sw, /slfa-app-v317/);
+});
+
+
+test('Match-Day Submission Inbox reconciles both club sheets and every assigned official live', () => {
+  const operations = fs.readFileSync(path.join(ROOT, 'competition-operations.js'), 'utf8');
+  const superAdmin = fs.readFileSync(path.join(ROOT, 'super-admin.html'), 'utf8');
+  assert.match(operations, /function buildSubmissionInboxRows/);
+  assert.match(operations, /category:'TEAM SHEET'/);
+  assert.match(operations, /category:'REFEREE RECORD'/);
+  assert.match(operations, /category:'COMMISSIONER REPORT'/);
+  assert.match(operations, /slfa-matchday-command-centre-live/);
+  assert.match(operations, /table:'match_team_sheets'/);
+  assert.match(operations, /table:'referee_match_record_submissions'/);
+  assert.match(operations, /table:'match_commissioner_reports'/);
+  assert.match(operations, /coInboxRows/);
+  assert.match(operations, /function exportSubmissionInbox/);
+  assert.match(superAdmin, /competition-operations\.js\?v=4/);
+
+  const teamSheetMigration = fs.readFileSync(
+    path.join(ROOT, 'supabase/migrations/2026-11-26-team-official-team-sheet-and-ocr.sql'),
+    'utf8'
+  );
+  assert.match(teamSheetMigration, /on conflict \(match_id,club_id\)/);
+  assert.match(teamSheetMigration, /submit_match_team_sheet/);
 });
