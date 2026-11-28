@@ -72,8 +72,7 @@
         var sheet = latest(current.sheets.filter(function(s) {
           return String(s.match_id) === String(m.id) && String(s.club_id) === String(clubId);
         }), 'updated_at');
-        var state = sheet ? upper(sheet.status) : missingStatus(m,kick,now);
-        if (!sheet && state === 'NOT DUE' && kick && kick.getTime() - now.getTime() <= 20 * 60 * 1000) state = 'AWAITING CLUB';
+        var state = sheet ? upper(sheet.status) : (cancelled(m) ? 'NOT REQUIRED' : (!kick || now.getTime() < kick.getTime() - 20 * 60 * 1000 ? 'NOT DUE' : 'OVERDUE'));
         out.push({
           matchId:m.id,match:matchLabel(m),kick:kick,category:'TEAM SHEET',
           owner:side+' club · '+teamName,assignee:sheet ? profileName(sheet.submitted_by) : 'Club Team Official',
@@ -82,7 +81,7 @@
         });
       }
       addClub(m.home_club_id,'Home',m.home_team || 'Home team');
-      if (String(m.away_club_id || '') !== String(m.home_club_id || '')) addClub(m.away_club_id,'Away',m.away_team || 'Away team');
+      if (!m.away_club_id || String(m.away_club_id) !== String(m.home_club_id || '')) addClub(m.away_club_id,'Away',m.away_team || 'Away team');
 
       assignmentsFor(m.id).forEach(function(a) {
         var role = upper(a.official_role), person = profileName(a.referee_user_id);
@@ -413,7 +412,7 @@
       live=active.filter(function(x){return live(x.match);}).length;
     var leagues=current.leagues.map(function(l){return '<option value="'+esc(l.name)+'">'+esc(l.name)+'</option>';}).join('');
     var inboxRows=buildSubmissionInboxRows(rows);
-    var inboxMissing=inboxRows.filter(function(x){return ['MISSING','OVERDUE','RETURNED','NOT LINKED'].indexOf(x.status)>=0;}).length;
+    var inboxMissing=inboxRows.filter(function(x){return ['MISSING','OVERDUE','NOT LINKED'].indexOf(x.status)>=0;}).length;
     var inboxReview=inboxRows.filter(function(x){return ['SUBMITTED','UNDER REVIEW','DRAFT'].indexOf(x.status)>=0;}).length;
     var inboxReturned=inboxRows.filter(function(x){return x.status==='RETURNED';}).length;
     var inboxComplete=inboxRows.filter(function(x){return ['APPROVED','ACKNOWLEDGED','REVIEWED'].indexOf(x.status)>=0;}).length;
