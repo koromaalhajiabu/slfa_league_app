@@ -472,25 +472,38 @@
   // Favourite clubs: saved to the fan's account when signed in, otherwise on this device
   function localFavs() { try { return JSON.parse(localStorage.getItem('slfa_fav_clubs') || '[]'); } catch (e) { return []; } }
   function saveLocalFavs(list) { try { localStorage.setItem('slfa_fav_clubs', JSON.stringify(list)); } catch (e) {} }
-  function loadFavs() {
+  var favsLoadedFor = null, favsInFlight = null, favsInFlightUser = null;
+  function loadFavs(force) {
     return db.auth.getSession().then(function (u) {
-      if (!u.data || !u.data.session || !u.data.session.user) {
+      var user = u.data && u.data.session && u.data.session.user;
+      if (!user) {
         var list = localFavs();
         myFavIds = {}; myFavNames = {}; myFavList = list.slice();
         list.forEach(function (f) { myFavIds[f.id] = true; myFavNames[f.name] = true; });
+        favsLoadedFor = 'anonymous';
         return;
       }
-      return db.from('user_favorite_clubs').select('club_id, league_clubs(club_name)').eq('user_id', u.data.session.user.id).then(function (r) {
+      var userId = String(user.id);
+      if (favsInFlight && favsInFlightUser === userId) return favsInFlight;
+      if (!force && favsLoadedFor === userId) return;
+      favsInFlightUser = userId;
+      favsInFlight = db.from('user_favorite_clubs').select('club_id, league_clubs(club_name)').eq('user_id', userId).then(function (r) {
         myFavIds = {}; myFavNames = {}; myFavList = [];
         (r.data || []).forEach(function (f) {
           var name = f.league_clubs && f.league_clubs.club_name;
           if (!name) return;
           myFavIds[f.club_id] = true; myFavNames[name] = true; myFavList.push({ id: f.club_id, name: name });
         });
+        if (!r.error) favsLoadedFor = userId;
+      }).then(function () {
+        favsInFlight = null; favsInFlightUser = null;
+      }, function () {
+        favsInFlight = null; favsInFlightUser = null;
       });
+      return favsInFlight;
     }).then(function () { if (isPublicTabActive('teams')) { publicTabLoaded.teams = true; loadTeams(); } renderMyClub(); });
   }
-  function refreshFavs() { loadFavs().then(function () { loadMatches(); }); }
+  function refreshFavs() { loadFavs(true).then(function () { loadMatches(); }); }
   function toggleFav(clubId, clubs) {
     var status = function (t) { var el = document.getElementById('favStatus'); if (el) el.textContent = t; };
     db.auth.getSession().then(function (u) {
@@ -519,7 +532,18 @@
       });
     });
   }
-  db.auth.onAuthStateChange(function () { refreshFavs(); });
+  db.auth.onAuthStateChange(function (event) {
+    // INITIAL_SESSION is followed by the explicit one-time load below.
+    // Ignore token refreshes: they do not change a fan's saved clubs.
+    if (event === 'SIGNED_IN') { favsLoadedFor = null; refreshFavs(); }
+    else if (event === 'SIGNED_OUT') {
+      favsLoadedFor = null; favsInFlight = null; favsInFlightUser = null;
+      var list = localFavs();
+      myFavIds = {}; myFavNames = {}; myFavList = list.slice();
+      list.forEach(function (f) { myFavIds[f.id] = true; myFavNames[f.name] = true; });
+      renderMyClub();
+    }
+  });
 
   // My club: the fan's first favourite club, shown at the top of Matches
   function ensureMyClubCard() {
