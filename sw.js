@@ -2,7 +2,7 @@
 // 1. Keeps the app shell available offline (pages, scripts, styles, images).
 // 2. Shows league alerts sent as push messages.
 // League data always comes from the network, so scores and news are never stale.
-const CACHE = 'slfa-app-v318';
+const CACHE = 'slfa-app-v319';
 // Saved copies of public league data, so fans can still read the last information when offline
 const DATA_CACHE = CACHE + '-data';
 const PUBLIC_TABLES = ['matches', 'league_standings', 'season_standings', 'league_clubs', 'club_squad', 'media_posts', 'leagues', 'match_events', 'match_lineups', 'club_announcements', 'top_scorers', 'top_assists', 'clean_sheets', 'motm_awards', 'competition_rules', 'seasons', 'slfa_publications', 'league_division_settings', 'league_movement_records'];
@@ -10,7 +10,7 @@ const SHELL = [
   "./",
   "./index.html",
   "./config.js",
-  "./i18n.js?v=27",
+  "./i18n.js?v=28",
   "./sw-update.js?v=5",
   "./match-minute-format.js?v=1",
   "./public.js?v=94",
