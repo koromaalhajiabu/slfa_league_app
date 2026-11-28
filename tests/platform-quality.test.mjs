@@ -122,22 +122,22 @@ test('all local HTML script, stylesheet, icon and media references resolve', () 
   assert.deepEqual(missing, [], missing.join('\n'));
 });
 
-test('service-worker precache includes the critical Super Admin workflow modules', () => {
-  const swPath = path.join(ROOT, 'sw.js');
-  const sw = fs.readFileSync(swPath, 'utf8');
+test('public shell installation does not block on staff-only modules', () => {
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   const shell = sw.match(/const\s+SHELL\s*=\s*\[([\s\S]*?)\];/);
   assert.ok(shell, 'Could not locate the service-worker SHELL asset list');
   const cached = new Set([...shell[1].matchAll(/['"]([^'"]+)['"]/g)].map(m => m[1].split(/[?#]/, 1)[0].replace(/^\.\//, '')));
-  for (const file of [
-    'competition-operations.js',
-    'match-ops-notifications.js',
-    'super-admin-referee-match-records.js',
-    'super-admin-team-sheets.js',
-    'national-integrity.js',
-    'division-management.js'
-  ]) {
-    assert.ok(cached.has(file), `Service worker does not precache ${file}`);
+  for (const file of ['index.html', 'public.js', 'match-centre.js', 'home-dashboard.js', 'i18n.js']) {
+    assert.ok(cached.has(file), `Public app shell must precache ${file}`);
   }
+  for (const file of ['admin.js', 'competition-operations.js', 'match-ops-notifications.js', 'super-admin-referee-match-records.js', 'super-admin-team-sheets.js', 'national-integrity.js', 'division-management.js', 'official-accreditation.js']) {
+    assert.ok(!cached.has(file), `Staff-only module ${file} must not delay public shell installation`);
+  }
+  const assetStart = sw.indexOf('// Public app assets are installed into the versioned shell cache.');
+  const pushStart = sw.indexOf("self.addEventListener('push'");
+  assert.ok(assetStart >= 0 && pushStart > assetStart);
+  assert.match(sw.slice(assetStart, pushStart), /cache\.put\(req, copy\)/,
+    'Non-shell staff assets must be cached automatically on first request');
 });
 
 test('browser JavaScript files pass Node syntax parsing', () => {
@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v315'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v316'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -188,7 +188,7 @@ test('public past-season statistics are limited to published events', () => {
 
 test('structured navigation assets load across every staff workspace', () => {
   const publicPage = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  assert.ok(publicPage.includes('workspace-shell.css?v=1'), 'Public League Centre must load the structured layout stylesheet');
+  assert.ok(publicPage.includes('workspace-shell.css?v=2'), 'Public League Centre must load the structured layout stylesheet');
 
   const staffPages = [
     'developer.html',
@@ -202,14 +202,14 @@ test('structured navigation assets load across every staff workspace', () => {
   ];
   for (const pageName of staffPages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.ok(page.includes('workspace-shell.css?v=1'), pageName + ' must load the shared workspace stylesheet');
-    assert.ok(page.includes('workspace-shell.js?v=1'), pageName + ' must load role-aware section navigation');
+    assert.ok(page.includes('workspace-shell.css?v=2'), pageName + ' must load the shared workspace stylesheet');
+    assert.ok(page.includes('workspace-shell.js?v=2'), pageName + ' must load role-aware section navigation');
   }
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
-  assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v315'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('workspace-shell.css?v=2'), 'Service worker must cache the workspace stylesheet');
+  assert.ok(sw.includes('workspace-shell.js?v=2'), 'Service worker must cache the workspace navigation script');
+  assert.ok(sw.includes('slfa-app-v316'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -269,12 +269,14 @@ test('Krio translations load across public and all staff portals', () => {
   ]) {
     assert.ok(dictionary.includes(phrase), 'Missing Krio dictionary key: ' + phrase);
   }
+  assert.ok(dictionary.includes('Load more matches'));
+  assert.ok(dictionary.includes('matches shown'));
   assert.match(dictionary, /National Football Intelligence & Integrity Centre[\s\S]*?Nashɔnəl Futbɔl Infomeshɔn/);
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=25'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v315'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=26'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v316'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -376,7 +378,37 @@ test('service worker serves versioned app assets cache first while keeping publi
   assert.match(dataHandler, /e\.respondWith\(fetch\(req\)/);
   assert.match(assetHandler, /cache\.match\(req\)[\s\S]*?if \(hit\) return hit[\s\S]*?return fetch\(req\)/);
   assert.match(assetHandler, /pathname\.endsWith\('\/sw\.js'\)/);
-  assert.match(sw, /const CACHE = 'slfa-app-v315'/);
+  assert.match(sw, /const CACHE = 'slfa-app-v316'/);
+});
+
+
+test('Match Centre renders matches in small pages and loads commissioner verification on demand', () => {
+  const matches = fs.readFileSync(path.join(ROOT, 'match-centre.js'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'match-centre.css'), 'utf8');
+  assert.match(matches, /visibleCount = 24/);
+  assert.match(matches, /visibleRows = list\.slice\(0, visibleCount\)/);
+  assert.match(matches, /visibleRows\.map\(card\)/);
+  assert.match(matches, /id="mcLoadMore"/);
+  assert.match(matches, /visibleCount \+= 24/);
+  assert.match(matches, /function requestCommissionerStatus\(rows\)/);
+  assert.match(matches, /requestCommissionerStatus\(visibleRows\)/);
+  assert.doesNotMatch(matches, /var finished=allMatches\.filter/);
+  assert.match(css, /\.slfa-mc-more-wrap/);
+});
+
+test('staff workspace navigation batches DOM updates and ignores attribute-only changes', () => {
+  const navigation = fs.readFileSync(path.join(ROOT, 'workspace-shell.js'), 'utf8');
+  assert.match(navigation, /function scheduleNavigationBuild\(\)/);
+  assert.match(navigation, /setTimeout\(buildNavigation, 90\)/);
+  assert.match(navigation, /new MutationObserver\(scheduleNavigationBuild\)/);
+  assert.match(navigation, /characterData: true/);
+  assert.doesNotMatch(navigation, /attributes:\s*true/);
+});
+
+test('mobile workspace shell avoids sticky-header backdrop compositing', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'workspace-shell.css'), 'utf8');
+  assert.match(css, /@media \(max-width: 680px\)/);
+  assert.match(css, /backdrop-filter: none !important/);
 });
 
 test('public data changes refresh only the affected panel', () => {
@@ -447,7 +479,9 @@ test('official accreditation uses private evidence and administrator review hist
   assert.match(accreditation, /getRandomValues/);
   assert.match(refereePortal, /official-accreditation\.js\?v=1/);
   assert.match(adminPortal, /official-accreditation\.js\?v=1/);
-  assert.match(sw, /official-accreditation\.js\?v=1/);
+  const shell = sw.match(/const\s+SHELL\s*=\s*\[([\s\S]*?)\];/);
+  assert.ok(shell, 'The public cache shell must be defined');
+  assert.doesNotMatch(shell[1], /official-accreditation\.js/, 'Private official evidence tooling must be loaded only in its staff portal');
 });
 
 
@@ -476,5 +510,5 @@ test('Help, feedback, privacy and terms are fully covered by Krio translations',
   assert.match(help, /i18n\.js\?v=25/);
   assert.match(privacy, /i18n\.js\?v=25/);
   assert.match(sw, /i18n\.js\?v=25/);
-  assert.match(sw, /slfa-app-v315/);
+  assert.match(sw, /slfa-app-v316/);
 });
