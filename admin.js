@@ -1474,7 +1474,7 @@
     ]).then(function(all){
       if(all[0].error){host.textContent='Account register unavailable: '+all[0].error.message;return;}
       if(all[1].error){host.textContent='Club assignments unavailable: '+all[1].error.message;return;}
-      var rows=all[0].data||[],clubs=all[1].data||[];
+      var rows=(all[0].data||[]).filter(function(u){return ['SUPER_ADMIN','LEAGUE_ADMIN','DEVELOPER'].indexOf(String(u.system_role||'').toUpperCase())===-1;}),clubs=all[1].data||[];
       host.innerHTML=rows.length?rows.map(function(u){
         var active=String(u.status||'').toLowerCase()==='active',role=saStaffRoleKey(u);
         var options=SA_OPERATIONAL_ROLES.map(function(o){return '<option value="'+o[0]+'"'+(role===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('');
@@ -1507,7 +1507,7 @@
   function loadSuperAdminStaffInvites(){
     var host=$('saStaffInvites');if(!host)return;
     db.from('role_invitations').select('email,full_name,system_role,official_title,invited_at,email_delivery_status,email_sent_at,email_delivery_error,invitation_status')
-      .in('invitation_status',['PENDING','ACCOUNT_CREATED']).order('invited_at',{ascending:false}).limit(200).then(function(r){
+      .neq('system_role','SUPER_ADMIN').neq('system_role','LEAGUE_ADMIN').in('invitation_status',['PENDING','ACCOUNT_CREATED']).order('invited_at',{ascending:false}).limit(200).then(function(r){
         if(r.error){host.textContent='Pending invitations unavailable: '+r.error.message;return;}
         var rows=r.data||[];
         host.innerHTML=rows.length?rows.map(function(x){
@@ -1552,7 +1552,7 @@
       '<div id="ivClubWrap" hidden><label for="ivClub">Club represented</label><select id="ivClub"><option value="">Loading active clubs…</option></select></div>'+
       '<div class="btns"><button class="primary" id="ivSave">Save invitation</button></div>'+
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
-      '<h2 class="rt">Super Admin appointment</h2><div id="roleList" class="muted">Only the Super Admin appointment is managed here.</div>'+
+      '<h2 class="rt">Super Admin appointment</h2><div id="roleList" class="muted">The Super Admin / League Administrator is the single league authority. Only this appointment is managed here.</div>'+
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
     loadDeveloperOverview();
     $('devRefreshOverview').onclick=loadDeveloperOverview;
@@ -1625,8 +1625,8 @@
   function refreshDeveloperSuperAdminSlot(){
     var note=$('devSuperAdminSlot'),select=$('ivRole');if(!note||!select)return;
     Promise.all([
-      db.from('user_profiles').select('id',{count:'exact',head:true}).eq('system_role','SUPER_ADMIN'),
-      db.from('role_invitations').select('email',{count:'exact',head:true}).eq('system_role','SUPER_ADMIN').in('invitation_status',['PENDING','ACCOUNT_CREATED'])
+      db.from('user_profiles').select('id',{count:'exact',head:true}).in('system_role',['SUPER_ADMIN','LEAGUE_ADMIN']),
+      db.from('role_invitations').select('email',{count:'exact',head:true}).in('system_role',['SUPER_ADMIN','LEAGUE_ADMIN']).in('invitation_status',['PENDING','ACCOUNT_CREATED'])
     ]).then(function(results){
       var failed=results.some(function(r){return r.error;});
       var occupied=!failed&&((results[0].count||0)+(results[1].count||0)>0);
