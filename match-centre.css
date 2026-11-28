@@ -35,6 +35,10 @@
 .slfa-mc-card-bottom{padding-top:10px;border-top:1px solid rgba(255,255,255,.07);color:var(--muted);font-size:9px}
 .slfa-mc-card-bottom span:last-child{text-align:right}
 .slfa-mc-motm{margin-top:9px;color:#d8bd7b;font-size:10px}
+/* Independent confirmation badge: a result the SLFA Match Commissioner has reviewed and signed off on, not a generic scores feed. */
+.slfa-mc-verified{display:inline-flex;align-items:center;gap:5px;margin:9px 0 0;padding:4px 9px;border:1px solid rgba(139,233,177,.38);border-radius:999px;background:rgba(31,174,101,.14);color:#aaf2c5;font-size:9px;font-weight:800;letter-spacing:.02em;width:fit-content}
+@media(prefers-color-scheme:light){.slfa-mc-verified{background:rgba(31,174,101,.1);border-color:rgba(20,120,70,.3);color:#146432}}
+:root[data-theme="light"] .slfa-mc-verified{background:rgba(31,174,101,.1);border-color:rgba(20,120,70,.3);color:#146432}
 .slfa-mc-details-btn{display:flex;justify-content:space-between;width:100%;margin-top:11px;padding:9px 10px;border:1px solid rgba(215,189,123,.2);border-radius:10px;background:rgba(215,189,123,.055);color:#e1c98e;font-size:10px;font-weight:600;text-align:left}
 .slfa-mc-detail{margin-top:10px;padding:11px;border-radius:12px;background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.06)}
 .slfa-mc-detail[hidden]{display:none}

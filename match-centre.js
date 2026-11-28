@@ -3,7 +3,7 @@
   'use strict';
   var db = window.slfaDb, host = document.getElementById('matchList');
   if (!db || !host) return;
-  var allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, leagueRows = [], clubRows = [], liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer, celebratedGoals = {};
+  var allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, leagueRows = [], clubRows = [], liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer, celebratedGoals = {}, commissionerConfirmed = {};
   // Season: the picker stores the chosen season; the default is the current season.
   function selectedSeason() { var stored = ''; try { stored = localStorage.getItem('slfa_season') || ''; } catch (e) {} var cur = seasons.filter(function (x) { return x.is_current; })[0] || null; return seasons.filter(function (x) { return String(x.id) === stored; })[0] || cur; }
   // Matches saved without a season count toward the season their date falls in.
@@ -140,7 +140,9 @@
     var homeWinner = g === 'results' && Number(m.home_score) > Number(m.away_score);
     var awayWinner = g === 'results' && Number(m.away_score) > Number(m.home_score);
     var cardState = g === 'live' ? 'is-live' : g === 'results' ? 'is-result' : g === 'upcoming' ? 'is-upcoming' : '';
+    var verified = g === 'results' && commissionerConfirmed[String(m.id)];
     return '<article class="slfa-mc-card '+cardState+'"><div class="slfa-mc-card-top"><b class="slfa-mc-status status-'+esc(s.toLowerCase())+'">'+(g==='live'?'<i class="slfa-mc-live-dot"></i>':'')+esc(label(m))+'</b><span class="slfa-mc-league">'+esc(leagueNames[String(m.league_id)] || 'SLFA Competition')+'</span></div>'+
+      (verified?'<p class="slfa-mc-verified" title="This result has been independently confirmed by an SLFA Match Commissioner">✓ Commissioner confirmed</p>':'')+
       '<div class="slfa-mc-teams"><div class="slfa-mc-team'+(homeWinner?' is-winner':'')+'">'+crest(m.home_team)+'<span role="button" tabindex="0" data-open-club-name="'+esc(m.home_team)+'">'+esc(m.home_team)+'</span></div>'+score+'<div class="slfa-mc-team'+(awayWinner?' is-winner':'')+'">'+crest(m.away_team)+'<span role="button" tabindex="0" data-open-club-name="'+esc(m.away_team)+'">'+esc(m.away_team)+'</span></div></div>'+
       '<div class="slfa-mc-card-bottom"><span>'+esc(dateText(m.match_date))+'</span><span>'+esc(m.venue || 'Venue TBC')+'</span></div>'+
       (m.motm_name?'<p class="slfa-mc-motm">★ Man of the Match: '+esc(m.motm_name)+(m.motm_jersey_number?' · #'+esc(m.motm_jersey_number):'')+'</p>':'')+
@@ -362,7 +364,18 @@
             if(m.away_score==null)m.away_score=goals.filter(function(x){return x.team_name===m.away_team;}).length;
           });
         }
-        updated=new Date();publishPublicData();render();return true;
+        updated=new Date();publishPublicData();render();
+        // Independent confirmation badge: fetched separately so a slow/failed lookup never blocks the scores themselves.
+        var finished=allMatches.filter(function(m){return group(m)==='results';}).map(function(m){return Number(m.id);});
+        if(finished.length&&db.rpc){
+          db.rpc('get_match_commissioner_status',{p_match_ids:finished}).then(function(r){
+            if(r.error)return;
+            commissionerConfirmed={};
+            (r.data||[]).forEach(function(x){commissionerConfirmed[String(x.match_id)]=x.confirmed_at||true;});
+            render();
+          }).catch(function(){});
+        }
+        return true;
       });
     });
     return Promise.race([request, new Promise(function (_, reject) {

@@ -2697,6 +2697,11 @@
       return Object.prototype.hasOwnProperty.call(DICT, v) || v === 'en' ? v : 'en';
     } catch (e) { return 'en'; }
   }
+  // Independent Match Commissioner confirmation badge on public results.
+  Object.assign(DICT.fr, {"Commissioner confirmed":"Confirmé par le commissaire","This result has been independently confirmed by an SLFA Match Commissioner":"Ce résultat a été confirmé de manière indépendante par un commissaire de match de la SLFA"});
+  Object.assign(DICT.kri, {"Commissioner confirmed":"Komishɔna dɔn kɔnfam am","This result has been independently confirmed by an SLFA Match Commissioner":"Dis rizɔlt dɔn kɔnfam separet bay wan SLFA Mach Komishɔna"});
+  Object.assign(DICT.ar, {"Commissioner confirmed":"أكّدها المفوض","This result has been independently confirmed by an SLFA Match Commissioner":"تم تأكيد هذه النتيجة بشكل مستقل من قبل مفوض مباراة تابع للاتحاد السيراليوني لكرة القدم"});
+
   var current = lang();
   var table = DICT[current] || null;
   // Compile translation lookups once. A single phrase matcher avoids scanning
