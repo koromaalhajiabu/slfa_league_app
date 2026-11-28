@@ -150,7 +150,7 @@
       'Live now': 'En direct',
       'Venue to be confirmed': 'Lieu à confirmer',
       'players found': 'joueurs trouvés',
-      'Selected competition': 'Compétition sélectionnée'
+      'Selected competition': 'Compétition sélectionnée',
       "Insights": "Analyses",
       "SLFA · 2026 FOOTBALL INTELLIGENCE": "SLFA · INTELLIGENCE FOOTBALL 2026",
       "Football Intelligence Centre": "Centre d’intelligence footballistique",
@@ -494,7 +494,7 @@
       'Live now': 'مباشر الآن',
       'Venue to be confirmed': 'الملعب لم يُحدد بعد',
       'players found': 'لاعبًا',
-      'Selected competition': 'المسابقة المختارة'
+      'Selected competition': 'المسابقة المختارة',
       "Insights": "التحليلات",
       "SLFA · 2026 FOOTBALL INTELLIGENCE": "اتحاد سيراليون لكرة القدم · تحليلات كرة القدم 2026",
       "Football Intelligence Centre": "مركز ذكاء كرة القدم",
