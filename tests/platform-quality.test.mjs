@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v320'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v321'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=2'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=2'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v320'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v321'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -275,8 +275,8 @@ test('Krio translations load across public and all staff portals', () => {
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=29'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v320'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=30'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v321'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -378,7 +378,7 @@ test('service worker serves versioned app assets cache first while keeping publi
   assert.match(dataHandler, /e\.respondWith\(fetch\(req\)/);
   assert.match(assetHandler, /cache\.match\(req\)[\s\S]*?if \(hit\) return hit[\s\S]*?return fetch\(req\)/);
   assert.match(assetHandler, /pathname\.endsWith\('\/sw\.js'\)/);
-  assert.match(sw, /const CACHE = 'slfa-app-v320'/);
+  assert.match(sw, /const CACHE = 'slfa-app-v321'/);
 });
 
 
@@ -507,10 +507,10 @@ test('Help, feedback, privacy and terms are fully covered by Krio translations',
     '[SLFA to set the retention period]',
     '[SLFA to confirm how comments from under-18s are handled]'
   ]) assert.ok(dictionary.includes(phrase), 'Missing full-sentence Krio translation key: ' + phrase);
-  assert.ok(help.includes('i18n.js?v=29'));
-  assert.ok(privacy.includes('i18n.js?v=29'));
-  assert.ok(sw.includes('i18n.js?v=29'));
-  assert.match(sw, /slfa-app-v320/);
+  assert.ok(help.includes('i18n.js?v=30'));
+  assert.ok(privacy.includes('i18n.js?v=30'));
+  assert.ok(sw.includes('i18n.js?v=30'));
+  assert.match(sw, /slfa-app-v321/);
 });
 
 
@@ -589,11 +589,11 @@ test('Arabic translation covers privacy, public help, account data and staff ope
   ];
   for (const pageName of pages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.ok(page.includes('i18n.js?v=29'), pageName + ' must load the current shared language dictionary');
+    assert.ok(page.includes('i18n.js?v=30'), pageName + ' must load the current shared language dictionary');
   }
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=29'));
-  assert.match(sw, /slfa-app-v320/);
+  assert.ok(sw.includes('i18n.js?v=30'));
+  assert.match(sw, /slfa-app-v321/);
 });
 
 test('Arabic public match centre and dynamic operations wording is available in the shared dictionary', () => {
@@ -625,6 +625,10 @@ test('Arabic public match centre and dynamic operations wording is available in 
 
 test('French translation covers privacy, help, account data and all staff operation portals', () => {
   const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
+  const frenchExpansion = dictionary.indexOf('Expanded French coverage for legal pages');
+  const lookupInitialization = dictionary.indexOf('var current = lang();');
+  assert.ok(frenchExpansion >= 0 && frenchExpansion < lookupInitialization,
+    'French dictionary additions must be loaded before the translation lookup is compiled');
   const requiredFrenchKeys = [
     'Privacy notice and terms of use',
     'The SLFA League App is a demonstration developed by Koroma Leone Tech for review by the Sierra Leone Football Association (SLFA). It is not currently an officially adopted or operated SLFA service. Any future operating body, data controller and contact details must be confirmed by the Association before production deployment.',
@@ -667,9 +671,9 @@ test('French translation covers privacy, help, account data and all staff operat
   ];
   for (const pageName of pages) {
     const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
-    assert.ok(page.includes('i18n.js?v=29'), pageName + ' must load the expanded French dictionary');
+    assert.ok(page.includes('i18n.js?v=30'), pageName + ' must load the expanded French dictionary');
   }
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=29'));
-  assert.match(sw, /slfa-app-v320/);
+  assert.ok(sw.includes('i18n.js?v=30'));
+  assert.match(sw, /slfa-app-v321/);
 });
