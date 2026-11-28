@@ -30,18 +30,18 @@
 <script>try{if(localStorage.getItem("slfa_theme")==="light"){document.documentElement.setAttribute("data-theme","light");}}catch(e){}</script>
 <link rel="stylesheet" href="styles.css?v=9">
 <link rel="stylesheet" href="match-centre.css?v=9">
-<link rel="stylesheet" href="my-club.css?v=1">
+<link rel="preload" as="style" href="my-club.css?v=1" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="my-club.css?v=1"></noscript>
 <link rel="stylesheet" href="buttons-compact.css?v=10">
-<link rel="stylesheet" href="league-pages.css?v=7">
-<link rel="stylesheet" href="competition-history.css?v=1">
-<link rel="stylesheet" href="publications.css?v=1">
-<link rel="stylesheet" href="football-intelligence.css?v=1">
-<link rel="stylesheet" href="player-stats.css">
-<link rel="stylesheet" href="player-directory.css?v=2">
-<link rel="stylesheet" href="player-profile.css?v=5">
-<link rel="stylesheet" href="matchday-premium.css?v=3">
-<link rel="stylesheet" href="news-centre.css">
-<link rel="stylesheet" href="premium-media.css?v=3">
+<link rel="preload" as="style" href="league-pages.css?v=7" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="league-pages.css?v=7"></noscript>
+<link rel="preload" as="style" href="competition-history.css?v=1" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="competition-history.css?v=1"></noscript>
+<link rel="preload" as="style" href="publications.css?v=1" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="publications.css?v=1"></noscript>
+<link rel="preload" as="style" href="football-intelligence.css?v=1" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="football-intelligence.css?v=1"></noscript>
+<link rel="preload" as="style" href="player-stats.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="player-stats.css"></noscript>
+<link rel="preload" as="style" href="player-directory.css?v=2" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="player-directory.css?v=2"></noscript>
+<link rel="preload" as="style" href="player-profile.css?v=5" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="player-profile.css?v=5"></noscript>
+<link rel="preload" as="style" href="matchday-premium.css?v=3" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="matchday-premium.css?v=3"></noscript>
+<link rel="preload" as="style" href="news-centre.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="news-centre.css"></noscript>
+<link rel="preload" as="style" href="premium-media.css?v=3" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="premium-media.css?v=3"></noscript>
 <link rel="stylesheet" href="premium-theme.css?v=64">
 <link rel="stylesheet" href="flag-mobile.css?v=17">
 <link rel="stylesheet" href="home-dashboard.css?v=4">
@@ -466,14 +466,37 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
 <script src="match-minute-format.js?v=1"></script>
 <script src="public.js?v=94"></script>
 <script src="match-centre.js?v=93"></script>
-<script src="league-pages.js?v=82"></script>
-<script src="home-dashboard.js?v=7"></script>
-<script src="football-intelligence.js?v=1"></script>
-<script src="premium-media.js?v=7"></script>
-<script src="player-profile.js?v=6"></script>
-<script src="player-directory.js?v=6"></script>
-<script src="cosmic-theme.js?v=19"></script>
-<script src="competition-history.js?v=1"></script>
-<script src="publications-public.js?v=2"></script>
+<script>
+/* Load secondary public sections after the first league view has rendered. */
+(function () {
+  var files = [
+    'league-pages.js?v=82',
+    'home-dashboard.js?v=7',
+    'football-intelligence.js?v=1',
+    'premium-media.js?v=7',
+    'player-profile.js?v=6',
+    'player-directory.js?v=6',
+    'cosmic-theme.js?v=19',
+    'competition-history.js?v=1',
+    'publications-public.js?v=2'
+  ];
+  function loadNext(index) {
+    if (index >= files.length) {
+      if (window.slfaPublicData) {
+        document.dispatchEvent(new CustomEvent('slfa:public-data-ready', { detail: window.slfaPublicData }));
+      }
+      return;
+    }
+    var script = document.createElement('script');
+    script.src = files[index];
+    script.onload = function () { loadNext(index + 1); };
+    script.onerror = function () { loadNext(index + 1); };
+    document.body.appendChild(script);
+  }
+  var start = function () { loadNext(0); };
+  if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 1400 });
+  else window.setTimeout(start, 700);
+})();
+</script>
 </body>
 </html>
