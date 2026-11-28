@@ -1,4 +1,4 @@
-// Language choice for fans: English (default), Krio or French.
+// Shared interface language: English (default), Arabic, Krio or French.
 // The text on the page is English. A dictionary swaps whole, exact labels only,
 // so names, scores and news stay as they were published.
 (function () {
