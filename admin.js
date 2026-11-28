@@ -1691,7 +1691,7 @@
       $('ivName').value='';$('ivEmail').value='';$('ivPhoto').value='';
       $('ivPhotoPreview').textContent='No photo selected.';
       if($('ivClub'))$('ivClub').value='';
-      loadInvites();loadRoleLog();if(devUser)loadAccountsDev(devUser);
+      loadInvites();loadRoleLog();refreshDeveloperSuperAdminSlot();if(devUser)loadAccountsDev(devUser);
     }).catch(function(err){msg(err.message||'Could not save this invitation.');})
       .finally(function(){if(save)save.disabled=false;});
   }
@@ -1771,7 +1771,7 @@
         return '<div class="post"><div style="display:flex;align-items:center">'+pic+'<div><strong>'+esc(u.full_name||u.email)+(me?' (you)':'')+'</strong><div class="muted">'+esc(u.email)+' · '+esc(u.status)+' · '+esc(u.system_role||'NONE')+(teamOfficial?' · '+(clubs.find(function(c){return String(c.id)===String(u.club_id);})||{}).club_name||'Not assigned':'')+'</div></div></div>'+
           (dev?'<div class="muted">Developer account · protected</div>':'<label>Role</label><select data-role-for="'+esc(u.id)+'">'+opts+'</select>'+assignment+'<div class="btns"><button class="small" data-apply="'+esc(u.id)+'">Apply role</button>'+(me?'':'<button class="small '+(active?'danger':'')+'" data-status="'+esc(u.id)+'" data-next="'+(active?'Suspended':'Active')+'">'+(active?'Suspend':'Restore')+'</button><button class="small danger" data-delete="'+esc(u.id)+'">Delete account</button>')+'</div>')+'</div>';
       }).join(''):'No accounts yet.';
-      document.querySelectorAll('[data-apply]').forEach(function(b){b.onclick=function(){var id=b.dataset.apply,el=document.querySelector('[data-role-for="'+id+'"]');if(!el)return;db.rpc('set_user_role',{p_user:id,p_role:el.value}).then(function(x){msg(x.error?x.error.message:(el.value==='TEAM_OFFICIAL'?'Team Official role assigned. Now choose the club below.':'Role updated.'));loadAccountsDev(p);loadRoleLog();});};});
+      document.querySelectorAll('[data-apply]').forEach(function(b){b.onclick=function(){var id=b.dataset.apply,el=document.querySelector('[data-role-for="'+id+'"]');if(!el)return;db.rpc('set_user_role',{p_user:id,p_role:el.value}).then(function(x){msg(x.error?x.error.message:(el.value==='TEAM_OFFICIAL'?'Team Official role assigned. Now choose the club below.':'Role updated.'));refreshDeveloperSuperAdminSlot();loadAccountsDev(p);loadRoleLog();});};});
       document.querySelectorAll('[data-team-club-save]').forEach(function(b){b.onclick=function(){var id=b.dataset.teamClubSave,el=document.querySelector('[data-team-club-for="'+id+'"]');if(!el)return;db.rpc('set_team_official_club',{p_user:id,p_club:el.value||null}).then(function(x){msg(x.error?x.error.message:(x.data||'Club assignment saved.'));loadAccountsDev(p);loadRoleLog();});};});
       document.querySelectorAll('[data-status]').forEach(function(b){b.onclick=function(){var st=b.dataset.next;db.rpc('set_account_status',{p_user:b.dataset.status,p_status:st}).then(function(x){msg(x.error?x.error.message:(st==='Active'?'Account restored.':'Account suspended.'));loadAccountsDev(p);});};});
       document.querySelectorAll('[data-delete]').forEach(function(b){b.onclick=function(){if(!confirm('Permanently delete this account? This cannot be undone.'))return;db.rpc('delete_user_account',{p_user:b.dataset.delete}).then(function(x){msg(x.error?x.error.message:'Account deleted.');loadAccountsDev(p);});};});
