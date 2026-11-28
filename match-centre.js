@@ -3,7 +3,7 @@
   'use strict';
   var db = window.slfaDb, host = document.getElementById('matchList');
   if (!db || !host) return;
-  var allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, leagueRows = [], clubRows = [], liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer, celebratedGoals = {}, commissionerConfirmed = {};
+  var allMatches = [], matches = [], seasons = [], leagueNames = {}, clubLogos = {}, leagueRows = [], clubRows = [], liveEvents = [], filter = 'all', chosenDate = '', chosenClub = '', updated = null, timer, fetchTimer, celebratedGoals = {}, commissionerConfirmed = {}, commissionerStatusRequested = Object.create(null), commissionerStatusGeneration = 0, visibleCount = 24;
   // Season: the picker stores the chosen season; the default is the current season.
   function selectedSeason() { var stored = ''; try { stored = localStorage.getItem('slfa_season') || ''; } catch (e) {} var cur = seasons.filter(function (x) { return x.is_current; })[0] || null; return seasons.filter(function (x) { return String(x.id) === stored; })[0] || cur; }
   // Matches saved without a season count toward the season their date falls in.
@@ -14,7 +14,7 @@
     window.slfaPublicData = payload;
     document.dispatchEvent(new CustomEvent('slfa:public-data-ready', { detail: payload }));
   }
-  document.addEventListener('slfa:season-change', function () { applySeason(); publishPublicData(); render(); });
+  document.addEventListener('slfa:season-change', function () { visibleCount = 24; applySeason(); publishPublicData(); render(); });
 
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function league() { try { return localStorage.getItem('slfa_league') || ''; } catch (e) { return ''; } }
@@ -97,6 +97,33 @@
       return new Date(b.match_date)-new Date(a.match_date);
     });
   }
+  function requestCommissionerStatus(rows) {
+    if (!db.rpc || !Array.isArray(rows) || !rows.length) return;
+    var ids = rows.filter(function (m) {
+      return group(m) === 'results' && !commissionerStatusRequested[String(m.id)];
+    }).map(function (m) { return Number(m.id); }).filter(function (id) { return Number.isFinite(id) && id > 0; });
+    if (!ids.length) return;
+    ids.forEach(function (id) { commissionerStatusRequested[String(id)] = true; });
+    var generation = commissionerStatusGeneration;
+    Promise.resolve(db.rpc('get_match_commissioner_status', { p_match_ids: ids })).then(function (r) {
+      if (generation !== commissionerStatusGeneration || !r || r.error) {
+        if (generation === commissionerStatusGeneration) ids.forEach(function (id) { delete commissionerStatusRequested[String(id)]; });
+        return;
+      }
+      var changed = false;
+      (r.data || []).forEach(function (item) {
+        var key = String(item.match_id);
+        if (!commissionerConfirmed[key]) {
+          commissionerConfirmed[key] = item.confirmed_at || true;
+          changed = true;
+        }
+      });
+      if (changed) render();
+    }).catch(function () {
+      if (generation === commissionerStatusGeneration) ids.forEach(function (id) { delete commissionerStatusRequested[String(id)]; });
+    });
+  }
+
   function goalCelebration(event) {
     if (!event || !event.published_at || String(event.event_type || '').toUpperCase() !== 'GOAL') return;
     var key = [event.match_id,event.minute,event.player_name,event.team_name].join('|');
@@ -150,7 +177,7 @@
       '<button class="slfa-mc-share" type="button" data-share="'+esc(m.id)+'" aria-label="Share this match">Share ↗</button>'+'<button class="slfa-mc-details-btn" type="button" data-mc-details="'+esc(m.id)+'" aria-expanded="false">Match details <span>＋</span></button><div class="slfa-mc-detail" id="mc-detail-'+esc(m.id)+'" hidden></div></article>';
   }
   function render() {
-    var list = selected(), clubs = {};
+    var list = selected(), clubs = {}, visibleRows = list.slice(0, visibleCount);
     // Competition/date/club scope is shared by filters and the live overview.
     var dateScope = matches.filter(function (m) {
       if (league() && String(m.league_id || '') !== league()) return false;
@@ -183,15 +210,20 @@
       '<span class="slfa-mc-summary-stat"><b>'+upcomingCount+'</b><small>Upcoming</small></span>'+
       '<span class="slfa-mc-summary-stat"><b>'+resultCount+'</b><small>Results</small></span>'+
       '<button type="button" id="mcRefresh" aria-label="Refresh match information">↻ Refresh</button></div>'+
-      '<p class="slfa-mc-count">'+list.length+' match'+(list.length===1?'':'es')+' shown</p>'+
-      (list.length?'<div class="slfa-mc-grid">'+list.map(card).join('')+'</div>':'<div class="slfa-mc-empty"><span>⚽</span><strong>No matches found</strong><p>Try another date, club or match filter.</p></div>')+
+      '<p class="slfa-mc-count">'+visibleRows.length+' of '+list.length+' matches shown</p>'+
+      (visibleRows.length?'<div class="slfa-mc-grid">'+visibleRows.map(card).join('')+'</div>':'<div class="slfa-mc-empty"><span>⚽</span><strong>No matches found</strong><p>Try another date, club or match filter.</p></div>')+
+      (visibleRows.length<list.length?'<div class="slfa-mc-more-wrap"><button type="button" class="slfa-mc-more" id="mcLoadMore">Load more matches</button></div>':'')+
       '<p class="slfa-mc-footnote">Scores and match details reflect information currently published in the app.</p></section>';
-    host.querySelectorAll('[data-mc-filter]').forEach(function (b) { b.addEventListener('click',function(){filter=b.dataset.mcFilter;render();}); });
-    host.querySelectorAll('[data-mc-day]').forEach(function(b){b.addEventListener('click',function(){chosenDate=b.getAttribute('data-mc-day')||'';render();});});
+    if (window.slfaTranslateDOM) window.slfaTranslateDOM(host);
+    var moreButton = document.getElementById('mcLoadMore');
+    if (moreButton) moreButton.addEventListener('click', function () { visibleCount += 24; render(); });
+    requestCommissionerStatus(visibleRows);
+    host.querySelectorAll('[data-mc-filter]').forEach(function (b) { b.addEventListener('click',function(){filter=b.dataset.mcFilter;visibleCount=24;render();}); });
+    host.querySelectorAll('[data-mc-day]').forEach(function(b){b.addEventListener('click',function(){chosenDate=b.getAttribute('data-mc-day')||'';visibleCount=24;render();});});
     var d=document.getElementById('mcDate'), c=document.getElementById('mcClub'), r=document.getElementById('mcReset');
-    if(d)d.addEventListener('change',function(){chosenDate=this.value;render();});
-    if(c)c.addEventListener('change',function(){chosenClub=this.value;render();});
-    if(r)r.addEventListener('click',function(){chosenDate='';chosenClub='';filter='all';render();});
+    if(d)d.addEventListener('change',function(){chosenDate=this.value;visibleCount=24;render();});
+    if(c)c.addEventListener('change',function(){chosenClub=this.value;visibleCount=24;render();});
+    if(r)r.addEventListener('click',function(){chosenDate='';chosenClub='';filter='all';visibleCount=24;render();});
     var refresh=document.getElementById('mcRefresh');if(refresh)refresh.addEventListener('click',function(){refresh.disabled=true;refresh.textContent='Refreshing…';fetchData().then(function(){var b=document.getElementById('mcRefresh');if(b){b.disabled=false;b.textContent='↻ Refresh';}});});
     host.querySelectorAll('[data-mc-details]').forEach(function(b){b.addEventListener('click',function(){details(b.dataset.mcDetails,b);});});
     host.querySelectorAll('[data-share]').forEach(function(b){b.addEventListener('click',function(){
@@ -364,17 +396,10 @@
             if(m.away_score==null)m.away_score=goals.filter(function(x){return x.team_name===m.away_team;}).length;
           });
         }
+        commissionerConfirmed = {};
+        commissionerStatusRequested = Object.create(null);
+        commissionerStatusGeneration += 1;
         updated=new Date();publishPublicData();render();
-        // Independent confirmation badge: fetched separately so a slow/failed lookup never blocks the scores themselves.
-        var finished=allMatches.filter(function(m){return group(m)==='results';}).map(function(m){return Number(m.id);});
-        if(finished.length&&db.rpc){
-          db.rpc('get_match_commissioner_status',{p_match_ids:finished}).then(function(r){
-            if(r.error)return;
-            commissionerConfirmed={};
-            (r.data||[]).forEach(function(x){commissionerConfirmed[String(x.match_id)]=x.confirmed_at||true;});
-            render();
-          }).catch(function(){});
-        }
         return true;
       });
     });
@@ -394,7 +419,7 @@
   function schedule(){clearTimeout(timer);timer=setTimeout(fetchData,500);}
   if(window.MutationObserver){new MutationObserver(function(){if(!host.querySelector('.slfa-match-centre-v2')&&matches.length)render();}).observe(host,{childList:true,subtree:true});}
   var switcher=document.getElementById('leagueSwitch');
-  if(switcher)switcher.addEventListener('click',function(){window.setTimeout(render,50);});
+  if(switcher)switcher.addEventListener('click',function(){visibleCount=24;window.setTimeout(render,50);});
   if(db.channel)db.channel('public-match-centre').on('postgres_changes',{event:'*',schema:'public',table:'matches'},schedule).on('postgres_changes',{event:'INSERT',schema:'public',table:'match_events'},function(payload){var e=payload&&payload.new;if(e&&e.published_at)goalCelebration(e);schedule();}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'match_events'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'league_clubs'},schedule).on('postgres_changes',{event:'*',schema:'public',table:'match_lineups'},schedule).subscribe();
   window.addEventListener('online',schedule);
   window.setInterval(function(){if(document.visibilityState !== 'hidden')fetchData();},180000);

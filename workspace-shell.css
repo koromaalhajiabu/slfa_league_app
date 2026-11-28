@@ -262,3 +262,14 @@ html[data-theme="light"] body:not([data-portal]) .season-switch {
 }
 
 body[data-portal="SUPER_ADMIN"] #portalArea > nav[aria-label="Content Management Centre"] { display: none !important; }
+
+
+/* Reduce scrolling/compositing cost on lower-powered mobile devices. */
+@media (max-width: 680px) {
+  body:not([data-portal]) .topbar,
+  body[data-portal] .portal-head {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: rgba(5, 23, 36, .98) !important;
+  }
+}

@@ -2740,6 +2740,19 @@
     "[SLFA to confirm the usage terms for crests]": "[SLFA fɔ kɔnfɔm rul fɔ yuz klob ɛn ɔganayzeshɔn lɔgɔ]"
   });
 
+  Object.assign(DICT.fr, {
+    'Load more matches': 'Charger plus de matchs',
+    'matches shown': 'matchs affichés'
+  });
+  Object.assign(DICT.kri, {
+    'Load more matches': 'Lod moa mach dɛn',
+    'matches shown': 'mach dɛn we dɛn de sho'
+  });
+  Object.assign(DICT.ar, {
+    'Load more matches': 'تحميل المزيد من المباريات',
+    'matches shown': 'المباريات المعروضة'
+  });
+
   var current = lang();
   var table = DICT[current] || null;
   // Compile translation lookups once. A single phrase matcher avoids scanning

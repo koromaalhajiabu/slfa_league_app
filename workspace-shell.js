@@ -81,6 +81,12 @@
     workspace.insertBefore(nav, workspace.firstChild);
   }
 
+  var navigationBuildTimer = null;
+  function scheduleNavigationBuild() {
+    window.clearTimeout(navigationBuildTimer);
+    navigationBuildTimer = window.setTimeout(buildNavigation, 90);
+  }
+
   function buildNavigation() {
     var list = headings();
     if (list.length < 2) {
@@ -161,8 +167,10 @@
   }
 
   buildNavigation();
-  var observer = new MutationObserver(function () { buildNavigation(); });
-  observer.observe(workspace, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['hidden'] });
+  var observer = new MutationObserver(scheduleNavigationBuild);
+  // Attribute changes (for example, opening tabs and toggling fields) do not alter
+  // section headings. Ignore them and debounce content changes into one rebuild.
+  observer.observe(workspace, { childList: true, subtree: true, characterData: true });
   window.addEventListener('storage', function (event) {
     if (event.key === 'slfa_lang') buildNavigation();
   });
