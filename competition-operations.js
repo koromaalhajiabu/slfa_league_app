@@ -10,7 +10,7 @@
     matches:[], assignments:[], commissionerReports:[], sheets:[], records:[],
     lineups:[], events:[], changes:[], leagues:[], seasons:[], profiles:{}, players:{}
   };
-  var lastLoad = null, observer = null, loading = false;
+  var lastLoad = null, observer = null, loading = false, channel = null, refreshTimer = null;
 
   function $(id) { return document.getElementById(id); }
   function esc(v) {
@@ -55,6 +55,118 @@
   function eventsFor(matchId) { return current.events.filter(function(x){return String(x.match_id)===String(matchId);}); }
   function recordsFor(matchId) { return current.records.filter(function(x){return String(x.match_id)===String(matchId);}); }
   function commissionerFor(matchId) { return current.commissionerReports.filter(function(x){return String(x.match_id)===String(matchId);}); }
+  function missingStatus(m,kick,now) {
+    if (cancelled(m)) return 'NOT REQUIRED';
+    if (!kick || kick > now) return 'NOT DUE';
+    return now.getTime() - kick.getTime() > 90 * 60 * 1000 ? 'OVERDUE' : 'MISSING';
+  }
+  function buildSubmissionInboxRows(matchRows) {
+    var out = [], now = new Date();
+    (matchRows || []).forEach(function(item) {
+      var m = item.match || item, kick = matchTime(m);
+      function addClub(clubId, side, teamName) {
+        if (!clubId) {
+          out.push({matchId:m.id,match:matchLabel(m),kick:kick,category:'TEAM SHEET',owner:side+' club · '+teamName,assignee:'Fixture is not linked to a club record',status:'NOT LINKED',submittedAt:null,reference:''});
+          return;
+        }
+        var sheet = latest(current.sheets.filter(function(s) {
+          return String(s.match_id) === String(m.id) && String(s.club_id) === String(clubId);
+        }), 'updated_at');
+        var state = sheet ? upper(sheet.status) : missingStatus(m,kick,now);
+        if (!sheet && state === 'NOT DUE' && kick && kick.getTime() - now.getTime() <= 20 * 60 * 1000) state = 'AWAITING CLUB';
+        out.push({
+          matchId:m.id,match:matchLabel(m),kick:kick,category:'TEAM SHEET',
+          owner:side+' club · '+teamName,assignee:sheet ? profileName(sheet.submitted_by) : 'Club Team Official',
+          status:state,submittedAt:sheet && (sheet.submitted_at || sheet.updated_at),
+          reference:sheet && sheet.reference_code || '',clubId:clubId
+        });
+      }
+      addClub(m.home_club_id,'Home',m.home_team || 'Home team');
+      if (String(m.away_club_id || '') !== String(m.home_club_id || '')) addClub(m.away_club_id,'Away',m.away_team || 'Away team');
+
+      assignmentsFor(m.id).forEach(function(a) {
+        var role = upper(a.official_role), person = profileName(a.referee_user_id);
+        if (role === 'MAIN' || role === 'ASSISTANT') {
+          var record = latest(current.records.filter(function(r) {
+            return String(r.match_id) === String(m.id) &&
+              String(r.submitted_by) === String(a.referee_user_id) &&
+              upper(r.official_role) === role &&
+              upper(r.report_type) === 'MATCH_RECORD' &&
+              upper(r.status) !== 'DRAFT';
+          }), 'created_at');
+          out.push({
+            matchId:m.id,match:matchLabel(m),kick:kick,category:'REFEREE RECORD',
+            owner:role === 'MAIN' ? 'Main Referee' : 'Assistant Referee',
+            assignee:person,status:record ? upper(record.status) : missingStatus(m,kick,now),
+            submittedAt:record && (record.submitted_at || record.created_at),
+            reference:record && record.reference_code || '',officialRole:role
+          });
+        } else if (role === 'MATCH_COMMISSIONER') {
+          var report = latest(current.commissionerReports.filter(function(r) {
+            return String(r.match_id) === String(m.id) &&
+              String(r.commissioner_user_id) === String(a.referee_user_id);
+          }), 'updated_at');
+          out.push({
+            matchId:m.id,match:matchLabel(m),kick:kick,category:'COMMISSIONER REPORT',
+            owner:'Match Commissioner',assignee:person,
+            status:report ? upper(report.report_status) : missingStatus(m,kick,now),
+            submittedAt:report && (report.submitted_at || report.updated_at),
+            reference:report && String(report.id) || ''
+          });
+        }
+      });
+    });
+    return out.sort(function(a,b) {
+      var at = a.kick ? a.kick.getTime() : 0, bt = b.kick ? b.kick.getTime() : 0;
+      if (at !== bt) return at - bt;
+      var order = {'TEAM SHEET':0,'REFEREE RECORD':1,'COMMISSIONER REPORT':2};
+      return order[a.category] - order[b.category] || String(a.owner).localeCompare(String(b.owner));
+    });
+  }
+  function inboxPill(status) {
+    var s = upper(status), good = ['APPROVED','ACKNOWLEDGED','REVIEWED','NOT REQUIRED'].indexOf(s) >= 0;
+    var neutral = ['NOT DUE','AWAITING CLUB','SUBMITTED','UNDER REVIEW','DRAFT'].indexOf(s) >= 0;
+    return '<span class="co-pill '+(good?'ok':(neutral?'neutral':'flag'))+'">'+esc(s.replace(/_/g,' '))+'</span>';
+  }
+  function openReviewInbox(category) {
+    var targetId = category === 'TEAM SHEET' ? 'slfaTeamSheetAdminInbox' :
+      (category === 'REFEREE RECORD' ? 'slfaRefereeMatchRecordInbox' : 'mcAdminReviewPanel');
+    var target = $(targetId);
+    if (target) target.scrollIntoView({behavior:'smooth',block:'start'});
+    else {
+      var status = $('coOpsStatus');
+      if (status) status.textContent = 'The dedicated '+category.toLowerCase()+' review panel is not currently mounted. Refresh the Super Admin workspace.';
+    }
+  }
+  function exportSubmissionInbox() {
+    var rows = buildSubmissionInboxRows(rowsForWindow());
+    var headers = ['Match ID','Kick-off Freetown','Fixture','Submission type','Responsible party','Assigned person','Status','Submitted at','Reference'];
+    var lines = [headers].concat(rows.map(function(r) {
+      return [r.matchId,fmt(r.kick),r.match,r.category,r.owner,r.assignee,r.status,fmt(r.submittedAt),r.reference];
+    }));
+    var csv = lines.map(function(r) { return r.map(function(v) { return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }).join(','); }).join('\r\n');
+    var blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href=url;a.download='slfa-matchday-submission-inbox-'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);a.remove();},1000);
+  }
+  function scheduleRealtimeRefresh() {
+    if (refreshTimer) clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(function() {
+      refreshTimer = null;
+      if (loading) { scheduleRealtimeRefresh(); return; }
+      load();
+    }, 650);
+  }
+  function subscribeToSubmissions() {
+    if (channel || !db.channel) return;
+    channel = db.channel('slfa-matchday-command-centre-live')
+      .on('postgres_changes',{event:'*',schema:'public',table:'match_team_sheets'},scheduleRealtimeRefresh)
+      .on('postgres_changes',{event:'*',schema:'public',table:'referee_match_record_submissions'},scheduleRealtimeRefresh)
+      .on('postgres_changes',{event:'*',schema:'public',table:'match_commissioner_reports'},scheduleRealtimeRefresh)
+      .subscribe();
+  }
   function addStyle() {
     if ($('coOpsStyle')) return;
     var st=document.createElement('style'); st.id='coOpsStyle';
@@ -85,6 +197,18 @@
       '#'+ROOT_ID+' .co-list{display:grid;gap:8px}#'+ROOT_ID+' .co-item{padding:9px;border-radius:9px;background:var(--surface,#f7f9fb);font-size:11px;line-height:1.45}',
       '#'+ROOT_ID+' .co-item small{display:block;color:var(--muted,#718096);margin-top:3px}',
       '#'+ROOT_ID+' .co-issues{margin:5px 0 0;padding-left:15px;font-size:9px;line-height:1.55;color:#8a5b0b}',
+      '#'+ROOT_ID+' .co-inbox{margin:16px 0;border:1px solid var(--border,#dce4eb);border-radius:12px;padding:13px;background:var(--panel,#fff)}',
+      '#'+ROOT_ID+' .co-inbox-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}',
+      '#'+ROOT_ID+' .co-inbox-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}',
+      '#'+ROOT_ID+' .co-inbox-metric{padding:9px;border:1px solid var(--border,#e0e6ed);border-radius:9px;background:var(--surface,#f7f9fb)}',
+      '#'+ROOT_ID+' .co-inbox-metric span{display:block;font-size:9px;color:var(--muted,#718096)}#'+ROOT_ID+' .co-inbox-metric b{display:block;font-size:19px;margin-top:3px}',
+      '#'+ROOT_ID+' .co-inbox-table{overflow:auto;border:1px solid var(--border,#e1e7ee);border-radius:9px}',
+      '#'+ROOT_ID+' .co-inbox-table table{min-width:920px}',
+      '#'+ROOT_ID+' .co-inbox-table td{font-size:10px}',
+      '#'+ROOT_ID+' .co-inbox-controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}',
+      '#'+ROOT_ID+' .co-inbox-controls input,#'+ROOT_ID+' .co-inbox-controls select{padding:8px;border:1px solid var(--border,#dce4eb);border-radius:8px;background:var(--panel,#fff);color:inherit;font-size:10px;min-width:135px}',
+      '#'+ROOT_ID+' .co-pill.neutral{background:#eaf0f6;color:#445970}',
+      '@media(max-width:760px){#'+ROOT_ID+' .co-inbox-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}',
       '@media(max-width:760px){#'+ROOT_ID+' .co-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#'+ROOT_ID+' .co-grid{grid-template-columns:1fr}#'+ROOT_ID+'{padding:13px}}',
       '@media print{#'+ROOT_ID+' .co-actions,#'+ROOT_ID+' .co-controls{display:none}}'
     ].join('');
@@ -92,9 +216,13 @@
   }
   function mount() {
     var role=$('whoRole'),target=$('roleTools');
-    if(!target||!role||upper(role.textContent).replace(/\s+/g,'_')!=='SUPER_ADMIN')return;
-    if(!target.querySelector('.sa-command-centre'))return;
+    if(!target||!role||upper(role.textContent).replace(/\s+/g,'_')!=='SUPER_ADMIN'||!target.querySelector('.sa-command-centre')){
+      if(channel){try{db.removeChannel(channel);}catch(_){}channel=null;}
+      var stale=$(ROOT_ID);if(stale)stale.remove();
+      return;
+    }
     addStyle();
+    subscribeToSubmissions();
     var panel=$(ROOT_ID);
     if(!panel){
       panel=document.createElement('section');panel.id=ROOT_ID;panel.setAttribute('aria-labelledby','coOpsTitle');
@@ -284,18 +412,50 @@
       closed=active.filter(function(x){return x.ops.state==='Closed';}).length,
       live=active.filter(function(x){return live(x.match);}).length;
     var leagues=current.leagues.map(function(l){return '<option value="'+esc(l.name)+'">'+esc(l.name)+'</option>';}).join('');
+    var inboxRows=buildSubmissionInboxRows(rows);
+    var inboxMissing=inboxRows.filter(function(x){return ['MISSING','OVERDUE','RETURNED','NOT LINKED'].indexOf(x.status)>=0;}).length;
+    var inboxReview=inboxRows.filter(function(x){return ['SUBMITTED','UNDER REVIEW','DRAFT'].indexOf(x.status)>=0;}).length;
+    var inboxReturned=inboxRows.filter(function(x){return x.status==='RETURNED';}).length;
+    var inboxComplete=inboxRows.filter(function(x){return ['APPROVED','ACKNOWLEDGED','REVIEWED'].indexOf(x.status)>=0;}).length;
     content.innerHTML=
       '<div class="co-metrics">'+[
         ['Fixtures monitored',active.length],['Upcoming fixtures',upcoming.length],['Require attention',attention.length],
         ['Live / half-time',live],['Pending reviews',reviewQueue],['Compliance discrepancies',discrepancies.length],
         ['Closed match dossiers',closed],['Result amendments · 90 days',current.changes.length]
       ].map(function(x){return '<article class="co-metric"><span>'+esc(x[0])+'</span><strong>'+x[1]+'</strong></article>';}).join('')+'</div>'+
+      '<section class="co-inbox" aria-labelledby="coInboxTitle"><div class="co-inbox-head"><div><h3 id="coInboxTitle">Match-Day Submission Inbox</h3><p>One live register for both clubs’ electronic team sheets, every assigned Main / Assistant Referee record, and each assigned Match Commissioner report. Missing items remain visible alongside submitted and reviewed items.</p></div><button type="button" class="co-secondary" id="coInboxExport">Export inbox CSV</button></div>'+
+      '<div class="co-inbox-metrics">'+[['Missing / overdue',inboxMissing],['Awaiting review',inboxReview],['Returned for correction',inboxReturned],['Completed',inboxComplete]].map(function(x){return '<article class="co-inbox-metric"><span>'+esc(x[0])+'</span><b>'+x[1]+'</b></article>';}).join('')+'</div>'+
+      '<div class="co-inbox-controls"><select id="coInboxCategory"><option value="">All submission types</option><option value="TEAM SHEET">Club team sheets</option><option value="REFEREE RECORD">Referee match records</option><option value="COMMISSIONER REPORT">Commissioner reports</option></select><select id="coInboxStatus"><option value="">All statuses</option>'+['MISSING','OVERDUE','RETURNED','NOT LINKED','AWAITING CLUB','NOT DUE','SUBMITTED','UNDER REVIEW','DRAFT','APPROVED','ACKNOWLEDGED','REVIEWED','NOT REQUIRED'].map(function(x){return '<option>'+x+'</option>';}).join('')+'</select><input id="coInboxSearch" type="search" placeholder="Search fixture, club or official" aria-label="Search submissions"></div>'+
+      '<div class="co-inbox-table"><table><thead><tr><th>Kick-off</th><th>Fixture</th><th>Submission</th><th>Club / assigned official</th><th>Status</th><th>Submitted</th><th>Review</th></tr></thead><tbody id="coInboxRows"></tbody></table></div></section>'+
       (failures&&failures.length?'<div class="co-note">Some optional records could not be read: '+esc(failures.join(' · '))+'. The board may be incomplete until those permissions are corrected.</div>':'')+
       '<div class="co-controls"><select id="coLeagueFilter"><option value="">All competitions</option>'+leagues+'</select><select id="coStateFilter"><option value="">All command states</option>'+['Awaiting preparation','Awaiting team sheets','Ready for match','In progress','Awaiting final result','Awaiting referee report','Awaiting commissioner report','Under review','Closed'].map(function(x){return '<option>'+x+'</option>';}).join('')+'</select><input id="coSearch" type="search" placeholder="Search team, venue or match status" aria-label="Search fixtures"></div>'+
       '<div class="co-table-wrap"><table><thead><tr><th>Kick-off · Freetown</th><th>Fixture / competition</th><th>Official appointments</th><th>Home / away sheets</th><th>Referee record</th><th>Commissioner report</th><th>Score / state</th><th>Compliance exceptions</th><th>Dossier</th></tr></thead><tbody id="coRows"></tbody></table></div>'+
       '<div class="co-grid"><section class="co-card"><h3>Recent result amendments</h3><div class="co-list">'+(current.changes.slice(0,10).map(function(c){var m=current.matches.find(function(x){return String(x.id)===String(c.match_id);});return '<div class="co-item"><strong>'+esc(m?matchLabel(m):'Match #'+c.match_id)+'</strong><small>'+esc(upper(c.action))+' · '+esc(c.changed_by_role||'Authorised role')+' · '+esc(fmt(c.changed_at))+'</small><small>Reason: '+esc(c.reason||'Not recorded')+'</small></div>';}).join('')||'<div class="co-empty">No result amendments recorded in the available history.</div>')+'</div></section>'+
       '<section class="co-card"><h3>Control rules</h3><p>Ready status requires a Main Referee, two Assistant Referees, a Match Commissioner and a Live Match Data Operator, plus a recorded venue and kick-off, both approved team sheets, and no outstanding preparation checks. A match cannot be closed until its official score, Main Referee photographed record and human-verified OCR, and reviewed Match Commissioner report are present.</p><p>OCR text is machine-generated and can contain errors. The original photo and verified text must be checked by an authorised human. Score and player discrepancies are flags for inspection, not automatic changes or disciplinary findings.</p><p>Some time-based follow-ups are operational prompts; they do not create or amend official SLFA regulations.</p></section></div>'+
       '<p class="co-sub">Last refreshed: '+esc(fmt(lastLoad))+' · Read-only oversight · '+current.matches.length+' match records loaded</p>';
+    function drawInboxRows(){
+      var category=$('coInboxCategory')?$('coInboxCategory').value:'';
+      var state=$('coInboxStatus')?$('coInboxStatus').value:'';
+      var term=$('coInboxSearch')?$('coInboxSearch').value.trim().toLowerCase():'';
+      var filtered=inboxRows.filter(function(x){
+        var hay=[x.match,x.category,x.owner,x.assignee,x.status,x.reference].join(' ').toLowerCase();
+        return (!category||x.category===category)&&(!state||x.status===state)&&(!term||hay.indexOf(term)>=0);
+      });
+      var body=$('coInboxRows');if(!body)return;
+      body.innerHTML=filtered.length?filtered.map(function(x){
+        return '<tr><td>'+esc(fmt(x.kick))+'</td><td><strong>'+esc(x.match)+'</strong><span class="co-sub">Match #'+esc(x.matchId)+'</span></td>'+
+          '<td>'+esc(x.category)+'</td><td><strong>'+esc(x.owner)+'</strong><span class="co-sub">'+esc(x.assignee||'—')+'</span></td>'+
+          '<td>'+inboxPill(x.status)+'</td><td>'+esc(fmt(x.submittedAt))+(x.reference?'<span class="co-sub">'+esc(x.reference)+'</span>':'')+'</td>'+
+          '<td><button type="button" class="co-secondary" data-co-review="'+esc(x.category)+'">Open review</button></td></tr>';
+      }).join(''):'<tr><td colspan="7" class="co-empty">No submissions match the selected filters.</td></tr>';
+      body.querySelectorAll('[data-co-review]').forEach(function(button){
+        button.addEventListener('click',function(){openReviewInbox(button.getAttribute('data-co-review'));});
+      });
+    }
+    ['coInboxCategory','coInboxStatus','coInboxSearch'].forEach(function(id){
+      var node=$(id);if(node)node.addEventListener(id==='coInboxSearch'?'input':'change',drawInboxRows);
+    });
+    var inboxExport=$('coInboxExport');if(inboxExport)inboxExport.addEventListener('click',exportSubmissionInbox);
     function drawRows(){
       var l=$('coLeagueFilter')?$('coLeagueFilter').value:'',state=$('coStateFilter')?$('coStateFilter').value:'',term=$('coSearch')?$('coSearch').value.trim().toLowerCase():'';
       var filtered=rows.filter(function(x){
@@ -321,6 +481,7 @@
     }
     ['coLeagueFilter','coStateFilter','coSearch'].forEach(function(id){var e=$(id);if(e)e.addEventListener(id==='coSearch'?'input':'change',drawRows);});
     drawRows();
+    drawInboxRows();
     status.textContent=current.matches.length?'Command Centre loaded. Inspect exceptions and open a match dossier for supporting records.':'No match records currently exist in this database. Add real association fixtures and assignments to begin operational checks.';
   }
   function exportCSV(){
