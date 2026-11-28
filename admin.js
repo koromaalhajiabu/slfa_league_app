@@ -147,7 +147,7 @@
 
   // Called by portal.js on the matching portal page only
   window.slfaRenderRole = function (p) {
-    var role = String(p.system_role).toUpperCase();
+    var role = String(p.system_role).toUpperCase()==='LEAGUE_ADMIN'?'SUPER_ADMIN':String(p.system_role).toUpperCase();
     var out;
     if (role === 'SUPER_ADMIN') { out = superAdmin(p); if (typeof window.slfaRenderCommissionerReportsAdmin === 'function') window.slfaRenderCommissionerReportsAdmin(p); }
     else if (role === 'MEDIA_OFFICER') out = mediaOfficer(p);
@@ -1431,7 +1431,7 @@
   var SA_OPERATIONAL_ROLES = [
     ['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],
     ['TEAM_OFFICIAL','Team Official / Club Representative'],['MATCH_DATA_OPERATOR','Match Data Operator'],
-    ['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer'],['LEAGUE_ADMIN','League Administrator']
+    ['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer']
   ];
   function saStaffSay(text){var el=$('saStaffStatus');if(el)el.textContent=text||'';}
   function saStaffRoleKey(row){return String(row.system_role||'').toUpperCase()==='REFEREE'&&String(row.official_title||'').trim().toLowerCase()==='match commissioner'?'MATCH_COMMISSIONER':String(row.system_role||'').toUpperCase();}
