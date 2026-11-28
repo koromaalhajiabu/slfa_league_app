@@ -33,7 +33,9 @@ body .brand p,body .kicker,body .sub,
 body .portal-head p,body .portal-head .eyebrow,
 body .news-eyebrow,body .ps-eyebrow {
   color:#f5fff8 !important;
-  animation:slfaPremiumTitle 5.5s ease-in-out infinite !important;
+  /* Plays twice on load/navigation then rests at the calm base state (same look as prefers-reduced-motion) 
+     instead of animating text-shadow forever, which forces a continuous repaint on low-end devices. */
+  animation:slfaPremiumTitle 5.5s ease-in-out 2 forwards !important;
 }
 body h1,body .portal-head h1 {
   letter-spacing:.0em;
@@ -106,7 +108,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
 <script src="match-ops-notifications.js?v=3"></script>
 <script src="portal-manual.js?v=3"></script>
 <script src="theme-toggle.js"></script>
-<script src="cosmic-theme.js?v=17"></script>
+<script src="cosmic-theme.js?v=18"></script>
 
   <script src="workspace-shell.js?v=1"></script>
 </body>

@@ -73,7 +73,9 @@ body .brand p,body .kicker,body .sub,
 body .portal-head p,body .portal-head .eyebrow,
 body .news-eyebrow,body .ps-eyebrow {
   color:#f5fff8 !important;
-  animation:slfaPremiumTitle 5.5s ease-in-out infinite !important;
+  /* Plays twice on load/navigation then rests at the calm base state (same look as prefers-reduced-motion) 
+     instead of animating text-shadow forever, which forces a continuous repaint on low-end devices. */
+  animation:slfaPremiumTitle 5.5s ease-in-out 2 forwards !important;
 }
 body h1,body .portal-head h1 {
   letter-spacing:.0em;
@@ -466,7 +468,7 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
 <script src="premium-media.js?v=7"></script>
 <script src="player-profile.js?v=6"></script>
 <script src="player-directory.js?v=6"></script>
-<script src="cosmic-theme.js?v=17"></script>
+<script src="cosmic-theme.js?v=18"></script>
 <script src="competition-history.js?v=1"></script>
 <script src="publications-public.js?v=2"></script>
 </body>

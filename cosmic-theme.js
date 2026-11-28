@@ -218,7 +218,9 @@
     layer.id = 'slfa-cosmos';
     layer.setAttribute('aria-hidden', 'true');
     var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    for (var i = 0; i < 58; i++) {
+    // 24 (not 58) continuously-twinkling elements: keeps the starry-sky feel while cutting the
+    // number of simultaneous infinite CSS animations running behind every page, every page load.
+    for (var i = 0; i < 24; i++) {
       var star = document.createElement('i');
       star.className = 'slfa-star';
       star.style.left = ((i * 37 + 11) % 100) + '%';
