@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v319'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v320'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=2'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=2'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v319'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v320'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -275,8 +275,8 @@ test('Krio translations load across public and all staff portals', () => {
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=28'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v319'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=29'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v320'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -378,7 +378,7 @@ test('service worker serves versioned app assets cache first while keeping publi
   assert.match(dataHandler, /e\.respondWith\(fetch\(req\)/);
   assert.match(assetHandler, /cache\.match\(req\)[\s\S]*?if \(hit\) return hit[\s\S]*?return fetch\(req\)/);
   assert.match(assetHandler, /pathname\.endsWith\('\/sw\.js'\)/);
-  assert.match(sw, /const CACHE = 'slfa-app-v319'/);
+  assert.match(sw, /const CACHE = 'slfa-app-v320'/);
 });
 
 
@@ -510,7 +510,7 @@ test('Help, feedback, privacy and terms are fully covered by Krio translations',
   assert.match(help, /i18n\\.js\\?v=28/);
   assert.match(privacy, /i18n\\.js\\?v=28/);
   assert.match(sw, /i18n\\.js\\?v=28/);
-  assert.match(sw, /slfa-app-v319/);
+  assert.match(sw, /slfa-app-v320/);
 });
 
 
@@ -593,7 +593,7 @@ test('Arabic translation covers privacy, public help, account data and staff ope
   }
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.match(sw, /i18n\.js\?v=28/);
-  assert.match(sw, /slfa-app-v319/);
+  assert.match(sw, /slfa-app-v320/);
 });
 
 test('Arabic public match centre and dynamic operations wording is available in the shared dictionary', () => {
@@ -620,4 +620,53 @@ test('Arabic public match centre and dynamic operations wording is available in 
     'Reconnect to the internet and refresh the library.',
     'Matchday photography, video highlights, player and coach interviews, and professional match reports.'
   ]) assert.ok(dictionary.includes(phrase), 'Missing Arabic interface phrase: ' + phrase);
+});
+
+
+test('French translation covers privacy, help, account data and all staff operation portals', () => {
+  const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
+  const requiredFrenchKeys = [
+    'Privacy notice and terms of use',
+    'The SLFA League App is a demonstration developed by Koroma Leone Tech for review by the Sierra Leone Football Association (SLFA). It is not currently an officially adopted or operated SLFA service. Any future operating body, data controller and contact details must be confirmed by the Association before production deployment.',
+    'Historical supporter entries:',
+    'How long we keep it',
+    'My fan data',
+    'This page provides access to match comments, problem reports and historic supporter entries previously submitted from this browser. Predictions and polls are no longer available in the current public app. Your browser keeps a small code to link them to you. Nobody else can see this page\'s contents unless they use this device. Clearing the app\'s site data removes the code, and the records then cannot be found again from this device.',
+    'Help & Feedback Centre',
+    'Frequently asked questions',
+    'League Information Management',
+    'Division Leagues & Promotion / Relegation',
+    'League Administrator Access',
+    'Matchday Operations Command Centre',
+    'Match-Day Submission Inbox',
+    'Electronic Team Sheet Review',
+    'Match Commissioner Report Submission',
+    'Referee Match Reporting',
+    'Digital Publications Management',
+    'Audit trail',
+    'Saving role and preparing the secure invitation…',
+    'Final score confirmed and published.',
+    'No electronic team sheets received yet.',
+    'No referee match records have been submitted yet.',
+    'Your assigned matches are ready. Choose the fixture and submit clear photographs.',
+    'French',
+    'The result has been returned for review.',
+    'The system does not change official results automatically.'
+  ];
+  for (const phrase of requiredFrenchKeys) {
+    assert.ok(dictionary.includes(phrase), 'French dictionary is missing a required interface phrase: ' + phrase);
+  }
+
+  const pages = [
+    'index.html','developer.html','super-admin.html','referee.html','team-official.html',
+    'match-data-operator.html','media.html','disciplinary.html','league-admin.html',
+    'help.html','privacy.html','my-data.html','reset-password.html'
+  ];
+  for (const pageName of pages) {
+    const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
+    assert.match(page, /i18n\\.js\\?v=29/, pageName + ' must load the expanded French dictionary');
+  }
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  assert.match(sw, /i18n\\.js\\?v=29/);
+  assert.match(sw, /slfa-app-v320/);
 });
