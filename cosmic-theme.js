@@ -147,71 +147,9 @@
         });
     }).catch(function () { return false; });
   }
-  function addControls() {
-    var anchor = document.getElementById('themeToggle');
-    if (!document.body || document.body.dataset.portal !== 'DEVELOPER') return;
-    var header = document.querySelector('.topbar .top-controls') || document.querySelector('.portal-head');
-    if (document.getElementById('slfaThemeControls') || !header) return;
-    var wrap = document.createElement('div');
-    wrap.id = 'slfaThemeControls';
-    wrap.setAttribute('aria-label', 'Developer system appearance controls');
+  // System palette editing has been retired. The application uses one centrally managed palette.
+  function addControls() { return; }
 
-    var label = document.createElement('span');
-    label.className = 'slfa-theme-label';
-    label.textContent = 'System theme';
-
-    var select = document.createElement('select');
-    select.id = 'slfaThemeSelect';
-    select.setAttribute('aria-label', 'Change the system colour theme');
-    PRESETS.forEach(function (p) {
-      var option = document.createElement('option');
-      option.value = p.value;
-      option.textContent = p.label;
-      select.appendChild(option);
-    });
-
-    var picker = document.createElement('input');
-    picker.type = 'color';
-    picker.id = 'slfaAccentColor';
-    picker.setAttribute('aria-label', 'Set custom system accent colour');
-    picker.title = 'Set custom system accent colour';
-
-    var publish = document.createElement('button');
-    publish.type = 'button';
-    publish.id = 'slfaThemePublish';
-    publish.className = 'small';
-    publish.textContent = 'Publish';
-    publish.setAttribute('aria-label', 'Publish the selected system colour theme');
-
-    var status = document.createElement('span');
-    status.id = 'slfaThemeStatus';
-    status.setAttribute('role', 'status');
-    status.setAttribute('aria-live', 'polite');
-
-    wrap.appendChild(label);
-    wrap.appendChild(select);
-    wrap.appendChild(picker);
-    wrap.appendChild(publish);
-    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
-    else header.appendChild(wrap);
-    header.appendChild(status);
-
-    syncControls();
-    select.addEventListener('change', function () {
-      applyPreset(select.value, current.custom_accent);
-      saveGlobalTheme();
-    });
-    picker.addEventListener('input', function () {
-      applyPreset('custom', picker.value);
-      select.value = 'custom';
-      setStatus('Preview only. Tap Publish to apply this colour to everyone.', false);
-    });
-    picker.addEventListener('change', function () {
-      applyPreset('custom', picker.value);
-      select.value = 'custom';
-    });
-    publish.addEventListener('click', saveGlobalTheme);
-  }
   function addStars() {
     if (!document.body || document.getElementById('slfa-cosmos')) return;
     var layer = document.createElement('div');
@@ -363,14 +301,8 @@
     // All viewers receive the same palette from the database. Local storage is only an offline fallback.
     loadGlobalTheme();
 
-    // The colour editor is created only on the Developer portal and only after database role verification.
-    verifyDeveloper().then(function (allowed) {
-      if (!allowed) return;
-      addControls();
-      loadGlobalTheme().then(function (exists) {
-        if (!exists) saveGlobalTheme();
-      });
-    });
+    // No developer-facing colour editor or custom palette publishing controls.
+    // Keep the shared read-only palette loader so all portals retain a consistent appearance.
 
     if (db && db.channel) {
       try {
