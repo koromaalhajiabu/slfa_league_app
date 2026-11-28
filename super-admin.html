@@ -83,7 +83,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
 <body data-portal="SUPER_ADMIN">
 <header class="portal-head">
   <a class="back" href="index.html">&larr; League Centre</a>
-  <h1>Super Admin</h1>
+  <h1>Super Admin / League Administrator</h1>
   <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false">Light mode</button>
 </header>
 <main class="portal">
@@ -119,15 +119,7 @@ body button,body a { -webkit-tap-highlight-color:transparent; }
       <div id="competitionAdminList" class="muted">Loading competitions…</div>
     </section>
 
-    <section class="card" id="leagueAdminAssignments" aria-labelledby="leagueAdminAssignmentsHeading">
-      <h2 class="rt" id="leagueAdminAssignmentsHeading">League Administrator Access</h2>
-      <p class="muted">Assign an existing active SLFA account to one competition. The administrator can manage only the assigned competition. Developer and Super Admin roles cannot be reassigned here.</p>
-      <label for="laAssignEmail">Approved staff account email</label><input id="laAssignEmail" type="email" autocomplete="off" placeholder="name@example.com">
-      <label for="laAssignLeague">Competition</label><select id="laAssignLeague"><option value="">Loading competitions…</option></select>
-      <div class="btns"><button type="button" class="primary" id="laAssignButton">Assign League Administrator</button></div>
-      <div class="status" id="laAssignStatus" role="status"></div>
-      <h3>Active assignments</h3><div id="laAssignments" class="muted">Loading assignments…</div>
-    </section>
+    
 
     <section class="hist-standings-admin" id="recordsRulesEditor" aria-labelledby="rrAdminHeading">
       <h2 class="rt" id="rrAdminHeading">Records and Rules · Official content editor</h2>
