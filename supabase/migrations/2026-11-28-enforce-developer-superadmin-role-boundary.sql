@@ -262,3 +262,12 @@ create policy "developer update own profile only" on public.user_profiles
 for update to authenticated
 using (id=auth.uid() and public.app_role()='DEVELOPER')
 with check (id=auth.uid() and public.app_role()='DEVELOPER');
+
+
+-- Developer can read/write invitation records only for the one Super Admin appointment.
+drop policy if exists "developer manages invitations" on public.role_invitations;
+drop policy if exists "developer manages super admin invitation only" on public.role_invitations;
+create policy "developer manages super admin invitation only" on public.role_invitations
+for all to authenticated
+using (public.app_role()='DEVELOPER' and upper(coalesce(system_role,'')) in ('SUPER_ADMIN','LEAGUE_ADMIN'))
+with check (public.app_role()='DEVELOPER' and upper(coalesce(system_role,'')) in ('SUPER_ADMIN','LEAGUE_ADMIN'));
