@@ -68,6 +68,10 @@ Use a dedicated staging project with synthetic accounts and fixtures. Do not cre
 | AT-13 | Staff account is suspended or role revoked | New privileged actions are denied; session/token revocation behaviour is verified. |
 | AT-14 | Network disconnects during referee entry | Local pending entries are not lost; reconnection does not create duplicate submissions. |
 | AT-15 | Backup is restored into an isolated project | Database and private evidence files are recoverable and cross-checked. |\n| AT-16 | A short, malformed or legacy fan-data token is submitted | The database rejects access and deletion; only the versioned cryptographic token format is accepted. |
+| AT-17 | Referee or Match Commissioner submits accreditation evidence | The submission is owned by the signed-in official, the document remains private, and unrelated officials cannot read it. |
+| AT-18 | Super Admin reviews accreditation | Verify/reject/expiry decisions are authorised, rejection requires a reason, and review history receives a decision record. |
+| AT-19 | Team Official submits a fixture team sheet | Head Coach and Team Manager are mandatory, optional bench staff are persisted, and the names appear in the inbox, CSV and printable team sheet. |
+| AT-20 | Team Official attempts the legacy team-sheet RPC | The database denies the legacy call; the secured bench-staff RPC is required. |
 
 Record the tester, account role, fixture identifier, expected result, actual result, evidence and pass/fail status for every test. Do not use production personal data for this test cycle.
 

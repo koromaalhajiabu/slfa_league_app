@@ -29,9 +29,11 @@
       '#'+ROOT+' .tso-btn{border:0;border-radius:9px;background:#086447;color:#fff;padding:11px 14px;font-size:11px;font-weight:850;cursor:pointer}',
       '#'+ROOT+' .tso-btn:disabled{opacity:.5;cursor:wait}',
       '#'+ROOT+' .tso-panel{border:1px solid var(--border,#e2e8ef);border-radius:11px;padding:12px;margin-top:13px}',
+      '#'+ROOT+' .tso-staff-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}',
+      '#'+ROOT+' .tso-staff-grid input:focus{outline:2px solid rgba(0,114,198,.35);border-color:#0072c6}',
       '#'+ROOT+' .tso-history{display:grid;gap:7px}.tso-history-item{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--border,#e2e8ef);border-radius:9px;padding:10px;font-size:10px}',
       '#'+ROOT+' .tso-status{border-radius:20px;padding:4px 8px;font-size:9px;font-weight:850;background:#eaf1f8;color:#38536a}',
-      '@media(max-width:580px){#'+ROOT+'{padding:12px}#'+ROOT+' .tso-grid{grid-template-columns:repeat(3,minmax(0,1fr))}#'+ROOT+' .tso-row{grid-template-columns:1fr}}'
+      '@media(max-width:580px){#'+ROOT+'{padding:12px}#'+ROOT+' .tso-grid{grid-template-columns:repeat(3,minmax(0,1fr))}#'+ROOT+' .tso-row{grid-template-columns:1fr}#'+ROOT+' .tso-staff-grid{grid-template-columns:1fr}}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -83,7 +85,7 @@
       if(!seasonId)throw new Error('No current competition season is configured.');
       var players=await db.from('club_squad').select('id,player_name,jersey_number,position').eq('club_id',club.id).eq('season_id',seasonId).eq('status','Active').eq('registration_status','Approved').order('jersey_number',{ascending:true});
       if(players.error)throw players.error;squad=players.data||[];
-      var existing=await db.from('match_team_sheets').select('id,reference_code,starting_player_ids,substitute_player_ids,status,review_notes').eq('match_id',activeMatch.id).eq('club_id',club.id).maybeSingle();
+      var existing=await db.from('match_team_sheets').select('id,reference_code,starting_player_ids,substitute_player_ids,status,review_notes,head_coach_name,team_manager_name,assistant_coach_name,team_doctor_name,physiotherapist_name').eq('match_id',activeMatch.id).eq('club_id',club.id).maybeSingle();
       if(existing.error)throw existing.error;
       renderPicker(existing.data||null);
     }catch(e){form.innerHTML='<p class="muted">'+esc(e.message||String(e))+'</p>';}
@@ -92,12 +94,22 @@
     var host=$('tsoSheetForm');if(!host)return;
     var locked=existing&&existing.status==='APPROVED';
     var starts=(existing&&existing.starting_player_ids)||[],subs=(existing&&existing.substitute_player_ids)||[];
+    function staffField(id,label,value,required){
+      return '<label for="'+id+'">'+label+(required?' *':'')+'</label><input id="'+id+'" type="text" maxlength="150" value="'+esc(value||'')+'" '+(required?'required':'')+(locked?' disabled':'')+' placeholder="Enter full name" style="width:100%;padding:10px;border:1px solid var(--border,#dce4eb);border-radius:8px;margin:4px 0 10px">';
+    }
+    var staffMarkup='<section class="tso-panel" aria-labelledby="tsoBenchTitle"><h3 id="tsoBenchTitle">Bench staff and team officials</h3><p class="muted">Record the officials accompanying this team. Head Coach and Team Manager are required; other roles are optional.</p><div class="tso-staff-grid">'+
+      '<div>'+staffField('tsoHeadCoach','Head Coach',existing&&existing.head_coach_name,true)+'</div>'+
+      '<div>'+staffField('tsoTeamManager','Team Manager',existing&&existing.team_manager_name,true)+'</div>'+
+      '<div>'+staffField('tsoAssistantCoach','Assistant Coach',existing&&existing.assistant_coach_name,false)+'</div>'+
+      '<div>'+staffField('tsoTeamDoctor','Team Doctor',existing&&existing.team_doctor_name,false)+'</div>'+
+      '<div>'+staffField('tsoPhysio','Physiotherapist',existing&&existing.physiotherapist_name,false)+'</div>'+
+      '</div></section>';
     var rows=squad.map(function(p){
       var current=starts.indexOf(p.id)>=0?'STARTER':(subs.indexOf(p.id)>=0?'SUB':'NONE');
       return '<div class="tso-row"><div><strong>'+(p.jersey_number?'#'+esc(p.jersey_number)+' ':'')+esc(p.player_name)+'</strong><small>'+esc(p.position||'Position not listed')+'</small></div><select data-tso-player="'+esc(p.id)+'" '+(locked?'disabled':'')+'><option value="NONE" '+(current==='NONE'?'selected':'')+'>Not selected</option><option value="STARTER" '+(current==='STARTER'?'selected':'')+'>Starting XI</option><option value="SUB" '+(current==='SUB'?'selected':'')+'>Substitute</option></select></div>';
     }).join('');
     var kick=timeOf(activeMatch),canSubmit=Date.now()<kick.getTime()-20*60000&&['SCHEDULED','RESCHEDULED'].includes(activeMatch.match_status);
-    host.innerHTML='<h3 style="margin-top:12px">Select players for '+esc(club.club_name)+'</h3><div class="tso-grid"><div class="tso-stat"><small>Starting XI</small><b id="tsoStarterCount">0 / 11</b></div><div class="tso-stat"><small>Substitutes</small><b id="tsoSubCount">0 / 9</b></div><div class="tso-stat"><small>Approved squad</small><b>'+squad.length+'</b></div></div><p class="muted">Choose exactly 11 starters and up to 9 substitutes. A player cannot appear in both groups.</p>'+(rows||'<p class="muted">No active approved players are registered for this club and season.</p>')+(existing&&existing.review_notes?'<div class="tso-note">Super Admin feedback: '+esc(existing.review_notes)+'</div>':'')+'<div id="tsoSubmitStatus" class="muted" role="status"></div><button type="button" id="tsoSubmit" class="tso-btn" '+(!canSubmit||locked||squad.length<11?'disabled':'')+'>'+(locked?'Approved · Locked':(canSubmit?'Submit team sheet to Super Admin':'Submission deadline passed'))+'</button>';
+    host.innerHTML='<h3 style="margin-top:12px">Select players for '+esc(club.club_name)+'</h3><div class="tso-grid"><div class="tso-stat"><small>Starting XI</small><b id="tsoStarterCount">0 / 11</b></div><div class="tso-stat"><small>Substitutes</small><b id="tsoSubCount">0 / 9</b></div><div class="tso-stat"><small>Approved squad</small><b>'+squad.length+'</b></div></div><p class="muted">Choose exactly 11 starters and up to 9 substitutes. A player cannot appear in both groups.</p>'+(rows||'<p class="muted">No active approved players are registered for this club and season.</p>')+(existing&&existing.review_notes?'<div class="tso-note">Super Admin feedback: '+esc(existing.review_notes)+'</div>':'')+staffMarkup+'<div id="tsoSubmitStatus" class="muted" role="status"></div><button type="button" id="tsoSubmit" class="tso-btn" '+(!canSubmit||locked||squad.length<11?'disabled':'')+'>'+(locked?'Approved · Locked':(canSubmit?'Submit team sheet to Super Admin':'Submission deadline passed'))+'</button>';
     host.querySelectorAll('[data-tso-player]').forEach(function(el){el.addEventListener('change',updateCounts);});
     updateCounts();
     var btn=$('tsoSubmit');if(btn)btn.addEventListener('click',submit);
@@ -115,11 +127,15 @@
   }
   async function submit(){
     var btn=$('tsoSubmit'),status=$('tsoSubmitStatus'),v=selections();
+    var staff={head:$('tsoHeadCoach')&&$('tsoHeadCoach').value.trim(),manager:$('tsoTeamManager')&&$('tsoTeamManager').value.trim(),
+      assistant:$('tsoAssistantCoach')&&$('tsoAssistantCoach').value.trim(),doctor:$('tsoTeamDoctor')&&$('tsoTeamDoctor').value.trim(),
+      physio:$('tsoPhysio')&&$('tsoPhysio').value.trim()};
     if(v.starters.length!==11||v.subs.length>9){if(status)status.textContent='Select exactly 11 starters and no more than 9 substitutes.';return;}
+    if(!staff.head||staff.head.length<2||!staff.manager||staff.manager.length<2){if(status)status.textContent='Enter the Head Coach and Team Manager names before submitting.';return;}
     if(!activeMatch)return;
     if(btn)btn.disabled=true;if(status)status.textContent='Submitting securely to the SLFA database…';
     try{
-      var r=await db.rpc('submit_match_team_sheet',{p_match_id:activeMatch.id,p_starting_player_ids:v.starters,p_substitute_player_ids:v.subs});
+      var r=await db.rpc('submit_match_team_sheet_with_staff',{p_match_id:activeMatch.id,p_starting_player_ids:v.starters,p_substitute_player_ids:v.subs,p_head_coach_name:staff.head,p_team_manager_name:staff.manager,p_assistant_coach_name:staff.assistant||null,p_team_doctor_name:staff.doctor||null,p_physiotherapist_name:staff.physio||null});
       if(r.error)throw r.error;
       var result=r.data||{};
       if(status)status.textContent='Team sheet submitted. Reference: '+(result.reference_code||'saved')+'. The Super Admin has received it.';

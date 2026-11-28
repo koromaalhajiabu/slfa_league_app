@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v313'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v314'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v313'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v314'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -274,7 +274,7 @@ test('Krio translations load across public and all staff portals', () => {
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('i18n.js?v=24'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v313'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('slfa-app-v314'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -376,7 +376,7 @@ test('service worker serves versioned app assets cache first while keeping publi
   assert.match(dataHandler, /e\.respondWith\(fetch\(req\)/);
   assert.match(assetHandler, /cache\.match\(req\)[\s\S]*?if \(hit\) return hit[\s\S]*?return fetch\(req\)/);
   assert.match(assetHandler, /pathname\.endsWith\('\/sw\.js'\)/);
-  assert.match(sw, /const CACHE = 'slfa-app-v313'/);
+  assert.match(sw, /const CACHE = 'slfa-app-v314'/);
 });
 
 test('public data changes refresh only the affected panel', () => {
@@ -419,4 +419,33 @@ test('database client table privileges are retained only when RLS has a matching
   assert.match(migration, /ARRAY\['public'::name\]/);
   assert.match(migration, /REVOKE %s ON TABLE public\.%I FROM %I/);
   assert.doesNotMatch(migration, /DELETE FROM public\.|DROP POLICY|ALTER TABLE .* DISABLE ROW LEVEL SECURITY/i);
+});
+
+
+test('electronic team sheets capture and publish named bench staff', () => {
+  const teamOfficial = fs.readFileSync(path.join(ROOT, 'team-official.js'), 'utf8');
+  const adminInbox = fs.readFileSync(path.join(ROOT, 'super-admin-team-sheets.js'), 'utf8');
+  assert.match(teamOfficial, /tsoHeadCoach/);
+  assert.match(teamOfficial, /tsoTeamManager/);
+  assert.match(teamOfficial, /tsoAssistantCoach/);
+  assert.match(teamOfficial, /tsoTeamDoctor/);
+  assert.match(teamOfficial, /tsoPhysio/);
+  assert.match(teamOfficial, /submit_match_team_sheet_with_staff/);
+  assert.match(adminInbox, /head_coach_name/);
+  assert.match(adminInbox, /physiotherapist_name/);
+  assert.match(adminInbox, /Bench staff and team officials/);
+});
+
+test('official accreditation uses private evidence and administrator review history', () => {
+  const accreditation = fs.readFileSync(path.join(ROOT, 'official-accreditation.js'), 'utf8');
+  const refereePortal = fs.readFileSync(path.join(ROOT, 'referee.html'), 'utf8');
+  const adminPortal = fs.readFileSync(path.join(ROOT, 'super-admin.html'), 'utf8');
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  assert.match(accreditation, /slfa-official-documents/);
+  assert.match(accreditation, /createSignedUrl/);
+  assert.match(accreditation, /official_accreditation_reviews/);
+  assert.match(accreditation, /getRandomValues/);
+  assert.match(refereePortal, /official-accreditation\.js\?v=1/);
+  assert.match(adminPortal, /official-accreditation\.js\?v=1/);
+  assert.match(sw, /official-accreditation\.js\?v=1/);
 });
