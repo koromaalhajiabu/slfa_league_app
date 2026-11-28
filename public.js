@@ -2,7 +2,9 @@
 // Read-only. Uses only data the database already exposes to the public.
 (function () {
   var cfg = window.SLFA_CONFIG;
-  var db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
+  // Reuse the page's primary Supabase client. Creating a second client here
+  // opens a second auth/realtime stack and duplicates connection work on startup.
+  var db = window.slfaDb || window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
   function $(id) { return document.getElementById(id); }
