@@ -348,44 +348,6 @@
     document.body.insertBefore(layer, document.body.firstChild);
   }
 
-  function addBirdFlights() {
-    if (!document.body || document.getElementById('slfa-bird-flight-layer')) return;
-    var flightLayer = document.createElement('div');
-    flightLayer.id = 'slfa-bird-flight-layer';
-    flightLayer.setAttribute('aria-hidden', 'true');
-    var assetUrl = new URL('bird-flight.gif?v=2', document.baseURI).href;
-
-    function makeBird(size, index, offset) {
-      var bird = document.createElement('img');
-      bird.className = 'slfa-bird slfa-real-bird bird-' + index;
-      bird.src = assetUrl;
-      bird.alt = '';
-      bird.setAttribute('aria-hidden', 'true');
-      bird.setAttribute('decoding', 'async');
-      bird.setAttribute('loading', 'eager');
-      bird.draggable = false;
-      bird.style.setProperty('--bird-size', size + 'px');
-      bird.style.marginLeft = index ? '-11px' : '0';
-      bird.style.transform = 'translateY(' + offset + 'px)';
-      return bird;
-    }
-
-    [
-      { name: 'a', sizes: [74, 62, 70, 58, 68], offsets: [0, -8, 5, -11, 2] },
-      { name: 'b', sizes: [66, 54, 60, 52], offsets: [3, -7, 4, -5] },
-      { name: 'c', sizes: [56, 46, 52], offsets: [0, -6, 3] }
-    ].forEach(function (group) {
-      var flock = document.createElement('span');
-      flock.className = 'slfa-bird-flock slfa-bird-flock-' + group.name;
-      group.sizes.forEach(function (size, index) {
-        flock.appendChild(makeBird(size, index, group.offsets[index]));
-      });
-      flightLayer.appendChild(flock);
-    });
-
-    // Keep the bird layer above dashboard panels, with no pointer interception.
-    document.body.appendChild(flightLayer);
-  }
   function init() {
     if (!document.body) return;
     db = getDb();
@@ -394,7 +356,6 @@
     var cachedConfig = configFromValue(cached);
     applyPreset(cachedConfig ? cachedConfig.palette : 'night-sky', cachedConfig ? cachedConfig.custom_accent : DEFAULT_ACCENT);
     addSkyAtmosphere();
-    addBirdFlights();
     applySkyCycle();
     addStars();
     window.setInterval(applySkyCycle, 15000);
@@ -425,13 +386,7 @@
     }
     document.addEventListener('visibilitychange', function () {
       var layer = document.getElementById('slfa-cosmos');
-      var birds = document.getElementById('slfa-bird-flight-layer');
       if (layer) layer.style.animationPlayState = document.hidden ? 'paused' : 'running';
-      if (birds) {
-        birds.querySelectorAll('.slfa-bird-flock').forEach(function (flock) {
-          flock.style.animationPlayState = document.hidden ? 'paused' : 'running';
-        });
-      }
       if (!document.hidden) { applySkyCycle(); loadGlobalTheme(); }
     });
   }

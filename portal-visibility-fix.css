@@ -1,71 +1,5 @@
-/* SLFA 2026 — final panel contrast and true-bird foreground layer */
-#slfa-bird-flight-layer {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 2147483000 !important;
-  overflow: hidden !important;
-  pointer-events: none !important;
-  isolation: isolate !important;
-}
-#slfa-bird-flight-layer .slfa-bird-flock {
-  position: absolute !important;
-  display: none;
-  align-items: center;
-  width: max-content;
-  height: auto;
-  gap: 0;
-  opacity: .96;
-  visibility: hidden;
-  pointer-events: none;
-  will-change: transform;
-  filter: drop-shadow(0 2px 4px rgba(7,18,35,.32));
-}
-#slfa-bird-flight-layer .slfa-bird {
-  display: block !important;
-  flex: 0 0 auto;
-  height: auto !important;
-  max-width: none !important;
-  object-fit: contain;
-  border: 0 !important;
-  background: transparent !important;
-  filter: drop-shadow(0 1px 2px rgba(10,20,30,.28));
-}
-#slfa-bird-flight-layer .slfa-bird-flock-a {
-  top: 15vh;
-  left: -45vw;
-  animation: slfaBirdFlightA 34s linear -9s infinite;
-}
-#slfa-bird-flight-layer .slfa-bird-flock-b {
-  top: 26vh;
-  left: -52vw;
-  animation: slfaBirdFlightB 43s linear -28s infinite;
-}
-#slfa-bird-flight-layer .slfa-bird-flock-c {
-  top: 9vh;
-  left: -60vw;
-  animation: slfaBirdFlightC 51s linear -40s infinite;
-}
-html[data-sky-phase="dawn"] #slfa-bird-flight-layer .slfa-bird-flock,
-html[data-sky-phase="afternoon"] #slfa-bird-flight-layer .slfa-bird-flock,
-html[data-sky-phase="dusk"] #slfa-bird-flight-layer .slfa-bird-flock {
-  display: flex !important;
-  visibility: visible !important;
-}
-html[data-sky-phase="night"] #slfa-bird-flight-layer .slfa-bird-flock {
-  display: none !important;
-  visibility: hidden !important;
-  animation: none !important;
-}
-@media (max-width: 600px) {
-  #slfa-bird-flight-layer .slfa-bird-flock-a { top: 14vh; }
-  #slfa-bird-flight-layer .slfa-bird-flock-b { top: 25vh; }
-  #slfa-bird-flight-layer .slfa-bird-flock-c { top: 8vh; }
-}
-@media (prefers-reduced-motion: reduce) {
-  #slfa-bird-flight-layer .slfa-bird-flock {
-    animation-duration: 90s !important;
-  }
-}
+
+
 
 /* Day/light appearance: prevent pale cards with inherited white text. */
 html[data-theme="light"] body {
@@ -142,8 +76,7 @@ html:not([data-theme="light"]) body main :is(input, select, textarea) {
 }
 
 /* Full-width sections are also panels on the public and staff dashboards. */
-#slfa-bird-flight-layer { z-index: 900 !important; }
-#slfa-bird-flight-layer .slfa-bird { width: var(--bird-size, 60px) !important; }
+
 
 html[data-theme="light"] body main > section:not(.hero) {
   color: #19334c !important;
@@ -169,22 +102,15 @@ html:not([data-theme="light"]) body main > section:not(.hero) *:not(button):not(
 }
 
 
-/* SKY BACKGROUND DEPTH: birds fly behind the dashboard, never over its controls. */
 #slfa-sky-atmosphere { z-index: 0 !important; }
-#slfa-bird-flight-layer {
-  position: fixed !important; inset: 0 !important; z-index: 2 !important;
-  pointer-events: none !important; overflow: hidden !important;
-}
+
 body > .topbar, body > .portal-head, body > header.topbar, body > header.portal-head {
   position: relative !important; z-index: 12 !important;
 }
 body > main, body > .portal, body > .app-legal, body main, body .portal {
   position: relative !important; z-index: 6 !important;
 }
-#slfa-bird-flight-layer .slfa-bird {
-  width: var(--bird-size, 60px) !important; height: auto !important;
-  object-fit: contain !important; background: transparent !important;
-}
+
 
 /* Glass panels allow the flock to remain visible behind content without reducing text contrast. */
 html[data-theme="light"] body main :is(
