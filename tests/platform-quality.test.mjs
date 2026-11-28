@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v317'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v318'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=2'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=2'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v317'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v318'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -275,8 +275,8 @@ test('Krio translations load across public and all staff portals', () => {
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=26'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v317'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=27'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v318'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -378,7 +378,7 @@ test('service worker serves versioned app assets cache first while keeping publi
   assert.match(dataHandler, /e\.respondWith\(fetch\(req\)/);
   assert.match(assetHandler, /cache\.match\(req\)[\s\S]*?if \(hit\) return hit[\s\S]*?return fetch\(req\)/);
   assert.match(assetHandler, /pathname\.endsWith\('\/sw\.js'\)/);
-  assert.match(sw, /const CACHE = 'slfa-app-v317'/);
+  assert.match(sw, /const CACHE = 'slfa-app-v318'/);
 });
 
 
@@ -510,7 +510,7 @@ test('Help, feedback, privacy and terms are fully covered by Krio translations',
   assert.match(help, /i18n\.js\?v=26/);
   assert.match(privacy, /i18n\.js\?v=26/);
   assert.match(sw, /i18n\.js\?v=26/);
-  assert.match(sw, /slfa-app-v317/);
+  assert.match(sw, /slfa-app-v318/);
 });
 
 
@@ -535,4 +535,61 @@ test('Match-Day Submission Inbox reconciles both club sheets and every assigned 
   );
   assert.match(teamSheetMigration, /on conflict \(match_id,club_id\)/);
   assert.match(teamSheetMigration, /submit_match_team_sheet/);
+});
+
+
+test('Arabic translation covers privacy, public help, account data and staff operation panels', () => {
+  const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
+  const requiredArabicKeys = [
+    'Privacy notice and terms of use',
+    'The SLFA League App is a demonstration developed by Koroma Leone Tech for review by the Sierra Leone Football Association (SLFA). It is not currently an officially adopted or operated SLFA service. Any future operating body, data controller and contact details must be confirmed by the Association before production deployment.',
+    'Historical supporter entries:',
+    'Why we store it',
+    'Who can see it',
+    'How long we keep it',
+    'Terms of use',
+    'Keep comments respectful. Do not post abuse, threats, hate, racism, spam, or anyone\\'s personal details.',
+    'Help & Feedback Centre',
+    'My fan data',
+    'This page provides access to match comments, problem reports and historic supporter entries previously submitted from this browser. Predictions and polls are no longer available in the current public app. Your browser keeps a small code to link them to you. Nobody else can see this page\\'s contents unless they use this device. Clearing the app\\'s site data removes the code, and the records then cannot be found again from this device.',
+    'Match-Day Submission Inbox',
+    'Electronic Team Sheet Inbox',
+    'Referee Match Record Inbox',
+    'Digital Publications Management',
+    'Official document library',
+    'Matchday Operations Command Centre',
+    'National Football Intelligence & Integrity Centre',
+    'League Administrator',
+    'Technical Director · The SLFA League App',
+    'Match Data Operator · The SLFA League App',
+    'Authorised match data operator sign in',
+    'Team Official · The SLFA League App',
+    'Head Coach',
+    'Team Manager',
+    'Physiotherapist',
+    'First half',
+    'Second half',
+    'No unread alerts',
+    'Your session has expired. Sign in again.'
+  ];
+  for (const phrase of requiredArabicKeys) {
+    assert.ok(dictionary.includes(phrase), 'Arabic dictionary is missing a required interface phrase: ' + phrase);
+  }
+  assert.match(dictionary, /documentElement\\.setAttribute\\('dir', current === 'ar' \\? 'rtl' : 'ltr'\\)/,
+    'The document direction must switch explicitly between RTL and LTR');
+  assert.match(dictionary, /Input values can be database enum values/);
+  assert.match(dictionary, /el\\.tagName === 'INPUT' && \\/\\^\\(button\\|submit\\|reset\\)\\$\\/i\\.test/,
+    'Only visible input button captions may have their value attribute translated');
+  const pages = [
+    'index.html','developer.html','super-admin.html','referee.html','team-official.html',
+    'match-data-operator.html','media.html','disciplinary.html','league-admin.html',
+    'help.html','privacy.html','my-data.html','reset-password.html'
+  ];
+  for (const pageName of pages) {
+    const page = fs.readFileSync(path.join(ROOT, pageName), 'utf8');
+    assert.match(page, /i18n\\.js\\?v=27/, pageName + ' must load the current shared language dictionary');
+  }
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  assert.match(sw, /i18n\\.js\\?v=27/);
+  assert.match(sw, /slfa-app-v318/);
 });
