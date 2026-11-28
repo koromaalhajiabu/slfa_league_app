@@ -651,7 +651,10 @@ test('French translation covers privacy, help, account data and all staff operat
     'Your assigned matches are ready. Choose the fixture and submit clear photographs.',
     'French',
     'The result has been returned for review.',
-    'The system does not change official results automatically.'
+    'The system does not change official results automatically.',
+    'Loading cup ties…',
+    'Match Data Operator · The SLFA League App',
+    ', or ask the Developer to check your staff invitation.'
   ];
   for (const phrase of requiredFrenchKeys) {
     assert.ok(dictionary.includes(phrase), 'French dictionary is missing a required interface phrase: ' + phrase);
