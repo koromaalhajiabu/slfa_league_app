@@ -1522,7 +1522,7 @@
         };});
         host.querySelectorAll('[data-sa-cancel]').forEach(function(b){b.onclick=function(){
           var email=b.dataset.saCancel;if(!confirm('Cancel this operational staff invitation?'))return;
-          db.from('role_invitations').update({invitation_status:'CANCELLED'}).eq('email',email).neq('system_role','SUPER_ADMIN')
+          db.from('role_invitations').update({invitation_status:'CANCELLED'}).eq('email',email).neq('system_role','SUPER_ADMIN').neq('system_role','LEAGUE_ADMIN')
             .then(function(x){if(x.error){saStaffSay(x.error.message);return;}saStaffSay('Invitation cancelled.');refreshSuperAdminStaff();});
         };});
       });
@@ -1551,7 +1551,7 @@
       '<label for="ivRole">Role</label><select id="ivRole">'+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join('')+'</select><div id="devSuperAdminSlot" class="muted" role="status">Checking Super Admin appointment availability…</div>'+
       
       '<div class="btns"><button class="primary" id="ivSave">Save invitation</button></div>'+
-      '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
+      '<h2 class="rt">Pending Super Admin invitation</h2><div id="ivList" class="muted">Loading…</div>'+
       '<h2 class="rt">Super Admin appointment</h2><div id="roleList" class="muted">The Super Admin / League Administrator is the single league authority. Only this appointment is managed here.</div>'+
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
     loadDeveloperOverview();
@@ -1698,7 +1698,7 @@
   function loadInvites(){
     db.from('role_invitations')
       .select('email,full_name,system_role,official_title,invited_at,email_delivery_status,email_sent_at,email_delivery_error,invitation_status')
-      .eq('system_role','SUPER_ADMIN').in('invitation_status',['PENDING','ACCOUNT_CREATED'])
+      .in('system_role',['SUPER_ADMIN','LEAGUE_ADMIN']).in('invitation_status',['PENDING','ACCOUNT_CREATED'])
       .order('invited_at',{ascending:false})
       .then(function(r){
         if(r.error){$('ivList').textContent=r.error.message;return;}
