@@ -507,8 +507,8 @@ test('Help, feedback, privacy and terms are fully covered by Krio translations',
     '[SLFA to set the retention period]',
     '[SLFA to confirm how comments from under-18s are handled]'
   ]) assert.ok(dictionary.includes(phrase), 'Missing full-sentence Krio translation key: ' + phrase);
-  assert.match(help, /i18n\.js\?v=25/);
-  assert.match(privacy, /i18n\.js\?v=25/);
-  assert.match(sw, /i18n\.js\?v=25/);
+  assert.match(help, /i18n\.js\?v=26/);
+  assert.match(privacy, /i18n\.js\?v=26/);
+  assert.match(sw, /i18n\.js\?v=26/);
   assert.match(sw, /slfa-app-v316/);
 });

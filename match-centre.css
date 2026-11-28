@@ -177,3 +177,8 @@
 .slfa-mc-day.active span,.slfa-mc-day.active strong,.slfa-mc-day.active small{color:#aaf2c5}
 .slfa-mc-day:focus-visible{outline:2px solid #8be9b1;outline-offset:3px}
 @media(max-width:420px){.slfa-mc-date-browser-head{align-items:flex-start;flex-direction:column;gap:3px}.slfa-mc-day{flex-basis:66px;min-height:73px}}
+
+
+/* Progressive match-list rendering: a generous tap target after each batch. */
+.slfa-mc-more-wrap{display:flex;justify-content:center;margin:14px 0 4px}
+.slfa-mc-more{min-height:44px;padding:10px 20px;border-radius:12px;font-weight:750}
