@@ -40,7 +40,8 @@ Deno.serve(async (req: Request) => {
   const { data: callerProfile, error: callerProfileError } = await admin
     .from("user_profiles").select("system_role,status")
     .eq("id", authData.user.id).maybeSingle();
-  const callerRole = String(callerProfile?.system_role || "").toUpperCase();
+  const rawCallerRole = String(callerProfile?.system_role || "").toUpperCase();
+  const callerRole = rawCallerRole === "LEAGUE_ADMIN" ? "SUPER_ADMIN" : rawCallerRole;
   if (callerProfileError || !callerProfile ||
       !["DEVELOPER", "SUPER_ADMIN"].includes(callerRole) ||
       String(callerProfile.status).toLowerCase() !== "active") {
@@ -77,8 +78,12 @@ Deno.serve(async (req: Request) => {
       return reply({ error: "No pending staff invitation was found for this email. Save the role invitation first." }, 404);
     }
 
-    if (callerRole === "SUPER_ADMIN" && String(invitation.system_role).toUpperCase() === "SUPER_ADMIN") {
-      return reply({ error: "Only the Developer can send or manage a Super Admin invitation." }, 403);
+    const inviteRole = String(invitation.system_role).toUpperCase();
+    if (callerRole === "DEVELOPER" && !["SUPER_ADMIN", "LEAGUE_ADMIN"].includes(inviteRole)) {
+      return reply({ error: "The Developer can send invitations only for the Super Admin / League Administrator account." }, 403);
+    }
+    if (callerRole === "SUPER_ADMIN" && ["SUPER_ADMIN", "LEAGUE_ADMIN"].includes(inviteRole)) {
+      return reply({ error: "Only the Developer can send or manage the Super Admin invitation." }, 403);
     }
 
     if (Number(invitation.email_attempts || 0) >= 5) {
