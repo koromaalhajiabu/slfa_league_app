@@ -2,7 +2,7 @@
 // 1. Keeps the app shell available offline (pages, scripts, styles, images).
 // 2. Shows league alerts sent as push messages.
 // League data always comes from the network, so scores and news are never stale.
-const CACHE = 'slfa-app-v331';
+const CACHE = 'slfa-app-v332';
 // Saved copies of public league data, so fans can still read the last information when offline
 const DATA_CACHE = CACHE + '-data';
 const PUBLIC_TABLES = ['matches', 'league_standings', 'season_standings', 'league_clubs', 'club_squad', 'media_posts', 'leagues', 'match_events', 'match_lineups', 'club_announcements', 'top_scorers', 'top_assists', 'clean_sheets', 'motm_awards', 'competition_rules', 'seasons', 'slfa_publications', 'league_division_settings', 'league_movement_records'];
@@ -65,11 +65,23 @@ self.addEventListener('fetch', function (e) {
     return;
   }
   if (isPublicDataRequest(req)) {
-    e.respondWith(fetch(req).then(function (res) {
-      if (res.ok) { var copy = res.clone(); caches.open(DATA_CACHE).then(function (c) { c.put(req, copy); }); }
+    // Stale-while-revalidate: show the last public snapshot immediately, then
+    // refresh the cache in the background. Only anonymous public GET requests
+    // are eligible; authenticated/private responses are never cached here.
+    var cachePromise = caches.open(DATA_CACHE);
+    var networkPromise = fetch(req).then(function (res) {
+      if (res.ok) {
+        var copy = res.clone();
+        cachePromise.then(function (cache) { return cache.put(req, copy); });
+      }
       return res;
-    }).catch(function () {
-      return caches.open(DATA_CACHE).then(function (c) { return c.match(req); }).then(function (hit) { return hit || Response.error(); });
+    });
+    e.waitUntil(networkPromise.then(function () {}, function () {}));
+    e.respondWith(cachePromise.then(function (cache) {
+      return cache.match(req).then(function (hit) {
+        if (hit) return hit;
+        return networkPromise.catch(function () { return Response.error(); });
+      });
     }));
     return;
   }
