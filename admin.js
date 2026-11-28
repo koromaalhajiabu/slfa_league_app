@@ -1539,24 +1539,24 @@
 
   // ---------- DEVELOPER PANEL ----------
   var devUser = null;
-  var ROLE_OPTIONS = [['REFEREE','Referee'],['MATCH_COMMISSIONER','Match Commissioner'],['TEAM_OFFICIAL','Team Official / Club Representative'],['MATCH_DATA_OPERATOR','Match Data Operator'],['MEDIA_OFFICER','Media Officer'],['DISCIPLINARY_OFFICER','Disciplinary Officer'],['LEAGUE_ADMIN','League Administrator'],['SUPER_ADMIN','Super Admin']];
+  var ROLE_OPTIONS = [['SUPER_ADMIN','Super Admin / League Administrator']];
   function developer(p) {
     devUser=p;
     box().innerHTML =
       '<section class="dev-overview" id="developerOverview"><h2 class="rt">Platform overview</h2><p class="muted">Live database totals and public app activity. Counts are loaded from the connected database.</p><div class="dev-metric-grid">'+[['devMetricAccounts','Accounts'],['devMetricMatches','Fixtures'],['devMetricClubs','Clubs'],['devMetricResults','Confirmed results']].map(function(x){return '<article class="dev-metric"><span>'+x[1]+'</span><strong id="'+x[0]+'">—</strong></article>';}).join('')+'</div><div class="dev-activity"><strong>Last 30 days · public app activity</strong><div id="devMetricActivity" class="muted">Loading activity…</div></div><button class="secondary" type="button" id="devRefreshOverview">Refresh overview</button><div class="status" id="devOverviewStatus" role="status"></div></section>'+
       '<h2 class="rt">Whole application</h2><div id="appState" class="muted">Checking…</div><div class="btns"><button class="secondary" id="freezeAppBtn">Freeze entire app</button><button class="primary" id="unfreezeAppBtn">Unfreeze entire app</button></div>'+
-      '<h2 class="rt">Assign a role</h2><p class="muted">Create staff invitations. For a Team Official / Club Representative, select the club they represent so their team-sheet portal is ready as soon as they register.</p>'+
+      '<h2 class="rt">Appoint the Super Admin</h2><p class="muted">The Developer can appoint only one Super Admin. The Super Admin is also the League Administrator and controls all operational staff roles. Operational roles cannot be assigned from this Developer panel.</p>'+
       '<label for="ivName">Full name</label><input id="ivName" type="text" autocomplete="name">'+input('ivEmail','Email address','email')+
       '<label for="ivPhoto">Round profile photo</label><input id="ivPhoto" type="file" accept="image/jpeg,image/png,image/webp"><div id="ivPhotoPreview" class="muted">No photo selected.</div>'+
       '<label for="ivRole">Role</label><select id="ivRole">'+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join('')+'</select><div id="devSuperAdminSlot" class="muted" role="status">Checking Super Admin appointment availability…</div>'+
       '<div id="ivClubWrap" hidden><label for="ivClub">Club represented</label><select id="ivClub"><option value="">Loading active clubs…</option></select></div>'+
       '<div class="btns"><button class="primary" id="ivSave">Save invitation</button></div>'+
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
-      '<h2 class="rt">All accounts and roles</h2><p class="muted">Change roles, suspend, restore or delete accounts. Actions are logged automatically.</p><div id="roleList" class="muted">Loading…</div>'+
+      '<h2 class="rt">Super Admin appointment</h2><div id="roleList" class="muted">Only the Super Admin appointment is managed here.</div>'+
       '<section id="developerRoleAuditHidden" hidden><h2 class="rt">Recent role changes</h2><div id="roleLog" class="muted">Loading…</div></section><div class="status" id="roleMsg"></div>';
     loadDeveloperOverview();
     $('devRefreshOverview').onclick=loadDeveloperOverview;
-    loadAppState();loadAccountsDev(p);loadRoleLog();loadInviteForm();
+    loadAppState();loadInviteForm();
     $('freezeAppBtn').onclick=function(){setAppFreeze(true);};$('unfreezeAppBtn').onclick=function(){setAppFreeze(false);};
     $('ivPhoto').onchange=function(){var f=this.files&&this.files[0];if(!f){$('ivPhotoPreview').textContent='No photo selected.';return;}if(['image/jpeg','image/png','image/webp'].indexOf(f.type)===-1||f.size>4*1024*1024){this.value='';msg('Choose a JPG, PNG or WebP photo no larger than 4 MB.');return;}var u=URL.createObjectURL(f);$('ivPhotoPreview').innerHTML='<img src="'+u+'" alt="Profile preview" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #16834a">';};
   }
@@ -1620,7 +1620,7 @@
   }
   function loadInviteForm(){
     $('ivSave').onclick=saveInvite;$('ivRole').addEventListener('change',updateInviteClubVisibility);
-    loadInviteClubs();loadInvites();updateInviteClubVisibility();refreshDeveloperSuperAdminSlot();
+    loadInvites();updateInviteClubVisibility();refreshDeveloperSuperAdminSlot();
   }
   function refreshDeveloperSuperAdminSlot(){
     var note=$('devSuperAdminSlot'),select=$('ivRole');if(!note||!select)return;
@@ -1664,10 +1664,10 @@
       });
   }
   function saveInvite(){
-    var name=$('ivName').value.trim(),email=$('ivEmail').value.trim().toLowerCase(),role=$('ivRole').value,file=$('ivPhoto').files&&$('ivPhoto').files[0];
+    var name=$('ivName').value.trim(),email=$('ivEmail').value.trim().toLowerCase(),role='SUPER_ADMIN',file=$('ivPhoto').files&&$('ivPhoto').files[0];
     var club=role==='TEAM_OFFICIAL'?($('ivClub').value||null):null;
     if(!name||!email){msg('Enter the full name and email address.');return;}
-    if(role==='TEAM_OFFICIAL'&&!club){msg('Choose the club the Team Official represents.');return;}
+    if(role!=='SUPER_ADMIN'){msg('The Developer can appoint only the Super Admin.');return;}
     var save=$('ivSave');if(save)save.disabled=true;
     msg('Saving role and preparing the secure invitation…');
     uploadDevPhoto(email,file).then(function(photo){
@@ -1691,14 +1691,14 @@
       $('ivName').value='';$('ivEmail').value='';$('ivPhoto').value='';
       $('ivPhotoPreview').textContent='No photo selected.';
       if($('ivClub'))$('ivClub').value='';
-      loadInvites();loadRoleLog();refreshDeveloperSuperAdminSlot();if(devUser)loadAccountsDev(devUser);
+      loadInvites();loadRoleLog();refreshDeveloperSuperAdminSlot();
     }).catch(function(err){msg(err.message||'Could not save this invitation.');})
       .finally(function(){if(save)save.disabled=false;});
   }
   function loadInvites(){
     db.from('role_invitations')
       .select('email,full_name,system_role,official_title,invited_at,email_delivery_status,email_sent_at,email_delivery_error,invitation_status')
-      .in('invitation_status',['PENDING','ACCOUNT_CREATED'])
+      .eq('system_role','SUPER_ADMIN').in('invitation_status',['PENDING','ACCOUNT_CREATED'])
       .order('invited_at',{ascending:false})
       .then(function(r){
         if(r.error){$('ivList').textContent=r.error.message;return;}
@@ -1755,6 +1755,7 @@
   function setAppFreeze(v){db.rpc('set_application_freeze',{p_frozen:v}).then(function(r){msg(r.error?r.error.message:(v?'Entire app frozen.':'Application unfrozen.'));loadAppState();});}
   function currentRoleKey(u){var r=String(u.system_role).toUpperCase();return r==='REFEREE'&&u.official_title==='Match Commissioner'?'MATCH_COMMISSIONER':r;}
   function loadAccountsDev(p){
+    if(!p||String(p.system_role).toUpperCase()!=='DEVELOPER')return;
     Promise.all([
       db.from('user_profiles').select('id,full_name,email,photo_url,system_role,status,official_title,club_id').order('email').limit(500),
       db.from('league_clubs').select('id,club_name').eq('is_active',true).order('club_name')
