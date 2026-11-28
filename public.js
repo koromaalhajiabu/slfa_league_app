@@ -136,7 +136,7 @@
   window.slfaTrack = function (ev) {
     try { db.rpc('log_app_event', { p_event: ev }).then(function () {}, function () {}); } catch (e) {}
   };
-  try { if (!sessionStorage.getItem('slfa_seen')) { sessionStorage.setItem('slfa_seen', '1'); window.slfaTrack('app_open'); } } catch (e) {}
+  try { if (!sessionStorage.getItem('slfa_seen')) { sessionStorage.setItem('slfa_seen', '1'); var sendOpen=function(){window.slfaTrack('app_open');}; if(window.requestIdleCallback) requestIdleCallback(sendOpen,{timeout:5000}); else setTimeout(sendOpen,5000); } } catch (e) {}
   var publicTabLoaded = { matches: true };
   var activePublicTab = 'matches';
   function isPublicTabActive(name) { return activePublicTab === name; }
@@ -473,14 +473,14 @@
   function localFavs() { try { return JSON.parse(localStorage.getItem('slfa_fav_clubs') || '[]'); } catch (e) { return []; } }
   function saveLocalFavs(list) { try { localStorage.setItem('slfa_fav_clubs', JSON.stringify(list)); } catch (e) {} }
   function loadFavs() {
-    return db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) {
+    return db.auth.getSession().then(function (u) {
+      if (!u.data || !u.data.session || !u.data.session.user) {
         var list = localFavs();
         myFavIds = {}; myFavNames = {}; myFavList = list.slice();
         list.forEach(function (f) { myFavIds[f.id] = true; myFavNames[f.name] = true; });
         return;
       }
-      return db.from('user_favorite_clubs').select('club_id, league_clubs(club_name)').eq('user_id', u.data.user.id).then(function (r) {
+      return db.from('user_favorite_clubs').select('club_id, league_clubs(club_name)').eq('user_id', u.data.session.user.id).then(function (r) {
         myFavIds = {}; myFavNames = {}; myFavList = [];
         (r.data || []).forEach(function (f) {
           var name = f.league_clubs && f.league_clubs.club_name;
@@ -493,8 +493,8 @@
   function refreshFavs() { loadFavs().then(function () { loadMatches(); }); }
   function toggleFav(clubId, clubs) {
     var status = function (t) { var el = document.getElementById('favStatus'); if (el) el.textContent = t; };
-    db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) {
+    db.auth.getSession().then(function (u) {
+      if (!u.data || !u.data.session || !u.data.session.user) {
         var on0 = !!myFavIds[clubId];
         var list = localFavs();
         if (on0) { list = list.filter(function (f) { return String(f.id) !== String(clubId); }); }
@@ -510,8 +510,8 @@
       var on = !!myFavIds[clubId];
       window.slfaTrack('favourite_club');
       var q = on
-        ? db.from('user_favorite_clubs').delete().eq('user_id', u.data.user.id).eq('club_id', clubId)
-        : db.from('user_favorite_clubs').insert({ user_id: u.data.user.id, club_id: clubId });
+        ? db.from('user_favorite_clubs').delete().eq('user_id', u.data.session.user.id).eq('club_id', clubId)
+        : db.from('user_favorite_clubs').insert({ user_id: u.data.session.user.id, club_id: clubId });
       return q.then(function (r) {
         if (r.error) { status(r.error.message); return; }
         status(on ? 'Removed from your clubs.' : 'Saved to your clubs.');
