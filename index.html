@@ -3,6 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+/* Opt-in field diagnostics: open the page with ?perf=1. No data is transmitted. */
+(function(){
+  var enabled = new URLSearchParams(location.search).has('perf');
+  var data = window.__slfaPerf = { started: performance.now(), lcp: 0, longTasks: [], resources: [] };
+  try {
+    new PerformanceObserver(function(list){
+      list.getEntries().forEach(function(e){ data.lcp = Math.round(e.startTime); });
+    }).observe({type:'largest-contentful-paint', buffered:true});
+  } catch(e) {}
+  try {
+    new PerformanceObserver(function(list){
+      list.getEntries().forEach(function(e){ data.longTasks.push(Math.round(e.duration)); });
+    }).observe({type:'longtask', buffered:true});
+  } catch(e) {}
+  function report(){
+    var nav=performance.getEntriesByType('navigation')[0];
+    var paints=performance.getEntriesByType('paint');
+    var fcp=paints.find(function(x){return x.name==='first-contentful-paint';});
+    data.domReady=nav?Math.round(nav.domContentLoadedEventEnd):null;
+    data.load=nav?Math.round(nav.loadEventEnd):null;
+    data.fcp=fcp?Math.round(fcp.startTime):null;
+    data.resourceCount=performance.getEntriesByType('resource').length;
+    data.slowest=performance.getEntriesByType('resource').slice().sort(function(a,b){return b.duration-a.duration;}).slice(0,6).map(function(r){
+      return {asset:(new URL(r.name)).pathname.split('/').pop()||r.name,duration:Math.round(r.duration),size:r.transferSize||0};
+    });
+    if(!enabled)return;
+    var panel=document.getElementById('slfaPerfPanel');
+    if(!panel){
+      panel=document.createElement('section');panel.id='slfaPerfPanel';
+      panel.style.cssText='position:fixed;z-index:99999;left:8px;right:8px;bottom:8px;max-height:48vh;overflow:auto;background:#071b2a;color:#fff;border:1px solid #57b88a;border-radius:12px;padding:12px;font:12px/1.5 system-ui;box-shadow:0 4px 22px #0008';
+      document.body.appendChild(panel);
+    }
+    var rows=[
+      'SLFA performance diagnostics',
+      'DOM ready: '+(data.domReady==null?'pending':data.domReady+' ms'),
+      'Page load: '+(data.load==null?'pending':data.load+' ms'),
+      'First contentful paint: '+(data.fcp==null?'not recorded':data.fcp+' ms'),
+      'Largest contentful paint: '+(data.lcp?data.lcp+' ms':'not recorded yet'),
+      'Long tasks over 50 ms: '+data.longTasks.length+' ('+data.longTasks.join(', ')+')',
+      'Network resources: '+data.resourceCount,
+      'Slowest assets:'
+    ].concat(data.slowest.map(function(r){return r.asset+' — '+r.duration+' ms';}));
+    panel.textContent=rows.join('\n');
+    var b=document.createElement('button');b.textContent='Copy report';b.style.cssText='margin-top:8px;padding:7px 12px;border-radius:8px;border:0;font-weight:600';
+    b.onclick=function(){var out=JSON.stringify(data,null,2);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(out).then(function(){b.textContent='Copied';},function(){b.textContent='Select and copy unavailable';});}else{b.textContent='Clipboard unavailable';}};
+    panel.appendChild(b);
+  }
+  window.addEventListener('load',function(){report();setTimeout(report,2500);});
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&enabled)report();});
+})();
+</script>
 <meta name="theme-color" content="#075c3f">
 <link rel="preconnect" href="https://ticcaervmjdzbprdpxxv.supabase.co" crossorigin>
 <link rel="dns-prefetch" href="//ticcaervmjdzbprdpxxv.supabase.co">
