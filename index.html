@@ -472,9 +472,9 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
 
   var PORTALS = { DEVELOPER: 'developer.html', SUPER_ADMIN: 'super-admin.html', REFEREE: 'referee.html', MEDIA_OFFICER: 'media.html', DISCIPLINARY_OFFICER: 'disciplinary.html', LEAGUE_ADMIN: 'league-admin.html', TEAM_OFFICIAL: 'team-official.html', MATCH_DATA_OPERATOR: 'match-data-operator.html' };
   $('openPortal').addEventListener('click', function () {
-    db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) return showSignedOut();
-      return db.from('user_profiles').select('system_role').eq('id', u.data.user.id).maybeSingle().then(function (r) {
+    db.auth.getSession().then(function (u) {
+      if (!u.data || !u.data.session || !u.data.session.user) return showSignedOut();
+      return db.from('user_profiles').select('system_role').eq('id', u.data.session.user.id).maybeSingle().then(function (r) {
         var page = r.data && PORTALS[String(r.data.system_role).toUpperCase()];
         if (page) location.href = page;
       });
@@ -482,9 +482,9 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
   });
 
   function showAdmin(openAfter) {
-    return db.auth.getUser().then(function (u) {
-      if (!u.data || !u.data.user) return showSignedOut();
-      return db.from('user_profiles').select('system_role, status, full_name, email').eq('id', u.data.user.id).maybeSingle()
+    return db.auth.getSession().then(function (u) {
+      if (!u.data || !u.data.session || !u.data.session.user) return showSignedOut();
+      return db.from('user_profiles').select('system_role, status, full_name, email').eq('id', u.data.session.user.id).maybeSingle()
         .then(function (res) {
           var p = res.data;
           if (!p || String(p.status).toLowerCase() !== 'active') {
@@ -517,7 +517,7 @@ body{background:radial-gradient(ellipse at 78% 0%,rgba(19,120,201,.16),transpare
 })();
 </script>
 <script src="match-minute-format.js?v=1"></script>
-<script src="public.js?v=94"></script>
+<script src="public.js?v=95"></script>
 <script src="match-centre.js?v=93"></script>
 <script>
 /* Load secondary public sections after the first league view has rendered. */
