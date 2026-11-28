@@ -20,6 +20,9 @@
   var db = null;
   var current = { palette: 'night-sky', custom_accent: DEFAULT_ACCENT };
   var saving = false;
+  var themeLoadPromise = null;
+  var lastThemeLoadAt = 0;
+  var THEME_REFRESH_MS = 5 * 60 * 1000;
 
   function safeGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
   function safeSet(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
@@ -81,9 +84,13 @@
       custom_accent: safeHex(value.custom_accent)
     };
   }
-  function loadGlobalTheme() {
+  function loadGlobalTheme(force) {
     if (!db) return Promise.resolve(false);
-    return db.from('app_settings').select('value').eq('key', CONFIG_KEY).maybeSingle().then(function (res) {
+    var now = Date.now();
+    if (themeLoadPromise) return themeLoadPromise;
+    if (!force && lastThemeLoadAt && now - lastThemeLoadAt < THEME_REFRESH_MS) return Promise.resolve(false);
+    lastThemeLoadAt = now;
+    themeLoadPromise = db.from('app_settings').select('value').eq('key', CONFIG_KEY).maybeSingle().then(function (res) {
       if (res.error || !res.data) return false;
       var value = configFromValue(res.data.value);
       if (!value) return false;
@@ -92,7 +99,8 @@
       applyPreset(value.palette, value.custom_accent);
       syncControls();
       return true;
-    }).catch(function () { return false; });
+    }).catch(function () { return false; }).finally(function () { themeLoadPromise = null; });
+    return themeLoadPromise;
   }
   function syncControls() {
     var select = document.getElementById('slfaThemeSelect');
@@ -296,7 +304,8 @@
     addSkyAtmosphere();
     applySkyCycle();
     addStars();
-    window.setInterval(applySkyCycle, 15000);
+    // The clock only needs minute-level precision; avoid repeated style recalculation.
+    window.setInterval(applySkyCycle, 60000);
 
     // All viewers receive the same palette from the database. Local storage is only an offline fallback.
     loadGlobalTheme();
@@ -312,14 +321,14 @@
             schema: 'public',
             table: 'app_settings',
             filter: 'key=eq.' + CONFIG_KEY
-          }, function () { loadGlobalTheme(); })
+          }, function () { loadGlobalTheme(true); })
           .subscribe();
       } catch (e) {}
     }
     document.addEventListener('visibilitychange', function () {
       var layer = document.getElementById('slfa-cosmos');
       if (layer) layer.style.animationPlayState = document.hidden ? 'paused' : 'running';
-      if (!document.hidden) { applySkyCycle(); loadGlobalTheme(); }
+      if (!document.hidden) { applySkyCycle(); loadGlobalTheme(false); }
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
