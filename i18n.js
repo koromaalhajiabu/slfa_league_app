@@ -3090,6 +3090,45 @@
     "League Centre": "مركز الدوري"
   });
 
+
+
+  // Complete remaining public landing, registration and accessible-label Arabic wording.
+  Object.assign(DICT.ar, {
+    "Sign in / Switch account": "تسجيل الدخول / تبديل الحساب",
+    "Full name": "الاسم الكامل",
+    "privacy notice and terms": "إشعار الخصوصية والشروط",
+    "and I agree to them.": "وأوافق عليها.",
+    "Create my account": "إنشاء حسابي",
+    "A new account can view the league. A Technical Director must assign your role before you can make changes.": "يمكن للحساب الجديد عرض معلومات الدوري. ويجب على المدير الفني تعيين دورك قبل أن تتمكن من إجراء التغييرات.",
+    "Open my portal": "فتح بوابتي",
+    "To install on iPhone: tap": "للتثبيت على iPhone: اضغط على",
+    ", then": "، ثم",
+    "Add to Home Screen": "إضافة إلى الشاشة الرئيسية",
+    "You are offline. Showing the last information saved on this phone.": "أنت غير متصل بالإنترنت. نعرض آخر معلومات محفوظة على هذا الهاتف.",
+    "Loading the latest football information…": "جارٍ تحميل أحدث معلومات كرة القدم…",
+    "Media Centre": "المركز الإعلامي",
+    "Relegation zone:": "منطقة الهبوط:",
+    "the bottom four clubs in each league.": "الأندية الأربعة الأخيرة في كل دوري.",
+    "Loading teams…": "جارٍ تحميل الفرق…",
+    "Loading registered players…": "جارٍ تحميل اللاعبين المسجلين…",
+    "All updates": "جميع التحديثات",
+    "Press releases": "البيانات الصحفية",
+    "Match reports": "تقارير المباريات",
+    "Photo stories": "قصص مصورة",
+    "© 2026 The SLFA League App. All rights reserved.": "© 2026 تطبيق دوري SLFA. جميع الحقوق محفوظة.",
+    "Developed by": "تطوير",
+    "· Designed by": "· التصميم بواسطة",
+    "Help & feedback": "المساعدة والملاحظات",
+    "Sierra Leone Football Association crest": "شعار اتحاد سيراليون لكرة القدم",
+    "Staff account actions": "إجراءات حساب الموظفين",
+    "Competition": "المسابقة",
+    "Enter the officially confirmed venue": "أدخل الملعب المؤكد رسمياً",
+    "Enter approved format details, stages or structure": "أدخل تفاصيل نظام المسابقة أو مراحلها أو هيكلها المعتمد",
+    "e.g. Leone Rock Premier League": "مثال: دوري ليون روك الممتاز",
+    "Record the authorised decision, meeting or regulation reference.": "أدخل مرجع القرار أو الاجتماع أو اللائحة المعتمدة.",
+    "Round of 16, Quarter-final, Semi-final, Final": "دور الـ16، ربع النهائي، نصف النهائي، النهائي"
+  });
+
   var current = lang();
   var table = DICT[current] || null;
   // Compile translation lookups once. A single phrase matcher avoids scanning
