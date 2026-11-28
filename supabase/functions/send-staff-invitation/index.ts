@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
 
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace(/^Bearer\s+/i, "");
-  if (!token) return reply({ error: "Developer sign-in is required." }, 401);
+  if (!token) return reply({ error: "Staff sign-in is required." }, 401);
 
   const caller = createClient(url, anon, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -40,10 +40,11 @@ Deno.serve(async (req: Request) => {
   const { data: callerProfile, error: callerProfileError } = await admin
     .from("user_profiles").select("system_role,status")
     .eq("id", authData.user.id).maybeSingle();
+  const callerRole = String(callerProfile?.system_role || "").toUpperCase();
   if (callerProfileError || !callerProfile ||
-      String(callerProfile.system_role).toUpperCase() !== "DEVELOPER" ||
+      !["DEVELOPER", "SUPER_ADMIN"].includes(callerRole) ||
       String(callerProfile.status).toLowerCase() !== "active") {
-    return reply({ error: "Only the active Developer account can send staff invitations." }, 403);
+    return reply({ error: "Only an active Developer or Super Admin can send operational staff invitations." }, 403);
   }
 
   try {
@@ -55,7 +56,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: invitation, error: invitationError } = await admin
       .from("role_invitations")
-      .select("email,invitation_status,email_delivery_status,email_attempts,full_name")
+      .select("email,system_role,invitation_status,email_delivery_status,email_attempts,full_name")
       .eq("email", email)
       .in("invitation_status", ["PENDING", "ACCOUNT_CREATED"])
       .maybeSingle();
@@ -74,6 +75,10 @@ Deno.serve(async (req: Request) => {
         });
       }
       return reply({ error: "No pending staff invitation was found for this email. Save the role invitation first." }, 404);
+    }
+
+    if (callerRole === "SUPER_ADMIN" && String(invitation.system_role).toUpperCase() === "SUPER_ADMIN") {
+      return reply({ error: "Only the Developer can send or manage a Super Admin invitation." }, 403);
     }
 
     if (Number(invitation.email_attempts || 0) >= 5) {
