@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v318'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v319'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=2'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=2'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v318'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v319'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -275,8 +275,8 @@ test('Krio translations load across public and all staff portals', () => {
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=27'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v318'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=28'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v319'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -378,7 +378,7 @@ test('service worker serves versioned app assets cache first while keeping publi
   assert.match(dataHandler, /e\.respondWith\(fetch\(req\)/);
   assert.match(assetHandler, /cache\.match\(req\)[\s\S]*?if \(hit\) return hit[\s\S]*?return fetch\(req\)/);
   assert.match(assetHandler, /pathname\.endsWith\('\/sw\.js'\)/);
-  assert.match(sw, /const CACHE = 'slfa-app-v318'/);
+  assert.match(sw, /const CACHE = 'slfa-app-v319'/);
 });
 
 
@@ -510,7 +510,7 @@ test('Help, feedback, privacy and terms are fully covered by Krio translations',
   assert.match(help, /i18n\.js\?v=26/);
   assert.match(privacy, /i18n\.js\?v=26/);
   assert.match(sw, /i18n\.js\?v=26/);
-  assert.match(sw, /slfa-app-v318/);
+  assert.match(sw, /slfa-app-v319/);
 });
 
 
@@ -591,5 +591,32 @@ test('Arabic translation covers privacy, public help, account data and staff ope
   }
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.match(sw, /i18n\\.js\\?v=27/);
-  assert.match(sw, /slfa-app-v318/);
+  assert.match(sw, /slfa-app-v319/);
+});
+
+
+test('Arabic public match centre and dynamic operations wording is available in the shared dictionary', () => {
+  const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
+  for (const phrase of [
+    'No results for your clubs yet.',
+    'Match reminders need push alerts. Use a browser that supports notifications.',
+    'Your one-hour match reminder is set.',
+    'Public match information',
+    'No match events published.',
+    'Digital Publications Management',
+    'The review action failed.',
+    'No electronic team sheets received yet.',
+    'No referee match records have been submitted yet.',
+    'Your assigned matches are ready. Choose the fixture and submit clear photographs.',
+    'Match-Day Submission Inbox',
+    'Matchday Operations Command Centre',
+    'Super Admin only. Appoint Main and Assistant Referees, Match Commissioners and one Live Match Data Operator to each fixture. The Data Operator records live goals, cards and substitutions; the Main Referee alone controls the match clock and official result. Changes and cancellations are logged.',
+    'Saving role and preparing the secure invitation…',
+    'Account suspended.',
+    'Final score confirmed and published.',
+    'Rules saved. They apply to cards given from now on.',
+    'Official document library',
+    'Reconnect to the internet and refresh the library.',
+    'Matchday photography, video highlights, player and coach interviews, and professional match reports.'
+  ]) assert.ok(dictionary.includes(phrase), 'Missing Arabic interface phrase: ' + phrase);
 });
