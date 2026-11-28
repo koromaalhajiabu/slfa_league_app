@@ -104,3 +104,35 @@ begin
     else 'Role updated.' end;
 end;
 $function$;
+
+
+-- Protect the legacy reason-bearing role assignment RPC as well.
+create or replace function public.set_user_role(p_user uuid,p_role text,p_reason text)
+returns void
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare t public.user_profiles%rowtype; v_role text:=p_role; v_title text:=null;
+begin
+  if public.app_role()<>'DEVELOPER' then raise exception 'Only the Developer can assign roles.' using errcode='42501'; end if;
+  if p_reason is null or length(btrim(p_reason))<5 then raise exception 'Give a reason of at least 5 characters. It is kept in the log.'; end if;
+  if p_role not in ('SUPER_ADMIN','REFEREE','MEDIA_OFFICER','DISCIPLINARY_OFFICER','MATCH_COMMISSIONER','TEAM_OFFICIAL','MATCH_DATA_OPERATOR','LEAGUE_ADMIN') then raise exception 'That role cannot be assigned here.'; end if;
+  if p_user=auth.uid() then raise exception 'You cannot change your own role.'; end if;
+  if p_role='SUPER_ADMIN' then
+    perform pg_advisory_xact_lock(hashtext('slfa_single_super_admin'));
+    if exists(select 1 from public.user_profiles where upper(coalesce(system_role,''))='SUPER_ADMIN' and id<>p_user)
+       or exists(select 1 from public.role_invitations where upper(coalesce(system_role,''))='SUPER_ADMIN' and invitation_status in ('PENDING','ACCOUNT_CREATED') and lower(email)<>(select lower(email) from public.user_profiles where id=p_user)) then
+      raise exception 'Only one Super Admin is permitted. Remove the existing Super Admin invitation or account first.' using errcode='23505';
+    end if;
+  end if;
+  if p_role='MATCH_COMMISSIONER' then v_role:='REFEREE';v_title:='Match Commissioner';end if;
+  if p_role='MATCH_DATA_OPERATOR' then v_title:='Match Data Operator';end if;
+  select * into t from public.user_profiles where id=p_user for update;
+  if not found then raise exception 'Account not found.';end if;
+  if upper(t.system_role)='DEVELOPER' then raise exception 'Developer accounts are protected.' using errcode='42501';end if;
+  update public.user_profiles set system_role=v_role,official_title=v_title,club_id=null,status='Active' where id=p_user;
+  insert into public.role_change_log(user_id,user_email,previous_role,new_role,reason,changed_by)
+  values(p_user,t.email,coalesce(t.official_title,t.system_role),coalesce(v_title,v_role),btrim(p_reason),auth.uid());
+end;
+$function$;
