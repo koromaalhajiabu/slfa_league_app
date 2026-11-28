@@ -1548,7 +1548,7 @@
       '<h2 class="rt">Assign a role</h2><p class="muted">Create staff invitations. For a Team Official / Club Representative, select the club they represent so their team-sheet portal is ready as soon as they register.</p>'+
       '<label for="ivName">Full name</label><input id="ivName" type="text" autocomplete="name">'+input('ivEmail','Email address','email')+
       '<label for="ivPhoto">Round profile photo</label><input id="ivPhoto" type="file" accept="image/jpeg,image/png,image/webp"><div id="ivPhotoPreview" class="muted">No photo selected.</div>'+
-      '<label for="ivRole">Role</label><select id="ivRole">'+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join('')+'</select>'+
+      '<label for="ivRole">Role</label><select id="ivRole">'+ROLE_OPTIONS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join('')+'</select><div id="devSuperAdminSlot" class="muted" role="status">Checking Super Admin appointment availability…</div>'+
       '<div id="ivClubWrap" hidden><label for="ivClub">Club represented</label><select id="ivClub"><option value="">Loading active clubs…</option></select></div>'+
       '<div class="btns"><button class="primary" id="ivSave">Save invitation</button></div>'+
       '<h2 class="rt">Pending role assignments</h2><div id="ivList" class="muted">Loading…</div>'+
@@ -1620,7 +1620,31 @@
   }
   function loadInviteForm(){
     $('ivSave').onclick=saveInvite;$('ivRole').addEventListener('change',updateInviteClubVisibility);
-    loadInviteClubs();loadInvites();updateInviteClubVisibility();
+    loadInviteClubs();loadInvites();updateInviteClubVisibility();refreshDeveloperSuperAdminSlot();
+  }
+  function refreshDeveloperSuperAdminSlot(){
+    var note=$('devSuperAdminSlot'),select=$('ivRole');if(!note||!select)return;
+    Promise.all([
+      db.from('user_profiles').select('id',{count:'exact',head:true}).eq('system_role','SUPER_ADMIN'),
+      db.from('role_invitations').select('email',{count:'exact',head:true}).eq('system_role','SUPER_ADMIN').in('invitation_status',['PENDING','ACCOUNT_CREATED'])
+    ]).then(function(results){
+      var failed=results.some(function(r){return r.error;});
+      var occupied=!failed&&((results[0].count||0)+(results[1].count||0)>0);
+      var option=select.querySelector('option[value="SUPER_ADMIN"]');
+      if(failed||occupied){
+        if(option)option.remove();
+        if(select.value==='SUPER_ADMIN')select.value='REFEREE';
+        note.textContent=failed
+          ?'Super Admin appointment is temporarily disabled because the current appointment status could not be verified.'
+          :'The single Super Admin position is already assigned or has a pending invitation. Revoke that appointment before appointing a replacement.';
+      }else{
+        note.textContent='One Super Admin appointment is available. Only one Super Admin account or pending invitation is permitted.';
+      }
+    }).catch(function(){
+      var option=select.querySelector('option[value="SUPER_ADMIN"]');if(option)option.remove();
+      if(select.value==='SUPER_ADMIN')select.value='REFEREE';
+      note.textContent='Super Admin appointment is disabled until the existing appointment status can be verified.';
+    });
   }
   function loadInviteClubs(){
     db.from('league_clubs').select('id,club_name').eq('is_active',true).order('club_name').then(function(r){
