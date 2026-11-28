@@ -131,7 +131,25 @@
   // Apply the selected language immediately to the late-mounted manual content.
   if (window.slfaTranslateDOM) { window.slfaTranslateDOM(button); window.slfaTranslateDOM(dialog); }
   function close() { if (dialog.open) dialog.close(); }
-  button.addEventListener('click', function () { if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open','open'); });
+  button.addEventListener('click', function () {
+    // The Match Commissioner title is resolved after authentication on the shared Referee portal.
+    if (role === 'REFEREE') {
+      var heading = document.querySelector('.portal-head h1');
+      var selected = heading && /match commissioner/i.test(heading.textContent || '') ? manuals.MATCH_COMMISSIONER : manuals.REFEREE;
+      if (selected && selected !== manual) {
+        manual = selected;
+        dialog.querySelector('#portalManualTitle').textContent = manual.title;
+        dialog.querySelector('.portal-manual-intro').textContent = manual.intro;
+        dialog.querySelector('.portal-manual-sections').innerHTML = manual.sections.map(function (section, index) {
+          return '<details class="portal-manual-section"' + (index === 0 ? ' open' : '') + '><summary>' + section[0] + '</summary><ol>' +
+            section[1].map(function (item) { return '<li>' + item.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</li>'; }).join('') +
+            '</ol></details>';
+        }).join('');
+        if (window.slfaTranslateDOM) window.slfaTranslateDOM(dialog);
+      }
+    }
+    if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open','open');
+  });
   dialog.querySelector('.portal-manual-close').addEventListener('click', close);
   dialog.querySelector('.portal-manual-done').addEventListener('click', close);
   dialog.querySelector('.portal-manual-print').addEventListener('click', function () { window.print(); });
