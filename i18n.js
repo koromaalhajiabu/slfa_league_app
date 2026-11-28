@@ -5242,4 +5242,12 @@
   "The public app displays published competition information.": "L’application publique affiche les informations publiées sur les compétitions.",
   "This is a demonstration and is not an official SLFA service unless formally adopted.": "Il s’agit d’une démonstration et non d’un service officiel de la SLFA tant qu’elle n’a pas été formellement adoptée."
 });
+
+  // Final static-page gaps identified by the French-language coverage audit.
+  Object.assign(DICT.fr, {
+    "Loading cup ties…": "Chargement des confrontations de coupe…",
+    "Match Data Operator · The SLFA League App": "Opérateur des données du match · Application des Ligues de la SLFA",
+    ", or ask the Developer to check your staff invitation.": ", ou demandez au développeur de vérifier votre invitation au portail du personnel."
+  });
+
 })();
