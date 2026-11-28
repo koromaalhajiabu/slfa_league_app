@@ -2702,6 +2702,44 @@
   Object.assign(DICT.kri, {"Commissioner confirmed":"Komishɔna dɔn kɔnfam am","This result has been independently confirmed by an SLFA Match Commissioner":"Dis rizɔlt dɔn kɔnfam separet bay wan SLFA Mach Komishɔna"});
   Object.assign(DICT.ar, {"Commissioner confirmed":"أكّدها المفوض","This result has been independently confirmed by an SLFA Match Commissioner":"تم تأكيد هذه النتيجة بشكل مستقل من قبل مفوض مباراة تابع للاتحاد السيراليوني لكرة القدم"});
 
+  // Complete sentence-level Krio coverage for Help & Feedback and Privacy / Terms.
+  // Full text-node keys prevent English fragments remaining between translated phrases.
+  Object.assign(DICT.kri, {
+    "← Back to League Centre": "← Go bak na Lig Sɛntə",
+    "← Back to the League Centre": "← Go bak na Lig Sɛntə",
+    "Use the competition selector to switch between the available men's and women's league information.": "Yuz selector fɔ kɔmpitishɔn fɔ chenj bitwin infomeshɔn fɔ lig fɔ man dɛn ɛn uman dɛn we de.",
+    "The public screens display information that has been published to the app. Live events and final results may not appear until the responsible match officials or administrators have submitted and published them. Use the report form below for general issues, or open that match's details and choose Report a problem to attach your report to a particular match.": "Pɔblik pej dɛn de sho infomeshɔn we dɛn don publish na app. Weteva we apin na mach ɛn rizɔlt we don ɛnd fit nɔ sho til ɔfisɛ dɛn fɔ mach ɔ admin don sɛnd dɛn ɛn publish dɛn. Fɔ ripɔt general problem, yuz fɔm we de dɔŋ. Ɔ opɛn dɛtɛl fɔ di mach ɛn pik Ripɔt wan problem fɔ konek yu ripɔt wit dat mach.",
+    "First enable Get alerts and allow notifications in your browser. Then use Remind me beside an upcoming match. The reminder is scheduled for one hour before kick-off, provided the match remains scheduled and there is enough time to create it.": "Fɔs on Gɛt alɛt dɛn ɛn mek browser gi pɔmit fɔ notifikeshɔn. Afta dat yuz Remaind mi we de nɛks to mach we de kam. Di reminder go set fɔ wan aw bifo kick-off, if mach de na plan ɛn tɛm de fɔ set am.",
+    "No. Its intended role is to make published league information easier for the public to access. It is not a replacement for FIFA Connect or for the Association's official competition administration systems.": "Nɔ. Im wok na fɔ mek pipul fit ɛntə infomeshɔn fɔ lig we dɛn publish wit no trɔbul. E nɔ de tek ples fɔ FIFA Connect ɔ ɔfishal system we Association de yuz fɔ manij kɔmpitishɔn.",
+    "/500 characters. Please do not include passwords, phone numbers, private email addresses or personal information about children.": "/500 karakter. Nɔ put paswɔd, tɛlifɔn nɔmba, privet imel adrɛs ɔ personal infomeshɔn fɔ pikin dɛn.",
+    "The linked privacy and terms page currently identifies itself as a draft and still contains items awaiting formal SLFA review. It should be completed and approved before this demonstration is presented as an operational SLFA service.": "Di pej fɔ privasi ɛn rul we de link ya de sho se na draft ɛn sɔm tin de we SLFA fɔ rid ɛn apruv. Dɛn fɔ fɛnish ɛn apruv am bifo dɛn go present dis demo olsem SLFA service we de wok.",
+    "Developed by Koroma Leone Tech · Designed by Alhaji Abu Koroma ·": "Koroma Leone Tech mek dis app · Alhaji Abu Koroma na im design am ·",
+    "Please describe the issue in at least five characters.": "Tok bɔt problem in lɛst 5 karakter.",
+    "Please keep the report within 500 characters.": "Mek yu ripɔt nɔ pas 500 karakter.",
+    "Your browser could not save the report code. Enable site storage and try again.": "Yu browser nɔ fit sev ripɔt code. On site storage ɛn tray bak.",
+    "The reporting service is unavailable. Please try again later.": "Service fɔ sɛnd ripɔt nɔ de naw. Tray bak afta.",
+    "Sending…": "De sɛnd…",
+    "Submitting your report…": "De put yu ripɔt…",
+    "The report limit has been reached for this browser. Please try again later.": "Dis browser don richa limit fɔ ripɔt. Tray bak afta.",
+    "The report could not be submitted. Please check your connection and try again.": "Dɛn nɔ fit sɛnd ripɔt. Chɛk yu intanɛt konekshɔn ɛn tray bak.",
+    "Report received. It has been sent to the moderation queue for review.": "Wi don gɛt yu ripɔt. Dɛn don sɛnd am go na list fɔ moderator fɔ rid.",
+    "The reporting service could not be reached. Please try again when connected.": "Browser nɔ fit konek wit service fɔ ripɔt. Tray bak wen intanɛt de.",
+    "The SLFA League App is a demonstration developed by Koroma Leone Tech for review by the Sierra Leone Football Association (SLFA). It is not currently an officially adopted or operated SLFA service. Any future operating body, data controller and contact details must be confirmed by the Association before production deployment.": "SLFA League App na demo we Koroma Leone Tech mek fɔ mek Sierra Leone Football Association (SLFA) luk am. SLFA nɔ adopt am ɛn nɔ de ɔfishali wok am yet. Bifo dɛn yuz am na production, Association fɔ kɔnfɔm ɔganayzeshɔn we go wok am, owna fɔ data, ɛn infomeshɔn fɔ kɔntakt.",
+    "earlier demonstration versions accepted score predictions and poll votes. Those features have been retired. Any historic entries already stored may remain available through the My Fan Data page for export or deletion; new predictions and poll votes are no longer accepted.": "Fɔs version fɔ dis demo bin de alaw pipul fɔ gis skɔ ɛn vot na poll. Dɛn don stop fichɔ dɛn ya. Rikɔd we dɛn sev finis fit de ya na My Fan Data pej fɔ download ɔ delit; nɔ de tek nyu gis fɔ skɔ ɔ poll vot again.",
+    "some choices, such as your name and language, are saved on your device only. You can delete them by clearing the app's site data in your browser.": "Sɔm pik dɛn, olsem yu nem ɛn lanwej, dɛn de sev na yu divays nɔmɔ. Yu fit delit dɛn wen yu clear site data fɔ app na yu browser.",
+    "To operate the demonstration: to publish competition information, moderate comments and problem reports, deliver alerts requested by users, remember language and favourite-club preferences, record staff agreement to the terms, monitor feature usage and maintain backup copies of league information.": "Fɔ mek dis demo wok: fɔ publish infomeshɔn fɔ kɔmpitishɔn, luk kɔmɛnt ɛn ripɔt fɔ problem, sɛnd alɛt we pipul aks fɔ gɛt, memba lanwej ɛn klob we pipul lɔv, rikɔd se staff don gri wit rul dɛn, luk aw pipul de yuz fichɔ dɛn, ɛn kip backup kopi fɔ infomeshɔn fɔ lig.",
+    "Everyone can see published results, the league table, current suspensions (with the player's name and club) and published disciplinary decisions.": "Ɔlman fit si rizɔlt we dɛn publish, tebul fɔ lig, suspenzɔn we de naw (wit nem fɔ pleya ɛn im klob) ɛn disizɔn fɔ disiplin we dɛn don publish.",
+    ". Problem reports are kept for": ". Dɛn de kip ripɔt fɔ problem dɛn fɔ",
+    "Clear the app's site data to remove the saved code, name and language from your device.": "Clear site data fɔ app fɔ tek code, nem ɛn lanwej we dɛn sev weh frɔm yu divays.",
+    "Keep comments respectful. Do not post abuse, threats, hate, racism, spam, or anyone's personal details.": "Giv rispɛkt na kɔmɛnt dɛn. Nɔ post insult, threat, hate, racism, spam, ɔ privet infomeshɔn fɔ eni pɔsin.",
+    "[SLFA to set the retention period]": "[SLFA fɔ set tɛm fɔ kip dis rikɔd dɛn]",
+    "[SLFA to set the period]": "[SLFA fɔ set di tɛm fɔ kip am]",
+    "[SLFA to set the period, for example 13 months]": "[SLFA fɔ set di tɛm, fɔ egzanp 13 mun]",
+    "[SLFA contact email or form]": "[Imel ɔ fɔm fɔ kɔntakt SLFA]",
+    "[SLFA to confirm how comments from under-18s are handled]": "[SLFA fɔ kɔnfɔm aw dɛn go handul kɔmɛnt fɔ pikin we nɔ richa 18 yet]",
+    "[SLFA to confirm the usage terms for crests]": "[SLFA fɔ kɔnfɔm rul fɔ yuz klob ɛn ɔganayzeshɔn lɔgɔ]"
+  });
+
   var current = lang();
   var table = DICT[current] || null;
   // Compile translation lookups once. A single phrase matcher avoids scanning

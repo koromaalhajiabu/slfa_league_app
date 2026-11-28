@@ -174,7 +174,7 @@ test('fan-data access uses a cryptographically random versioned browser token', 
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('voter-key.js?v=1'), 'Service worker must precache the token helper');
-  assert.ok(sw.includes('slfa-app-v314'), 'Service worker cache version must be advanced');
+  assert.ok(sw.includes('slfa-app-v315'), 'Service worker cache version must be advanced');
 });
 
 test('public past-season statistics are limited to published events', () => {
@@ -209,7 +209,7 @@ test('structured navigation assets load across every staff workspace', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert.ok(sw.includes('workspace-shell.css?v=1'), 'Service worker must cache the workspace stylesheet');
   assert.ok(sw.includes('workspace-shell.js?v=1'), 'Service worker must cache the workspace navigation script');
-  assert.ok(sw.includes('slfa-app-v314'), 'Service worker cache must be advanced for the interface refresh');
+  assert.ok(sw.includes('slfa-app-v315'), 'Service worker cache must be advanced for the interface refresh');
 });
 
 
@@ -273,8 +273,8 @@ test('Krio translations load across public and all staff portals', () => {
   assert.match(dictionary, /No referee match records have been submitted yet\.[\s\S]*?Nɔ gɛt referee mach rikɔd/);
 
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.ok(sw.includes('i18n.js?v=24'), 'Service worker must precache the expanded language dictionary');
-  assert.ok(sw.includes('slfa-app-v314'), 'Service worker cache must be advanced for the Krio update');
+  assert.ok(sw.includes('i18n.js?v=25'), 'Service worker must precache the expanded language dictionary');
+  assert.ok(sw.includes('slfa-app-v315'), 'Service worker cache must be advanced for the Krio update');
 });
 
 
@@ -376,7 +376,7 @@ test('service worker serves versioned app assets cache first while keeping publi
   assert.match(dataHandler, /e\.respondWith\(fetch\(req\)/);
   assert.match(assetHandler, /cache\.match\(req\)[\s\S]*?if \(hit\) return hit[\s\S]*?return fetch\(req\)/);
   assert.match(assetHandler, /pathname\.endsWith\('\/sw\.js'\)/);
-  assert.match(sw, /const CACHE = 'slfa-app-v314'/);
+  assert.match(sw, /const CACHE = 'slfa-app-v315'/);
 });
 
 test('public data changes refresh only the affected panel', () => {
@@ -448,4 +448,33 @@ test('official accreditation uses private evidence and administrator review hist
   assert.match(refereePortal, /official-accreditation\.js\?v=1/);
   assert.match(adminPortal, /official-accreditation\.js\?v=1/);
   assert.match(sw, /official-accreditation\.js\?v=1/);
+});
+
+
+test('Help, feedback, privacy and terms are fully covered by Krio translations', () => {
+  const dictionary = fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8');
+  const help = fs.readFileSync(path.join(ROOT, 'help.html'), 'utf8');
+  const privacy = fs.readFileSync(path.join(ROOT, 'privacy.html'), 'utf8');
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  for (const phrase of [
+    '← Back to League Centre',
+    'The public screens display information that has been published to the app.',
+    'First enable Get alerts and allow notifications in your browser.',
+    'The linked privacy and terms page currently identifies itself as a draft',
+    'Please describe the issue in at least five characters.',
+    'Submitting your report…',
+    'Report received. It has been sent to the moderation queue for review.',
+    'The SLFA League App is a demonstration developed by Koroma Leone Tech',
+    'earlier demonstration versions accepted score predictions and poll votes.',
+    'To operate the demonstration: to publish competition information',
+    'Everyone can see published results, the league table',
+    '. Problem reports are kept for',
+    'Clear the app\\'s site data to remove the saved code, name and language from your device.',
+    '[SLFA to set the retention period]',
+    '[SLFA to confirm how comments from under-18s are handled]'
+  ]) assert.ok(dictionary.includes(phrase), 'Missing full-sentence Krio translation key: ' + phrase);
+  assert.match(help, /i18n\\.js\\?v=25/);
+  assert.match(privacy, /i18n\\.js\\?v=25/);
+  assert.match(sw, /i18n\\.js\\?v=25/);
+  assert.match(sw, /slfa-app-v315/);
 });
