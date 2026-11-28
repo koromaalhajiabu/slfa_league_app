@@ -70,11 +70,10 @@ self.addEventListener('fetch', function (e) {
     // are eligible; authenticated/private responses are never cached here.
     var cachePromise = caches.open(DATA_CACHE);
     var networkPromise = fetch(req).then(function (res) {
-      if (res.ok) {
-        var copy = res.clone();
-        cachePromise.then(function (cache) { return cache.put(req, copy); });
-      }
-      return res;
+      if (!res.ok) return res;
+      return cachePromise.then(function (cache) {
+        return cache.put(req, res.clone()).catch(function () {});
+      }).then(function () { return res; });
     });
     e.waitUntil(networkPromise.then(function () {}, function () {}));
     e.respondWith(cachePromise.then(function (cache) {
